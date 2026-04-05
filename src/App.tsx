@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
+import { MovieDetail } from "./pages/MovieDetail";
+import { SeriesDetail } from "./pages/SeriesDetail";
 import { theme } from "./theme";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
@@ -21,6 +23,8 @@ function App() {
           <Routes>
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
+              <Route path="/movie/:movieId" element={<MovieDetail />} />
+              <Route path="/series/:seriesId" element={<SeriesDetail />} />
             </Route>
           </Routes>
         </BrowserRouter>

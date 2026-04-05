@@ -32,5 +32,24 @@
     "seasons_other": "{{count}} Temporadas",
     "episodes": "{{count}} Episodio",
     "episodes_other": "{{count}} Episodios"
+  },
+  "detail": {
+    "watchNow": "Assistir Agora",
+    "resume": "Continuar",
+    "addToList": "Adicionar a Lista",
+    "favorite": "Favoritar",
+    "synopsis": "Sinopse",
+    "showMore": "Ver mais",
+    "showLess": "Ver menos",
+    "fileVariants": "Variantes de Arquivo",
+    "details": "Detalhes",
+    "originalTitle": "Titulo Original",
+    "audio": "Audio",
+    "subtitles": "Legendas",
+    "primary": "Principal",
+    "season": "Temporada {{number}}",
+    "specials": "Especiais",
+    "episode": "E{{number}}",
+    "noEpisodes": "Nenhum episodio disponivel para esta temporada."
   }
 }

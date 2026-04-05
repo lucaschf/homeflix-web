@@ -32,5 +32,24 @@
     "seasons_other": "{{count}} Seasons",
     "episodes": "{{count}} Episode",
     "episodes_other": "{{count}} Episodes"
+  },
+  "detail": {
+    "watchNow": "Watch Now",
+    "resume": "Resume",
+    "addToList": "Add to List",
+    "favorite": "Favorite",
+    "synopsis": "Synopsis",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "fileVariants": "File Variants",
+    "details": "Details",
+    "originalTitle": "Original Title",
+    "audio": "Audio",
+    "subtitles": "Subtitles",
+    "primary": "Primary",
+    "season": "Season {{number}}",
+    "specials": "Specials",
+    "episode": "E{{number}}",
+    "noEpisodes": "No episodes available for this season."
   }
 }
