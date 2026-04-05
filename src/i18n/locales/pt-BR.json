@@ -86,5 +86,44 @@
     "tryDifferent": "Tente um termo de busca diferente",
     "movies": "Filmes",
     "series": "Series"
+  },
+  "settings": {
+    "title": "Configuracoes",
+    "libraries": "Bibliotecas",
+    "addLibrary": "Adicionar Biblioteca",
+    "scan": "Escanear",
+    "scanning": "Escaneando...",
+    "path": "Caminho",
+    "name": "Nome",
+    "noLibraries": "Nenhuma biblioteca configurada.",
+    "playback": "Reproducao",
+    "preferredAudio": "Audio Preferido",
+    "preferredSubtitle": "Legenda Preferida",
+    "subtitleMode": "Modo de Legenda",
+    "defaultQuality": "Qualidade Padrao",
+    "subtitleModes": {
+      "always": "Sempre",
+      "foreignOnly": "Apenas audio estrangeiro",
+      "forcedOnly": "Apenas forcadas",
+      "off": "Desligado"
+    },
+    "qualityOptions": {
+      "best": "Melhor disponivel",
+      "1080p": "1080p",
+      "720p": "720p"
+    },
+    "metadata": "Metadados",
+    "tmdbApiKey": "Chave da API TMDB",
+    "testKey": "Testar",
+    "autoEnrich": "Enriquecer automaticamente ao escanear",
+    "enrichAll": "Enriquecer Todos",
+    "enriching": "Enriquecendo...",
+    "about": "Sobre",
+    "version": "Versao",
+    "apiStatus": "Status da API",
+    "healthy": "Saudavel",
+    "unreachable": "Indisponivel",
+    "save": "Salvar",
+    "saved": "Configuracoes salvas"
   }
 }

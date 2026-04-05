@@ -86,5 +86,44 @@
     "tryDifferent": "Try a different search term",
     "movies": "Movies",
     "series": "Series"
+  },
+  "settings": {
+    "title": "Settings",
+    "libraries": "Libraries",
+    "addLibrary": "Add Library",
+    "scan": "Scan",
+    "scanning": "Scanning...",
+    "path": "Path",
+    "name": "Name",
+    "noLibraries": "No libraries configured.",
+    "playback": "Playback",
+    "preferredAudio": "Preferred Audio",
+    "preferredSubtitle": "Preferred Subtitle",
+    "subtitleMode": "Subtitle Mode",
+    "defaultQuality": "Default Quality",
+    "subtitleModes": {
+      "always": "Always",
+      "foreignOnly": "Foreign audio only",
+      "forcedOnly": "Forced only",
+      "off": "Off"
+    },
+    "qualityOptions": {
+      "best": "Best available",
+      "1080p": "1080p",
+      "720p": "720p"
+    },
+    "metadata": "Metadata",
+    "tmdbApiKey": "TMDB API Key",
+    "testKey": "Test",
+    "autoEnrich": "Auto-enrich on scan",
+    "enrichAll": "Enrich All",
+    "enriching": "Enriching...",
+    "about": "About",
+    "version": "Version",
+    "apiStatus": "API Status",
+    "healthy": "Healthy",
+    "unreachable": "Unreachable",
+    "save": "Save",
+    "saved": "Settings saved"
   }
 }
