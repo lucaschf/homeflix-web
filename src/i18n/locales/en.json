@@ -77,5 +77,14 @@
     "yearOldest": "Year (Oldest)",
     "noResults": "No results found. Try a different filter.",
     "loadMore": "Load More"
+  },
+  "search": {
+    "placeholder": "Search HomeFlix...",
+    "recentSearches": "Recent Searches",
+    "clearAll": "Clear All",
+    "noResults": "No results for \"{{query}}\"",
+    "tryDifferent": "Try a different search term",
+    "movies": "Movies",
+    "series": "Series"
   }
 }

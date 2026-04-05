@@ -77,5 +77,14 @@
     "yearOldest": "Ano (Mais Antigo)",
     "noResults": "Nenhum resultado encontrado. Tente um filtro diferente.",
     "loadMore": "Carregar Mais"
+  },
+  "search": {
+    "placeholder": "Buscar no HomeFlix...",
+    "recentSearches": "Buscas Recentes",
+    "clearAll": "Limpar Tudo",
+    "noResults": "Nenhum resultado para \"{{query}}\"",
+    "tryDifferent": "Tente um termo de busca diferente",
+    "movies": "Filmes",
+    "series": "Series"
   }
 }
