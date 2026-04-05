@@ -267,7 +267,7 @@ export function Player() {
         )}
 
         {/* Bottom Controls */}
-        <Box sx={{ p: 2, pt: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7), transparent)" }}>
+        <Box sx={{ px: { xs: 3, md: 5 }, pb: { xs: 2, md: 3 }, pt: 6, background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
           {/* Seek Bar */}
           <Slider
             value={currentTime}
