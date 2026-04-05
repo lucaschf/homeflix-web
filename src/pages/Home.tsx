@@ -1,7 +1,111 @@
 import { Box, Button, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
+import { HeroBanner } from "../components/HeroBanner";
+import { MediaCard } from "../components/MediaCard";
+import { MediaCarousel } from "../components/MediaCarousel";
+
+// TODO: Replace with real API data via TanStack Query
+const MOCK_HERO = {
+  title: "Inception",
+  synopsis:
+    "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
+  year: 2010,
+  duration: "2h 28min",
+  genres: ["Sci-Fi", "Action", "Thriller"],
+  backdropUrl: "https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg",
+};
+
+const MOCK_MOVIES = [
+  { title: "Interstellar", year: 2014 },
+  { title: "The Dark Knight", year: 2008 },
+  { title: "Pulp Fiction", year: 1994 },
+  { title: "Fight Club", year: 1999 },
+  { title: "The Matrix", year: 1999 },
+  { title: "Parasite", year: 2019 },
+  { title: "Whiplash", year: 2014 },
+];
+
+const MOCK_CONTINUE = [
+  { title: "Breaking Bad", subtitle: "S02E05 - Breakage", progress: 45 },
+  { title: "Inception", subtitle: "1h 12min left", progress: 65 },
+  { title: "The Office", subtitle: "S04E01 - Fun Run", progress: 20 },
+];
+
+const MOCK_SERIES = [
+  { title: "Breaking Bad", year: 2008 },
+  { title: "The Office", year: 2005 },
+  { title: "Stranger Things", year: 2016 },
+  { title: "Dark", year: 2017 },
+  { title: "Better Call Saul", year: 2015 },
+  { title: "Chernobyl", year: 2019 },
+];
 
 export function Home() {
+  const hasContent = true; // TODO: check if library has content
+
+  if (!hasContent) {
+    return <EmptyState />;
+  }
+
+  return (
+    <Box>
+      <HeroBanner {...MOCK_HERO} />
+
+      <Box sx={{ mt: -4, position: "relative", zIndex: 1 }}>
+        {/* Continue Watching */}
+        <MediaCarousel title="Continue Watching">
+          {MOCK_CONTINUE.map((item) => (
+            <MediaCard
+              key={item.title}
+              title={item.title}
+              subtitle={item.subtitle}
+              progress={item.progress}
+              variant="episode"
+            />
+          ))}
+        </MediaCarousel>
+
+        {/* Recently Added */}
+        <MediaCarousel title="Recently Added" onSeeAll={() => {}}>
+          {MOCK_MOVIES.map((item) => (
+            <MediaCard
+              key={item.title}
+              title={item.title}
+              year={item.year}
+              variant="poster"
+            />
+          ))}
+        </MediaCarousel>
+
+        {/* Movies */}
+        <MediaCarousel title="Movies" onSeeAll={() => {}}>
+          {MOCK_MOVIES.map((item) => (
+            <MediaCard
+              key={item.title}
+              title={item.title}
+              year={item.year}
+              variant="poster"
+            />
+          ))}
+        </MediaCarousel>
+
+        {/* Series */}
+        <MediaCarousel title="Series" onSeeAll={() => {}}>
+          {MOCK_SERIES.map((item) => (
+            <MediaCard
+              key={item.title}
+              title={item.title}
+              year={item.year}
+              variant="poster"
+            />
+          ))}
+        </MediaCarousel>
+      </Box>
+    </Box>
+  );
+}
+
+function EmptyState() {
   return (
     <Box
       sx={{
@@ -9,7 +113,7 @@ export function Home() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "60vh",
+        minHeight: "70vh",
         textAlign: "center",
       }}
     >
@@ -27,16 +131,13 @@ export function Home() {
       >
         <Film size={32} color="#E8926F" />
       </Box>
-
       <Typography variant="h1" gutterBottom>
         Welcome to HomeFlix
       </Typography>
-
       <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, mb: 4 }}>
         Add a library to get started. Point to a folder with your movies and
         series, and we'll do the rest.
       </Typography>
-
       <Button variant="contained" startIcon={<FolderOpen size={20} />} size="large">
         Add Library
       </Button>
