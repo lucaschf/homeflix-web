@@ -9,6 +9,7 @@ interface MediaCardProps {
   progress?: number;
   subtitle?: string;
   variant?: "poster" | "episode";
+  fullWidth?: boolean;
   onClick?: () => void;
 }
 
@@ -19,6 +20,7 @@ export function MediaCard({
   progress,
   subtitle,
   variant = "poster",
+  fullWidth = false,
   onClick,
 }: MediaCardProps) {
   const { t } = useTranslation();
@@ -31,7 +33,7 @@ export function MediaCard({
       sx={{
         cursor: "pointer",
         flexShrink: 0,
-        width: { xs: 280, sm: 320, md: 360 },
+        width: fullWidth ? "100%" : { xs: 280, sm: 320, md: 360 },
         "&:hover .media-image": {
           transform: "scale(1.05)",
         },

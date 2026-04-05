@@ -64,5 +64,18 @@
     "playNow": "Assistir Agora",
     "cancel": "Cancelar",
     "back": "Voltar"
+  },
+  "browse": {
+    "all": "Todos",
+    "genre": "Genero",
+    "allGenres": "Todos os Generos",
+    "sortBy": "Ordenar Por",
+    "recentlyAdded": "Adicionados Recentemente",
+    "titleAZ": "Titulo A-Z",
+    "titleZA": "Titulo Z-A",
+    "yearNewest": "Ano (Mais Recente)",
+    "yearOldest": "Ano (Mais Antigo)",
+    "noResults": "Nenhum resultado encontrado. Tente um filtro diferente.",
+    "loadMore": "Carregar Mais"
   }
 }

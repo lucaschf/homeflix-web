@@ -64,5 +64,18 @@
     "playNow": "Play Now",
     "cancel": "Cancel",
     "back": "Back"
+  },
+  "browse": {
+    "all": "All",
+    "genre": "Genre",
+    "allGenres": "All Genres",
+    "sortBy": "Sort By",
+    "recentlyAdded": "Recently Added",
+    "titleAZ": "Title A-Z",
+    "titleZA": "Title Z-A",
+    "yearNewest": "Year (Newest)",
+    "yearOldest": "Year (Oldest)",
+    "noResults": "No results found. Try a different filter.",
+    "loadMore": "Load More"
   }
 }

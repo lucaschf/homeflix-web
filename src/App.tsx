@@ -2,6 +2,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { Browse } from "./pages/Browse";
 import { Home } from "./pages/Home";
 import { MovieDetail } from "./pages/MovieDetail";
 import { Player } from "./pages/Player";
@@ -25,6 +26,7 @@ function App() {
             <Route path="/play/:mediaId" element={<Player />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
+              <Route path="/browse" element={<Browse />} />
               <Route path="/movie/:movieId" element={<MovieDetail />} />
               <Route path="/series/:seriesId" element={<SeriesDetail />} />
             </Route>
