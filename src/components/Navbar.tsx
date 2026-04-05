@@ -9,16 +9,18 @@ import {
   useTheme,
 } from "@mui/material";
 import { Film, Search, Settings } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
 
 const navItems = [
-  { to: "/", label: "Home" },
-  { to: "/browse", label: "Browse" },
-  { to: "/lists", label: "My Lists" },
-  { to: "/history", label: "History" },
+  { to: "/", labelKey: "nav.home" },
+  { to: "/browse", labelKey: "nav.browse" },
+  { to: "/lists", labelKey: "nav.myLists" },
+  { to: "/history", labelKey: "nav.history" },
 ];
 
 export function Navbar() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const location = useLocation();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -58,7 +60,7 @@ export function Navbar() {
 
         {/* Nav Links */}
         <Box sx={{ display: "flex", gap: 0.5, flexGrow: 1 }}>
-          {navItems.map(({ to, label }) => {
+          {navItems.map(({ to, labelKey }) => {
             const isActive = location.pathname === to;
             return (
               <Button
@@ -89,7 +91,7 @@ export function Navbar() {
                   },
                 }}
               >
-                {label}
+                {t(labelKey)}
               </Button>
             );
           })}

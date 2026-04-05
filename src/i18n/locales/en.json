@@ -1,0 +1,36 @@
+{
+  "nav": {
+    "home": "Home",
+    "browse": "Browse",
+    "myLists": "My Lists",
+    "history": "History",
+    "settings": "Settings",
+    "search": "Search"
+  },
+  "home": {
+    "continueWatching": "Continue Watching",
+    "recentlyAdded": "Recently Added",
+    "movies": "Movies",
+    "series": "Series",
+    "seeAll": "See All"
+  },
+  "hero": {
+    "play": "Play",
+    "myList": "My List",
+    "moreInfo": "More Info"
+  },
+  "empty": {
+    "welcome": "Welcome to HomeFlix",
+    "description": "Add a library to get started. Point to a folder with your movies and series, and we'll do the rest.",
+    "addLibrary": "Add Library"
+  },
+  "card": {
+    "noImage": "No Image"
+  },
+  "common": {
+    "seasons": "{{count}} Season",
+    "seasons_other": "{{count}} Seasons",
+    "episodes": "{{count}} Episode",
+    "episodes_other": "{{count}} Episodes"
+  }
+}

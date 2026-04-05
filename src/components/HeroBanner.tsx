@@ -1,5 +1,6 @@
 import { Box, Button, Chip, Typography } from "@mui/material";
 import { Play, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface HeroBannerProps {
   title: string;
@@ -22,6 +23,7 @@ export function HeroBanner({
   onPlay,
   onAddToList,
 }: HeroBannerProps) {
+  const { t } = useTranslation();
   return (
     <Box
       sx={{
@@ -146,7 +148,7 @@ export function HeroBanner({
             onClick={onPlay}
             size="large"
           >
-            Play
+            {t("hero.play")}
           </Button>
           <Button
             variant="outlined"
@@ -162,7 +164,7 @@ export function HeroBanner({
               },
             }}
           >
-            My List
+            {t("hero.myList")}
           </Button>
         </Box>
       </Box>

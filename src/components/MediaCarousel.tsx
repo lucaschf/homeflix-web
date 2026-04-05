@@ -1,6 +1,7 @@
 import { Box, IconButton, Typography } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface MediaCarouselProps {
   title: string;
@@ -9,6 +10,7 @@ interface MediaCarouselProps {
 }
 
 export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(true);
@@ -53,7 +55,7 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
               "&:hover": { textDecoration: "underline" },
             }}
           >
-            See All &gt;
+            {t("home.seeAll")} &gt;
           </Typography>
         )}
       </Box>

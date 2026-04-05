@@ -1,5 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { HeroBanner } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
@@ -41,6 +42,7 @@ const MOCK_SERIES = [
 ];
 
 export function Home() {
+  const { t } = useTranslation();
   const hasContent = true; // TODO: check if library has content
 
   if (!hasContent) {
@@ -52,8 +54,7 @@ export function Home() {
       <HeroBanner {...MOCK_HERO} />
 
       <Box sx={{ mt: -4, position: "relative", zIndex: 1 }}>
-        {/* Continue Watching */}
-        <MediaCarousel title="Continue Watching">
+        <MediaCarousel title={t("home.continueWatching")}>
           {MOCK_CONTINUE.map((item) => (
             <MediaCard
               key={item.title}
@@ -65,8 +66,7 @@ export function Home() {
           ))}
         </MediaCarousel>
 
-        {/* Recently Added */}
-        <MediaCarousel title="Recently Added" onSeeAll={() => {}}>
+        <MediaCarousel title={t("home.recentlyAdded")} onSeeAll={() => {}}>
           {MOCK_MOVIES.map((item) => (
             <MediaCard
               key={item.title}
@@ -77,8 +77,7 @@ export function Home() {
           ))}
         </MediaCarousel>
 
-        {/* Movies */}
-        <MediaCarousel title="Movies" onSeeAll={() => {}}>
+        <MediaCarousel title={t("home.movies")} onSeeAll={() => {}}>
           {MOCK_MOVIES.map((item) => (
             <MediaCard
               key={item.title}
@@ -89,8 +88,7 @@ export function Home() {
           ))}
         </MediaCarousel>
 
-        {/* Series */}
-        <MediaCarousel title="Series" onSeeAll={() => {}}>
+        <MediaCarousel title={t("home.series")} onSeeAll={() => {}}>
           {MOCK_SERIES.map((item) => (
             <MediaCard
               key={item.title}
@@ -106,6 +104,8 @@ export function Home() {
 }
 
 function EmptyState() {
+  const { t } = useTranslation();
+
   return (
     <Box
       sx={{
@@ -132,14 +132,13 @@ function EmptyState() {
         <Film size={32} color="#E8926F" />
       </Box>
       <Typography variant="h1" gutterBottom>
-        Welcome to HomeFlix
+        {t("empty.welcome")}
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, mb: 4 }}>
-        Add a library to get started. Point to a folder with your movies and
-        series, and we'll do the rest.
+        {t("empty.description")}
       </Typography>
       <Button variant="contained" startIcon={<FolderOpen size={20} />} size="large">
-        Add Library
+        {t("empty.addLibrary")}
       </Button>
     </Box>
   );

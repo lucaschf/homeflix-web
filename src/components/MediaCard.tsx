@@ -1,5 +1,6 @@
 import { Box, LinearProgress, Typography } from "@mui/material";
 import { Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface MediaCardProps {
   title: string;
@@ -20,6 +21,7 @@ export function MediaCard({
   variant = "poster",
   onClick,
 }: MediaCardProps) {
+  const { t } = useTranslation();
   const isPoster = variant === "poster";
   const aspectRatio = isPoster ? "2/3" : "16/9";
 
@@ -30,8 +32,8 @@ export function MediaCard({
         cursor: "pointer",
         flexShrink: 0,
         width: isPoster
-          ? { xs: 130, sm: 150, md: 170 }
-          : { xs: 240, sm: 280, md: 320 },
+          ? { xs: 150, sm: 180, md: 200 }
+          : { xs: 280, sm: 320, md: 360 },
         "&:hover .media-image": {
           transform: "scale(1.05)",
         },
@@ -75,8 +77,8 @@ export function MediaCard({
               background: "linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)",
             }}
           >
-            <Typography variant="body2" color="text.tertiary">
-              No Image
+            <Typography variant="body2" color="text.secondary">
+              {t("card.noImage")}
             </Typography>
           </Box>
         )}
@@ -97,8 +99,8 @@ export function MediaCard({
         >
           <Box
             sx={{
-              width: 48,
-              height: 48,
+              width: 52,
+              height: 52,
               borderRadius: "50%",
               bgcolor: "primary.main",
               display: "flex",
@@ -106,7 +108,7 @@ export function MediaCard({
               justifyContent: "center",
             }}
           >
-            <Play size={24} color="#0D0D0D" fill="#0D0D0D" />
+            <Play size={26} color="#0D0D0D" fill="#0D0D0D" />
           </Box>
         </Box>
 
@@ -120,7 +122,7 @@ export function MediaCard({
               bottom: 0,
               left: 0,
               right: 0,
-              height: 3,
+              height: 4,
               bgcolor: "rgba(255,255,255,0.2)",
               "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
             }}
@@ -130,7 +132,7 @@ export function MediaCard({
 
       {/* Title */}
       <Typography
-        variant="body2"
+        variant="body1"
         noWrap
         sx={{ fontWeight: 500, color: "text.primary" }}
       >
@@ -139,7 +141,7 @@ export function MediaCard({
 
       {/* Subtitle / Year */}
       {(subtitle || year) && (
-        <Typography variant="caption" color="text.secondary" noWrap>
+        <Typography variant="body2" color="text.secondary" noWrap>
           {subtitle || year}
         </Typography>
       )}

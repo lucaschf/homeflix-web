@@ -1,0 +1,36 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "browse": "Explorar",
+    "myLists": "Minhas Listas",
+    "history": "Historico",
+    "settings": "Configuracoes",
+    "search": "Buscar"
+  },
+  "home": {
+    "continueWatching": "Continue Assistindo",
+    "recentlyAdded": "Adicionados Recentemente",
+    "movies": "Filmes",
+    "series": "Series",
+    "seeAll": "Ver Tudo"
+  },
+  "hero": {
+    "play": "Assistir",
+    "myList": "Minha Lista",
+    "moreInfo": "Mais Informacoes"
+  },
+  "empty": {
+    "welcome": "Bem-vindo ao HomeFlix",
+    "description": "Adicione uma biblioteca para comecar. Aponte para uma pasta com seus filmes e series, e nos faremos o resto.",
+    "addLibrary": "Adicionar Biblioteca"
+  },
+  "card": {
+    "noImage": "Sem Imagem"
+  },
+  "common": {
+    "seasons": "{{count}} Temporada",
+    "seasons_other": "{{count}} Temporadas",
+    "episodes": "{{count}} Episodio",
+    "episodes_other": "{{count}} Episodios"
+  }
+}
