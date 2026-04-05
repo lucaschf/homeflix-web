@@ -1,103 +1,81 @@
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { useMovies, useSeries } from "../api/hooks";
 import { HeroBanner } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 
-// TODO: Replace with real API data via TanStack Query
-const MOCK_HERO = {
-  title: "Inception",
-  synopsis:
-    "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
-  year: 2010,
-  duration: "2h 28min",
-  genres: ["Sci-Fi", "Action", "Thriller"],
-  backdropUrl: "https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg",
-};
-
-const MOCK_MOVIES = [
-  { title: "Interstellar", year: 2014 },
-  { title: "The Dark Knight", year: 2008 },
-  { title: "Pulp Fiction", year: 1994 },
-  { title: "Fight Club", year: 1999 },
-  { title: "The Matrix", year: 1999 },
-  { title: "Parasite", year: 2019 },
-  { title: "Whiplash", year: 2014 },
-];
-
-const MOCK_CONTINUE = [
-  { title: "Breaking Bad", subtitle: "S02E05 - Breakage", progress: 45 },
-  { title: "Inception", subtitle: "1h 12min left", progress: 65 },
-  { title: "The Office", subtitle: "S04E01 - Fun Run", progress: 20 },
-];
-
-const MOCK_SERIES = [
-  { title: "Breaking Bad", year: 2008 },
-  { title: "The Office", year: 2005 },
-  { title: "Stranger Things", year: 2016 },
-  { title: "Dark", year: 2017 },
-  { title: "Better Call Saul", year: 2015 },
-  { title: "Chernobyl", year: 2019 },
-];
-
 export function Home() {
   const { t } = useTranslation();
-  const hasContent = true; // TODO: check if library has content
+  const navigate = useNavigate();
+  const { data: moviesData, isLoading: moviesLoading } = useMovies();
+  const { data: seriesData, isLoading: seriesLoading } = useSeries();
+
+  const movies = moviesData?.movies ?? [];
+  const series = seriesData?.series ?? [];
+  const isLoading = moviesLoading || seriesLoading;
+  const hasContent = movies.length > 0 || series.length > 0;
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
 
   if (!hasContent) {
     return <EmptyState />;
   }
 
+  // Pick a random movie for hero banner
+  const heroMovie = movies[0];
+
   return (
     <Box>
-      <HeroBanner {...MOCK_HERO} />
+      {heroMovie && (
+        <HeroBanner
+          title={heroMovie.title}
+          year={heroMovie.year}
+          duration={heroMovie.duration_formatted}
+          genres={heroMovie.genres}
+          posterUrl={heroMovie.poster_path ?? undefined}
+          onPlay={() => navigate(`/movie/${heroMovie.id}`)}
+        />
+      )}
 
       <Box sx={{ mt: -4, position: "relative", zIndex: 1 }}>
-        <MediaCarousel title={t("home.continueWatching")}>
-          {MOCK_CONTINUE.map((item) => (
-            <MediaCard
-              key={item.title}
-              title={item.title}
-              subtitle={item.subtitle}
-              progress={item.progress}
-              variant="episode"
-            />
-          ))}
-        </MediaCarousel>
+        {movies.length > 0 && (
+          <MediaCarousel title={t("home.movies")} onSeeAll={() => navigate("/browse")}>
+            {movies.map((movie) => (
+              <MediaCard
+                key={movie.id}
+                title={movie.title}
+                year={movie.year}
+                posterUrl={movie.poster_path ?? undefined}
+                variant="poster"
+                onClick={() => navigate(`/movie/${movie.id}`)}
+              />
+            ))}
+          </MediaCarousel>
+        )}
 
-        <MediaCarousel title={t("home.recentlyAdded")} onSeeAll={() => {}}>
-          {MOCK_MOVIES.map((item) => (
-            <MediaCard
-              key={item.title}
-              title={item.title}
-              year={item.year}
-              variant="poster"
-            />
-          ))}
-        </MediaCarousel>
-
-        <MediaCarousel title={t("home.movies")} onSeeAll={() => {}}>
-          {MOCK_MOVIES.map((item) => (
-            <MediaCard
-              key={item.title}
-              title={item.title}
-              year={item.year}
-              variant="poster"
-            />
-          ))}
-        </MediaCarousel>
-
-        <MediaCarousel title={t("home.series")} onSeeAll={() => {}}>
-          {MOCK_SERIES.map((item) => (
-            <MediaCard
-              key={item.title}
-              title={item.title}
-              year={item.year}
-              variant="poster"
-            />
-          ))}
-        </MediaCarousel>
+        {series.length > 0 && (
+          <MediaCarousel title={t("home.series")} onSeeAll={() => navigate("/browse")}>
+            {series.map((s) => (
+              <MediaCard
+                key={s.id}
+                title={s.title}
+                year={s.start_year}
+                posterUrl={s.poster_path ?? undefined}
+                variant="poster"
+                onClick={() => navigate(`/series/${s.id}`)}
+              />
+            ))}
+          </MediaCarousel>
+        )}
       </Box>
     </Box>
   );
@@ -105,6 +83,7 @@ export function Home() {
 
 function EmptyState() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   return (
     <Box
@@ -137,7 +116,12 @@ function EmptyState() {
       <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, mb: 4 }}>
         {t("empty.description")}
       </Typography>
-      <Button variant="contained" startIcon={<FolderOpen size={20} />} size="large">
+      <Button
+        variant="contained"
+        startIcon={<FolderOpen size={20} />}
+        size="large"
+        onClick={() => navigate("/settings")}
+      >
         {t("empty.addLibrary")}
       </Button>
     </Box>

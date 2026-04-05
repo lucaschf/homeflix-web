@@ -3,91 +3,64 @@ import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Collapse,
   IconButton,
   Typography,
 } from "@mui/material";
-import { Heart, Play, Plus } from "lucide-react";
+import { Heart, Play, Plus, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-
-// TODO: Replace with real API data via TanStack Query + useParams
-const MOCK_MOVIE = {
-  id: "mov_abc123",
-  title: "Inception",
-  originalTitle: "Inception",
-  year: 2010,
-  duration: "2h 28min",
-  synopsis:
-    "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O., but his tragic past may doom the project and his team to disaster.",
-  genres: ["Sci-Fi", "Action", "Thriller"],
-  backdropUrl:
-    "https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg",
-  posterUrl:
-    "https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-  audio: ["English 5.1", "Portuguese 2.0"],
-  subtitles: ["Portuguese", "English"],
-};
+import { useNavigate, useParams } from "react-router-dom";
+import { useEnrichMovie, useMovie } from "../api/hooks";
 
 export function MovieDetail() {
   const { t } = useTranslation();
+  const { movieId } = useParams<{ movieId: string }>();
+  const navigate = useNavigate();
+  const { data: movie, isLoading } = useMovie(movieId!);
+  const enrichMutation = useEnrichMovie();
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
-  const movie = MOCK_MOVIE;
+
+  if (isLoading || !movie) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
 
   return (
     <Box>
       {/* Hero Header */}
       <Box sx={{ position: "relative", width: "100%", height: { xs: 450, md: 550 }, overflow: "hidden" }}>
-        {movie.backdropUrl && (
+        {movie.backdrop_path && (
           <Box
             component="img"
-            src={movie.backdropUrl}
+            src={movie.backdrop_path}
             alt=""
             sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           />
         )}
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.7) 35%, transparent 65%)",
-          }}
-        />
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.4) 25%, transparent 50%)",
-          }}
-        />
+        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.7) 35%, transparent 65%)" }} />
+        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.4) 25%, transparent 50%)" }} />
 
-        {/* Content */}
-        <Box
-          sx={{
-            position: "relative",
-            height: "100%",
-            display: "flex",
-            alignItems: "flex-end",
-            px: { xs: 3, md: 6 },
-            pb: { xs: 4, md: 6 },
-            gap: 4,
-          }}
-        >
-          {/* Poster */}
-          <Box
-            component="img"
-            src={movie.posterUrl}
-            alt={movie.title}
-            sx={{
-              width: { xs: 140, md: 200 },
-              aspectRatio: "2/3",
-              borderRadius: 2,
-              objectFit: "cover",
-              display: { xs: "none", sm: "block" },
-              boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
-            }}
-          />
+        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: 4 }}>
+          {movie.poster_path && (
+            <Box
+              component="img"
+              src={movie.poster_path}
+              alt={movie.title}
+              sx={{
+                width: { xs: 140, md: 200 },
+                aspectRatio: "2/3",
+                borderRadius: 2,
+                objectFit: "cover",
+                display: { xs: "none", sm: "block" },
+                boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+              }}
+            />
+          )}
 
-          {/* Info */}
           <Box sx={{ flex: 1, maxWidth: 600 }}>
             <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", md: "2.5rem" }, fontWeight: 700, mb: 1 }}>
               {movie.title}
@@ -96,36 +69,36 @@ export function MovieDetail() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
               <Typography variant="body2" color="text.secondary">{movie.year}</Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary">{movie.duration}</Typography>
+              <Typography variant="body2" color="text.secondary">{movie.duration_formatted}</Typography>
               {movie.genres.map((g) => (
-                <Chip
-                  key={g}
-                  label={g}
-                  size="small"
-                  sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.7rem" }}
-                />
+                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.7rem" }} />
               ))}
             </Box>
 
             <Box sx={{ display: "flex", gap: 1.5 }}>
-              <Button variant="contained" startIcon={<Play size={18} />} size="large">
+              <Button variant="contained" startIcon={<Play size={18} />} size="large" onClick={() => navigate(`/play/${movie.id}`)}>
                 {t("detail.watchNow")}
               </Button>
               <Button
                 variant="outlined"
                 startIcon={<Plus size={18} />}
                 size="large"
-                sx={{
-                  borderColor: "rgba(255,255,255,0.3)",
-                  color: "text.primary",
-                  "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" },
-                }}
+                sx={{ borderColor: "rgba(255,255,255,0.3)", color: "text.primary", "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" } }}
               >
                 {t("detail.addToList")}
               </Button>
               <IconButton sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}>
                 <Heart size={22} />
               </IconButton>
+              {!movie.tmdb_id && (
+                <IconButton
+                  onClick={() => enrichMutation.mutate({ movieId: movie.id })}
+                  disabled={enrichMutation.isPending}
+                  sx={{ color: "text.secondary" }}
+                >
+                  <RefreshCw size={20} />
+                </IconButton>
+              )}
             </Box>
           </Box>
         </Box>
@@ -133,31 +106,33 @@ export function MovieDetail() {
 
       {/* Body */}
       <Box sx={{ px: { xs: 3, md: 6 }, py: 4, maxWidth: 1000 }}>
-        {/* Synopsis */}
-        <Typography variant="h2" sx={{ mb: 1.5 }}>{t("detail.synopsis")}</Typography>
-        <Collapse in={synopsisExpanded} collapsedSize={60}>
-          <Typography variant="body1" color="text.secondary">
-            {movie.synopsis}
-          </Typography>
-        </Collapse>
-        {movie.synopsis.length > 150 && (
-          <Typography
-            variant="body2"
-            onClick={() => setSynopsisExpanded(!synopsisExpanded)}
-            sx={{ color: "primary.main", cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}
-          >
-            {synopsisExpanded ? t("detail.showLess") : t("detail.showMore")}
-          </Typography>
+        {movie.synopsis && (
+          <>
+            <Typography variant="h2" sx={{ mb: 1.5 }}>{t("detail.synopsis")}</Typography>
+            <Collapse in={synopsisExpanded} collapsedSize={60}>
+              <Typography variant="body1" color="text.secondary">
+                {movie.synopsis}
+              </Typography>
+            </Collapse>
+            {movie.synopsis.length > 150 && (
+              <Typography
+                variant="body2"
+                onClick={() => setSynopsisExpanded(!synopsisExpanded)}
+                sx={{ color: "primary.main", cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}
+              >
+                {synopsisExpanded ? t("detail.showLess") : t("detail.showMore")}
+              </Typography>
+            )}
+          </>
         )}
 
-        {/* Details */}
         <Typography variant="h2" sx={{ mt: 4, mb: 1.5 }}>{t("detail.details")}</Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {movie.originalTitle && movie.originalTitle !== movie.title && (
-            <DetailRow label={t("detail.originalTitle")} value={movie.originalTitle} />
+          {movie.original_title && movie.original_title !== movie.title && (
+            <DetailRow label={t("detail.originalTitle")} value={movie.original_title} />
           )}
-          <DetailRow label={t("detail.audio")} value={movie.audio.join(", ")} />
-          <DetailRow label={t("detail.subtitles")} value={movie.subtitles.join(", ")} />
+          {movie.resolution && <DetailRow label="Resolution" value={movie.resolution} />}
+          {movie.imdb_id && <DetailRow label="IMDb" value={movie.imdb_id} />}
         </Box>
       </Box>
     </Box>
@@ -167,9 +142,7 @@ export function MovieDetail() {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <Box sx={{ display: "flex", gap: 1 }}>
-      <Typography variant="body2" color="text.secondary" sx={{ minWidth: 120 }}>
-        {label}:
-      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ minWidth: 120 }}>{label}:</Typography>
       <Typography variant="body2">{value}</Typography>
     </Box>
   );

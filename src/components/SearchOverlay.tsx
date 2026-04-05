@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Dialog,
@@ -9,22 +9,10 @@ import {
 import { Film, Search, Tv, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { useMovies, useSeries } from "../api/hooks";
 
 const RECENT_STORAGE_KEY = "homeflix-recent-searches";
 const MAX_RECENT = 5;
-
-// TODO: Replace with real API search
-const MOCK_ALL = [
-  { id: "mov_1", title: "Inception", year: 2010, type: "movie" as const },
-  { id: "mov_2", title: "Interstellar", year: 2014, type: "movie" as const },
-  { id: "mov_3", title: "The Dark Knight", year: 2008, type: "movie" as const },
-  { id: "mov_4", title: "Into the Spider-Verse", year: 2018, type: "movie" as const },
-  { id: "ser_1", title: "Breaking Bad", year: 2008, type: "series" as const },
-  { id: "ser_2", title: "The Office", year: 2005, type: "series" as const },
-  { id: "ser_3", title: "Stranger Things", year: 2016, type: "series" as const },
-  { id: "ser_4", title: "Dark", year: 2017, type: "series" as const },
-  { id: "ser_5", title: "Better Call Saul", year: 2015, type: "series" as const },
-];
 
 interface SearchOverlayProps {
   open: boolean;
@@ -36,6 +24,18 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
+  const { data: moviesData } = useMovies();
+  const { data: seriesData } = useSeries();
+
+  const allItems = useMemo(() => {
+    const movies = (moviesData?.movies ?? []).map((m) => ({
+      id: m.id, title: m.title, year: m.year, type: "movie" as const,
+    }));
+    const series = (seriesData?.series ?? []).map((s) => ({
+      id: s.id, title: s.title, year: s.start_year, type: "series" as const,
+    }));
+    return [...movies, ...series];
+  }, [moviesData, seriesData]);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) || "[]");
@@ -79,7 +79,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     localStorage.removeItem(RECENT_STORAGE_KEY);
   }, []);
 
-  const handleSelect = (item: (typeof MOCK_ALL)[0]) => {
+  const handleSelect = (item: (typeof allItems)[0]) => {
     saveRecentSearch(item.title);
     onClose();
     navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`);
@@ -92,7 +92,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   // Filter results
   const normalizedQuery = query.toLowerCase().trim();
   const results = normalizedQuery.length >= 1
-    ? MOCK_ALL.filter((item) => item.title.toLowerCase().includes(normalizedQuery))
+    ? allItems.filter((item) => item.title.toLowerCase().includes(normalizedQuery))
     : [];
 
   const movies = results.filter((r) => r.type === "movie");
