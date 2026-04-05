@@ -51,5 +51,18 @@
     "specials": "Specials",
     "episode": "E{{number}}",
     "noEpisodes": "No episodes available for this season."
+  },
+  "player": {
+    "quality": "Quality",
+    "speed": "Speed",
+    "subtitles": "Subtitles",
+    "audio": "Audio",
+    "off": "Off",
+    "normal": "Normal",
+    "nextEpisode": "Next Episode",
+    "nextEpisodeIn": "Next episode in {{seconds}}s",
+    "playNow": "Play Now",
+    "cancel": "Cancel",
+    "back": "Back"
   }
 }

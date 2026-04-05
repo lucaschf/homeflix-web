@@ -51,5 +51,18 @@
     "specials": "Especiais",
     "episode": "E{{number}}",
     "noEpisodes": "Nenhum episodio disponivel para esta temporada."
+  },
+  "player": {
+    "quality": "Qualidade",
+    "speed": "Velocidade",
+    "subtitles": "Legendas",
+    "audio": "Audio",
+    "off": "Desligado",
+    "normal": "Normal",
+    "nextEpisode": "Proximo Episodio",
+    "nextEpisodeIn": "Proximo episodio em {{seconds}}s",
+    "playNow": "Assistir Agora",
+    "cancel": "Cancelar",
+    "back": "Voltar"
   }
 }

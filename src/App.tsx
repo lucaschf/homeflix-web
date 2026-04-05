@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
 import { MovieDetail } from "./pages/MovieDetail";
+import { Player } from "./pages/Player";
 import { SeriesDetail } from "./pages/SeriesDetail";
 import { theme } from "./theme";
 import "@fontsource/inter/400.css";
@@ -21,6 +22,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
+            <Route path="/play/:mediaId" element={<Player />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Home />} />
               <Route path="/movie/:movieId" element={<MovieDetail />} />
