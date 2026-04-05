@@ -1,43 +1,103 @@
-import { Film, Home, List, Clock, Settings } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import {
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Box,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import {
+  Film,
+  Home,
+  List as ListIcon,
+  Clock,
+  Settings,
+} from "lucide-react";
+import { NavLink, useLocation } from "react-router-dom";
+
+const SIDEBAR_WIDTH = 240;
+const SIDEBAR_COLLAPSED = 64;
 
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/browse", icon: Film, label: "Browse" },
-  { to: "/lists", icon: List, label: "My Lists" },
+  { to: "/lists", icon: ListIcon, label: "My Lists" },
   { to: "/history", icon: Clock, label: "History" },
   { to: "/settings", icon: Settings, label: "Settings" },
 ];
 
 export function Sidebar() {
-  return (
-    <aside className="fixed left-0 top-0 h-full w-16 lg:w-60 bg-bg-secondary border-r border-border flex flex-col z-20">
-      <div className="h-16 flex items-center px-4 gap-3">
-        <Film className="w-7 h-7 text-accent shrink-0" />
-        <span className="text-lg font-bold text-text-primary hidden lg:block">
-          HomeFlix
-        </span>
-      </div>
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+  const location = useLocation();
 
-      <nav className="flex-1 flex flex-col gap-1 px-2 mt-4">
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-md transition-fast text-sm
-               ${
-                 isActive
-                   ? "bg-accent/15 text-accent"
-                   : "text-text-secondary hover:bg-bg-tertiary hover:text-text-primary"
-               }`
-            }
-          >
-            <Icon className="w-5 h-5 shrink-0" />
-            <span className="hidden lg:block">{label}</span>
-          </NavLink>
-        ))}
-      </nav>
-    </aside>
+  const width = isDesktop ? SIDEBAR_WIDTH : SIDEBAR_COLLAPSED;
+
+  return (
+    <Drawer
+      variant="permanent"
+      sx={{
+        width,
+        flexShrink: 0,
+        "& .MuiDrawer-paper": { width, boxSizing: "border-box" },
+      }}
+    >
+      <Box
+        sx={{
+          height: 64,
+          display: "flex",
+          alignItems: "center",
+          px: 2,
+          gap: 1.5,
+        }}
+      >
+        <Film size={28} color={theme.palette.primary.main} />
+        {isDesktop && (
+          <Typography variant="h3" noWrap>
+            HomeFlix
+          </Typography>
+        )}
+      </Box>
+
+      <List sx={{ px: 1, mt: 2 }}>
+        {navItems.map(({ to, icon: Icon, label }) => {
+          const isActive = location.pathname === to;
+          return (
+            <ListItemButton
+              key={to}
+              component={NavLink}
+              to={to}
+              selected={isActive}
+              sx={{
+                borderRadius: 1,
+                mb: 0.5,
+                color: isActive ? "primary.main" : "text.secondary",
+                "&.Mui-selected": {
+                  bgcolor: "primary.alpha12",
+                  color: "primary.main",
+                  "&:hover": { bgcolor: "primary.alpha12" },
+                },
+                "&:hover": { bgcolor: "action.hover" },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: isDesktop ? 40 : "unset",
+                  color: "inherit",
+                }}
+              >
+                <Icon size={20} />
+              </ListItemIcon>
+              {isDesktop && <ListItemText primary={label} />}
+            </ListItemButton>
+          );
+        })}
+      </List>
+    </Drawer>
   );
 }
+
+export { SIDEBAR_WIDTH, SIDEBAR_COLLAPSED };

@@ -1,18 +1,18 @@
+import { Box } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { TopBar } from "./TopBar";
 
 export function Layout() {
   return (
-    <div className="flex min-h-screen bg-bg-primary">
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <Sidebar />
-
-      <div className="flex-1 ml-16 lg:ml-60">
+      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
         <TopBar />
-        <main className="p-6">
+        <Box component="main" sx={{ p: 3, flexGrow: 1 }}>
           <Outlet />
-        </main>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
