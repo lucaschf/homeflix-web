@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Box,
   Button,
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   FormControl,
   IconButton,
@@ -19,31 +23,62 @@ import { FolderOpen, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useBulkEnrich, useHealth, useScan } from "../api/hooks";
 
-// TODO: Replace with real library management API
-const MOCK_LIBRARIES = [
-  { id: "lib_1", name: "Movies", path: "/media/movies" },
-  { id: "lib_2", name: "Series", path: "/media/series" },
-];
+const LIBRARIES_STORAGE_KEY = "homeflix-libraries";
+
+interface Library {
+  id: string;
+  name: string;
+  path: string;
+}
+
+function loadLibraries(): Library[] {
+  try {
+    return JSON.parse(localStorage.getItem(LIBRARIES_STORAGE_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveLibraries(libs: Library[]) {
+  localStorage.setItem(LIBRARIES_STORAGE_KEY, JSON.stringify(libs));
+}
 
 export function Settings() {
   const { t } = useTranslation();
-  const [libraries] = useState(MOCK_LIBRARIES);
+  const [libraries, setLibraries] = useState<Library[]>(loadLibraries);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const scanMutation = useScan();
   const enrichMutation = useBulkEnrich();
   const { data: health } = useHealth();
 
-  // Playback prefs
   const [audioLang, setAudioLang] = useState("pt-BR");
   const [subtitleLang, setSubtitleLang] = useState("pt-BR");
   const [subtitleMode, setSubtitleMode] = useState("foreignOnly");
   const [defaultQuality, setDefaultQuality] = useState("best");
-
-  // Metadata
   const [tmdbKey, setTmdbKey] = useState("");
   const [autoEnrich, setAutoEnrich] = useState(true);
 
-  const handleScan = (lib: { path: string }) => {
+  const handleAddLibrary = useCallback((name: string, path: string) => {
+    const newLib: Library = { id: `lib_${Date.now()}`, name, path };
+    const updated = [...libraries, newLib];
+    setLibraries(updated);
+    saveLibraries(updated);
+    setAddDialogOpen(false);
+  }, [libraries]);
+
+  const handleDeleteLibrary = useCallback((id: string) => {
+    const updated = libraries.filter((l) => l.id !== id);
+    setLibraries(updated);
+    saveLibraries(updated);
+  }, [libraries]);
+
+  const handleScan = (lib: Library) => {
     scanMutation.mutate([lib.path]);
+  };
+
+  const handleScanAll = () => {
+    const paths = libraries.map((l) => l.path);
+    if (paths.length > 0) scanMutation.mutate(paths);
   };
 
   const apiHealthy = health?.status === "healthy";
@@ -79,7 +114,11 @@ export function Settings() {
                     >
                       {scanMutation.isPending ? t("settings.scanning") : t("settings.scan")}
                     </Button>
-                    <IconButton size="small" sx={{ color: "text.secondary" }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteLibrary(lib.id)}
+                      sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
+                    >
                       <Trash2 size={16} />
                     </IconButton>
                   </Box>
@@ -92,8 +131,20 @@ export function Settings() {
             </Box>
           )}
           <Divider />
-          <Box sx={{ px: 2.5, py: 1.5 }}>
-            <Button startIcon={<Plus size={16} />} size="small">{t("settings.addLibrary")}</Button>
+          <Box sx={{ display: "flex", justifyContent: "space-between", px: 2.5, py: 1.5 }}>
+            <Button startIcon={<Plus size={16} />} size="small" onClick={() => setAddDialogOpen(true)}>
+              {t("settings.addLibrary")}
+            </Button>
+            {libraries.length > 0 && (
+              <Button
+                size="small"
+                startIcon={<RefreshCw size={14} />}
+                onClick={handleScanAll}
+                disabled={scanMutation.isPending}
+              >
+                {scanMutation.isPending ? t("settings.scanning") : `${t("settings.scan")} ${t("browse.all")}`}
+              </Button>
+            )}
           </Box>
         </CardContent>
       </Card>
@@ -179,7 +230,74 @@ export function Settings() {
           />
         </CardContent>
       </Card>
+
+      {/* Add Library Dialog */}
+      <AddLibraryDialog
+        open={addDialogOpen}
+        onClose={() => setAddDialogOpen(false)}
+        onAdd={handleAddLibrary}
+      />
     </Box>
+  );
+}
+
+function AddLibraryDialog({
+  open,
+  onClose,
+  onAdd,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onAdd: (name: string, path: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [name, setName] = useState("");
+  const [path, setPath] = useState("");
+
+  const handleSubmit = () => {
+    if (name.trim() && path.trim()) {
+      onAdd(name.trim(), path.trim());
+      setName("");
+      setPath("");
+    }
+  };
+
+  const handleClose = () => {
+    setName("");
+    setPath("");
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{t("settings.addLibraryTitle")}</DialogTitle>
+      <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "16px !important" }}>
+        <TextField
+          autoFocus
+          fullWidth
+          label={t("settings.libraryName")}
+          placeholder={t("settings.libraryNamePlaceholder")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <TextField
+          fullWidth
+          label={t("settings.libraryPath")}
+          placeholder={t("settings.libraryPathPlaceholder")}
+          value={path}
+          onChange={(e) => setPath(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        />
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={handleClose} color="inherit">
+          {t("settings.cancel")}
+        </Button>
+        <Button onClick={handleSubmit} variant="contained" disabled={!name.trim() || !path.trim()}>
+          {t("settings.add")}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
