@@ -5,11 +5,6 @@ import {
   Chip,
   Collapse,
   IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
   Typography,
 } from "@mui/material";
 import { Heart, Play, Plus } from "lucide-react";
@@ -29,11 +24,6 @@ const MOCK_MOVIE = {
     "https://image.tmdb.org/t/p/original/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg",
   posterUrl:
     "https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg",
-  files: [
-    { resolution: "4K", codec: "HEVC", hdr: "HDR10", size: "15.2 GB", isPrimary: true },
-    { resolution: "1080p", codec: "H264", hdr: null, size: "4.1 GB", isPrimary: false },
-    { resolution: "720p", codec: "H264", hdr: null, size: "2.3 GB", isPrimary: false },
-  ],
   audio: ["English 5.1", "Portuguese 2.0"],
   subtitles: ["Portuguese", "English"],
 };
@@ -159,38 +149,6 @@ export function MovieDetail() {
             {synopsisExpanded ? t("detail.showLess") : t("detail.showMore")}
           </Typography>
         )}
-
-        {/* File Variants */}
-        <Typography variant="h2" sx={{ mt: 4, mb: 1.5 }}>{t("detail.fileVariants")}</Typography>
-        <TableContainer sx={{ bgcolor: "background.paper", borderRadius: 2, border: 1, borderColor: "divider" }}>
-          <Table size="small">
-            <TableBody>
-              {movie.files.map((file) => (
-                <TableRow key={file.resolution} hover>
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body1" fontWeight={600}>{file.resolution}</Typography>
-                      {file.hdr && (
-                        <Chip label={file.hdr} size="small" sx={{ bgcolor: "primary.alpha12", color: "primary.main", height: 20, fontSize: "0.65rem" }} />
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{file.codec}</Typography></TableCell>
-                  <TableCell><Typography variant="body2" color="text.secondary">{file.size}</Typography></TableCell>
-                  <TableCell align="right">
-                    {file.isPrimary ? (
-                      <Chip label={t("detail.primary")} size="small" sx={{ bgcolor: "primary.main", color: "primary.contrastText", height: 24 }} />
-                    ) : (
-                      <Button size="small" startIcon={<Play size={14} />} sx={{ color: "text.secondary" }}>
-                        {t("hero.play")}
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
 
         {/* Details */}
         <Typography variant="h2" sx={{ mt: 4, mb: 1.5 }}>{t("detail.details")}</Typography>
