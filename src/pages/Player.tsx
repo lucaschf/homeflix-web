@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
+  CircularProgress,
   IconButton,
   Menu,
   MenuItem,
@@ -24,18 +25,8 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-
-// TODO: Replace with real data from API
-const MOCK = {
-  title: "Inception",
-  episodeLabel: null as string | null, // "S01E01 - Pilot" for series
-  videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-  qualities: ["4K", "1080p", "720p"],
-  currentQuality: "1080p",
-  subtitles: ["Portuguese", "English"],
-  audioTracks: ["English 5.1", "Portuguese 2.0"],
-};
+import { useNavigate, useParams } from "react-router-dom";
+import { useMovie } from "../api/hooks";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -50,6 +41,24 @@ function formatTime(seconds: number): string {
 export function Player() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const params = useParams<{
+    movieId?: string;
+    seriesId?: string;
+    season?: string;
+    episode?: string;
+  }>();
+
+  // Determine stream URL and fetch title
+  const isMovie = !!params.movieId;
+  const streamUrl = isMovie
+    ? `/api/v1/stream/movie/${params.movieId}`
+    : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}`;
+
+  const { data: movieData, isLoading } = useMovie(params.movieId ?? "");
+  const title = isMovie
+    ? movieData?.title ?? ""
+    : `S${params.season?.padStart(2, "0")}E${params.episode?.padStart(2, "0")}`;
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -62,11 +71,21 @@ export function Player() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [speed, setSpeed] = useState(1);
-  const [quality, setQuality] = useState(MOCK.currentQuality);
+
+  // Quality from movie files
+  const qualities = movieData?.files?.map((f) => f.resolution) ?? [];
+  const [quality, setQuality] = useState("");
+
+  useEffect(() => {
+    if (qualities.length > 0 && !quality) {
+      const primary = movieData?.files?.find((f) => f.is_primary);
+      setQuality(primary?.resolution ?? qualities[0]);
+    }
+  }, [qualities, quality, movieData]);
 
   // Settings menu
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-  const [settingsPanel, setSettingsPanel] = useState<"main" | "quality" | "speed" | "subtitles" | "audio">("main");
+  const [settingsPanel, setSettingsPanel] = useState<"main" | "quality" | "speed">("main");
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
@@ -76,7 +95,6 @@ export function Player() {
     }
   }, [playing]);
 
-  // Video event handlers
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -99,7 +117,6 @@ export function Player() {
     };
   }, []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
@@ -202,7 +219,13 @@ export function Player() {
     setSettingsPanel("main");
   };
 
-  const displayTitle = MOCK.episodeLabel || MOCK.title;
+  if (isMovie && isLoading) {
+    return (
+      <Box sx={{ position: "fixed", inset: 0, bgcolor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -221,8 +244,9 @@ export function Player() {
     >
       <video
         ref={videoRef}
-        src={MOCK.videoUrl}
+        src={streamUrl}
         style={{ width: "100%", height: "100%", objectFit: "contain" }}
+        autoPlay
       />
 
       {/* Controls Overlay */}
@@ -244,7 +268,7 @@ export function Player() {
             <ArrowLeft size={24} />
           </IconButton>
           <Typography variant="body1" fontWeight={600} color="#fff">
-            {displayTitle}
+            {title}
           </Typography>
         </Box>
 
@@ -285,7 +309,6 @@ export function Player() {
 
           {/* Controls Row */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            {/* Left */}
             <IconButton onClick={() => skip(-10)} sx={{ color: "#fff" }} size="small">
               <SkipBack size={20} />
             </IconButton>
@@ -296,7 +319,6 @@ export function Player() {
               <SkipForward size={20} />
             </IconButton>
 
-            {/* Volume */}
             <IconButton onClick={() => { const m = !muted; setMuted(m); if (videoRef.current) videoRef.current.muted = m; }} sx={{ color: "#fff" }} size="small">
               {muted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
             </IconButton>
@@ -314,14 +336,12 @@ export function Player() {
               }}
             />
 
-            {/* Time */}
             <Typography variant="body2" color="#fff" sx={{ mx: 1, whiteSpace: "nowrap", fontSize: "0.75rem" }}>
               {formatTime(currentTime)} / {formatTime(duration)}
             </Typography>
 
             <Box sx={{ flexGrow: 1 }} />
 
-            {/* Right */}
             <IconButton onClick={openSettings} sx={{ color: "#fff" }} size="small">
               <Settings size={20} />
             </IconButton>
@@ -335,7 +355,7 @@ export function Player() {
         </Box>
       </Box>
 
-      {/* Settings Menu (YouTube-style) */}
+      {/* Settings Menu */}
       <Menu
         anchorEl={settingsAnchor}
         open={Boolean(settingsAnchor)}
@@ -345,17 +365,17 @@ export function Player() {
         slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 220, borderRadius: 2 } } }}
       >
         {settingsPanel === "main" && [
-          <MenuItem key="quality" onClick={() => setSettingsPanel("quality")}>
-            <ListItemText primary={t("player.quality")} />
-            <Typography variant="body2" color="text.secondary">{quality}</Typography>
-          </MenuItem>,
+          ...(qualities.length > 0
+            ? [
+                <MenuItem key="quality" onClick={() => setSettingsPanel("quality")}>
+                  <ListItemText primary={t("player.quality")} />
+                  <Typography variant="body2" color="text.secondary">{quality}</Typography>
+                </MenuItem>,
+              ]
+            : []),
           <MenuItem key="speed" onClick={() => setSettingsPanel("speed")}>
             <ListItemText primary={t("player.speed")} />
             <Typography variant="body2" color="text.secondary">{speed === 1 ? t("player.normal") : `${speed}x`}</Typography>
-          </MenuItem>,
-          <MenuItem key="audio" onClick={() => setSettingsPanel("audio")}>
-            <ListItemText primary={t("player.audio")} />
-            <Typography variant="body2" color="text.secondary">{MOCK.audioTracks[0]}</Typography>
           </MenuItem>,
         ]}
 
@@ -364,7 +384,7 @@ export function Player() {
             <ListItemIcon><ArrowLeft size={16} color="#fff" /></ListItemIcon>
             <ListItemText primary={t("player.quality")} />
           </MenuItem>,
-          ...MOCK.qualities.map((q) => (
+          ...qualities.map((q) => (
             <MenuItem key={q} onClick={() => { setQuality(q); setSettingsPanel("main"); }}>
               {quality === q && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
               <ListItemText inset={quality !== q} primary={q} />
@@ -381,19 +401,6 @@ export function Player() {
             <MenuItem key={s} onClick={() => changeSpeed(s)}>
               {speed === s && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
               <ListItemText inset={speed !== s} primary={s === 1 ? t("player.normal") : `${s}x`} />
-            </MenuItem>
-          )),
-        ]}
-
-        {settingsPanel === "audio" && [
-          <MenuItem key="back" onClick={() => setSettingsPanel("main")}>
-            <ListItemIcon><ArrowLeft size={16} color="#fff" /></ListItemIcon>
-            <ListItemText primary={t("player.audio")} />
-          </MenuItem>,
-          ...MOCK.audioTracks.map((track, idx) => (
-            <MenuItem key={track} onClick={() => setSettingsPanel("main")}>
-              {idx === 0 && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
-              <ListItemText inset={idx !== 0} primary={track} />
             </MenuItem>
           )),
         ]}

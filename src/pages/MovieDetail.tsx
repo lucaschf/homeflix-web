@@ -76,7 +76,7 @@ export function MovieDetail() {
             </Box>
 
             <Box sx={{ display: "flex", gap: 1.5 }}>
-              <Button variant="contained" startIcon={<Play size={18} />} size="large" onClick={() => navigate(`/play/${movie.id}`)}>
+              <Button variant="contained" startIcon={<Play size={18} />} size="large" onClick={() => navigate(`/play/movie/${movie.id}`)}>
                 {t("detail.watchNow")}
               </Button>
               <Button

@@ -161,7 +161,7 @@ export function SeriesDetail() {
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {currentSeason?.episodes.map((ep) => (
-                <EpisodeRow key={ep.episode_number} episode={ep} onPlay={() => navigate(`/play/${ep.id}`)} />
+                <EpisodeRow key={ep.episode_number} episode={ep} onPlay={() => navigate(`/play/episode/${series.id}/${currentSeason.season_number}/${ep.episode_number}`)} />
               ))}
               {(!currentSeason || currentSeason.episodes.length === 0) && (
                 <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
