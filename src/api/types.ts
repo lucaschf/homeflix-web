@@ -101,15 +101,22 @@ export interface SeriesDetail {
   updated_at: string;
 }
 
-export interface ListMoviesResponse {
-  movies: MovieSummary[];
-  total_count: number;
+// API wraps responses in { type, data, metadata }
+export interface ApiListResponse<T> {
+  type: string;
+  data: T[];
+  metadata: { total_count: number };
 }
 
-export interface ListSeriesResponse {
-  series: SeriesSummary[];
-  total_count: number;
+export interface ApiDetailResponse<T> {
+  type: string;
+  data: T;
 }
+
+export type ListMoviesResponse = ApiListResponse<MovieSummary>;
+export type ListSeriesResponse = ApiListResponse<SeriesSummary>;
+export type MovieDetailResponse = ApiDetailResponse<MovieDetail>;
+export type SeriesDetailResponse = ApiDetailResponse<SeriesDetail>;
 
 export interface ScanResponse {
   movies_created: number;

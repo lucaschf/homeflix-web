@@ -7,8 +7,12 @@ import type {
   ListMoviesResponse,
   ListSeriesResponse,
   MovieDetail,
+  MovieDetailResponse,
+  MovieSummary,
   ScanResponse,
   SeriesDetail,
+  SeriesDetailResponse,
+  SeriesSummary,
 } from "./types";
 
 // ── Queries ──────────────────────────────────────────────
@@ -16,14 +20,20 @@ import type {
 export function useMovies() {
   return useQuery({
     queryKey: ["movies"],
-    queryFn: () => api.get<ListMoviesResponse>("/movies"),
+    queryFn: async (): Promise<{ movies: MovieSummary[]; total_count: number }> => {
+      const resp = await api.get<ListMoviesResponse>("/movies");
+      return { movies: resp.data, total_count: resp.metadata.total_count };
+    },
   });
 }
 
 export function useMovie(movieId: string) {
   return useQuery({
     queryKey: ["movie", movieId],
-    queryFn: () => api.get<MovieDetail>(`/movies/${movieId}`),
+    queryFn: async (): Promise<MovieDetail> => {
+      const resp = await api.get<MovieDetailResponse>(`/movies/${movieId}`);
+      return resp.data;
+    },
     enabled: !!movieId,
   });
 }
@@ -31,14 +41,20 @@ export function useMovie(movieId: string) {
 export function useSeries() {
   return useQuery({
     queryKey: ["series"],
-    queryFn: () => api.get<ListSeriesResponse>("/series"),
+    queryFn: async (): Promise<{ series: SeriesSummary[]; total_count: number }> => {
+      const resp = await api.get<ListSeriesResponse>("/series");
+      return { series: resp.data, total_count: resp.metadata.total_count };
+    },
   });
 }
 
 export function useSeriesDetail(seriesId: string) {
   return useQuery({
     queryKey: ["series", seriesId],
-    queryFn: () => api.get<SeriesDetail>(`/series/${seriesId}`),
+    queryFn: async (): Promise<SeriesDetail> => {
+      const resp = await api.get<SeriesDetailResponse>(`/series/${seriesId}`);
+      return resp.data;
+    },
     enabled: !!seriesId,
   });
 }
@@ -49,7 +65,7 @@ export function useHealth() {
     queryFn: async () => {
       try {
         const res = await fetch("/health");
-        return res.ok ? (await res.json()) as HealthResponse : null;
+        return res.ok ? ((await res.json()) as HealthResponse) : null;
       } catch {
         return null;
       }
