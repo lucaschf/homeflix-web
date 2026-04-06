@@ -1,3 +1,4 @@
+import Hls from "hls.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
@@ -48,11 +49,11 @@ export function Player() {
     episode?: string;
   }>();
 
-  // Determine stream URL and fetch title
+  // Determine HLS playlist URL
   const isMovie = !!params.movieId;
-  const streamUrl = isMovie
-    ? `/api/v1/stream/movie/${params.movieId}`
-    : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}`;
+  const hlsUrl = isMovie
+    ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8`
+    : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8`;
 
   const { data: movieData, isLoading } = useMovie(params.movieId ?? "");
   const title = isMovie
@@ -116,6 +117,40 @@ export function Player() {
       video.removeEventListener("pause", onPause);
     };
   }, []);
+
+  // Initialize HLS
+  const hlsRef = useRef<Hls | null>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !hlsUrl) return;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        maxBufferLength: 30,
+        maxMaxBufferLength: 60,
+      });
+      hls.loadSource(hlsUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+      hlsRef.current = hls;
+
+      return () => {
+        hls.destroy();
+        hlsRef.current = null;
+      };
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Safari native HLS
+      video.src = hlsUrl;
+      video.addEventListener("loadedmetadata", () => {
+        video.play().catch(() => {});
+      });
+    }
+
+    return undefined;
+  }, [hlsUrl]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -244,9 +279,7 @@ export function Player() {
     >
       <video
         ref={videoRef}
-        src={streamUrl}
         style={{ width: "100%", height: "100%", objectFit: "contain" }}
-        autoPlay
       />
 
       {/* Controls Overlay */}
