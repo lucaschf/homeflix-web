@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   BulkEnrichResponse,
@@ -18,20 +19,24 @@ import type {
 // ── Queries ──────────────────────────────────────────────
 
 export function useMovies() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
   return useQuery({
-    queryKey: ["movies"],
+    queryKey: ["movies", lang],
     queryFn: async (): Promise<{ movies: MovieSummary[]; total_count: number }> => {
-      const resp = await api.get<ListMoviesResponse>("/movies");
+      const resp = await api.get<ListMoviesResponse>("/movies", { lang });
       return { movies: resp.data, total_count: resp.metadata.total_count };
     },
   });
 }
 
 export function useMovie(movieId: string) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
   return useQuery({
-    queryKey: ["movie", movieId],
+    queryKey: ["movie", movieId, lang],
     queryFn: async (): Promise<MovieDetail> => {
-      const resp = await api.get<MovieDetailResponse>(`/movies/${movieId}`);
+      const resp = await api.get<MovieDetailResponse>(`/movies/${movieId}`, { lang });
       return resp.data;
     },
     enabled: !!movieId,

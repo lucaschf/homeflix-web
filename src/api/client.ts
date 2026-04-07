@@ -13,8 +13,14 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
+function withParams(path: string, params?: Record<string, string>): string {
+  if (!params) return path;
+  const search = new URLSearchParams(params).toString();
+  return search ? `${path}?${search}` : path;
+}
+
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, params?: Record<string, string>) => request<T>(withParams(path, params)),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
 };
