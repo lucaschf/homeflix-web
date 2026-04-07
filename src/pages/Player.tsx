@@ -72,6 +72,12 @@ export function Player() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [speed, setSpeed] = useState(1);
+  const [hlsReady, setHlsReady] = useState(false);
+  const [buffering, setBuffering] = useState(false);
+
+  // Use movie metadata duration as authoritative source
+  const knownDuration = movieData?.duration_seconds ?? 0;
+  const displayDuration = knownDuration > 0 ? knownDuration : duration;
 
   // Quality from movie files
   const qualities = movieData?.files?.map((f) => f.resolution) ?? [];
@@ -101,22 +107,30 @@ export function Player() {
     if (!video) return;
 
     const onTimeUpdate = () => setCurrentTime(video.currentTime);
-    const onLoadedMetadata = () => setDuration(video.duration);
+    const onLoadedMetadata = () => {
+      if (!knownDuration) setDuration(video.duration);
+    };
     const onPlay = () => setPlaying(true);
     const onPause = () => { setPlaying(false); setShowControls(true); };
+    const onPlaying = () => { setHlsReady(true); setBuffering(false); };
+    const onWaiting = () => setBuffering(true);
 
     video.addEventListener("timeupdate", onTimeUpdate);
     video.addEventListener("loadedmetadata", onLoadedMetadata);
     video.addEventListener("play", onPlay);
     video.addEventListener("pause", onPause);
+    video.addEventListener("playing", onPlaying);
+    video.addEventListener("waiting", onWaiting);
 
     return () => {
       video.removeEventListener("timeupdate", onTimeUpdate);
       video.removeEventListener("loadedmetadata", onLoadedMetadata);
       video.removeEventListener("play", onPlay);
       video.removeEventListener("pause", onPause);
+      video.removeEventListener("playing", onPlaying);
+      video.removeEventListener("waiting", onWaiting);
     };
-  }, []);
+  }, [knownDuration]);
 
   // Initialize HLS
   const hlsRef = useRef<Hls | null>(null);
@@ -125,15 +139,37 @@ export function Player() {
     const video = videoRef.current;
     if (!video || !hlsUrl) return;
 
+    setHlsReady(false);
+
     if (Hls.isSupported()) {
       const hls = new Hls({
         maxBufferLength: 30,
         maxMaxBufferLength: 60,
+        startPosition: 0,
+        liveSyncDuration: 0,
+        liveMaxLatencyDuration: undefined,
       });
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         video.play().catch(() => {});
+      });
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        console.error("[HLS Error]", data.type, data.details, data.fatal, data);
+        if (data.fatal) {
+          setHlsReady(false);
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              setTimeout(() => hls.startLoad(), 3000);
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hls.recoverMediaError();
+              break;
+            default:
+              hls.destroy();
+              break;
+          }
+        }
       });
       hlsRef.current = hls;
 
@@ -168,7 +204,7 @@ export function Player() {
           resetHideTimer();
           break;
         case "arrowright":
-          video.currentTime = Math.min(duration, video.currentTime + 30);
+          video.currentTime = Math.min(displayDuration, video.currentTime + 30);
           resetHideTimer();
           break;
         case "arrowup":
@@ -197,7 +233,7 @@ export function Player() {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [duration, isFullscreen, navigate, resetHideTimer]);
+  }, [displayDuration, isFullscreen, navigate, resetHideTimer]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -215,7 +251,7 @@ export function Player() {
   const skip = (seconds: number) => {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = Math.max(0, Math.min(duration, video.currentTime + seconds));
+    video.currentTime = Math.max(0, Math.min(displayDuration, video.currentTime + seconds));
     resetHideTimer();
   };
 
@@ -254,6 +290,7 @@ export function Player() {
     setSettingsPanel("main");
   };
 
+  // Show loading while fetching movie data
   if (isMovie && isLoading) {
     return (
       <Box sx={{ position: "fixed", inset: 0, bgcolor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -282,6 +319,31 @@ export function Player() {
         style={{ width: "100%", height: "100%", objectFit: "contain" }}
       />
 
+      {/* Loading overlay while HLS is preparing or buffering */}
+      {(!hlsReady || buffering) && (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+            bgcolor: hlsReady ? "transparent" : "rgba(0,0,0,0.7)",
+            zIndex: 1,
+            pointerEvents: "none",
+          }}
+        >
+          <CircularProgress color="primary" size={48} />
+          {!hlsReady && (
+            <Typography variant="body1" color="#fff">
+              {t("player.preparing")}
+            </Typography>
+          )}
+        </Box>
+      )}
+
       {/* Controls Overlay */}
       <Box
         sx={{
@@ -305,8 +367,8 @@ export function Player() {
           </Typography>
         </Box>
 
-        {/* Center Play Button (when paused) */}
-        {!playing && (
+        {/* Center Play Button (when paused and ready) */}
+        {!playing && hlsReady && (
           <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}>
             <IconButton
               onClick={togglePlay}
@@ -328,7 +390,7 @@ export function Player() {
           {/* Seek Bar */}
           <Slider
             value={currentTime}
-            max={duration || 1}
+            max={displayDuration || 1}
             onChange={(_, v) => seek(v as number)}
             sx={{
               color: "primary.main",
@@ -370,7 +432,7 @@ export function Player() {
             />
 
             <Typography variant="body2" color="#fff" sx={{ mx: 1, whiteSpace: "nowrap", fontSize: "0.75rem" }}>
-              {formatTime(currentTime)} / {formatTime(duration)}
+              {formatTime(currentTime)} / {formatTime(displayDuration)}
             </Typography>
 
             <Box sx={{ flexGrow: 1 }} />

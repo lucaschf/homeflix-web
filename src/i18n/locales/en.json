@@ -63,7 +63,8 @@
     "nextEpisodeIn": "Next episode in {{seconds}}s",
     "playNow": "Play Now",
     "cancel": "Cancel",
-    "back": "Back"
+    "back": "Back",
+    "preparing": "Preparing video…"
   },
   "browse": {
     "all": "All",
