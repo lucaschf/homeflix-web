@@ -84,6 +84,8 @@ export function Player() {
   const { data: movieData, isLoading } = useMovie(params.movieId ?? "");
   const { data: savedProgress } = useProgress(mediaId);
   const saveProgress = useSaveProgress();
+  const saveProgressRef = useRef(saveProgress.mutate);
+  saveProgressRef.current = saveProgress.mutate;
   const title = isMovie
     ? movieData?.title ?? ""
     : `S${params.season?.padStart(2, "0")}E${params.episode?.padStart(2, "0")}`;
@@ -291,7 +293,7 @@ export function Player() {
       if (!video || video.paused || !mediaId) return;
       const dur = displayDuration || video.duration;
       if (!dur) return;
-      saveProgress.mutate({
+      saveProgressRef.current({
         media_id: mediaId,
         media_type: mediaType,
         position_seconds: Math.floor(video.currentTime),
@@ -301,7 +303,7 @@ export function Player() {
       });
     }, 10_000);
     return () => clearInterval(interval);
-  }, [playing, mediaId, mediaType, displayDuration, saveProgress]);
+  }, [playing, mediaId, mediaType, displayDuration]);
 
   // Save progress on pause or unmount
   const saveCurrentProgress = useCallback(() => {
@@ -309,7 +311,7 @@ export function Player() {
     if (!video || !mediaId) return;
     const dur = displayDuration || video.duration;
     if (!dur || video.currentTime === 0) return;
-    saveProgress.mutate({
+    saveProgressRef.current({
       media_id: mediaId,
       media_type: mediaType,
       position_seconds: Math.floor(video.currentTime),
@@ -317,7 +319,7 @@ export function Player() {
       audio_track: hlsRef.current?.audioTrack,
       subtitle_track: hlsRef.current?.subtitleTrack,
     });
-  }, [mediaId, mediaType, displayDuration, saveProgress]);
+  }, [mediaId, mediaType, displayDuration]);
 
   useEffect(() => {
     const video = videoRef.current;
