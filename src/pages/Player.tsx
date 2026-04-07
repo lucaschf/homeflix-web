@@ -13,6 +13,7 @@ import {
 } from "@mui/material";
 import {
   ArrowLeft,
+  AudioLines,
   Check,
   Maximize,
   Minimize,
@@ -30,6 +31,26 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useMovie } from "../api/hooks";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+/** Clean up track names: remove URLs, site names, normalize encoding. */
+function cleanTrackName(name: string): string {
+  return name
+    .replace(/\s*[/|\\-]\s*(?:www\.|https?:\/\/)[^\s"',]*/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+interface HlsAudioTrack {
+  id: number;
+  name: string;
+  lang: string;
+}
+
+interface HlsSubtitleTrack {
+  id: number;
+  name: string;
+  lang: string;
+}
 
 function formatTime(seconds: number): string {
   const h = Math.floor(seconds / 3600);
@@ -75,6 +96,12 @@ export function Player() {
   const [hlsReady, setHlsReady] = useState(false);
   const [buffering, setBuffering] = useState(false);
 
+  // Audio / subtitle track state
+  const [audioTracks, setAudioTracks] = useState<HlsAudioTrack[]>([]);
+  const [currentAudioTrack, setCurrentAudioTrack] = useState(0);
+  const [subtitleTracks, setSubtitleTracks] = useState<HlsSubtitleTrack[]>([]);
+  const [currentSubtitleTrack, setCurrentSubtitleTrack] = useState(-1);
+
   // Use movie metadata duration as authoritative source
   const knownDuration = movieData?.duration_seconds ?? 0;
   const displayDuration = knownDuration > 0 ? knownDuration : duration;
@@ -92,7 +119,14 @@ export function Player() {
 
   // Settings menu
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-  const [settingsPanel, setSettingsPanel] = useState<"main" | "quality" | "speed">("main");
+  type SettingsPanel = "main" | "quality" | "speed";
+  const [settingsPanel, setSettingsPanel] = useState<SettingsPanel>("main");
+
+  // Audio menu (separate from settings)
+  const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
+
+  // Subtitle menu (separate from settings)
+  const [subtitleAnchor, setSubtitleAnchor] = useState<null | HTMLElement>(null);
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
@@ -154,6 +188,38 @@ export function Player() {
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         video.play().catch(() => {});
       });
+
+      // Track audio tracks from HLS manifest
+      hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
+        const tracks = hls.audioTracks.map((t) => ({
+          id: t.id,
+          name: cleanTrackName(t.name || t.lang || `Track ${t.id}`),
+          lang: t.lang || "",
+        }));
+        setAudioTracks(tracks);
+        setCurrentAudioTrack(hls.audioTrack);
+      });
+
+
+      hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, (_, data) => {
+        setCurrentAudioTrack(data.id);
+      });
+
+      // Track subtitle tracks from HLS manifest
+      hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, () => {
+        const tracks = hls.subtitleTracks.map((t) => ({
+          id: t.id,
+          name: t.name || t.lang || `Subtitle ${t.id}`,
+          lang: t.lang || "",
+        }));
+        setSubtitleTracks(tracks);
+        setCurrentSubtitleTrack(hls.subtitleTrack);
+      });
+
+      hls.on(Hls.Events.SUBTITLE_TRACK_SWITCH, (_, data) => {
+        setCurrentSubtitleTrack(data.id);
+      });
+
       let retryTimeout: ReturnType<typeof setTimeout> | null = null;
       hls.on(Hls.Events.ERROR, (_, data) => {
         console.error("[HLS Error]", data.type, data.details, data.fatal, data);
@@ -275,6 +341,20 @@ export function Player() {
     setSettingsPanel("main");
   };
 
+  const changeAudioTrack = (trackId: number) => {
+    const hls = hlsRef.current;
+    if (!hls) return;
+    hls.audioTrack = trackId;
+    setAudioAnchor(null);
+  };
+
+  const changeSubtitleTrack = (trackId: number) => {
+    const hls = hlsRef.current;
+    if (!hls) return;
+    hls.subtitleTrack = trackId;
+    setSubtitleAnchor(null);
+  };
+
   const toggleFullscreen = () => {
     const el = containerRef.current;
     if (!el) return;
@@ -292,6 +372,14 @@ export function Player() {
     setSettingsPanel("main");
   };
 
+  const openAudio = (e: React.MouseEvent<HTMLElement>) => {
+    setAudioAnchor(e.currentTarget);
+  };
+
+  const openSubtitles = (e: React.MouseEvent<HTMLElement>) => {
+    setSubtitleAnchor(e.currentTarget);
+  };
+
   // Show loading while fetching movie data
   if (isMovie && isLoading) {
     return (
@@ -300,6 +388,9 @@ export function Player() {
       </Box>
     );
   }
+
+  const currentAudioName = audioTracks.find((t) => t.id === currentAudioTrack)?.name ?? "";
+  const subtitlesActive = currentSubtitleTrack >= 0;
 
   return (
     <Box
@@ -442,9 +533,20 @@ export function Player() {
             <IconButton onClick={openSettings} sx={{ color: "#fff" }} size="small">
               <Settings size={20} />
             </IconButton>
-            <IconButton sx={{ color: "#fff" }} size="small">
-              <Subtitles size={20} />
-            </IconButton>
+            {audioTracks.length > 1 && (
+              <IconButton onClick={openAudio} sx={{ color: "#fff" }} size="small">
+                <AudioLines size={20} />
+              </IconButton>
+            )}
+            {subtitleTracks.length > 0 && (
+              <IconButton
+                onClick={openSubtitles}
+                sx={{ color: subtitlesActive ? "primary.main" : "#fff" }}
+                size="small"
+              >
+                <Subtitles size={20} />
+              </IconButton>
+            )}
             <IconButton onClick={toggleFullscreen} sx={{ color: "#fff" }} size="small">
               {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </IconButton>
@@ -459,6 +561,7 @@ export function Player() {
         onClose={() => { setSettingsAnchor(null); setSettingsPanel("main"); }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+        container={containerRef.current}
         slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 220, borderRadius: 2 } } }}
       >
         {settingsPanel === "main" && [
@@ -501,6 +604,46 @@ export function Player() {
             </MenuItem>
           )),
         ]}
+      </Menu>
+
+      {/* Audio Menu */}
+      <Menu
+        anchorEl={audioAnchor}
+        open={Boolean(audioAnchor)}
+        onClose={() => setAudioAnchor(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+        container={containerRef.current}
+        slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
+      >
+        {audioTracks.map((track) => (
+          <MenuItem key={track.id} onClick={() => changeAudioTrack(track.id)}>
+            {currentAudioTrack === track.id && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
+            <ListItemText inset={currentAudioTrack !== track.id} primary={track.name} />
+          </MenuItem>
+        ))}
+      </Menu>
+
+      {/* Subtitle Menu */}
+      <Menu
+        anchorEl={subtitleAnchor}
+        open={Boolean(subtitleAnchor)}
+        onClose={() => setSubtitleAnchor(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+        container={containerRef.current}
+        slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
+      >
+        <MenuItem onClick={() => changeSubtitleTrack(-1)}>
+          {currentSubtitleTrack === -1 && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
+          <ListItemText inset={currentSubtitleTrack !== -1} primary={t("player.off")} />
+        </MenuItem>
+        {subtitleTracks.map((track) => (
+          <MenuItem key={track.id} onClick={() => changeSubtitleTrack(track.id)}>
+            {currentSubtitleTrack === track.id && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
+            <ListItemText inset={currentSubtitleTrack !== track.id} primary={track.name} />
+          </MenuItem>
+        ))}
       </Menu>
     </Box>
   );
