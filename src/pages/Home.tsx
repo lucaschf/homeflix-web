@@ -1,11 +1,40 @@
+import { useMemo } from "react";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useMovies, useSeries } from "../api/hooks";
+import type { MovieSummary, SeriesSummary } from "../api/types";
 import { HeroBanner } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+
+interface GenreSection {
+  genre: string;
+  items: Array<{ id: string; title: string; year: number; type: "movie" | "series"; posterUrl?: string }>;
+}
+
+function buildGenreSections(movies: MovieSummary[], series: SeriesSummary[]): GenreSection[] {
+  const genreMap = new Map<string, GenreSection["items"]>();
+
+  for (const m of movies) {
+    for (const g of m.genres) {
+      if (!genreMap.has(g)) genreMap.set(g, []);
+      genreMap.get(g)!.push({ id: m.id, title: m.title, year: m.year, type: "movie", posterUrl: m.poster_path ?? undefined });
+    }
+  }
+
+  for (const s of series) {
+    for (const g of s.genres) {
+      if (!genreMap.has(g)) genreMap.set(g, []);
+      genreMap.get(g)!.push({ id: s.id, title: s.title, year: s.start_year, type: "series", posterUrl: s.poster_path ?? undefined });
+    }
+  }
+
+  return [...genreMap.entries()]
+    .map(([genre, items]) => ({ genre, items }))
+    .sort((a, b) => b.items.length - a.items.length);
+}
 
 export function Home() {
   const { t } = useTranslation();
@@ -17,6 +46,8 @@ export function Home() {
   const series = seriesData?.series ?? [];
   const isLoading = moviesLoading || seriesLoading;
   const hasContent = movies.length > 0 || series.length > 0;
+
+  const genreSections = useMemo(() => buildGenreSections(movies, series), [movies, series]);
 
   if (isLoading) {
     return (
@@ -30,7 +61,6 @@ export function Home() {
     return <EmptyState />;
   }
 
-  // Pick a random movie for hero banner
   const heroMovie = movies[0];
 
   return (
@@ -48,7 +78,7 @@ export function Home() {
 
       <Box sx={{ mt: -4, position: "relative", zIndex: 1 }}>
         {movies.length > 0 && (
-          <MediaCarousel title={t("home.movies")} onSeeAll={() => navigate("/browse")}>
+          <MediaCarousel title={t("home.movies")} onSeeAll={() => navigate("/browse?type=movie")}>
             {movies.map((movie) => (
               <MediaCard
                 key={movie.id}
@@ -63,7 +93,7 @@ export function Home() {
         )}
 
         {series.length > 0 && (
-          <MediaCarousel title={t("home.series")} onSeeAll={() => navigate("/browse")}>
+          <MediaCarousel title={t("home.series")} onSeeAll={() => navigate("/browse?type=series")}>
             {series.map((s) => (
               <MediaCard
                 key={s.id}
@@ -76,6 +106,21 @@ export function Home() {
             ))}
           </MediaCarousel>
         )}
+
+        {genreSections.map((section) => (
+          <MediaCarousel key={section.genre} title={section.genre} onSeeAll={() => navigate(`/browse?genre=${encodeURIComponent(section.genre)}`)}>
+            {section.items.map((item) => (
+              <MediaCard
+                key={item.id}
+                title={item.title}
+                year={item.year}
+                posterUrl={item.posterUrl}
+                variant="poster"
+                onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
+              />
+            ))}
+          </MediaCarousel>
+        ))}
       </Box>
     </Box>
   );

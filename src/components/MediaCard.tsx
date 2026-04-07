@@ -33,7 +33,7 @@ export function MediaCard({
       sx={{
         cursor: "pointer",
         flexShrink: 0,
-        width: fullWidth ? "100%" : { xs: 280, sm: 320, md: 360 },
+        width: fullWidth ? "100%" : { xs: 240, sm: 280, md: 320, lg: 360 },
         "&:hover .media-image": {
           transform: "scale(1.05)",
         },
@@ -47,10 +47,10 @@ export function MediaCard({
         sx={{
           position: "relative",
           aspectRatio,
-          borderRadius: 1.5,
+          borderRadius: 1,
           overflow: "hidden",
           bgcolor: "background.paper",
-          mb: 1,
+          mb: 0.5,
         }}
       >
         {posterUrl ? (
@@ -99,8 +99,8 @@ export function MediaCard({
         >
           <Box
             sx={{
-              width: 52,
-              height: 52,
+              width: 40,
+              height: 40,
               borderRadius: "50%",
               bgcolor: "primary.main",
               display: "flex",
@@ -108,7 +108,7 @@ export function MediaCard({
               justifyContent: "center",
             }}
           >
-            <Play size={26} color="#0D0D0D" fill="#0D0D0D" />
+            <Play size={20} color="#0D0D0D" fill="#0D0D0D" />
           </Box>
         </Box>
 
@@ -132,16 +132,16 @@ export function MediaCard({
 
       {/* Title */}
       <Typography
-        variant="body1"
+        variant="body2"
         noWrap
-        sx={{ fontWeight: 500, color: "text.primary" }}
+        sx={{ fontWeight: 500, color: "text.primary", fontSize: "0.8rem", lineHeight: 1.3 }}
       >
         {title}
       </Typography>
 
       {/* Subtitle / Year */}
       {(subtitle || year) && (
-        <Typography variant="body2" color="text.secondary" noWrap>
+        <Typography variant="caption" color="text.secondary" noWrap sx={{ fontSize: "0.7rem" }}>
           {subtitle || year}
         </Typography>
       )}
