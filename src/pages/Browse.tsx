@@ -1,22 +1,14 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Box,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Tab,
-  Tabs,
   Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMovies, useSeries } from "../api/hooks";
 import { MediaCard } from "../components/MediaCard";
-
-type TypeFilter = "all" | "movie" | "series";
-type SortOption = "recent" | "title_asc" | "title_desc" | "year_new" | "year_old";
+import { MediaCarousel } from "../components/MediaCarousel";
 
 interface BrowseItem {
   id: string;
@@ -27,6 +19,11 @@ interface BrowseItem {
   posterUrl?: string;
 }
 
+interface GenreSection {
+  genre: string;
+  items: BrowseItem[];
+}
+
 export function Browse() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -34,9 +31,8 @@ export function Browse() {
   const { data: moviesData, isLoading: moviesLoading } = useMovies();
   const { data: seriesData, isLoading: seriesLoading } = useSeries();
 
-  const typeFilter = (searchParams.get("type") as TypeFilter) || "all";
-  const [genre, setGenre] = useState("all");
-  const [sort, setSort] = useState<SortOption>("recent");
+  const typeFilter = searchParams.get("type") as "movie" | "series" | null;
+  const genreFilter = searchParams.get("genre");
 
   const allItems: BrowseItem[] = useMemo(() => {
     const movies = (moviesData?.movies ?? []).map((m) => ({
@@ -58,30 +54,23 @@ export function Browse() {
     return [...movies, ...series];
   }, [moviesData, seriesData]);
 
-  const allGenres = useMemo(
-    () => [...new Set(allItems.flatMap((i) => i.genres))].sort(),
-    [allItems],
-  );
-
   const filtered = useMemo(() => {
-    let result = allItems.filter((item) => {
-      if (typeFilter !== "all" && item.type !== typeFilter) return false;
-      if (genre !== "all" && !item.genres.includes(genre)) return false;
-      return true;
-    });
+    if (!typeFilter) return allItems;
+    return allItems.filter((item) => item.type === typeFilter);
+  }, [allItems, typeFilter]);
 
-    result = [...result].sort((a, b) => {
-      switch (sort) {
-        case "title_asc": return a.title.localeCompare(b.title);
-        case "title_desc": return b.title.localeCompare(a.title);
-        case "year_new": return b.year - a.year;
-        case "year_old": return a.year - b.year;
-        default: return 0;
+  const genreSections: GenreSection[] = useMemo(() => {
+    const genreMap = new Map<string, BrowseItem[]>();
+    for (const item of filtered) {
+      for (const g of item.genres) {
+        if (!genreMap.has(g)) genreMap.set(g, []);
+        genreMap.get(g)!.push(item);
       }
-    });
-
-    return result;
-  }, [allItems, typeFilter, genre, sort]);
+    }
+    return [...genreMap.entries()]
+      .map(([genre, items]) => ({ genre, items }))
+      .sort((a, b) => b.items.length - a.items.length);
+  }, [filtered]);
 
   const isLoading = moviesLoading || seriesLoading;
 
@@ -94,82 +83,73 @@ export function Browse() {
   }
 
   return (
-    <Box sx={{ px: { xs: 3, md: 6 }, py: 4 }}>
-      <Typography variant="h1" sx={{ mb: 3 }}>
-        {t("nav.browse")}
-      </Typography>
-
-      <Tabs
-        value={typeFilter}
-        onChange={(_, v) => {
-          if (v === "all") {
-            searchParams.delete("type");
-          } else {
-            searchParams.set("type", v);
-          }
-          setSearchParams(searchParams);
-        }}
-        sx={{
-          mb: 3,
-          "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontWeight: 500, minWidth: "auto", px: 2 },
-          "& .Mui-selected": { color: "primary.main" },
-          "& .MuiTabs-indicator": { bgcolor: "primary.main" },
-        }}
-      >
-        <Tab value="all" label={t("browse.all")} />
-        <Tab value="movie" label={t("home.movies")} />
-        <Tab value="series" label={t("home.series")} />
-      </Tabs>
-
-      <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>{t("browse.genre")}</InputLabel>
-          <Select value={genre} onChange={(e) => setGenre(e.target.value)} label={t("browse.genre")}>
-            <MenuItem value="all">{t("browse.allGenres")}</MenuItem>
-            {allGenres.map((g) => (
-              <MenuItem key={g} value={g}>{g}</MenuItem>
+    <Box sx={{ py: 4 }}>
+      {genreFilter ? (
+        <>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: { xs: 3, md: 6 }, mb: 3 }}>
+            <Typography variant="h2">{genreFilter}</Typography>
+            <Typography
+              variant="body2"
+              onClick={() => {
+                searchParams.delete("genre");
+                setSearchParams(searchParams);
+              }}
+              sx={{ color: "primary.main", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+            >
+              {t("browse.all")} &gt;
+            </Typography>
+          </Box>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(2, 1fr)",
+                sm: "repeat(3, 1fr)",
+                md: "repeat(4, 1fr)",
+                lg: "repeat(5, 1fr)",
+                xl: "repeat(6, 1fr)",
+              },
+              gap: 2,
+              px: { xs: 3, md: 6 },
+            }}
+          >
+            {filtered
+              .filter((item) => item.genres.includes(genreFilter))
+              .map((item) => (
+                <MediaCard
+                  key={item.id}
+                  title={item.title}
+                  year={item.year}
+                  posterUrl={item.posterUrl}
+                  variant="poster"
+                  fullWidth
+                  onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
+                />
+              ))}
+          </Box>
+        </>
+      ) : genreSections.length > 0 ? (
+        genreSections.map((section) => (
+          <MediaCarousel
+            key={section.genre}
+            title={section.genre}
+            onSeeAll={() => {
+              searchParams.set("genre", section.genre);
+              setSearchParams(searchParams);
+            }}
+          >
+            {section.items.map((item) => (
+              <MediaCard
+                key={item.id}
+                title={item.title}
+                year={item.year}
+                posterUrl={item.posterUrl}
+                variant="poster"
+                onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
+              />
             ))}
-          </Select>
-        </FormControl>
-
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>{t("browse.sortBy")}</InputLabel>
-          <Select value={sort} onChange={(e) => setSort(e.target.value as SortOption)} label={t("browse.sortBy")}>
-            <MenuItem value="recent">{t("browse.recentlyAdded")}</MenuItem>
-            <MenuItem value="title_asc">{t("browse.titleAZ")}</MenuItem>
-            <MenuItem value="title_desc">{t("browse.titleZA")}</MenuItem>
-            <MenuItem value="year_new">{t("browse.yearNewest")}</MenuItem>
-            <MenuItem value="year_old">{t("browse.yearOldest")}</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-
-      {filtered.length > 0 ? (
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "repeat(2, 1fr)",
-              sm: "repeat(3, 1fr)",
-              md: "repeat(4, 1fr)",
-              lg: "repeat(5, 1fr)",
-              xl: "repeat(6, 1fr)",
-            },
-            gap: 3,
-          }}
-        >
-          {filtered.map((item) => (
-            <MediaCard
-              key={item.id}
-              title={item.title}
-              year={item.year}
-              posterUrl={item.posterUrl}
-              variant="poster"
-              fullWidth
-              onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
-            />
-          ))}
-        </Box>
+          </MediaCarousel>
+        ))
       ) : (
         <Box sx={{ textAlign: "center", py: 10 }}>
           <Typography variant="body1" color="text.secondary">

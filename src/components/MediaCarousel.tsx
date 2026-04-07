@@ -112,7 +112,7 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
           onScroll={handleScroll}
           sx={{
             display: "flex",
-            gap: 2,
+            gap: 1.5,
             overflowX: "auto",
             scrollbarWidth: "none",
             "&::-webkit-scrollbar": { display: "none" },
