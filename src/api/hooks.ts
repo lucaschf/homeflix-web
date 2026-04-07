@@ -58,10 +58,12 @@ export function useSeries() {
 }
 
 export function useSeriesDetail(seriesId: string) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
   return useQuery({
-    queryKey: ["series", seriesId],
+    queryKey: ["series", seriesId, lang],
     queryFn: async (): Promise<SeriesDetail> => {
-      const resp = await api.get<SeriesDetailResponse>(`/series/${seriesId}`);
+      const resp = await api.get<SeriesDetailResponse>(`/series/${seriesId}`, { lang });
       return resp.data;
     },
     enabled: !!seriesId,
