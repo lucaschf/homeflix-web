@@ -90,6 +90,8 @@ export function Home() {
                 onClick={() => {
                   if (item.media_type === "movie") {
                     navigate(`/play/movie/${item.media_id}`);
+                  } else if (item.media_type === "episode") {
+                    navigate(`/movie/${item.media_id}`);
                   }
                 }}
               />

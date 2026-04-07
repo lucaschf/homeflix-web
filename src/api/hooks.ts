@@ -170,7 +170,8 @@ export function useSaveProgress() {
     }) => api.put<ProgressResponse>("/progress", data),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["progress", vars.media_id] });
-      queryClient.invalidateQueries({ queryKey: ["continueWatching"] });
+      // Invalidate all continueWatching queries regardless of lang
+      queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "continueWatching" });
     },
   });
 }
