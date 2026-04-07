@@ -161,7 +161,7 @@ export function SeriesDetail() {
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {currentSeason?.episodes.map((ep) => (
-                <EpisodeRow key={ep.episode_number} episode={ep} onPlay={() => navigate(`/play/episode/${series.id}/${currentSeason.season_number}/${ep.episode_number}`)} />
+                <EpisodeRow key={ep.episode_number} episode={ep} seriesPoster={series.poster_path} onPlay={() => navigate(`/play/episode/${series.id}/${currentSeason.season_number}/${ep.episode_number}`)} />
               ))}
               {(!currentSeason || currentSeason.episodes.length === 0) && (
                 <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
@@ -176,7 +176,7 @@ export function SeriesDetail() {
   );
 }
 
-function EpisodeRow({ episode, onPlay }: { episode: EpisodeOutput; onPlay: () => void }) {
+function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput; seriesPoster: string | null; onPlay: () => void }) {
   const { t } = useTranslation();
 
   return (
@@ -193,8 +193,8 @@ function EpisodeRow({ episode, onPlay }: { episode: EpisodeOutput; onPlay: () =>
       }}
     >
       <Box sx={{ position: "relative", width: { xs: 140, md: 200 }, flexShrink: 0, aspectRatio: "16/9", borderRadius: 1.5, overflow: "hidden", bgcolor: "background.paper" }}>
-        {episode.thumbnail_path ? (
-          <Box component="img" src={episode.thumbnail_path} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        {(episode.thumbnail_path || seriesPoster) ? (
+          <Box component="img" src={episode.thumbnail_path ?? seriesPoster!} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
           <Box sx={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)" }} />
         )}

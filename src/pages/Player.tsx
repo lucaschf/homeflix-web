@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMovie, useProgress, useSaveProgress } from "../api/hooks";
+import { useMovie, useProgress, useSaveProgress, useSeriesDetail } from "../api/hooks";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -81,14 +81,34 @@ export function Player() {
     : `epi_${params.seriesId}_${params.season}_${params.episode}`;
   const mediaType = isMovie ? "movie" : "episode";
 
-  const { data: movieData, isLoading } = useMovie(params.movieId ?? "");
+  const { data: movieData, isLoading: movieLoading } = useMovie(params.movieId ?? "");
+  const { data: seriesData, isLoading: seriesLoading } = useSeriesDetail(params.seriesId ?? "");
+  const isLoading = isMovie ? movieLoading : seriesLoading;
+
+  // Find episode duration from series data
+  const episodeDuration = (() => {
+    if (isMovie || !seriesData) return 0;
+    const seasonNum = Number(params.season);
+    const episodeNum = Number(params.episode);
+    const season = seriesData.seasons.find((s) => s.season_number === seasonNum);
+    const episode = season?.episodes.find((e) => e.episode_number === episodeNum);
+    return episode?.duration_seconds ?? 0;
+  })();
   const { data: savedProgress } = useProgress(mediaId);
   const saveProgress = useSaveProgress();
   const saveProgressRef = useRef(saveProgress.mutate);
   saveProgressRef.current = saveProgress.mutate;
   const title = isMovie
     ? movieData?.title ?? ""
-    : `S${params.season?.padStart(2, "0")}E${params.episode?.padStart(2, "0")}`;
+    : (() => {
+        const seasonNum = Number(params.season);
+        const episodeNum = Number(params.episode);
+        const season = seriesData?.seasons.find((s) => s.season_number === seasonNum);
+        const episode = season?.episodes.find((e) => e.episode_number === episodeNum);
+        const epTitle = episode?.title ?? "";
+        const prefix = `S${String(seasonNum).padStart(2, "0")}E${String(episodeNum).padStart(2, "0")}`;
+        return epTitle ? `${prefix} - ${epTitle}` : prefix;
+      })();
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -112,8 +132,8 @@ export function Player() {
   const [subtitleTracks, setSubtitleTracks] = useState<HlsSubtitleTrack[]>([]);
   const [currentSubtitleTrack, setCurrentSubtitleTrack] = useState(-1);
 
-  // Use movie metadata duration as authoritative source
-  const knownDuration = movieData?.duration_seconds ?? 0;
+  // Use metadata duration as authoritative source (movie or episode)
+  const knownDuration = isMovie ? (movieData?.duration_seconds ?? 0) : episodeDuration;
   const displayDuration = knownDuration > 0 ? knownDuration : duration;
 
   // Quality from movie files
@@ -459,7 +479,7 @@ export function Player() {
   };
 
   // Show loading while fetching movie data
-  if (isMovie && isLoading) {
+  if (isLoading) {
     return (
       <Box sx={{ position: "fixed", inset: 0, bgcolor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <CircularProgress color="primary" />
