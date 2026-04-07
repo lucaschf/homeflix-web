@@ -67,6 +67,20 @@ export function MovieDetail() {
             </Typography>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
+              {movie.content_rating && (
+                <Chip
+                  label={movie.content_rating}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    borderColor: "rgba(255,255,255,0.4)",
+                    color: "#fff",
+                    fontWeight: 700,
+                    height: 24,
+                    fontSize: "0.7rem",
+                  }}
+                />
+              )}
               <Typography variant="body2" color="text.secondary">{movie.year}</Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
               <Typography variant="body2" color="text.secondary">{movie.duration_formatted}</Typography>
@@ -126,8 +140,23 @@ export function MovieDetail() {
           </>
         )}
 
+        {movie.cast.length > 0 && (
+          <>
+            <Typography variant="h2" sx={{ mt: 4, mb: 1.5 }}>{t("detail.cast")}</Typography>
+            <Typography variant="body1" color="text.secondary">
+              {movie.cast.join(", ")}
+            </Typography>
+          </>
+        )}
+
         <Typography variant="h2" sx={{ mt: 4, mb: 1.5 }}>{t("detail.details")}</Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          {movie.directors.length > 0 && (
+            <DetailRow label={t("detail.director")} value={movie.directors.join(", ")} />
+          )}
+          {movie.writers.length > 0 && (
+            <DetailRow label={t("detail.writers")} value={movie.writers.join(", ")} />
+          )}
           {movie.original_title && movie.original_title !== movie.title && (
             <DetailRow label={t("detail.originalTitle")} value={movie.original_title} />
           )}

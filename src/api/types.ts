@@ -33,6 +33,10 @@ export interface MovieDetail {
   poster_path: string | null;
   backdrop_path: string | null;
   genres: string[];
+  cast: string[];
+  directors: string[];
+  writers: string[];
+  content_rating: string | null;
   file_path: string | null;
   file_size: number | null;
   resolution: string | null;
