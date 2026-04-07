@@ -1,4 +1,5 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Tooltip, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 /**
  * Brazilian content rating (classificacao indicativa) color mapping.
@@ -26,12 +27,14 @@ interface ContentRatingBadgeProps {
 }
 
 export function ContentRatingBadge({ rating, size = 28 }: ContentRatingBadgeProps) {
+  const { t } = useTranslation();
   const config = RATING_CONFIG[rating];
   const bg = config?.bg ?? "rgba(255,255,255,0.2)";
   const label = config?.label ?? rating;
   const fontSize = label.length > 2 ? size * 0.32 : size * 0.46;
+  const tooltip = t(`rating.${rating}`, { defaultValue: "" });
 
-  return (
+  const badge = (
     <Box
       sx={{
         width: size,
@@ -42,6 +45,7 @@ export function ContentRatingBadge({ rating, size = 28 }: ContentRatingBadgeProp
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
+        cursor: tooltip ? "help" : "default",
       }}
     >
       <Typography
@@ -56,5 +60,13 @@ export function ContentRatingBadge({ rating, size = 28 }: ContentRatingBadgeProp
         {label}
       </Typography>
     </Box>
+  );
+
+  if (!tooltip) return badge;
+
+  return (
+    <Tooltip title={tooltip} arrow placement="top">
+      {badge}
+    </Tooltip>
   );
 }

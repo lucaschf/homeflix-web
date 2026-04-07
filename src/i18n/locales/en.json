@@ -71,6 +71,19 @@
     "back": "Back",
     "preparing": "Preparing video…"
   },
+  "rating": {
+    "L": "General audiences",
+    "10": "Not recommended for under 10",
+    "12": "Not recommended for under 12",
+    "14": "Not recommended for under 14",
+    "16": "Not recommended for under 16",
+    "18": "Not recommended for under 18",
+    "G": "General audiences",
+    "PG": "Parental guidance suggested",
+    "PG-13": "Parents strongly cautioned (under 13)",
+    "R": "Restricted (under 17 requires parent)",
+    "NC-17": "Adults only (no one under 17)"
+  },
   "browse": {
     "all": "All",
     "genre": "Genre",
