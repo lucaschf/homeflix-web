@@ -11,7 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMovies, useSeries } from "../api/hooks";
 import { MediaCard } from "../components/MediaCard";
 
@@ -30,10 +30,11 @@ interface BrowseItem {
 export function Browse() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: moviesData, isLoading: moviesLoading } = useMovies();
   const { data: seriesData, isLoading: seriesLoading } = useSeries();
 
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const typeFilter = (searchParams.get("type") as TypeFilter) || "all";
   const [genre, setGenre] = useState("all");
   const [sort, setSort] = useState<SortOption>("recent");
 
@@ -100,7 +101,14 @@ export function Browse() {
 
       <Tabs
         value={typeFilter}
-        onChange={(_, v) => setTypeFilter(v)}
+        onChange={(_, v) => {
+          if (v === "all") {
+            searchParams.delete("type");
+          } else {
+            searchParams.set("type", v);
+          }
+          setSearchParams(searchParams);
+        }}
         sx={{
           mb: 3,
           "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontWeight: 500, minWidth: "auto", px: 2 },

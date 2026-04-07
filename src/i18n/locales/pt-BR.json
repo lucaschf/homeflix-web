@@ -1,9 +1,11 @@
 {
   "nav": {
-    "home": "Inicio",
+    "home": "Início",
+    "movies": "Filmes",
+    "series": "Séries",
     "browse": "Explorar",
     "myLists": "Minhas Listas",
-    "history": "Historico",
+    "history": "Histórico",
     "settings": "Configuracoes",
     "search": "Buscar"
   },

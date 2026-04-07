@@ -9,7 +9,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Film, Search, Settings } from "lucide-react";
+import { Bookmark, Film, Search, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router-dom";
 import { LanguageSwitch } from "./language-switch/LanguageSwitch";
@@ -17,9 +17,8 @@ import { SearchOverlay } from "./SearchOverlay";
 
 const navItems = [
   { to: "/", labelKey: "nav.home" },
-  { to: "/browse", labelKey: "nav.browse" },
-  { to: "/lists", labelKey: "nav.myLists" },
-  { to: "/history", labelKey: "nav.history" },
+  { to: "/browse?type=movie", labelKey: "nav.movies" },
+  { to: "/browse?type=series", labelKey: "nav.series" },
 ];
 
 export function Navbar() {
@@ -68,7 +67,7 @@ export function Navbar() {
               mr: 4,
             }}
           >
-            <Film size={28} color={theme.palette.primary.main} />
+            <Film size={30} color={theme.palette.primary.main} />
             {!isMobile && (
               <Typography variant="h3" noWrap>
                 HomeFlix
@@ -79,7 +78,13 @@ export function Navbar() {
           {/* Nav Links */}
           <Box sx={{ display: "flex", gap: 0.5, flexGrow: 1 }}>
             {navItems.map(({ to, labelKey }) => {
-              const isActive = location.pathname === to;
+              const [path, query] = to.split("?");
+              const params = new URLSearchParams(query);
+              const searchParams = new URLSearchParams(location.search);
+              const isActive = query
+                ? location.pathname === path &&
+                  searchParams.get("type") === params.get("type")
+                : location.pathname === path;
               return (
                 <Button
                   key={to}
@@ -88,7 +93,8 @@ export function Navbar() {
                   size="small"
                   sx={{
                     color: isActive ? "primary.main" : "text.secondary",
-                    fontWeight: isActive ? 700 : 400,
+                    fontWeight: isActive ? 700 : 500,
+                    fontSize: "0.95rem",
                     position: "relative",
                     "&::after": isActive
                       ? {
@@ -121,7 +127,16 @@ export function Navbar() {
             size="small"
             sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
           >
-            <Search size={20} />
+            <Search size={22} />
+          </IconButton>
+          <IconButton
+            component={NavLink}
+            to="/lists"
+            size="small"
+            aria-label={t("nav.myLists")}
+            sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
+          >
+            <Bookmark size={22} />
           </IconButton>
           <LanguageSwitch />
           <IconButton

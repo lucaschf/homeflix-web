@@ -1,6 +1,8 @@
 {
   "nav": {
     "home": "Home",
+    "movies": "Movies",
+    "series": "Series",
     "browse": "Browse",
     "myLists": "My Lists",
     "history": "History",
