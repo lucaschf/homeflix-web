@@ -23,4 +23,7 @@ export const api = {
   get: <T>(path: string, params?: Record<string, string>) => request<T>(withParams(path, params)),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "POST", body: body ? JSON.stringify(body) : undefined }),
+  put: <T>(path: string, body?: unknown) =>
+    request<T>(path, { method: "PUT", body: body ? JSON.stringify(body) : undefined }),
+  del: (path: string) => fetch(`${BASE_URL}${path}`, { method: "DELETE" }),
 };

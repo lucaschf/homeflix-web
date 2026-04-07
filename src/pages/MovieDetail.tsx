@@ -11,7 +11,7 @@ import {
 import { Heart, Play, Plus, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEnrichMovie, useMovie } from "../api/hooks";
+import { useEnrichMovie, useMovie, useProgress } from "../api/hooks";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 
 export function MovieDetail() {
@@ -19,7 +19,9 @@ export function MovieDetail() {
   const { movieId } = useParams<{ movieId: string }>();
   const navigate = useNavigate();
   const { data: movie, isLoading } = useMovie(movieId!);
+  const { data: progress } = useProgress(movieId!);
   const enrichMutation = useEnrichMovie();
+  const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
 
   if (isLoading || !movie) {
@@ -81,7 +83,7 @@ export function MovieDetail() {
 
             <Box sx={{ display: "flex", gap: 1.5 }}>
               <Button variant="contained" startIcon={<Play size={18} />} size="large" onClick={() => navigate(`/play/movie/${movie.id}`)}>
-                {t("detail.watchNow")}
+                {hasProgress ? t("detail.resume") : t("detail.watchNow")}
               </Button>
               <Button
                 variant="outlined"

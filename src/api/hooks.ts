@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   BulkEnrichResponse,
+  ContinueWatchingItem,
+  ContinueWatchingResponse,
   EnrichResponse,
   HealthResponse,
   ListMoviesResponse,
@@ -10,6 +12,8 @@ import type {
   MovieDetail,
   MovieDetailResponse,
   MovieSummary,
+  ProgressOutput,
+  ProgressResponse,
   ScanResponse,
   SeriesDetail,
   SeriesDetailResponse,
@@ -124,6 +128,49 @@ export function useBulkEnrich() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       queryClient.invalidateQueries({ queryKey: ["series"] });
+    },
+  });
+}
+
+// ── Watch Progress ──────────────────────────────────────
+
+export function useProgress(mediaId: string) {
+  return useQuery({
+    queryKey: ["progress", mediaId],
+    queryFn: async (): Promise<ProgressOutput | null> => {
+      const resp = await api.get<ProgressResponse>(`/progress/${mediaId}`);
+      return resp.data;
+    },
+    enabled: !!mediaId,
+  });
+}
+
+export function useContinueWatching() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["continueWatching", lang],
+    queryFn: async (): Promise<ContinueWatchingItem[]> => {
+      const resp = await api.get<ContinueWatchingResponse>("/progress/continue-watching", { lang });
+      return resp.data;
+    },
+  });
+}
+
+export function useSaveProgress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      media_id: string;
+      media_type: string;
+      position_seconds: number;
+      duration_seconds: number;
+      audio_track?: number;
+      subtitle_track?: number;
+    }) => api.put<ProgressResponse>("/progress", data),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["progress", vars.media_id] });
+      queryClient.invalidateQueries({ queryKey: ["continueWatching"] });
     },
   });
 }
