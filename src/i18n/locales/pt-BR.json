@@ -82,7 +82,8 @@
     "PG": "Supervisão dos pais sugerida",
     "PG-13": "Pais fortemente alertados (menores de 13)",
     "R": "Restrito (menores de 17 requerem acompanhante)",
-    "NC-17": "Apenas adultos (proibido para menores de 17)"
+    "NC-17": "Apenas adultos (proibido para menores de 17)",
+    "NR": "Sem classificação"
   },
   "browse": {
     "all": "Todos",

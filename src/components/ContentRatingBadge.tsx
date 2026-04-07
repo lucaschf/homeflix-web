@@ -19,6 +19,7 @@ const RATING_CONFIG: Record<string, { bg: string; label?: string }> = {
   "PG-13": { bg: "#F5D218", label: "PG-13" },
   R: { bg: "#E4202A" },
   "NC-17": { bg: "#1D1815", label: "NC-17" },
+  NR: { bg: "#616161", label: "NR" },
 };
 
 interface ContentRatingBadgeProps {

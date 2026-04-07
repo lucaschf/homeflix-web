@@ -82,7 +82,8 @@
     "PG": "Parental guidance suggested",
     "PG-13": "Parents strongly cautioned (under 13)",
     "R": "Restricted (under 17 requires parent)",
-    "NC-17": "Adults only (no one under 17)"
+    "NC-17": "Adults only (no one under 17)",
+    "NR": "Not rated"
   },
   "browse": {
     "all": "All",
