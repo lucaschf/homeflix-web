@@ -36,6 +36,7 @@ export interface MovieDetail {
   cast: string[];
   directors: string[];
   writers: string[];
+  content_rating: string | null;
   file_path: string | null;
   file_size: number | null;
   resolution: string | null;

@@ -67,6 +67,20 @@ export function MovieDetail() {
             </Typography>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
+              {movie.content_rating && (
+                <Chip
+                  label={movie.content_rating}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    borderColor: "rgba(255,255,255,0.4)",
+                    color: "#fff",
+                    fontWeight: 700,
+                    height: 24,
+                    fontSize: "0.7rem",
+                  }}
+                />
+              )}
               <Typography variant="body2" color="text.secondary">{movie.year}</Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
               <Typography variant="body2" color="text.secondary">{movie.duration_formatted}</Typography>
