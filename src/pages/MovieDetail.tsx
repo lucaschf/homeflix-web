@@ -12,6 +12,7 @@ import { Heart, Play, Plus, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEnrichMovie, useMovie } from "../api/hooks";
+import { ContentRatingBadge } from "../components/ContentRatingBadge";
 
 export function MovieDetail() {
   const { t } = useTranslation();
@@ -68,18 +69,7 @@ export function MovieDetail() {
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
               {movie.content_rating && (
-                <Chip
-                  label={movie.content_rating}
-                  size="small"
-                  variant="outlined"
-                  sx={{
-                    borderColor: "rgba(255,255,255,0.4)",
-                    color: "#fff",
-                    fontWeight: 700,
-                    height: 24,
-                    fontSize: "0.7rem",
-                  }}
-                />
+                <ContentRatingBadge rating={movie.content_rating} />
               )}
               <Typography variant="body2" color="text.secondary">{movie.year}</Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
