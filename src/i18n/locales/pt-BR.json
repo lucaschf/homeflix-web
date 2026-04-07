@@ -63,7 +63,8 @@
     "nextEpisodeIn": "Proximo episodio em {{seconds}}s",
     "playNow": "Assistir Agora",
     "cancel": "Cancelar",
-    "back": "Voltar"
+    "back": "Voltar",
+    "preparing": "Preparando vídeo…"
   },
   "browse": {
     "all": "Todos",
