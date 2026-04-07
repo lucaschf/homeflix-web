@@ -154,13 +154,14 @@ export function Player() {
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         video.play().catch(() => {});
       });
+      let retryTimeout: ReturnType<typeof setTimeout> | null = null;
       hls.on(Hls.Events.ERROR, (_, data) => {
         console.error("[HLS Error]", data.type, data.details, data.fatal, data);
         if (data.fatal) {
           setHlsReady(false);
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              setTimeout(() => hls.startLoad(), 3000);
+              retryTimeout = setTimeout(() => hls.startLoad(), 3000);
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
               hls.recoverMediaError();
@@ -174,6 +175,7 @@ export function Player() {
       hlsRef.current = hls;
 
       return () => {
+        if (retryTimeout) clearTimeout(retryTimeout);
         hls.destroy();
         hlsRef.current = null;
       };
