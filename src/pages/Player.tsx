@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMovie } from "../api/hooks";
+import { useMovie, useProgress, useSaveProgress } from "../api/hooks";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -76,13 +76,23 @@ export function Player() {
     ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8`
     : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8`;
 
+  const mediaId = isMovie
+    ? params.movieId ?? ""
+    : `epi_${params.seriesId}_${params.season}_${params.episode}`;
+  const mediaType = isMovie ? "movie" : "episode";
+
   const { data: movieData, isLoading } = useMovie(params.movieId ?? "");
+  const { data: savedProgress } = useProgress(mediaId);
+  const saveProgress = useSaveProgress();
+  const saveProgressRef = useRef(saveProgress.mutate);
+  saveProgressRef.current = saveProgress.mutate;
   const title = isMovie
     ? movieData?.title ?? ""
     : `S${params.season?.padStart(2, "0")}E${params.episode?.padStart(2, "0")}`;
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const progressRestoredRef = useRef(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const [playing, setPlaying] = useState(false);
@@ -255,6 +265,74 @@ export function Player() {
 
     return undefined;
   }, [hlsUrl]);
+
+  // Restore saved progress (position, audio, subtitle) on first play
+  useEffect(() => {
+    if (!savedProgress || progressRestoredRef.current) return;
+    const video = videoRef.current;
+    const hls = hlsRef.current;
+    if (!video || !hlsReady) return;
+
+    progressRestoredRef.current = true;
+    if (savedProgress.position_seconds > 0 && savedProgress.status !== "completed") {
+      video.currentTime = savedProgress.position_seconds;
+    }
+    if (savedProgress.audio_track != null && hls) {
+      hls.audioTrack = savedProgress.audio_track;
+    }
+    if (savedProgress.subtitle_track != null && hls) {
+      hls.subtitleTrack = savedProgress.subtitle_track;
+    }
+  }, [savedProgress, hlsReady]);
+
+  // Auto-save progress every 10 seconds during playback
+  useEffect(() => {
+    if (!playing) return;
+    const interval = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.paused || !mediaId) return;
+      const dur = displayDuration || video.duration;
+      if (!dur) return;
+      saveProgressRef.current({
+        media_id: mediaId,
+        media_type: mediaType,
+        position_seconds: Math.floor(video.currentTime),
+        duration_seconds: Math.floor(dur),
+        audio_track: hlsRef.current?.audioTrack,
+        subtitle_track: hlsRef.current?.subtitleTrack,
+      });
+    }, 10_000);
+    return () => clearInterval(interval);
+  }, [playing, mediaId, mediaType, displayDuration]);
+
+  // Save progress on pause or unmount
+  const saveCurrentProgress = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !mediaId) return;
+    const dur = displayDuration || video.duration;
+    if (!dur || video.currentTime === 0) return;
+    saveProgressRef.current({
+      media_id: mediaId,
+      media_type: mediaType,
+      position_seconds: Math.floor(video.currentTime),
+      duration_seconds: Math.floor(dur),
+      audio_track: hlsRef.current?.audioTrack,
+      subtitle_track: hlsRef.current?.subtitleTrack,
+    });
+  }, [mediaId, mediaType, displayDuration]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.addEventListener("pause", saveCurrentProgress);
+    return () => video.removeEventListener("pause", saveCurrentProgress);
+  }, [saveCurrentProgress]);
+
+  // Save on page unload
+  useEffect(() => {
+    window.addEventListener("beforeunload", saveCurrentProgress);
+    return () => window.removeEventListener("beforeunload", saveCurrentProgress);
+  }, [saveCurrentProgress]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {

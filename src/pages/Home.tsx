@@ -3,7 +3,7 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useMovies, useSeries } from "../api/hooks";
+import { useContinueWatching, useMovies, useSeries } from "../api/hooks";
 import type { MovieSummary, SeriesSummary } from "../api/types";
 import { HeroBanner } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
@@ -41,6 +41,7 @@ export function Home() {
   const navigate = useNavigate();
   const { data: moviesData, isLoading: moviesLoading } = useMovies();
   const { data: seriesData, isLoading: seriesLoading } = useSeries();
+  const { data: continueWatching } = useContinueWatching();
 
   const movies = moviesData?.movies ?? [];
   const series = seriesData?.series ?? [];
@@ -77,6 +78,27 @@ export function Home() {
       )}
 
       <Box sx={{ mt: -4, position: "relative", zIndex: 1 }}>
+        {continueWatching && continueWatching.length > 0 && (
+          <MediaCarousel title={t("home.continueWatching")}>
+            {continueWatching.map((item) => (
+              <MediaCard
+                key={item.media_id}
+                title={item.title}
+                posterUrl={item.poster_path ?? undefined}
+                progress={item.percentage}
+                variant="poster"
+                onClick={() => {
+                  if (item.media_type === "movie") {
+                    navigate(`/play/movie/${item.media_id}`);
+                  } else if (item.media_type === "episode") {
+                    navigate(`/movie/${item.media_id}`);
+                  }
+                }}
+              />
+            ))}
+          </MediaCarousel>
+        )}
+
         {movies.length > 0 && (
           <MediaCarousel title={t("home.movies")} onSeeAll={() => navigate("/browse?type=movie")}>
             {movies.map((movie) => (

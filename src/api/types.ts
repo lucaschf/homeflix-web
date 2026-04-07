@@ -149,3 +149,40 @@ export interface HealthResponse {
   timestamp: string;
   version: string;
 }
+
+// Watch Progress
+export type MediaType = "movie" | "episode";
+export type WatchStatus = "in_progress" | "completed";
+
+export interface ProgressOutput {
+  media_id: string;
+  media_type: MediaType;
+  position_seconds: number;
+  duration_seconds: number;
+  percentage: number;
+  status: WatchStatus;
+  audio_track: number | null;
+  subtitle_track: number | null;
+  last_watched_at: string;
+}
+
+export interface ContinueWatchingItem {
+  media_id: string;
+  media_type: MediaType;
+  title: string;
+  poster_path: string | null;
+  position_seconds: number;
+  duration_seconds: number;
+  percentage: number;
+  last_watched_at: string;
+}
+
+export interface ProgressResponse {
+  type: string;
+  data: ProgressOutput | null;
+}
+
+export interface ContinueWatchingResponse {
+  type: string;
+  data: ContinueWatchingItem[];
+}
