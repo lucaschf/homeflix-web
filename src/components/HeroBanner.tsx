@@ -29,36 +29,41 @@ export function HeroBanner({
 }: HeroBannerProps) {
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval>>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const count = slides.length;
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const startTimer = useCallback(() => {
+    clearTimer();
+    if (count <= 1) return;
+    timerRef.current = setInterval(() => {
+      setCurrent((idx) => (idx + 1) % count);
+    }, autoPlayInterval);
+  }, [count, autoPlayInterval, clearTimer]);
+
+  useEffect(() => {
+    startTimer();
+    return clearTimer;
+  }, [startTimer, clearTimer]);
+
+  // Clamp current if slides shrink
+  useEffect(() => {
+    setCurrent((idx) => (count > 0 ? Math.min(idx, count - 1) : 0));
+  }, [count]);
 
   const goTo = useCallback(
     (index: number) => {
       setCurrent(((index % count) + count) % count);
+      startTimer();
     },
-    [count],
-  );
-
-  const next = useCallback(() => goTo(current + 1), [current, goTo]);
-  const prev = useCallback(() => goTo(current - 1), [current, goTo]);
-
-  // Auto-play
-  useEffect(() => {
-    if (count <= 1) return;
-    timerRef.current = setInterval(next, autoPlayInterval);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [next, count, autoPlayInterval]);
-
-  // Reset timer on manual nav
-  const navigate = useCallback(
-    (index: number) => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      goTo(index);
-    },
-    [goTo],
+    [count, startTimer],
   );
 
   if (count === 0) return null;
@@ -119,7 +124,8 @@ export function HeroBanner({
       {count > 1 && (
         <>
           <IconButton
-            onClick={() => navigate(current - 1)}
+            aria-label="Previous slide"
+            onClick={() => goTo(current - 1)}
             sx={{
               position: "absolute",
               left: 8,
@@ -134,7 +140,8 @@ export function HeroBanner({
             <ChevronLeft size={28} />
           </IconButton>
           <IconButton
-            onClick={() => navigate(current + 1)}
+            aria-label="Next slide"
+            onClick={() => goTo(current + 1)}
             sx={{
               position: "absolute",
               right: 8,
@@ -245,7 +252,11 @@ export function HeroBanner({
           {slides.map((s, i) => (
             <Box
               key={s.id}
-              onClick={() => navigate(i)}
+              role="button"
+              aria-label={`Go to slide ${i + 1}`}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") goTo(i); }}
+              onClick={() => goTo(i)}
               sx={{
                 width: i === current ? 24 : 8,
                 height: 8,
