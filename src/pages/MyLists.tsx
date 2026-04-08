@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  InputAdornment,
   Menu,
   MenuItem,
   Tab,
@@ -15,15 +16,18 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ArrowLeft, Bookmark, MoreVertical, Plus } from "lucide-react";
+import { ArrowLeft, Bookmark, MoreVertical, Plus, Search, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
+  useAddItemToCustomList,
   useCreateCustomList,
   useCustomListItems,
   useCustomLists,
   useDeleteCustomList,
+  useMovies,
   useRenameCustomList,
+  useSeries,
   useWatchlist,
 } from "../api/hooks";
 import type { CustomListOutput } from "../api/types";
@@ -259,6 +263,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: items, isLoading } = useCustomListItems(list.id);
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <Box>
@@ -275,9 +280,42 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
         {list.name}
       </Typography>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {t("lists.itemCount", { count: list.item_count })}
-      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+        <TextField
+          size="small"
+          placeholder={t("lists.searchMedia")}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ width: { xs: "100%", sm: 320 } }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search size={16} color="#737373" />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery ? (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchQuery("")}>
+                    <X size={14} />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            },
+          }}
+        />
+        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: "nowrap" }}>
+          {t("lists.itemCount", { count: items?.length ?? list.item_count })}
+        </Typography>
+      </Box>
+
+      {searchQuery.trim() && (
+        <MediaSearchResults
+          query={searchQuery.trim()}
+          listId={list.id}
+          existingMediaIds={new Set(items?.map((i) => i.media_id) ?? [])}
+        />
+      )}
 
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
@@ -310,7 +348,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
             />
           ))}
         </Box>
-      ) : (
+      ) : !searchQuery.trim() ? (
         <Box sx={{ textAlign: "center", py: 10 }}>
           <Bookmark size={48} color="#555" />
           <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
@@ -320,7 +358,104 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
             {t("lists.listItemsEmptyHint")}
           </Typography>
         </Box>
-      )}
+      ) : null}
+    </Box>
+  );
+}
+
+// ── Media Search Results (inline in list detail) ─────────
+
+function MediaSearchResults({
+  query,
+  listId,
+  existingMediaIds,
+}: {
+  query: string;
+  listId: string;
+  existingMediaIds: Set<string>;
+}) {
+  const { t } = useTranslation();
+  const { data: moviesData } = useMovies();
+  const { data: seriesData } = useSeries();
+  const addItem = useAddItemToCustomList();
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
+
+  const results = useMemo(() => {
+    const q = query.toLowerCase();
+    const movies = (moviesData?.movies ?? [])
+      .filter((m) => m.title.toLowerCase().includes(q))
+      .map((m) => ({ id: m.id, title: m.title, type: "movie" as const, imageUrl: m.poster_path ?? undefined, year: m.year }));
+    const series = (seriesData?.series ?? [])
+      .filter((s) => s.title.toLowerCase().includes(q))
+      .map((s) => ({ id: s.id, title: s.title, type: "series" as const, imageUrl: s.poster_path ?? undefined, year: s.start_year }));
+    return [...movies, ...series].slice(0, 12);
+  }, [query, moviesData, seriesData]);
+
+  const handleAdd = (mediaId: string, mediaType: "movie" | "series") => {
+    addItem.mutate(
+      { listId, media_id: mediaId, media_type: mediaType },
+      {
+        onSuccess: () => {
+          setAddedIds((prev) => new Set(prev).add(mediaId));
+        },
+      },
+    );
+  };
+
+  if (!results.length) {
+    return (
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        {t("lists.noSearchResults", { query })}
+      </Typography>
+    );
+  }
+
+  return (
+    <Box sx={{ mb: 4 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        {t("lists.searchResults")}
+      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1.5,
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          "&::-webkit-scrollbar": { display: "none" },
+          pb: 1,
+        }}
+      >
+        {results.map((item) => {
+          const alreadyIn = existingMediaIds.has(item.id) || addedIds.has(item.id);
+          return (
+            <Box key={item.id} sx={{ flexShrink: 0, width: 120, position: "relative" }}>
+              <MediaCard
+                title={item.title}
+                imageUrl={item.imageUrl}
+                variant="poster"
+                fullWidth
+                year={item.year}
+              />
+              <Button
+                size="small"
+                variant={alreadyIn ? "outlined" : "contained"}
+                disabled={alreadyIn}
+                onClick={() => handleAdd(item.id, item.type)}
+                fullWidth
+                sx={{
+                  mt: 0.5,
+                  fontSize: "0.65rem",
+                  py: 0.25,
+                  textTransform: "none",
+                  minHeight: 0,
+                }}
+              >
+                {alreadyIn ? t("lists.added") : t("lists.addToList")}
+              </Button>
+            </Box>
+          );
+        })}
+      </Box>
     </Box>
   );
 }
