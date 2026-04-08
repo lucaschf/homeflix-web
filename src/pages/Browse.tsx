@@ -101,7 +101,9 @@ export function Browse() {
 
     if (typeFilter === "movie") return movieSlides.slice(0, 6);
     if (typeFilter === "series") return seriesSlides.slice(0, 6);
-    return [...movieSlides, ...seriesSlides].slice(0, 6);
+    return [...movieSlides, ...seriesSlides]
+      .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
+      .slice(0, 6);
   }, [moviesData, seriesData, typeFilter]);
 
   const isLoading = moviesLoading || seriesLoading;
@@ -126,7 +128,7 @@ export function Browse() {
         />
       )}
 
-      <Box sx={{ mt: genreFilter || heroSlides.length === 0 ? 4 : -10, position: "relative", zIndex: 1 }}>
+      <Box sx={{ mt: Boolean(genreFilter) || heroSlides.length === 0 ? 4 : -10, position: "relative", zIndex: 1 }}>
       {genreFilter ? (
         <>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: { xs: 3, md: 6 }, mb: 3 }}>
