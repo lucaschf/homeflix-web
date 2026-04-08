@@ -11,10 +11,10 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
-import { Heart, Play, Plus, RefreshCw } from "lucide-react";
+import { Bookmark, Play, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEnrichSeries, useSeriesDetail } from "../api/hooks";
+import { useContinueWatching, useEnrichSeries, useSeriesDetail } from "../api/hooks";
 import type { EpisodeOutput } from "../api/types";
 
 export function SeriesDetail() {
@@ -23,6 +23,7 @@ export function SeriesDetail() {
   const navigate = useNavigate();
   const { data: series, isLoading } = useSeriesDetail(seriesId!);
   const enrichMutation = useEnrichSeries();
+  const { data: continueWatching } = useContinueWatching();
   const [selectedSeason, setSelectedSeason] = useState(0);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
 
@@ -36,10 +37,40 @@ export function SeriesDetail() {
 
   const currentSeason = series.seasons[selectedSeason];
 
+  // Find in-progress episode for this series from continue watching
+  const inProgressEpisode = (() => {
+    if (!continueWatching || !series) return null;
+    // Continue watching items for episodes have media_type "episode"
+    // and media_id matching pattern for this series
+    for (const item of continueWatching) {
+      if (item.media_type !== "episode") continue;
+      // Check if any episode in this series matches
+      for (const season of series.seasons) {
+        for (const ep of season.episodes) {
+          if (ep.id === item.media_id) {
+            return { seasonNumber: season.season_number, episodeNumber: ep.episode_number };
+          }
+        }
+      }
+    }
+    return null;
+  })();
+
+  const firstEpisode = series.seasons[0]?.episodes[0];
+  const playTarget = inProgressEpisode
+    ? { season: inProgressEpisode.seasonNumber, episode: inProgressEpisode.episodeNumber }
+    : { season: firstEpisode ? series.seasons[0].season_number : 1, episode: firstEpisode?.episode_number ?? 1 };
+
+  const playLabel = inProgressEpisode
+    ? `${t("detail.resume")} E${inProgressEpisode.episodeNumber}`
+    : firstEpisode
+      ? `${t("detail.watch")} E${firstEpisode.episode_number}`
+      : t("detail.watch");
+
   return (
     <Box>
       {/* Hero Header */}
-      <Box sx={{ position: "relative", width: "100%", height: { xs: 350, sm: 420, md: 550 }, overflow: "hidden" }}>
+      <Box sx={{ position: "relative", width: "100%", height: { xs: 400, sm: 480, md: 600 }, overflow: "hidden" }}>
         {series.backdrop_path && (
           <Box
             component="img"
@@ -86,19 +117,26 @@ export function SeriesDetail() {
             </Box>
 
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <Button variant="contained" startIcon={<Play size={16} />} size="medium" sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
-                {t("detail.watchNow")}
-              </Button>
               <Button
-                variant="outlined"
-                startIcon={<Plus size={16} />}
+                variant="contained"
+                startIcon={<Play size={16} />}
                 size="medium"
-                sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" }, borderColor: "rgba(255,255,255,0.3)", color: "text.primary", "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" } }}
+                sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}
+                onClick={() => navigate(`/play/episode/${series.id}/${playTarget.season}/${playTarget.episode}`)}
               >
-                {t("detail.addToList")}
+                {playLabel}
               </Button>
-              <IconButton sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }} size="small">
-                <Heart size={20} />
+              <IconButton
+                sx={{
+                  color: "text.secondary",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: 1.5,
+                  width: 38,
+                  height: 38,
+                  "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+                }}
+              >
+                <Bookmark size={18} />
               </IconButton>
               {!series.tmdb_id && (
                 <IconButton

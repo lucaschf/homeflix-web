@@ -8,7 +8,7 @@ import {
   IconButton,
   Typography,
 } from "@mui/material";
-import { Heart, Play, Plus, RefreshCw } from "lucide-react";
+import { Bookmark, Play, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEnrichMovie, useMovie, useProgress } from "../api/hooks";
@@ -35,7 +35,7 @@ export function MovieDetail() {
   return (
     <Box>
       {/* Hero Header */}
-      <Box sx={{ position: "relative", width: "100%", height: { xs: 350, sm: 420, md: 550 }, overflow: "hidden" }}>
+      <Box sx={{ position: "relative", width: "100%", height: { xs: 400, sm: 480, md: 600 }, overflow: "hidden" }}>
         {movie.backdrop_path && (
           <Box
             component="img"
@@ -88,23 +88,19 @@ export function MovieDetail() {
                 onClick={() => navigate(`/play/movie/${movie.id}`)}
                 sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}
               >
-                {hasProgress ? t("detail.resume") : t("detail.watchNow")}
+                {hasProgress ? t("detail.resume") : t("detail.watch")}
               </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Plus size={16} />}
-                size="medium"
+              <IconButton
                 sx={{
-                  fontSize: { xs: "0.8rem", md: "0.875rem" },
-                  borderColor: "rgba(255,255,255,0.3)",
-                  color: "text.primary",
-                  "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" },
+                  color: "text.secondary",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: 1.5,
+                  width: 38,
+                  height: 38,
+                  "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
                 }}
               >
-                {t("detail.addToList")}
-              </Button>
-              <IconButton sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }} size="small">
-                <Heart size={20} />
+                <Bookmark size={18} />
               </IconButton>
               {!movie.tmdb_id && (
                 <IconButton
