@@ -39,75 +39,75 @@ export function SeriesDetail() {
   return (
     <Box>
       {/* Hero Header */}
-      <Box sx={{ position: "relative", width: "100%", height: { xs: 450, md: 550 }, overflow: "hidden" }}>
+      <Box sx={{ position: "relative", width: "100%", height: { xs: 350, sm: 420, md: 550 }, overflow: "hidden" }}>
         {series.backdrop_path && (
           <Box
             component="img"
             src={series.backdrop_path}
             alt=""
-            sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
           />
         )}
         <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.7) 35%, transparent 65%)" }} />
         <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.4) 25%, transparent 50%)" }} />
 
-        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: 4 }}>
+        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 3, md: 6 }, gap: { xs: 2, md: 4 } }}>
           {series.poster_path && (
             <Box
               component="img"
               src={series.poster_path}
               alt={series.title}
               sx={{
-                width: { xs: 140, md: 200 },
+                width: { xs: 100, sm: 140, md: 200 },
                 aspectRatio: "2/3",
                 borderRadius: 2,
                 objectFit: "cover",
-                display: { xs: "none", sm: "block" },
                 boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
               }}
             />
           )}
 
-          <Box sx={{ flex: 1, maxWidth: 600 }}>
-            <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", md: "2.5rem" }, fontWeight: 700, mb: 1 }}>
+          <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600 }}>
+            <Typography variant="h1" sx={{ fontSize: { xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }, fontWeight: 700, mb: 0.5 }}>
               {series.title}
             </Typography>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>
                 {series.start_year}{series.end_year ? `–${series.end_year}` : "–"}
               </Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>
                 {t("common.seasons", { count: series.season_count })}
               </Typography>
-              {series.genres.map((g) => (
-                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.7rem" }} />
+              {series.genres.slice(0, 3).map((g) => (
+                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 20, fontSize: "0.65rem" }} />
               ))}
             </Box>
 
-            <Box sx={{ display: "flex", gap: 1.5 }}>
-              <Button variant="contained" startIcon={<Play size={18} />} size="large">
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+              <Button variant="contained" startIcon={<Play size={16} />} size="medium" sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
                 {t("detail.watchNow")}
               </Button>
               <Button
                 variant="outlined"
-                startIcon={<Plus size={18} />}
-                size="large"
-                sx={{ borderColor: "rgba(255,255,255,0.3)", color: "text.primary", "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" } }}
+                startIcon={<Plus size={16} />}
+                size="medium"
+                sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" }, borderColor: "rgba(255,255,255,0.3)", color: "text.primary", "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" } }}
               >
                 {t("detail.addToList")}
               </Button>
-              <IconButton sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}>
-                <Heart size={22} />
+              <IconButton sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }} size="small">
+                <Heart size={20} />
               </IconButton>
               {!series.tmdb_id && (
                 <IconButton
                   onClick={() => enrichMutation.mutate({ seriesId: series.id })}
                   disabled={enrichMutation.isPending}
                   sx={{ color: "text.secondary" }}
+                  size="small"
                 >
-                  <RefreshCw size={20} />
+                  <RefreshCw size={18} />
                 </IconButton>
               )}
             </Box>
@@ -116,11 +116,11 @@ export function SeriesDetail() {
       </Box>
 
       {/* Body */}
-      <Box sx={{ px: { xs: 3, md: 6 }, py: 4 }}>
+      <Box sx={{ px: { xs: 2, sm: 3, md: 6 }, py: { xs: 3, md: 4 } }}>
         {series.synopsis && (
           <>
             <Collapse in={synopsisExpanded} collapsedSize={44}>
-              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800 }}>
+              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800, fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
                 {series.synopsis}
               </Typography>
             </Collapse>
@@ -192,7 +192,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
         "&:hover .ep-play": { opacity: 1 },
       }}
     >
-      <Box sx={{ position: "relative", width: { xs: 140, md: 200 }, flexShrink: 0, aspectRatio: "16/9", borderRadius: 1.5, overflow: "hidden", bgcolor: "background.paper" }}>
+      <Box sx={{ position: "relative", width: { xs: 110, sm: 140, md: 200 }, flexShrink: 0, aspectRatio: "16/9", borderRadius: 1.5, overflow: "hidden", bgcolor: "background.paper" }}>
         {(episode.thumbnail_path || seriesPoster) ? (
           <Box component="img" src={episode.thumbnail_path ?? seriesPoster!} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
@@ -221,15 +221,15 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, mb: 0.5 }}>
-          <Typography variant="body1" fontWeight={600}>
+        <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5, mb: 0.25 }}>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
             {t("detail.episode", { number: episode.episode_number })}
           </Typography>
-          <Typography variant="body1" fontWeight={500} noWrap>
+          <Typography variant="body2" fontWeight={500} noWrap sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
             {episode.title}
           </Typography>
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block", fontSize: { xs: "0.65rem", md: "0.7rem" } }}>
           {episode.duration_formatted}
           {episode.air_date && ` | ${episode.air_date}`}
         </Typography>
