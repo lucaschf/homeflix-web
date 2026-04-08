@@ -728,10 +728,7 @@ export function Player() {
         ]}
 
         {settingsPanel === "quality" && [
-          <MenuItem key="back" onClick={() => setSettingsPanel("main")}>
-            <ListItemIcon><ChevronLeft size={16} color="#fff" /></ListItemIcon>
-            <ListItemText primary={t("player.quality")} />
-          </MenuItem>,
+          <SettingsBackItem key="back" label={t("player.quality")} onClick={() => setSettingsPanel("main")} />,
           ...qualities.map((q) => (
             <MenuItem key={q} onClick={() => { setQuality(q); setSettingsPanel("main"); }}>
               {quality === q && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
@@ -741,10 +738,7 @@ export function Player() {
         ]}
 
         {settingsPanel === "speed" && [
-          <MenuItem key="back" onClick={() => setSettingsPanel("main")}>
-            <ListItemIcon><ChevronLeft size={16} color="#fff" /></ListItemIcon>
-            <ListItemText primary={t("player.speed")} />
-          </MenuItem>,
+          <SettingsBackItem key="back" label={t("player.speed")} onClick={() => setSettingsPanel("main")} />,
           ...SPEEDS.map((s) => (
             <MenuItem key={s} onClick={() => changeSpeed(s)}>
               {speed === s && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
@@ -794,5 +788,14 @@ export function Player() {
         ))}
       </Menu>
     </Box>
+  );
+}
+
+function SettingsBackItem({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <MenuItem onClick={onClick}>
+      <ListItemIcon><ChevronLeft size={16} color="#fff" /></ListItemIcon>
+      <ListItemText primary={label} />
+    </MenuItem>
   );
 }
