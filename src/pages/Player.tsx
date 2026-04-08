@@ -12,7 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import {
-  ArrowLeft,
+  ChevronLeft,
   AudioLines,
   Check,
   Maximize,
@@ -29,6 +29,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMovie, useProgress, useSaveProgress, useSeriesDetail } from "../api/hooks";
+import { ContentRatingBadge } from "../components/ContentRatingBadge";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -114,8 +115,11 @@ export function Player() {
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRestoredRef = useRef(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [playing, setPlaying] = useState(false);
+  const [showBadge, setShowBadge] = useState(false);
+  const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -174,7 +178,13 @@ export function Player() {
     const onLoadedMetadata = () => {
       if (!knownDuration) setDuration(video.duration);
     };
-    const onPlay = () => setPlaying(true);
+    const onPlay = () => {
+      setPlaying(true);
+      // Show rating badge for 5 seconds on play
+      setShowBadge(true);
+      if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
+      badgeTimerRef.current = setTimeout(() => setShowBadge(false), 5000);
+    };
     const onPause = () => { setPlaying(false); setShowControls(true); };
     const onPlaying = () => { setHlsReady(true); setBuffering(false); };
     const onWaiting = () => setBuffering(true);
@@ -354,6 +364,14 @@ export function Player() {
     return () => window.removeEventListener("beforeunload", saveCurrentProgress);
   }, [saveCurrentProgress]);
 
+  // Cleanup stray timers on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
@@ -494,15 +512,14 @@ export function Player() {
     <Box
       ref={containerRef}
       onMouseMove={resetHideTimer}
-      onClick={(e) => {
-        if ((e.target as HTMLElement).tagName === "VIDEO") togglePlay();
-      }}
       sx={{
         position: "fixed",
         inset: 0,
         zIndex: 9999,
         bgcolor: "#000",
         cursor: showControls ? "default" : "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
       }}
     >
       <video
@@ -549,35 +566,63 @@ export function Player() {
         }}
       >
         {/* Top Bar */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 2, background: "linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, p: { xs: 1, md: 2 }, background: "linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)" }}>
           <IconButton onClick={() => navigate(-1)} sx={{ color: "#fff" }}>
-            <ArrowLeft size={24} />
+            <ChevronLeft size={28} />
           </IconButton>
-          <Typography variant="body1" fontWeight={600} color="#fff">
-            {title}
-          </Typography>
+          {movieData?.content_rating && (
+            <Box sx={{ opacity: showBadge ? 1 : 0, transition: "opacity 500ms" }}>
+              <ContentRatingBadge rating={movieData.content_rating} size={32} />
+            </Box>
+          )}
         </Box>
 
-        {/* Center Play Button (when paused and ready) */}
-        {!playing && hlsReady && (
-          <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)" }}>
-            <IconButton
-              onClick={togglePlay}
-              sx={{
-                width: 72,
-                height: 72,
-                bgcolor: "rgba(232,146,111,0.9)",
-                color: "#0D0D0D",
-                "&:hover": { bgcolor: "rgba(232,146,111,1)" },
-              }}
-            >
-              <Play size={36} fill="#0D0D0D" />
-            </IconButton>
-          </Box>
-        )}
+        {/* Center click zone — handles single click (play/pause) and double click (fullscreen) */}
+        <Box
+          sx={{ flex: 1, cursor: "default" }}
+          onClick={() => {
+            if (clickTimerRef.current) {
+              clearTimeout(clickTimerRef.current);
+              clickTimerRef.current = null;
+              toggleFullscreen();
+            } else {
+              clickTimerRef.current = setTimeout(() => {
+                clickTimerRef.current = null;
+                togglePlay();
+              }, 250);
+            }
+          }}
+        >
+          {/* Center Play Button (when paused and ready) */}
+          {!playing && hlsReady && (
+            <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none" }}>
+              <IconButton
+                sx={{
+                  width: 72,
+                  height: 72,
+                  bgcolor: "rgba(232,146,111,0.9)",
+                  color: "#0D0D0D",
+                  pointerEvents: "none",
+                }}
+              >
+                <Play size={36} fill="#0D0D0D" />
+              </IconButton>
+            </Box>
+          )}
+        </Box>
 
         {/* Bottom Controls */}
-        <Box sx={{ px: { xs: 3, md: 5 }, pb: { xs: 2, md: 3 }, pt: 6, background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
+        <Box sx={{ px: { xs: 1.5, md: 5 }, pb: { xs: 1.5, md: 3 }, pt: 6, background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
+          {/* Title and remaining time above seek bar */}
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.75 }}>
+            <Typography variant="body1" fontWeight={600} color="#fff" noWrap sx={{ fontSize: { xs: "0.95rem", md: "1.1rem" }, flex: 1, mr: 2 }}>
+              {title}
+            </Typography>
+            <Typography variant="body1" color="rgba(255,255,255,0.7)" sx={{ whiteSpace: "nowrap", fontSize: { xs: "0.85rem", md: "0.95rem" } }}>
+              {displayDuration > 0 ? `${formatTime(currentTime)} / -${formatTime(Math.max(0, displayDuration - currentTime))}` : ""}
+            </Typography>
+          </Box>
+
           {/* Seek Bar */}
           <Slider
             value={currentTime}
@@ -585,29 +630,38 @@ export function Player() {
             onChange={(_, v) => seek(v as number)}
             sx={{
               color: "primary.main",
-              height: 4,
+              height: { xs: 3, md: 4 },
               p: 0,
-              mb: 1,
-              "& .MuiSlider-thumb": { width: 14, height: 14, transition: "0.1s", "&:hover": { width: 18, height: 18 } },
+              mb: { xs: 0.5, md: 1 },
+              "& .MuiSlider-thumb": {
+                width: { xs: 16, md: 14 },
+                height: { xs: 16, md: 14 },
+                transition: "0.1s",
+                "&:hover": { width: 18, height: 18 },
+              },
               "& .MuiSlider-rail": { bgcolor: "rgba(255,255,255,0.3)" },
             }}
           />
 
           {/* Controls Row */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <IconButton onClick={() => skip(-10)} sx={{ color: "#fff" }} size="small">
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 0.5 } }}>
+            <IconButton onClick={() => skip(-10)} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
               <SkipBack size={20} />
             </IconButton>
-            <IconButton onClick={togglePlay} sx={{ color: "#fff" }}>
+            <IconButton onClick={togglePlay} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
               {playing ? <Pause size={24} /> : <Play size={24} fill="#fff" />}
             </IconButton>
-            <IconButton onClick={() => skip(30)} sx={{ color: "#fff" }} size="small">
+            <IconButton onClick={() => skip(30)} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
               <SkipForward size={20} />
             </IconButton>
 
-            <IconButton onClick={() => { const m = !muted; setMuted(m); if (videoRef.current) videoRef.current.muted = m; }} sx={{ color: "#fff" }} size="small">
+            <IconButton
+              onClick={() => { const m = !muted; setMuted(m); if (videoRef.current) videoRef.current.muted = m; }}
+              sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}
+            >
               {muted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
             </IconButton>
+            {/* Volume slider — desktop only */}
             <Slider
               value={muted ? 0 : volume}
               max={1}
@@ -617,35 +671,31 @@ export function Player() {
                 width: 80,
                 color: "#fff",
                 mx: 1,
+                display: { xs: "none", md: "block" },
                 "& .MuiSlider-thumb": { width: 12, height: 12 },
                 "& .MuiSlider-rail": { bgcolor: "rgba(255,255,255,0.3)" },
               }}
             />
 
-            <Typography variant="body2" color="#fff" sx={{ mx: 1, whiteSpace: "nowrap", fontSize: "0.75rem" }}>
-              {formatTime(currentTime)} / {formatTime(displayDuration)}
-            </Typography>
-
             <Box sx={{ flexGrow: 1 }} />
 
-            <IconButton onClick={openSettings} sx={{ color: "#fff" }} size="small">
+            <IconButton onClick={openSettings} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
               <Settings size={20} />
             </IconButton>
             {audioTracks.length > 1 && (
-              <IconButton onClick={openAudio} sx={{ color: "#fff" }} size="small">
+              <IconButton onClick={openAudio} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
                 <AudioLines size={20} />
               </IconButton>
             )}
             {subtitleTracks.length > 0 && (
               <IconButton
                 onClick={openSubtitles}
-                sx={{ color: subtitlesActive ? "primary.main" : "#fff" }}
-                size="small"
+                sx={{ color: subtitlesActive ? "primary.main" : "#fff", p: { xs: 1, md: 0.75 } }}
               >
                 <Subtitles size={20} />
               </IconButton>
             )}
-            <IconButton onClick={toggleFullscreen} sx={{ color: "#fff" }} size="small">
+            <IconButton onClick={toggleFullscreen} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
               {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </IconButton>
           </Box>
