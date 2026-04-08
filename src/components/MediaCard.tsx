@@ -41,8 +41,8 @@ export function MediaCard({
 
   return (
     <Box
-      onClick={onClick}
       sx={{
+        position: "relative",
         cursor: "pointer",
         flexShrink: 0,
         minWidth: 0,
@@ -55,15 +55,16 @@ export function MediaCard({
         }),
       }}
     >
-      {/* Image Container */}
+      {/* Image */}
       <Box
+        onClick={onClick}
         sx={{
           position: "relative",
           aspectRatio,
           borderRadius: 1,
           overflow: "hidden",
           bgcolor: "background.paper",
-          mb: 0.5,
+          mb: hasActions ? 0 : 0.5,
         }}
       >
         {imageUrl ? (
@@ -127,18 +128,6 @@ export function MediaCard({
           </Box>
         )}
 
-        {/* Info overlay on hover (Crunchyroll-style, stays within card) */}
-        {hasActions && (
-          <InfoOverlay
-            title={title}
-            synopsis={synopsis}
-            year={year}
-            mediaId={mediaId}
-            mediaType={mediaType}
-            onPlay={onPlay}
-          />
-        )}
-
         {/* Progress bar */}
         {progress !== undefined && progress > 0 && (
           <LinearProgress
@@ -158,26 +147,47 @@ export function MediaCard({
         )}
       </Box>
 
-      {/* Title */}
-      <Typography
-        variant="body2"
-        noWrap
-        sx={{ fontWeight: 500, color: "text.primary", fontSize: "0.8rem", lineHeight: 1.3 }}
+      {/* Title + Year (visible when NOT hovered on action cards, always visible otherwise) */}
+      <Box
+        onClick={onClick}
+        sx={{
+          ...(hasActions && {
+            // Reserve space so card height is stable; hidden by overlay on hover
+            minHeight: "2rem",
+          }),
+        }}
       >
-        {title}
-      </Typography>
-
-      {/* Subtitle / Year */}
-      {(subtitle || year) && (
-        <Typography variant="caption" color="text.secondary" noWrap sx={{ fontSize: "0.7rem" }}>
-          {subtitle || year}
+        <Typography
+          variant="body2"
+          noWrap
+          sx={{ fontWeight: 500, color: "text.primary", fontSize: "0.8rem", lineHeight: 1.3, mt: 0.5 }}
+        >
+          {title}
         </Typography>
+        {(subtitle || year) && (
+          <Typography variant="caption" color="text.secondary" noWrap sx={{ fontSize: "0.7rem" }}>
+            {subtitle || year}
+          </Typography>
+        )}
+      </Box>
+
+      {/* Full-card hover overlay (covers image + title area) */}
+      {hasActions && (
+        <InfoOverlay
+          title={title}
+          synopsis={synopsis}
+          year={year}
+          mediaId={mediaId}
+          mediaType={mediaType}
+          onPlay={onPlay}
+          onClick={onClick}
+        />
       )}
     </Box>
   );
 }
 
-// ── Info Overlay (inside the poster, no expansion) ───────
+// ── Info Overlay (covers entire card on hover) ───────────
 
 function InfoOverlay({
   title,
@@ -186,6 +196,7 @@ function InfoOverlay({
   mediaId,
   mediaType,
   onPlay,
+  onClick,
 }: {
   title: string;
   synopsis?: string;
@@ -193,6 +204,7 @@ function InfoOverlay({
   mediaId: string;
   mediaType: "movie" | "series";
   onPlay?: () => void;
+  onClick?: () => void;
 }) {
   const { t } = useTranslation();
   const { data: inWatchlist } = useIsInWatchlist(mediaId);
@@ -203,16 +215,19 @@ function InfoOverlay({
     <>
       <Box
         className="card-hover-overlay"
+        onClick={onClick}
         sx={{
           position: "absolute",
           inset: 0,
+          borderRadius: 1,
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
-          background: "linear-gradient(0deg, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,0.15) 100%)",
+          background: "linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.75) 45%, rgba(0,0,0,0.1) 100%)",
           opacity: 0,
           transition: "opacity 250ms ease",
           zIndex: 1,
+          overflow: "hidden",
         }}
       >
         {/* Info content */}
@@ -249,25 +264,15 @@ function InfoOverlay({
             </Typography>
           )}
 
-          {/* Action buttons */}
+          {/* Action buttons — accent-colored icons, no background */}
           <Box
-            sx={{ display: "flex", gap: 0.75, mt: 1.5 }}
+            sx={{ display: "flex", gap: 0.5, mt: 1.5 }}
             onClick={(e) => e.stopPropagation()}
           >
             {onPlay && (
               <Tooltip title={t("card.play")} arrow>
-                <IconButton
-                  size="small"
-                  onClick={onPlay}
-                  sx={{
-                    bgcolor: "primary.main",
-                    color: "#0D0D0D",
-                    "&:hover": { bgcolor: "primary.dark" },
-                    width: 32,
-                    height: 32,
-                  }}
-                >
-                  <Play size={14} fill="#0D0D0D" />
+                <IconButton size="small" onClick={onPlay} sx={{ color: "primary.main" }}>
+                  <Play size={18} />
                 </IconButton>
               </Tooltip>
             )}
@@ -276,15 +281,9 @@ function InfoOverlay({
               <IconButton
                 size="small"
                 onClick={() => toggleWatchlist.mutate({ media_id: mediaId, media_type: mediaType })}
-                sx={{
-                  bgcolor: "rgba(255,255,255,0.15)",
-                  color: inWatchlist ? "primary.main" : "#fff",
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-                  width: 32,
-                  height: 32,
-                }}
+                sx={{ color: "primary.main" }}
               >
-                {inWatchlist ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+                {inWatchlist ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
               </IconButton>
             </Tooltip>
 
@@ -292,15 +291,9 @@ function InfoOverlay({
               <IconButton
                 size="small"
                 onClick={() => setAddToListOpen(true)}
-                sx={{
-                  bgcolor: "rgba(255,255,255,0.15)",
-                  color: "#fff",
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.25)" },
-                  width: 32,
-                  height: 32,
-                }}
+                sx={{ color: "primary.main" }}
               >
-                <ListPlus size={14} />
+                <ListPlus size={18} />
               </IconButton>
             </Tooltip>
           </Box>
