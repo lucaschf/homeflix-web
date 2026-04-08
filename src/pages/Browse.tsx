@@ -17,7 +17,7 @@ interface BrowseItem {
   year: number;
   type: "movie" | "series";
   genres: string[];
-  posterUrl?: string;
+  imageUrl?: string;
 }
 
 interface GenreSection {
@@ -42,7 +42,7 @@ export function Browse() {
       year: m.year,
       type: "movie" as const,
       genres: m.genres,
-      posterUrl: m.poster_path ?? undefined,
+      imageUrl: m.poster_path ?? undefined,
     }));
     const series = (seriesData?.series ?? []).map((s) => ({
       id: s.id,
@@ -50,7 +50,7 @@ export function Browse() {
       year: s.start_year,
       type: "series" as const,
       genres: s.genres,
-      posterUrl: s.poster_path ?? undefined,
+      imageUrl: s.poster_path ?? undefined,
     }));
     return [...movies, ...series];
   }, [moviesData, seriesData]);
@@ -165,7 +165,7 @@ export function Browse() {
                   key={item.id}
                   title={item.title}
                   year={item.year}
-                  posterUrl={item.posterUrl}
+                  imageUrl={item.imageUrl}
                   variant="poster"
                   fullWidth
                   onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
@@ -188,7 +188,7 @@ export function Browse() {
                 key={item.id}
                 title={item.title}
                 year={item.year}
-                posterUrl={item.posterUrl}
+                imageUrl={item.imageUrl}
                 variant="poster"
                 onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
               />
