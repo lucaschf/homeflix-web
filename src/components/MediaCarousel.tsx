@@ -1,6 +1,6 @@
 import { Box, IconButton, Typography } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface MediaCarouselProps {
@@ -27,15 +27,16 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
 
   const handleScroll = updateArrows;
 
-  // Check overflow on mount and when children change
+  // Check overflow on mount, resize, and when children count changes
+  const childCount = React.Children.count(children);
   useEffect(() => {
     updateArrows();
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(updateArrows);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [updateArrows, children]);
+  }, [updateArrows, childCount]);
 
   const scroll = (direction: "left" | "right") => {
     const el = scrollRef.current;
