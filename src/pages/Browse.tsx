@@ -174,7 +174,7 @@ export function Browse() {
                   fullWidth
                   mediaId={item.id}
                   mediaType={item.type}
-                  onPlay={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
+                  onPlay={() => navigate(item.type === "movie" ? `/play/movie/${item.id}` : `/series/${item.id}`)}
                   onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
                 />
               ))}

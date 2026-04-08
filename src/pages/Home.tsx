@@ -137,7 +137,7 @@ export function Home() {
                 variant="poster"
                 mediaId={movie.id}
                 mediaType="movie"
-                onPlay={() => navigate(`/movie/${movie.id}`)}
+                onPlay={() => navigate(`/play/movie/${movie.id}`)}
                 onClick={() => navigate(`/movie/${movie.id}`)}
               />
             ))}
@@ -175,7 +175,7 @@ export function Home() {
                 variant="poster"
                 mediaId={item.id}
                 mediaType={item.type}
-                onPlay={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
+                onPlay={() => navigate(item.type === "movie" ? `/play/movie/${item.id}` : `/series/${item.id}`)}
                 onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
               />
             ))}
