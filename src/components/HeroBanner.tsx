@@ -233,20 +233,10 @@ export function HeroBanner({
             {t("hero.myList")}
           </Button>
         </Box>
-      </Box>
 
-      {/* Dot Indicators */}
-      {count > 1 && (
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: 16,
-            right: { xs: 16, md: 48 },
-            display: "flex",
-            gap: 1,
-            zIndex: 2,
-          }}
-        >
+        {/* Dot Indicators — positioned near the first list below */}
+        {count > 1 && (
+          <Box sx={{ display: "flex", gap: 0.75, mt: { xs: 8, md: 12 } }}>
           {slides.map((s, i) => (
             <Box
               key={s.id}
@@ -266,8 +256,9 @@ export function HeroBanner({
               }}
             />
           ))}
-        </Box>
-      )}
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }
