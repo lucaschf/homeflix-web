@@ -231,11 +231,12 @@ export function HeroBanner({
             }}
             sx={{
               color: inWatchlist ? "primary.main" : "text.secondary",
-              border: "1px solid rgba(255,255,255,0.2)",
+              border: inWatchlist ? "1px solid" : "1px solid rgba(255,255,255,0.2)",
+              borderColor: inWatchlist ? "primary.main" : undefined,
               borderRadius: 1.5,
               width: 42,
               height: 42,
-              "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+              "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.4)" },
             }}
           >
             <Bookmark size={20} fill={inWatchlist ? "currentColor" : "none"} />

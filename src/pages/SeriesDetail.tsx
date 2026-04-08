@@ -9,6 +9,7 @@ import {
   LinearProgress,
   Tab,
   Tabs,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { Bookmark, Play, RefreshCw } from "lucide-react";
@@ -112,19 +113,22 @@ export function SeriesDetail() {
               >
                 {playLabel}
               </Button>
-              <IconButton
-                onClick={() => toggleWatchlist.mutate({ media_id: series.id, media_type: "series" })}
-                sx={{
-                  color: inWatchlist ? "primary.main" : "text.secondary",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: 1.5,
-                  width: 38,
-                  height: 38,
-                  "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: "rgba(255,255,255,0.4)" },
-                }}
-              >
-                <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
-              </IconButton>
+              <Tooltip title={inWatchlist ? t("lists.removeFromList") : t("lists.addToList")} arrow>
+                <IconButton
+                  onClick={() => toggleWatchlist.mutate({ media_id: series.id, media_type: "series" })}
+                  sx={{
+                    color: inWatchlist ? "primary.main" : "text.secondary",
+                    border: inWatchlist ? "1px solid" : "1px solid rgba(255,255,255,0.2)",
+                    borderColor: inWatchlist ? "primary.main" : undefined,
+                    borderRadius: 1.5,
+                    width: 38,
+                    height: 38,
+                    "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.4)" },
+                  }}
+                >
+                  <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
+                </IconButton>
+              </Tooltip>
               {!series.tmdb_id && (
                 <IconButton
                   onClick={() => enrichMutation.mutate({ seriesId: series.id })}
