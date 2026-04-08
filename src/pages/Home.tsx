@@ -110,9 +110,9 @@ export function Home() {
               <MediaCard
                 key={item.media_id}
                 title={item.title}
-                posterUrl={item.poster_path ?? undefined}
+                posterUrl={item.backdrop_path ?? item.poster_path ?? undefined}
                 progress={item.percentage}
-                variant="poster"
+                variant="episode"
                 onClick={() => {
                   if (item.media_type === "movie") {
                     navigate(`/play/movie/${item.media_id}`);
