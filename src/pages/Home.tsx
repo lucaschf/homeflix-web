@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useContinueWatching, useMovies, useSeries } from "../api/hooks";
 import type { MovieSummary, SeriesSummary } from "../api/types";
-import { HeroBanner } from "../components/HeroBanner";
+import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 
@@ -50,6 +50,35 @@ export function Home() {
 
   const genreSections = useMemo(() => buildGenreSections(movies, series), [movies, series]);
 
+  const heroSlides: HeroSlide[] = useMemo(() => {
+    const all: HeroSlide[] = [
+      ...movies
+        .filter((m) => m.backdrop_path)
+        .map((m) => ({
+          id: m.id,
+          type: "movie" as const,
+          title: m.title,
+          synopsis: m.synopsis,
+          year: m.year,
+          duration: m.duration_formatted,
+          genres: m.genres,
+          backdropUrl: m.backdrop_path,
+        })),
+      ...series
+        .filter((s) => s.backdrop_path)
+        .map((s) => ({
+          id: s.id,
+          type: "series" as const,
+          title: s.title,
+          synopsis: s.synopsis,
+          year: s.start_year,
+          genres: s.genres,
+          backdropUrl: s.backdrop_path,
+        })),
+    ];
+    return all.slice(0, 6);
+  }, [movies, series]);
+
   if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
@@ -62,18 +91,15 @@ export function Home() {
     return <EmptyState />;
   }
 
-  const heroMovie = movies[0];
-
   return (
     <Box>
-      {heroMovie && (
+      {heroSlides.length > 0 && (
         <HeroBanner
-          title={heroMovie.title}
-          year={heroMovie.year}
-          duration={heroMovie.duration_formatted}
-          genres={heroMovie.genres}
-          posterUrl={heroMovie.poster_path ?? undefined}
-          onPlay={() => navigate(`/movie/${heroMovie.id}`)}
+          slides={heroSlides}
+          onPlay={(slide) => {
+            if (slide.type === "movie") navigate(`/movie/${slide.id}`);
+            else navigate(`/series/${slide.id}`);
+          }}
         />
       )}
 
