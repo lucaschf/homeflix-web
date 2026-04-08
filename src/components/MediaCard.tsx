@@ -231,7 +231,7 @@ function InfoOverlay({
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
-          background: "linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.75) 45%, rgba(0,0,0,0.1) 100%)",
+          background: "linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0.35) 100%)",
           opacity: 0,
           transition: "opacity 250ms ease",
           zIndex: 1,
