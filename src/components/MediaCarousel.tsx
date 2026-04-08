@@ -67,20 +67,20 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
           <IconButton
             className="scroll-btn"
             onClick={() => scroll("left")}
+            aria-label="Scroll left"
             sx={{
               position: "absolute",
-              left: 8,
+              left: { xs: 0, md: 8 },
               top: "50%",
               transform: "translateY(-50%)",
               zIndex: 2,
-              bgcolor: "rgba(0,0,0,0.7)",
-              color: "text.primary",
+              color: "rgba(255,255,255,0.7)",
               opacity: 0,
               transition: "opacity 200ms",
-              "&:hover": { bgcolor: "rgba(0,0,0,0.9)" },
+              "&:hover": { color: "#fff", bgcolor: "transparent" },
             }}
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={32} />
           </IconButton>
         )}
 
@@ -89,20 +89,20 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
           <IconButton
             className="scroll-btn"
             onClick={() => scroll("right")}
+            aria-label="Scroll right"
             sx={{
               position: "absolute",
-              right: 8,
+              right: { xs: 0, md: 8 },
               top: "50%",
               transform: "translateY(-50%)",
               zIndex: 2,
-              bgcolor: "rgba(0,0,0,0.7)",
-              color: "text.primary",
+              color: "rgba(255,255,255,0.7)",
               opacity: 0,
               transition: "opacity 200ms",
-              "&:hover": { bgcolor: "rgba(0,0,0,0.9)" },
+              "&:hover": { color: "#fff", bgcolor: "transparent" },
             }}
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={32} />
           </IconButton>
         )}
 
