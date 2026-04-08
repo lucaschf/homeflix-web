@@ -1,6 +1,6 @@
 import { Box, IconButton, Typography } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 interface MediaCarouselProps {
@@ -13,14 +13,30 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
   const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
-  const [showRight, setShowRight] = useState(true);
+  const [showRight, setShowRight] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
 
-  const handleScroll = () => {
+  const updateArrows = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
+    const overflows = el.scrollWidth > el.clientWidth + 10;
+    setHasOverflow(overflows);
     setShowLeft(el.scrollLeft > 0);
     setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
-  };
+  }, []);
+
+  const handleScroll = updateArrows;
+
+  // Check overflow on mount, resize, and when children count changes
+  const childCount = React.Children.count(children);
+  useEffect(() => {
+    updateArrows();
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(updateArrows);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [updateArrows, childCount]);
 
   const scroll = (direction: "left" | "right") => {
     const el = scrollRef.current;
@@ -45,7 +61,7 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
         }}
       >
         <Typography variant="h2">{title}</Typography>
-        {onSeeAll && (
+        {onSeeAll && hasOverflow && (
           <Typography
             variant="body2"
             onClick={onSeeAll}
