@@ -7,6 +7,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMovies, useSeries } from "../api/hooks";
+import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 
@@ -72,6 +73,37 @@ export function Browse() {
       .sort((a, b) => b.items.length - a.items.length);
   }, [filtered]);
 
+  const heroSlides: HeroSlide[] = useMemo(() => {
+    const movieSlides: HeroSlide[] = (moviesData?.movies ?? [])
+      .filter((m) => m.backdrop_path)
+      .map((m) => ({
+        id: m.id,
+        type: "movie" as const,
+        title: m.title,
+        synopsis: m.synopsis,
+        year: m.year,
+        duration: m.duration_formatted,
+        genres: m.genres,
+        backdropUrl: m.backdrop_path,
+      }));
+
+    const seriesSlides: HeroSlide[] = (seriesData?.series ?? [])
+      .filter((s) => s.backdrop_path)
+      .map((s) => ({
+        id: s.id,
+        type: "series" as const,
+        title: s.title,
+        synopsis: s.synopsis,
+        year: s.start_year,
+        genres: s.genres,
+        backdropUrl: s.backdrop_path,
+      }));
+
+    if (typeFilter === "movie") return movieSlides.slice(0, 6);
+    if (typeFilter === "series") return seriesSlides.slice(0, 6);
+    return [...movieSlides, ...seriesSlides].slice(0, 6);
+  }, [moviesData, seriesData, typeFilter]);
+
   const isLoading = moviesLoading || seriesLoading;
 
   if (isLoading) {
@@ -83,7 +115,18 @@ export function Browse() {
   }
 
   return (
-    <Box sx={{ py: 4 }}>
+    <Box>
+      {!genreFilter && heroSlides.length > 0 && (
+        <HeroBanner
+          slides={heroSlides}
+          onPlay={(slide) => {
+            if (slide.type === "movie") navigate(`/movie/${slide.id}`);
+            else navigate(`/series/${slide.id}`);
+          }}
+        />
+      )}
+
+      <Box sx={{ mt: genreFilter || heroSlides.length === 0 ? 4 : -10, position: "relative", zIndex: 1 }}>
       {genreFilter ? (
         <>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: { xs: 3, md: 6 }, mb: 3 }}>
@@ -157,6 +200,7 @@ export function Browse() {
           </Typography>
         </Box>
       )}
+      </Box>
     </Box>
   );
 }
