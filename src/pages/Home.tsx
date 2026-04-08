@@ -103,7 +103,7 @@ export function Home() {
         />
       )}
 
-      <Box sx={{ mt: -4, position: "relative", zIndex: 1 }}>
+      <Box sx={{ mt: -10, position: "relative", zIndex: 1 }}>
         {continueWatching && continueWatching.length > 0 && (
           <MediaCarousel title={t("home.continueWatching")}>
             {continueWatching.map((item) => (

@@ -70,7 +70,8 @@ export function HeroBanner({
       sx={{
         position: "relative",
         width: "100%",
-        height: { xs: 400, sm: 480, md: 560 },
+        height: "75dvh",
+        minHeight: 500,
         overflow: "hidden",
       }}
     >
@@ -90,7 +91,7 @@ export function HeroBanner({
               component="img"
               src={s.backdropUrl}
               alt=""
-              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+              sx={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
             />
           )}
         </Box>
@@ -110,7 +111,7 @@ export function HeroBanner({
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.3) 30%, transparent 50%)",
+            "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.6) 25%, transparent 55%)",
         }}
       />
 
@@ -159,7 +160,7 @@ export function HeroBanner({
           flexDirection: "column",
           justifyContent: "flex-end",
           px: { xs: 3, md: 6 },
-          pb: { xs: 4, md: 6 },
+          pb: { xs: 10, md: 14 },
           maxWidth: 600,
           zIndex: 1,
         }}
