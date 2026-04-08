@@ -11,7 +11,7 @@ import { MediaCarousel } from "../components/MediaCarousel";
 
 interface GenreSection {
   genre: string;
-  items: Array<{ id: string; title: string; year: number; type: "movie" | "series"; posterUrl?: string }>;
+  items: Array<{ id: string; title: string; year: number; type: "movie" | "series"; imageUrl?: string }>;
 }
 
 function buildGenreSections(movies: MovieSummary[], series: SeriesSummary[]): GenreSection[] {
@@ -20,14 +20,14 @@ function buildGenreSections(movies: MovieSummary[], series: SeriesSummary[]): Ge
   for (const m of movies) {
     for (const g of m.genres) {
       if (!genreMap.has(g)) genreMap.set(g, []);
-      genreMap.get(g)!.push({ id: m.id, title: m.title, year: m.year, type: "movie", posterUrl: m.poster_path ?? undefined });
+      genreMap.get(g)!.push({ id: m.id, title: m.title, year: m.year, type: "movie", imageUrl: m.poster_path ?? undefined });
     }
   }
 
   for (const s of series) {
     for (const g of s.genres) {
       if (!genreMap.has(g)) genreMap.set(g, []);
-      genreMap.get(g)!.push({ id: s.id, title: s.title, year: s.start_year, type: "series", posterUrl: s.poster_path ?? undefined });
+      genreMap.get(g)!.push({ id: s.id, title: s.title, year: s.start_year, type: "series", imageUrl: s.poster_path ?? undefined });
     }
   }
 
@@ -110,9 +110,9 @@ export function Home() {
               <MediaCard
                 key={item.media_id}
                 title={item.title}
-                posterUrl={item.poster_path ?? undefined}
+                imageUrl={item.backdrop_path ?? item.poster_path ?? undefined}
                 progress={item.percentage}
-                variant="poster"
+                variant="landscape"
                 onClick={() => {
                   if (item.media_type === "movie") {
                     navigate(`/play/movie/${item.media_id}`);
@@ -132,7 +132,7 @@ export function Home() {
                 key={movie.id}
                 title={movie.title}
                 year={movie.year}
-                posterUrl={movie.poster_path ?? undefined}
+                imageUrl={movie.poster_path ?? undefined}
                 variant="poster"
                 onClick={() => navigate(`/movie/${movie.id}`)}
               />
@@ -147,7 +147,7 @@ export function Home() {
                 key={s.id}
                 title={s.title}
                 year={s.start_year}
-                posterUrl={s.poster_path ?? undefined}
+                imageUrl={s.poster_path ?? undefined}
                 variant="poster"
                 onClick={() => navigate(`/series/${s.id}`)}
               />
@@ -162,7 +162,7 @@ export function Home() {
                 key={item.id}
                 title={item.title}
                 year={item.year}
-                posterUrl={item.posterUrl}
+                imageUrl={item.imageUrl}
                 variant="poster"
                 onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
               />

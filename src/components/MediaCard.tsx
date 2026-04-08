@@ -4,18 +4,18 @@ import { useTranslation } from "react-i18next";
 
 interface MediaCardProps {
   title: string;
-  posterUrl?: string;
+  imageUrl?: string;
   year?: number;
   progress?: number;
   subtitle?: string;
-  variant?: "poster" | "episode";
+  variant?: "poster" | "landscape" | "episode";
   fullWidth?: boolean;
   onClick?: () => void;
 }
 
 export function MediaCard({
   title,
-  posterUrl,
+  imageUrl,
   year,
   progress,
   subtitle,
@@ -24,8 +24,7 @@ export function MediaCard({
   onClick,
 }: MediaCardProps) {
   const { t } = useTranslation();
-  const isPoster = variant === "poster";
-  const aspectRatio = isPoster ? "2/3" : "16/9";
+  const aspectRatio = variant === "poster" ? "2/3" : "16/9";
 
   return (
     <Box
@@ -55,11 +54,11 @@ export function MediaCard({
           mb: 0.5,
         }}
       >
-        {posterUrl ? (
+        {imageUrl ? (
           <Box
             component="img"
             className="media-image"
-            src={posterUrl}
+            src={imageUrl}
             alt={title}
             sx={{
               width: "100%",

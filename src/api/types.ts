@@ -175,6 +175,7 @@ export interface ContinueWatchingItem {
   media_type: MediaType;
   title: string;
   poster_path: string | null;
+  backdrop_path: string | null;
   position_seconds: number;
   duration_seconds: number;
   percentage: number;
