@@ -364,6 +364,14 @@ export function Player() {
     return () => window.removeEventListener("beforeunload", saveCurrentProgress);
   }, [saveCurrentProgress]);
 
+  // Cleanup stray timers on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
+    };
+  }, []);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
