@@ -47,9 +47,15 @@ export function MediaCard({
         flexShrink: 0,
         minWidth: 0,
         overflow: "hidden",
+        borderRadius: 1,
         width: fullWidth ? "100%" : { xs: 140, sm: 200, md: 240, lg: 280 },
         "&:hover .media-image": { transform: "scale(1.05)" },
         "&:hover .card-hover-overlay": { opacity: 1 },
+        // On hover: hide text, image fills entire card
+        ...(hasActions && {
+          "&:hover .card-image-wrapper": { position: "absolute", inset: 0, aspectRatio: "auto" },
+          "&:hover .card-text": { opacity: 0 },
+        }),
         ...(!hasActions && {
           "&:hover .play-overlay": { opacity: 1 },
         }),
@@ -57,6 +63,7 @@ export function MediaCard({
     >
       {/* Image */}
       <Box
+        className={hasActions ? "card-image-wrapper" : undefined}
         onClick={onClick}
         sx={{
           position: "relative",
@@ -65,6 +72,8 @@ export function MediaCard({
           overflow: "hidden",
           bgcolor: "background.paper",
           mb: hasActions ? 0 : 0.5,
+          transition: "all 250ms ease",
+          zIndex: 0,
         }}
       >
         {imageUrl ? (
@@ -147,20 +156,19 @@ export function MediaCard({
         )}
       </Box>
 
-      {/* Title + Year (visible when NOT hovered on action cards, always visible otherwise) */}
+      {/* Title + Year — fades out on hover for action cards */}
       <Box
+        className={hasActions ? "card-text" : undefined}
         onClick={onClick}
         sx={{
-          ...(hasActions && {
-            // Reserve space so card height is stable; hidden by overlay on hover
-            minHeight: "2rem",
-          }),
+          transition: hasActions ? "opacity 250ms ease" : undefined,
+          mt: 0.5,
         }}
       >
         <Typography
           variant="body2"
           noWrap
-          sx={{ fontWeight: 500, color: "text.primary", fontSize: "0.8rem", lineHeight: 1.3, mt: 0.5 }}
+          sx={{ fontWeight: 500, color: "text.primary", fontSize: "0.8rem", lineHeight: 1.3 }}
         >
           {title}
         </Typography>
