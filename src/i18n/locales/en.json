@@ -28,7 +28,11 @@
     "addLibrary": "Add Library"
   },
   "card": {
-    "noImage": "No Image"
+    "noImage": "No Image",
+    "play": "Play",
+    "addToWatchlist": "Add to Watchlist",
+    "removeFromWatchlist": "Remove from Watchlist",
+    "addToList": "Add to List"
   },
   "common": {
     "seasons": "{{count}} Season",
@@ -137,7 +141,15 @@
     "listItemsEmptyHint": "Use the search above to add items, or add them from the media page",
     "backToLists": "Back to Lists",
     "settings": "Settings",
-    "limitReached": "List limit reached"
+    "limitReached": "List limit reached",
+    "addToListTitle": "Add to List",
+    "createAndAdd": "Create New List",
+    "noLists": "No lists yet. Create one first!",
+    "added": "Added!",
+    "alreadyInList": "Already in list",
+    "searchMedia": "Search movies or series...",
+    "searchResults": "Search Results",
+    "noSearchResults": "No results for \"{{query}}\""
   },
   "settings": {
     "title": "Settings",
