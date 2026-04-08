@@ -729,7 +729,7 @@ export function Player() {
 
         {settingsPanel === "quality" && [
           <MenuItem key="back" onClick={() => setSettingsPanel("main")}>
-            <ListItemIcon><ArrowLeft size={16} color="#fff" /></ListItemIcon>
+            <ListItemIcon><ChevronLeft size={16} color="#fff" /></ListItemIcon>
             <ListItemText primary={t("player.quality")} />
           </MenuItem>,
           ...qualities.map((q) => (
@@ -742,7 +742,7 @@ export function Player() {
 
         {settingsPanel === "speed" && [
           <MenuItem key="back" onClick={() => setSettingsPanel("main")}>
-            <ListItemIcon><ArrowLeft size={16} color="#fff" /></ListItemIcon>
+            <ListItemIcon><ChevronLeft size={16} color="#fff" /></ListItemIcon>
             <ListItemText primary={t("player.speed")} />
           </MenuItem>,
           ...SPEEDS.map((s) => (

@@ -22,7 +22,7 @@ const navItems = [
   { to: "/", labelKey: "nav.home", icon: Home },
   { to: "/browse?type=movie", labelKey: "nav.movies", icon: Film },
   { to: "/browse?type=series", labelKey: "nav.series", icon: Tv },
-  { to: "/lists", labelKey: "nav.myLists", icon: Bookmark, mobileOnly: true },
+  { to: "/lists", labelKey: "nav.myListsShort", icon: Bookmark, mobileOnly: true },
   { to: "/settings", labelKey: "nav.settings", icon: Settings, mobileOnly: true },
 ];
 
@@ -202,16 +202,20 @@ export function Navbar() {
               backdropFilter: "blur(12px)",
               "& .MuiBottomNavigationAction-root": {
                 color: "text.secondary",
-                minWidth: 0,
+                minWidth: "auto",
+                px: 0.5,
                 py: 1,
                 "&.Mui-selected": {
                   color: "primary.main",
                 },
               },
               "& .MuiBottomNavigationAction-label": {
-                fontSize: "0.65rem",
+                fontSize: "0.6rem",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
                 "&.Mui-selected": {
-                  fontSize: "0.65rem",
+                  fontSize: "0.6rem",
                 },
               },
             }}
