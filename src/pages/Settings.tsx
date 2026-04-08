@@ -120,10 +120,10 @@ export function Settings() {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
                   <FolderOpen size={18} color="#A0A0A0" />
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="body2" fontWeight={600} noWrap>
+                    <Typography variant="body2" fontWeight={600} noWrap title={lib.name}>
                       {lib.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" noWrap sx={{ display: "block" }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }} title={lib.path}>
                       {lib.path}
                     </Typography>
                   </Box>
