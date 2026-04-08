@@ -2,8 +2,6 @@ import { useCallback, useState } from "react";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Chip,
   Dialog,
   DialogActions,
@@ -19,9 +17,19 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { FolderOpen, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+  Database,
+  FolderOpen,
+  HardDrive,
+  Info,
+  MonitorPlay,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useBulkEnrich, useHealth, useScan } from "../api/hooks";
+import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
 
 const LIBRARIES_STORAGE_KEY = "homeflix-libraries";
 
@@ -55,22 +63,27 @@ export function Settings() {
   const [subtitleLang, setSubtitleLang] = useState("pt-BR");
   const [subtitleMode, setSubtitleMode] = useState("foreignOnly");
   const [defaultQuality, setDefaultQuality] = useState("best");
-  const [tmdbKey, setTmdbKey] = useState("");
   const [autoEnrich, setAutoEnrich] = useState(true);
 
-  const handleAddLibrary = useCallback((name: string, path: string) => {
-    const newLib: Library = { id: `lib_${Date.now()}`, name, path };
-    const updated = [...libraries, newLib];
-    setLibraries(updated);
-    saveLibraries(updated);
-    setAddDialogOpen(false);
-  }, [libraries]);
+  const handleAddLibrary = useCallback(
+    (name: string, path: string) => {
+      const newLib: Library = { id: `lib_${Date.now()}`, name, path };
+      const updated = [...libraries, newLib];
+      setLibraries(updated);
+      saveLibraries(updated);
+      setAddDialogOpen(false);
+    },
+    [libraries],
+  );
 
-  const handleDeleteLibrary = useCallback((id: string) => {
-    const updated = libraries.filter((l) => l.id !== id);
-    setLibraries(updated);
-    saveLibraries(updated);
-  }, [libraries]);
+  const handleDeleteLibrary = useCallback(
+    (id: string) => {
+      const updated = libraries.filter((l) => l.id !== id);
+      setLibraries(updated);
+      saveLibraries(updated);
+    },
+    [libraries],
+  );
 
   const handleScan = (lib: Library) => {
     scanMutation.mutate([lib.path]);
@@ -84,87 +97,99 @@ export function Settings() {
   const apiHealthy = health?.status === "healthy";
 
   return (
-    <Box sx={{ px: { xs: 3, md: 6 }, py: 4, maxWidth: 800 }}>
-      <Typography variant="h1" sx={{ mb: 4 }}>
+    <Box sx={{ px: { xs: 2, md: 6 }, py: { xs: 3, md: 5 }, maxWidth: 800, mx: "auto" }}>
+      <Typography variant="h1" sx={{ fontSize: { xs: "1.5rem", md: "1.75rem" }, fontWeight: 700, mb: 4 }}>
         {t("settings.title")}
       </Typography>
 
-      {/* Libraries */}
-      <SectionTitle>{t("settings.libraries")}</SectionTitle>
-      <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
-          {libraries.length > 0 ? (
-            libraries.map((lib, idx) => (
-              <Box key={lib.id}>
-                {idx > 0 && <Divider />}
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2.5, py: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <FolderOpen size={20} color="#A0A0A0" />
-                    <Box>
-                      <Typography variant="body1" fontWeight={500}>{lib.name}</Typography>
-                      <Typography variant="body2" color="text.secondary">{lib.path}</Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <Button
-                      size="small"
-                      startIcon={<RefreshCw size={14} />}
-                      onClick={() => handleScan(lib)}
-                      disabled={scanMutation.isPending}
-                    >
-                      {scanMutation.isPending ? t("settings.scanning") : t("settings.scan")}
-                    </Button>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDeleteLibrary(lib.id)}
-                      sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
-                    >
-                      <Trash2 size={16} />
-                    </IconButton>
+      {/* ── Libraries ────────────────────────────────────── */}
+      <SettingsSection icon={HardDrive} title={t("settings.libraries")}>
+        {libraries.length > 0 ? (
+          libraries.map((lib, idx) => (
+            <Box key={lib.id}>
+              {idx > 0 && <Divider sx={{ borderColor: "rgba(255,255,255,0.06)" }} />}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  px: 2.5,
+                  py: 2,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
+                  <FolderOpen size={18} color="#A0A0A0" />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600} noWrap title={lib.name}>
+                      {lib.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }} title={lib.path}>
+                      {lib.path}
+                    </Typography>
                   </Box>
                 </Box>
+                <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
+                  <Button
+                    size="small"
+                    startIcon={<RefreshCw size={14} />}
+                    onClick={() => handleScan(lib)}
+                    disabled={scanMutation.isPending}
+                    sx={{ fontSize: "0.75rem" }}
+                  >
+                    {scanMutation.isPending ? t("settings.scanning") : t("settings.scan")}
+                  </Button>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteLibrary(lib.id)}
+                    sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}
+                  >
+                    <Trash2 size={15} />
+                  </IconButton>
+                </Box>
               </Box>
-            ))
-          ) : (
-            <Box sx={{ textAlign: "center", py: 4 }}>
-              <Typography variant="body2" color="text.secondary">{t("settings.noLibraries")}</Typography>
             </Box>
-          )}
-          <Divider />
-          <Box sx={{ display: "flex", justifyContent: "space-between", px: 2.5, py: 1.5 }}>
-            <Button startIcon={<Plus size={16} />} size="small" onClick={() => setAddDialogOpen(true)}>
-              {t("settings.addLibrary")}
-            </Button>
-            {libraries.length > 0 && (
-              <Button
-                size="small"
-                startIcon={<RefreshCw size={14} />}
-                onClick={handleScanAll}
-                disabled={scanMutation.isPending}
-              >
-                {scanMutation.isPending ? t("settings.scanning") : `${t("settings.scan")} ${t("browse.all")}`}
-              </Button>
-            )}
+          ))
+        ) : (
+          <Box sx={{ textAlign: "center", py: 5 }}>
+            <FolderOpen size={32} color="#555" />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              {t("settings.noLibraries")}
+            </Typography>
           </Box>
-        </CardContent>
-      </Card>
+        )}
+        <Divider sx={{ borderColor: "rgba(255,255,255,0.06)" }} />
+        <Box sx={{ display: "flex", justifyContent: "space-between", px: 2.5, py: 1.5 }}>
+          <Button startIcon={<Plus size={16} />} size="small" onClick={() => setAddDialogOpen(true)}>
+            {t("settings.addLibrary")}
+          </Button>
+          {libraries.length > 0 && (
+            <Button
+              size="small"
+              startIcon={<RefreshCw size={14} />}
+              onClick={handleScanAll}
+              disabled={scanMutation.isPending}
+            >
+              {scanMutation.isPending ? t("settings.scanning") : `${t("settings.scan")} ${t("browse.all")}`}
+            </Button>
+          )}
+        </Box>
+      </SettingsSection>
 
-      {/* Playback */}
-      <SectionTitle>{t("settings.playback")}</SectionTitle>
-      <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      {/* ── Playback ─────────────────────────────────────── */}
+      <SettingsSection icon={MonitorPlay} title={t("settings.playback")}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
           <FormControl size="small" fullWidth>
             <InputLabel>{t("settings.preferredAudio")}</InputLabel>
             <Select value={audioLang} onChange={(e) => setAudioLang(e.target.value)} label={t("settings.preferredAudio")}>
-              <MenuItem value="pt-BR">Portugues (Brasil)</MenuItem>
+              <MenuItem value="pt-BR">Português (Brasil)</MenuItem>
               <MenuItem value="en">English</MenuItem>
-              <MenuItem value="ja">Japanese</MenuItem>
+              <MenuItem value="ja">日本語</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" fullWidth>
             <InputLabel>{t("settings.preferredSubtitle")}</InputLabel>
             <Select value={subtitleLang} onChange={(e) => setSubtitleLang(e.target.value)} label={t("settings.preferredSubtitle")}>
-              <MenuItem value="pt-BR">Portugues (Brasil)</MenuItem>
+              <MenuItem value="pt-BR">Português (Brasil)</MenuItem>
               <MenuItem value="en">English</MenuItem>
               <MenuItem value="off">{t("settings.subtitleModes.off")}</MenuItem>
             </Select>
@@ -186,50 +211,47 @@ export function Settings() {
               <MenuItem value="720p">{t("settings.qualityOptions.720p")}</MenuItem>
             </Select>
           </FormControl>
-        </CardContent>
-      </Card>
+        </Box>
+      </SettingsSection>
 
-      {/* Metadata */}
-      <SectionTitle>{t("settings.metadata")}</SectionTitle>
-      <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
-          <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
-            <TextField size="small" fullWidth label={t("settings.tmdbApiKey")} type="password" value={tmdbKey} onChange={(e) => setTmdbKey(e.target.value)} />
-            <Button variant="outlined" size="small" sx={{ mt: 0.5, whiteSpace: "nowrap" }}>{t("settings.testKey")}</Button>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="body2">{t("settings.autoEnrich")}</Typography>
-            <Switch checked={autoEnrich} onChange={(_, checked) => setAutoEnrich(checked)} color="primary" />
-          </Box>
+      {/* ── Metadata ─────────────────────────────────────── */}
+      <SettingsSection icon={Database} title={t("settings.metadata")}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
+          <SettingsRow label={t("settings.autoEnrich")}>
+            <Switch checked={autoEnrich} onChange={(_, checked) => setAutoEnrich(checked)} color="primary" size="small" />
+          </SettingsRow>
           <Button
             variant="outlined"
             onClick={() => enrichMutation.mutate(false)}
             disabled={enrichMutation.isPending}
             fullWidth
+            sx={{ borderColor: "rgba(255,255,255,0.15)" }}
           >
             {enrichMutation.isPending ? t("settings.enriching") : t("settings.enrichAll")}
           </Button>
-        </CardContent>
-      </Card>
+        </Box>
+      </SettingsSection>
 
-      {/* About */}
-      <SectionTitle>{t("settings.about")}</SectionTitle>
-      <Card>
-        <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <DetailRow label={t("settings.version")} value="0.1.0" />
-          <DetailRow
-            label={t("settings.apiStatus")}
-            value={
-              <Chip
-                label={apiHealthy ? t("settings.healthy") : t("settings.unreachable")}
-                size="small"
-                color={apiHealthy ? "success" : "error"}
-                sx={{ height: 22 }}
-              />
-            }
-          />
-        </CardContent>
-      </Card>
+      {/* ── About ────────────────────────────────────────── */}
+      <SettingsSection icon={Info} title={t("settings.about")} last>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 2.5 }}>
+          <SettingsRow label={t("settings.version")}>
+            <Typography variant="body2" fontWeight={500}>0.1.0</Typography>
+          </SettingsRow>
+          <SettingsRow label={t("settings.apiStatus")}>
+            <Chip
+              label={apiHealthy ? t("settings.healthy") : t("settings.unreachable")}
+              size="small"
+              color={apiHealthy ? "success" : "error"}
+              variant="outlined"
+              sx={{ height: 22, fontWeight: 600 }}
+            />
+          </SettingsRow>
+          <SettingsRow label={t("settings.language")}>
+            <LanguageSwitch />
+          </SettingsRow>
+        </Box>
+      </SettingsSection>
 
       {/* Add Library Dialog */}
       <AddLibraryDialog
@@ -237,6 +259,52 @@ export function Settings() {
         onClose={() => setAddDialogOpen(false)}
         onAdd={handleAddLibrary}
       />
+    </Box>
+  );
+}
+
+// ── Shared Components ──────────────────────────────────────────────
+
+function SettingsSection({
+  icon: Icon,
+  title,
+  children,
+  last = false,
+}: {
+  icon: React.ComponentType<{ size?: number; color?: string }>;
+  title: string;
+  children: React.ReactNode;
+  last?: boolean;
+}) {
+  return (
+    <Box sx={{ mb: last ? 0 : 4 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+        <Icon size={18} color="#888" />
+        <Typography variant="h2" sx={{ fontSize: "1.1rem", fontWeight: 600 }}>
+          {title}
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          bgcolor: "rgba(255,255,255,0.03)",
+          borderRadius: 2,
+          border: "1px solid rgba(255,255,255,0.06)",
+          overflow: "hidden",
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
+function SettingsRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Typography variant="body2" color="text.secondary">
+        {label}
+      </Typography>
+      {children}
     </Box>
   );
 }
@@ -269,8 +337,21 @@ function AddLibraryDialog({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{t("settings.addLibraryTitle")}</DialogTitle>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: "background.paper",
+            borderRadius: 2,
+          },
+        },
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: 600 }}>{t("settings.addLibraryTitle")}</DialogTitle>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "16px !important" }}>
         <TextField
           autoFocus
@@ -279,6 +360,7 @@ function AddLibraryDialog({
           placeholder={t("settings.libraryNamePlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
+          size="small"
         />
         <TextField
           fullWidth
@@ -287,29 +369,17 @@ function AddLibraryDialog({
           value={path}
           onChange={(e) => setPath(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+          size="small"
         />
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleClose} color="inherit">
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={handleClose} color="inherit" size="small">
           {t("settings.cancel")}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={!name.trim() || !path.trim()}>
+        <Button onClick={handleSubmit} variant="contained" disabled={!name.trim() || !path.trim()} size="small">
           {t("settings.add")}
         </Button>
       </DialogActions>
     </Dialog>
-  );
-}
-
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <Typography variant="h2" sx={{ mb: 1.5 }}>{children}</Typography>;
-}
-
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <Typography variant="body2" color="text.secondary">{label}</Typography>
-      {typeof value === "string" ? <Typography variant="body2">{value}</Typography> : value}
-    </Box>
   );
 }

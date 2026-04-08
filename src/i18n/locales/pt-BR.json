@@ -151,6 +151,7 @@
     "apiStatus": "Status da API",
     "healthy": "Saudavel",
     "unreachable": "Indisponivel",
+    "language": "Idioma",
     "save": "Salvar",
     "saved": "Configuracoes salvas"
   }
