@@ -243,6 +243,7 @@ export function Settings() {
               label={apiHealthy ? t("settings.healthy") : t("settings.unreachable")}
               size="small"
               color={apiHealthy ? "success" : "error"}
+              variant="outlined"
               sx={{ height: 22, fontWeight: 600 }}
             />
           </SettingsRow>
