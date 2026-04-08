@@ -215,3 +215,41 @@ export interface CheckWatchlistResponse {
   type: string;
   data: { in_list: boolean };
 }
+
+// Custom Lists
+export interface CustomListOutput {
+  id: string;
+  name: string;
+  item_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomListItemOutput {
+  media_id: string;
+  media_type: "movie" | "series";
+  title: string;
+  poster_path: string | null;
+  position: number;
+  added_at: string;
+}
+
+export interface CustomListsResponse {
+  type: string;
+  data: CustomListOutput[];
+}
+
+export interface CustomListDetailResponse {
+  type: string;
+  data: CustomListOutput;
+}
+
+export interface CustomListItemsResponse {
+  type: string;
+  data: CustomListItemOutput[];
+}
+
+export interface AddItemToCustomListResponse {
+  type: string;
+  data: { list_id: string; media_id: string; added: boolean };
+}
