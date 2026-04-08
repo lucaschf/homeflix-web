@@ -6,12 +6,13 @@ import {
   CircularProgress,
   Collapse,
   IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { Bookmark, Play, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEnrichMovie, useMovie, useProgress } from "../api/hooks";
+import { useEnrichMovie, useIsInWatchlist, useMovie, useProgress, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 
 export function MovieDetail() {
@@ -21,6 +22,8 @@ export function MovieDetail() {
   const { data: movie, isLoading } = useMovie(movieId!);
   const { data: progress } = useProgress(movieId!);
   const enrichMutation = useEnrichMovie();
+  const { data: inWatchlist } = useIsInWatchlist(movieId!);
+  const toggleWatchlist = useToggleWatchlist();
   const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
 
@@ -90,18 +93,22 @@ export function MovieDetail() {
               >
                 {hasProgress ? t("detail.resume") : t("detail.watch")}
               </Button>
-              <IconButton
-                sx={{
-                  color: "text.secondary",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: 1.5,
-                  width: 38,
-                  height: 38,
-                  "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
-                }}
-              >
-                <Bookmark size={18} />
-              </IconButton>
+              <Tooltip title={inWatchlist ? t("lists.removeFromList") : t("lists.addToList")} arrow>
+                <IconButton
+                  onClick={() => toggleWatchlist.mutate({ media_id: movie.id, media_type: "movie" })}
+                  sx={{
+                    color: inWatchlist ? "primary.main" : "text.secondary",
+                    border: inWatchlist ? "1px solid" : "1px solid rgba(255,255,255,0.2)",
+                    borderColor: inWatchlist ? "primary.main" : undefined,
+                    borderRadius: 1.5,
+                    width: 38,
+                    height: 38,
+                    "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.4)" },
+                  }}
+                >
+                  <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
+                </IconButton>
+              </Tooltip>
               {!movie.tmdb_id && (
                 <IconButton
                   onClick={() => enrichMutation.mutate({ movieId: movie.id })}

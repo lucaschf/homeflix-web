@@ -108,6 +108,13 @@
     "movies": "Filmes",
     "series": "Series"
   },
+  "lists": {
+    "title": "Minha Lista",
+    "empty": "Sua lista está vazia",
+    "emptyHint": "Marque filmes e séries para adicioná-los aqui",
+    "addToList": "Adicionar à Minha Lista",
+    "removeFromList": "Remover da Minha Lista"
+  },
   "settings": {
     "title": "Configuracoes",
     "libraries": "Bibliotecas",
