@@ -14,10 +14,13 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
+    const overflows = el.scrollWidth > el.clientWidth + 10;
+    setHasOverflow(overflows);
     setShowLeft(el.scrollLeft > 0);
     setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
   }, []);
@@ -57,7 +60,7 @@ export function MediaCarousel({ title, onSeeAll, children }: MediaCarouselProps)
         }}
       >
         <Typography variant="h2">{title}</Typography>
-        {onSeeAll && (
+        {onSeeAll && hasOverflow && (
           <Typography
             variant="body2"
             onClick={onSeeAll}
