@@ -31,9 +31,7 @@ export function HeroBanner({
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const currentSlide = slides[current];
   const toggleWatchlist = useToggleWatchlist();
-  const { data: inWatchlist } = useIsInWatchlist(currentSlide?.id ?? "");
 
   const count = slides.length;
 
@@ -73,6 +71,7 @@ export function HeroBanner({
   if (count === 0) return null;
 
   const slide = slides[current];
+  const { data: inWatchlist } = useIsInWatchlist(slide?.id ?? "");
 
   return (
     <Box
