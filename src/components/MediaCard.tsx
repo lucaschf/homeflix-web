@@ -33,7 +33,9 @@ export function MediaCard({
       sx={{
         cursor: "pointer",
         flexShrink: 0,
-        width: fullWidth ? "100%" : { xs: 240, sm: 280, md: 320, lg: 360 },
+        minWidth: 0,
+        overflow: "hidden",
+        width: fullWidth ? "100%" : { xs: 140, sm: 200, md: 240, lg: 280 },
         "&:hover .media-image": {
           transform: "scale(1.05)",
         },
