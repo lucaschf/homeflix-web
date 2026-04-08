@@ -15,7 +15,7 @@ import { Bookmark, Play, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useSeriesDetail } from "../api/hooks";
-import type { EpisodeOutput } from "../api/types";
+import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 
 export function SeriesDetail() {
   const { t } = useTranslation();
@@ -38,23 +38,7 @@ export function SeriesDetail() {
   const currentSeason = series.seasons[selectedSeason];
 
   // Find in-progress episode for this series from continue watching
-  const inProgressEpisode = (() => {
-    if (!continueWatching || !series) return null;
-    // Continue watching items for episodes have media_type "episode"
-    // and media_id matching pattern for this series
-    for (const item of continueWatching) {
-      if (item.media_type !== "episode") continue;
-      // Check if any episode in this series matches
-      for (const season of series.seasons) {
-        for (const ep of season.episodes) {
-          if (ep.id === item.media_id) {
-            return { seasonNumber: season.season_number, episodeNumber: ep.episode_number };
-          }
-        }
-      }
-    }
-    return null;
-  })();
+  const inProgressEpisode = findInProgressEpisode(continueWatching, series);
 
   const firstEpisode = series.seasons[0]?.episodes[0];
   const playTarget = inProgressEpisode
@@ -212,6 +196,33 @@ export function SeriesDetail() {
       </Box>
     </Box>
   );
+}
+
+/** Find the most recent in-progress episode for this series from continue watching data. */
+function findInProgressEpisode(
+  continueWatching: ContinueWatchingItem[] | undefined,
+  series: SeriesDetailType | undefined,
+): { seasonNumber: number; episodeNumber: number } | null {
+  if (!continueWatching || !series) return null;
+
+  // Build a set of episode IDs in this series for fast lookup
+  const episodeMap = new Map<string, { seasonNumber: number; episodeNumber: number }>();
+  for (const season of series.seasons) {
+    for (const ep of season.episodes) {
+      if (ep.id) {
+        episodeMap.set(ep.id, { seasonNumber: season.season_number, episodeNumber: ep.episode_number });
+      }
+    }
+  }
+
+  // Find the first matching in-progress episode
+  for (const item of continueWatching) {
+    if (item.media_type !== "episode") continue;
+    const match = episodeMap.get(item.media_id);
+    if (match) return match;
+  }
+
+  return null;
 }
 
 function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput; seriesPoster: string | null; onPlay: () => void }) {

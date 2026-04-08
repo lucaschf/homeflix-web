@@ -220,6 +220,7 @@ export function HeroBanner({
             {t("hero.play")}
           </Button>
           <IconButton
+            aria-label={t("hero.myList")}
             onClick={() => onAddToList?.(slide)}
             sx={{
               color: "text.secondary",
