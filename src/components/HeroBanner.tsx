@@ -128,32 +128,30 @@ export function HeroBanner({
             onClick={() => goTo(current - 1)}
             sx={{
               position: "absolute",
-              left: 8,
-              top: "50%",
+              left: { xs: 4, md: 16 },
+              top: "45%",
               transform: "translateY(-50%)",
-              color: "#fff",
-              bgcolor: "rgba(0,0,0,0.3)",
-              "&:hover": { bgcolor: "rgba(0,0,0,0.6)" },
+              color: "rgba(255,255,255,0.7)",
+              "&:hover": { color: "#fff", bgcolor: "transparent" },
               zIndex: 2,
             }}
           >
-            <ChevronLeft size={28} />
+            <ChevronLeft size={36} />
           </IconButton>
           <IconButton
             aria-label="Next slide"
             onClick={() => goTo(current + 1)}
             sx={{
               position: "absolute",
-              right: 8,
-              top: "50%",
+              right: { xs: 4, md: 16 },
+              top: "45%",
               transform: "translateY(-50%)",
-              color: "#fff",
-              bgcolor: "rgba(0,0,0,0.3)",
-              "&:hover": { bgcolor: "rgba(0,0,0,0.6)" },
+              color: "rgba(255,255,255,0.7)",
+              "&:hover": { color: "#fff", bgcolor: "transparent" },
               zIndex: 2,
             }}
           >
-            <ChevronRight size={28} />
+            <ChevronRight size={36} />
           </IconButton>
         </>
       )}
@@ -167,7 +165,7 @@ export function HeroBanner({
           flexDirection: "column",
           justifyContent: "flex-end",
           px: { xs: 3, md: 6 },
-          pb: { xs: 10, md: 14 },
+          pb: { xs: 16, md: 22 },
           maxWidth: 600,
           zIndex: 1,
         }}

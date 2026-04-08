@@ -48,10 +48,12 @@ export function useMovie(movieId: string) {
 }
 
 export function useSeries() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
   return useQuery({
-    queryKey: ["series"],
+    queryKey: ["series", lang],
     queryFn: async (): Promise<{ series: SeriesSummary[]; total_count: number }> => {
-      const resp = await api.get<ListSeriesResponse>("/series");
+      const resp = await api.get<ListSeriesResponse>("/series", { lang });
       return { series: resp.data, total_count: resp.metadata.total_count };
     },
   });
