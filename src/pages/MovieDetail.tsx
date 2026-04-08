@@ -103,7 +103,7 @@ export function MovieDetail() {
                   "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: "rgba(255,255,255,0.4)" },
                 }}
               >
-                <Bookmark size={18} />
+                <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
               </IconButton>
               {!movie.tmdb_id && (
                 <IconButton

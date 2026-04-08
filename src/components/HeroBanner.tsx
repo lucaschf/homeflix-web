@@ -238,7 +238,7 @@ export function HeroBanner({
               "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: "rgba(255,255,255,0.4)" },
             }}
           >
-            <Bookmark size={20} />
+            <Bookmark size={20} fill={inWatchlist ? "currentColor" : "none"} />
           </IconButton>
         </Box>
 

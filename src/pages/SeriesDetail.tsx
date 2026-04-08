@@ -123,7 +123,7 @@ export function SeriesDetail() {
                   "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: "rgba(255,255,255,0.4)" },
                 }}
               >
-                <Bookmark size={18} />
+                <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
               </IconButton>
               {!series.tmdb_id && (
                 <IconButton
