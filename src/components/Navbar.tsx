@@ -19,25 +19,21 @@ import { LanguageSwitch } from "./language-switch/LanguageSwitch";
 import { SearchOverlay } from "./SearchOverlay";
 
 const navItems = [
-  { to: "/", labelKey: "nav.home" },
-  { to: "/browse?type=movie", labelKey: "nav.movies" },
-  { to: "/browse?type=series", labelKey: "nav.series" },
-];
-
-const bottomNavItems = [
   { to: "/", labelKey: "nav.home", icon: Home },
   { to: "/browse?type=movie", labelKey: "nav.movies", icon: Film },
   { to: "/browse?type=series", labelKey: "nav.series", icon: Tv },
-  { to: "/settings", labelKey: "nav.settings", icon: Settings },
+  { to: "/lists", labelKey: "nav.myLists", icon: Bookmark, mobileOnly: true },
+  { to: "/settings", labelKey: "nav.settings", icon: Settings, mobileOnly: true },
 ];
 
+const desktopNavItems = navItems.filter((item) => !item.mobileOnly);
+const bottomNavItems = navItems;
+
 function getActiveBottomNav(pathname: string, search: string): number {
-  const params = new URLSearchParams(search);
-  if (pathname === "/") return 0;
-  if (pathname === "/browse" && params.get("type") === "movie") return 1;
-  if (pathname === "/browse" && params.get("type") === "series") return 2;
-  if (pathname === "/settings") return 3;
-  return -1;
+  return bottomNavItems.findIndex((item) => {
+    if (!item.to.includes("?")) return item.to === pathname;
+    return item.to === `${pathname}?${search.replace(/^\?/, "")}`;
+  });
 }
 
 export function Navbar() {
@@ -99,7 +95,7 @@ export function Navbar() {
           {/* Desktop Nav Links — hidden on mobile */}
           {!isMobile && (
             <Box sx={{ display: "flex", gap: 0.5, flexGrow: 1 }}>
-              {navItems.map(({ to, labelKey }) => {
+              {desktopNavItems.map(({ to, labelKey }) => {
                 const [path, query] = to.split("?");
                 const params = new URLSearchParams(query);
                 const searchParams = new URLSearchParams(location.search);
