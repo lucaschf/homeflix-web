@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
-import { ChevronLeft, ChevronRight, Play, Plus } from "lucide-react";
+import { Bookmark, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export interface HeroSlide {
@@ -219,19 +219,20 @@ export function HeroBanner({
           <Button variant="contained" startIcon={<Play size={18} />} onClick={() => onPlay?.(slide)} size="large">
             {t("hero.play")}
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Plus size={18} />}
+          <IconButton
+            aria-label={t("hero.myList")}
             onClick={() => onAddToList?.(slide)}
-            size="large"
             sx={{
-              borderColor: "rgba(255,255,255,0.3)",
-              color: "text.primary",
-              "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" },
+              color: "text.secondary",
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: 1.5,
+              width: 42,
+              height: 42,
+              "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
             }}
           >
-            {t("hero.myList")}
-          </Button>
+            <Bookmark size={20} />
+          </IconButton>
         </Box>
 
         {/* Dot Indicators — positioned near the first list below */}

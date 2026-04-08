@@ -11,11 +11,11 @@ import {
   Tabs,
   Typography,
 } from "@mui/material";
-import { Heart, Play, Plus, RefreshCw } from "lucide-react";
+import { Bookmark, Play, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEnrichSeries, useSeriesDetail } from "../api/hooks";
-import type { EpisodeOutput } from "../api/types";
+import { useContinueWatching, useEnrichSeries, useSeriesDetail } from "../api/hooks";
+import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 
 export function SeriesDetail() {
   const { t } = useTranslation();
@@ -23,6 +23,7 @@ export function SeriesDetail() {
   const navigate = useNavigate();
   const { data: series, isLoading } = useSeriesDetail(seriesId!);
   const enrichMutation = useEnrichSeries();
+  const { data: continueWatching } = useContinueWatching();
   const [selectedSeason, setSelectedSeason] = useState(0);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
 
@@ -36,78 +37,99 @@ export function SeriesDetail() {
 
   const currentSeason = series.seasons[selectedSeason];
 
+  // Find in-progress episode for this series from continue watching
+  const inProgressEpisode = findInProgressEpisode(continueWatching, series);
+
+  const firstEpisode = series.seasons[0]?.episodes[0];
+  const playTarget = inProgressEpisode
+    ? { season: inProgressEpisode.seasonNumber, episode: inProgressEpisode.episodeNumber }
+    : { season: firstEpisode ? series.seasons[0].season_number : 1, episode: firstEpisode?.episode_number ?? 1 };
+
+  const playLabel = inProgressEpisode
+    ? `${t("detail.resume")} E${inProgressEpisode.episodeNumber}`
+    : firstEpisode
+      ? `${t("detail.watch")} E${firstEpisode.episode_number}`
+      : t("detail.watch");
+
   return (
     <Box>
       {/* Hero Header */}
-      <Box sx={{ position: "relative", width: "100%", height: { xs: 450, md: 550 }, overflow: "hidden" }}>
+      <Box sx={{ position: "relative", width: "100%", height: { xs: 400, sm: 480, md: 600 }, overflow: "hidden" }}>
         {series.backdrop_path && (
           <Box
             component="img"
             src={series.backdrop_path}
             alt=""
-            sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
           />
         )}
         <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.7) 35%, transparent 65%)" }} />
         <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.4) 25%, transparent 50%)" }} />
 
-        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: 4 }}>
+        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 3, md: 6 }, gap: { xs: 2, md: 4 } }}>
           {series.poster_path && (
             <Box
               component="img"
               src={series.poster_path}
               alt={series.title}
               sx={{
-                width: { xs: 140, md: 200 },
+                width: { xs: 100, sm: 140, md: 200 },
                 aspectRatio: "2/3",
                 borderRadius: 2,
                 objectFit: "cover",
-                display: { xs: "none", sm: "block" },
                 boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
               }}
             />
           )}
 
-          <Box sx={{ flex: 1, maxWidth: 600 }}>
-            <Typography variant="h1" sx={{ fontSize: { xs: "1.75rem", md: "2.5rem" }, fontWeight: 700, mb: 1 }}>
+          <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600 }}>
+            <Typography variant="h1" sx={{ fontSize: { xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }, fontWeight: 700, mb: 0.5 }}>
               {series.title}
             </Typography>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2, flexWrap: "wrap" }}>
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>
                 {series.start_year}{series.end_year ? `–${series.end_year}` : "–"}
               </Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>
                 {t("common.seasons", { count: series.season_count })}
               </Typography>
-              {series.genres.map((g) => (
-                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.7rem" }} />
+              {series.genres.slice(0, 3).map((g) => (
+                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 20, fontSize: "0.65rem" }} />
               ))}
             </Box>
 
-            <Box sx={{ display: "flex", gap: 1.5 }}>
-              <Button variant="contained" startIcon={<Play size={18} />} size="large">
-                {t("detail.watchNow")}
-              </Button>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               <Button
-                variant="outlined"
-                startIcon={<Plus size={18} />}
-                size="large"
-                sx={{ borderColor: "rgba(255,255,255,0.3)", color: "text.primary", "&:hover": { borderColor: "rgba(255,255,255,0.5)", bgcolor: "rgba(255,255,255,0.05)" } }}
+                variant="contained"
+                startIcon={<Play size={16} />}
+                size="medium"
+                sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}
+                onClick={() => navigate(`/play/episode/${series.id}/${playTarget.season}/${playTarget.episode}`)}
               >
-                {t("detail.addToList")}
+                {playLabel}
               </Button>
-              <IconButton sx={{ color: "text.secondary", "&:hover": { color: "error.main" } }}>
-                <Heart size={22} />
+              <IconButton
+                sx={{
+                  color: "text.secondary",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: 1.5,
+                  width: 38,
+                  height: 38,
+                  "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+                }}
+              >
+                <Bookmark size={18} />
               </IconButton>
               {!series.tmdb_id && (
                 <IconButton
                   onClick={() => enrichMutation.mutate({ seriesId: series.id })}
                   disabled={enrichMutation.isPending}
                   sx={{ color: "text.secondary" }}
+                  size="small"
                 >
-                  <RefreshCw size={20} />
+                  <RefreshCw size={18} />
                 </IconButton>
               )}
             </Box>
@@ -116,11 +138,11 @@ export function SeriesDetail() {
       </Box>
 
       {/* Body */}
-      <Box sx={{ px: { xs: 3, md: 6 }, py: 4 }}>
+      <Box sx={{ px: { xs: 2, sm: 3, md: 6 }, py: { xs: 3, md: 4 } }}>
         {series.synopsis && (
           <>
             <Collapse in={synopsisExpanded} collapsedSize={44}>
-              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800 }}>
+              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800, fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
                 {series.synopsis}
               </Typography>
             </Collapse>
@@ -176,6 +198,33 @@ export function SeriesDetail() {
   );
 }
 
+/** Find the most recent in-progress episode for this series from continue watching data. */
+function findInProgressEpisode(
+  continueWatching: ContinueWatchingItem[] | undefined,
+  series: SeriesDetailType | undefined,
+): { seasonNumber: number; episodeNumber: number } | null {
+  if (!continueWatching || !series) return null;
+
+  // Build a set of episode IDs in this series for fast lookup
+  const episodeMap = new Map<string, { seasonNumber: number; episodeNumber: number }>();
+  for (const season of series.seasons) {
+    for (const ep of season.episodes) {
+      if (ep.id) {
+        episodeMap.set(ep.id, { seasonNumber: season.season_number, episodeNumber: ep.episode_number });
+      }
+    }
+  }
+
+  // Find the first matching in-progress episode
+  for (const item of continueWatching) {
+    if (item.media_type !== "episode") continue;
+    const match = episodeMap.get(item.media_id);
+    if (match) return match;
+  }
+
+  return null;
+}
+
 function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput; seriesPoster: string | null; onPlay: () => void }) {
   const { t } = useTranslation();
 
@@ -192,7 +241,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
         "&:hover .ep-play": { opacity: 1 },
       }}
     >
-      <Box sx={{ position: "relative", width: { xs: 140, md: 200 }, flexShrink: 0, aspectRatio: "16/9", borderRadius: 1.5, overflow: "hidden", bgcolor: "background.paper" }}>
+      <Box sx={{ position: "relative", width: { xs: 110, sm: 140, md: 200 }, flexShrink: 0, aspectRatio: "16/9", borderRadius: 1.5, overflow: "hidden", bgcolor: "background.paper" }}>
         {(episode.thumbnail_path || seriesPoster) ? (
           <Box component="img" src={episode.thumbnail_path ?? seriesPoster!} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
         ) : (
@@ -221,15 +270,15 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Box sx={{ display: "flex", alignItems: "baseline", gap: 1, mb: 0.5 }}>
-          <Typography variant="body1" fontWeight={600}>
+        <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5, mb: 0.25 }}>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
             {t("detail.episode", { number: episode.episode_number })}
           </Typography>
-          <Typography variant="body1" fontWeight={500} noWrap>
+          <Typography variant="body2" fontWeight={500} noWrap sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
             {episode.title}
           </Typography>
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block", fontSize: { xs: "0.65rem", md: "0.7rem" } }}>
           {episode.duration_formatted}
           {episode.air_date && ` | ${episode.air_date}`}
         </Typography>
