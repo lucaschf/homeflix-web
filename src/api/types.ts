@@ -5,7 +5,9 @@ export interface MovieSummary {
   title: string;
   year: number;
   duration_formatted: string;
+  synopsis: string | null;
   poster_path: string | null;
+  backdrop_path: string | null;
   resolution: string | null;
   variant_count: number;
   available_resolutions: string[];
@@ -79,7 +81,9 @@ export interface SeriesSummary {
   start_year: number;
   end_year: number | null;
   is_ongoing: boolean;
+  synopsis: string | null;
   poster_path: string | null;
+  backdrop_path: string | null;
   season_count: number;
   total_episodes: number;
   genres: string[];
