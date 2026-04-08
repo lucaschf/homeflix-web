@@ -18,6 +18,7 @@ interface BrowseItem {
   type: "movie" | "series";
   genres: string[];
   imageUrl?: string;
+  synopsis?: string;
 }
 
 interface GenreSection {
@@ -43,6 +44,7 @@ export function Browse() {
       type: "movie" as const,
       genres: m.genres,
       imageUrl: m.poster_path ?? undefined,
+      synopsis: m.synopsis ?? undefined,
     }));
     const series = (seriesData?.series ?? []).map((s) => ({
       id: s.id,
@@ -51,6 +53,7 @@ export function Browse() {
       type: "series" as const,
       genres: s.genres,
       imageUrl: s.poster_path ?? undefined,
+      synopsis: s.synopsis ?? undefined,
     }));
     return [...movies, ...series];
   }, [moviesData, seriesData]);
@@ -166,8 +169,12 @@ export function Browse() {
                   title={item.title}
                   year={item.year}
                   imageUrl={item.imageUrl}
+                  synopsis={item.synopsis}
                   variant="poster"
                   fullWidth
+                  mediaId={item.id}
+                  mediaType={item.type}
+                  onPlay={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
                   onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
                 />
               ))}
@@ -189,7 +196,11 @@ export function Browse() {
                 title={item.title}
                 year={item.year}
                 imageUrl={item.imageUrl}
+                synopsis={item.synopsis}
                 variant="poster"
+                mediaId={item.id}
+                mediaType={item.type}
+                onPlay={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
                 onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
               />
             ))}
