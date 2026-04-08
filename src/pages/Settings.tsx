@@ -20,7 +20,6 @@ import {
 import {
   Database,
   FolderOpen,
-  Globe,
   HardDrive,
   Info,
   MonitorPlay,
@@ -30,6 +29,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useBulkEnrich, useHealth, useScan } from "../api/hooks";
+import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
 
 const LIBRARIES_STORAGE_KEY = "homeflix-libraries";
 
@@ -247,7 +247,7 @@ export function Settings() {
             />
           </SettingsRow>
           <SettingsRow label={t("settings.language")}>
-            <Globe size={16} />
+            <LanguageSwitch />
           </SettingsRow>
         </Box>
       </SettingsSection>
