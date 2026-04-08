@@ -7,6 +7,7 @@ import { Home } from "./pages/Home";
 import { MovieDetail } from "./pages/MovieDetail";
 import { Player } from "./pages/Player";
 import { SeriesDetail } from "./pages/SeriesDetail";
+import { MyLists } from "./pages/MyLists";
 import { Settings } from "./pages/Settings";
 import { theme } from "./theme";
 import "@fontsource/inter/400.css";
@@ -31,6 +32,7 @@ function App() {
               <Route path="/browse" element={<Browse />} />
               <Route path="/movie/:movieId" element={<MovieDetail />} />
               <Route path="/series/:seriesId" element={<SeriesDetail />} />
+              <Route path="/lists" element={<MyLists />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Routes>

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
 import { Bookmark, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 
 export interface HeroSlide {
   id: string;
@@ -30,6 +31,9 @@ export function HeroBanner({
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentSlide = slides[current];
+  const toggleWatchlist = useToggleWatchlist();
+  const { data: inWatchlist } = useIsInWatchlist(currentSlide?.id ?? "");
 
   const count = slides.length;
 
@@ -221,14 +225,17 @@ export function HeroBanner({
           </Button>
           <IconButton
             aria-label={t("hero.myList")}
-            onClick={() => onAddToList?.(slide)}
+            onClick={() => {
+              toggleWatchlist.mutate({ media_id: slide.id, media_type: slide.type });
+              onAddToList?.(slide);
+            }}
             sx={{
-              color: "text.secondary",
+              color: inWatchlist ? "primary.main" : "text.secondary",
               border: "1px solid rgba(255,255,255,0.2)",
               borderRadius: 1.5,
               width: 42,
               height: 42,
-              "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+              "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: "rgba(255,255,255,0.4)" },
             }}
           >
             <Bookmark size={20} />

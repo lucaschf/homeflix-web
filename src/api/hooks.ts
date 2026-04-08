@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   BulkEnrichResponse,
+  CheckWatchlistResponse,
   ContinueWatchingItem,
   ContinueWatchingResponse,
   EnrichResponse,
@@ -18,6 +19,9 @@ import type {
   SeriesDetail,
   SeriesDetailResponse,
   SeriesSummary,
+  ToggleWatchlistResponse,
+  WatchlistItemOutput,
+  WatchlistResponse,
 } from "./types";
 
 // ── Queries ──────────────────────────────────────────────
@@ -176,6 +180,43 @@ export function useSaveProgress() {
       queryClient.invalidateQueries({ queryKey: ["progress", vars.media_id] });
       // Invalidate all continueWatching queries regardless of lang
       queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] === "continueWatching" });
+    },
+  });
+}
+
+// ── Watchlist ───────────────────────────────────────────
+
+export function useWatchlist() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["watchlist", lang],
+    queryFn: async (): Promise<WatchlistItemOutput[]> => {
+      const resp = await api.get<WatchlistResponse>("/watchlist", { lang });
+      return resp.data;
+    },
+  });
+}
+
+export function useIsInWatchlist(mediaId: string) {
+  return useQuery({
+    queryKey: ["watchlist", "check", mediaId],
+    queryFn: async (): Promise<boolean> => {
+      const resp = await api.get<CheckWatchlistResponse>(`/watchlist/check/${mediaId}`);
+      return resp.data.in_list;
+    },
+    enabled: !!mediaId,
+  });
+}
+
+export function useToggleWatchlist() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { media_id: string; media_type: string }) =>
+      api.post<ToggleWatchlistResponse>("/watchlist/toggle", data),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+      queryClient.invalidateQueries({ queryKey: ["watchlist", "check", vars.media_id] });
     },
   });
 }

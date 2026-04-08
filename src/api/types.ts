@@ -190,3 +190,27 @@ export interface ContinueWatchingResponse {
   type: string;
   data: ContinueWatchingItem[];
 }
+
+// Watchlist
+export interface WatchlistItemOutput {
+  media_id: string;
+  media_type: "movie" | "series";
+  title: string;
+  poster_path: string | null;
+  added_at: string;
+}
+
+export interface ToggleWatchlistResponse {
+  type: string;
+  data: { media_id: string; added: boolean };
+}
+
+export interface WatchlistResponse {
+  type: string;
+  data: WatchlistItemOutput[];
+}
+
+export interface CheckWatchlistResponse {
+  type: string;
+  data: { in_list: boolean };
+}

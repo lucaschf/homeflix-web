@@ -14,7 +14,7 @@ import {
 import { Bookmark, Play, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useContinueWatching, useEnrichSeries, useSeriesDetail } from "../api/hooks";
+import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 
 export function SeriesDetail() {
@@ -23,6 +23,8 @@ export function SeriesDetail() {
   const navigate = useNavigate();
   const { data: series, isLoading } = useSeriesDetail(seriesId!);
   const enrichMutation = useEnrichSeries();
+  const { data: inWatchlist } = useIsInWatchlist(seriesId!);
+  const toggleWatchlist = useToggleWatchlist();
   const { data: continueWatching } = useContinueWatching();
   const [selectedSeason, setSelectedSeason] = useState(0);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
@@ -111,13 +113,14 @@ export function SeriesDetail() {
                 {playLabel}
               </Button>
               <IconButton
+                onClick={() => toggleWatchlist.mutate({ media_id: series.id, media_type: "series" })}
                 sx={{
-                  color: "text.secondary",
+                  color: inWatchlist ? "primary.main" : "text.secondary",
                   border: "1px solid rgba(255,255,255,0.2)",
                   borderRadius: 1.5,
                   width: 38,
                   height: 38,
-                  "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+                  "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: "rgba(255,255,255,0.4)" },
                 }}
               >
                 <Bookmark size={18} />
