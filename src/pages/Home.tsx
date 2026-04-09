@@ -11,7 +11,7 @@ import { MediaCarousel } from "../components/MediaCarousel";
 
 interface GenreSection {
   genre: string;
-  items: Array<{ id: string; title: string; year: number; type: "movie" | "series"; imageUrl?: string }>;
+  items: Array<{ id: string; title: string; year: number; type: "movie" | "series"; imageUrl?: string; synopsis?: string }>;
 }
 
 function buildGenreSections(movies: MovieSummary[], series: SeriesSummary[]): GenreSection[] {
@@ -20,14 +20,14 @@ function buildGenreSections(movies: MovieSummary[], series: SeriesSummary[]): Ge
   for (const m of movies) {
     for (const g of m.genres) {
       if (!genreMap.has(g)) genreMap.set(g, []);
-      genreMap.get(g)!.push({ id: m.id, title: m.title, year: m.year, type: "movie", imageUrl: m.poster_path ?? undefined });
+      genreMap.get(g)!.push({ id: m.id, title: m.title, year: m.year, type: "movie", imageUrl: m.poster_path ?? undefined, synopsis: m.synopsis ?? undefined });
     }
   }
 
   for (const s of series) {
     for (const g of s.genres) {
       if (!genreMap.has(g)) genreMap.set(g, []);
-      genreMap.get(g)!.push({ id: s.id, title: s.title, year: s.start_year, type: "series", imageUrl: s.poster_path ?? undefined });
+      genreMap.get(g)!.push({ id: s.id, title: s.title, year: s.start_year, type: "series", imageUrl: s.poster_path ?? undefined, synopsis: s.synopsis ?? undefined });
     }
   }
 
@@ -133,7 +133,11 @@ export function Home() {
                 title={movie.title}
                 year={movie.year}
                 imageUrl={movie.poster_path ?? undefined}
+                synopsis={movie.synopsis ?? undefined}
                 variant="poster"
+                mediaId={movie.id}
+                mediaType="movie"
+                onPlay={() => navigate(`/play/movie/${movie.id}`)}
                 onClick={() => navigate(`/movie/${movie.id}`)}
               />
             ))}
@@ -148,7 +152,11 @@ export function Home() {
                 title={s.title}
                 year={s.start_year}
                 imageUrl={s.poster_path ?? undefined}
+                synopsis={s.synopsis ?? undefined}
                 variant="poster"
+                mediaId={s.id}
+                mediaType="series"
+                onPlay={() => navigate(`/series/${s.id}`)}
                 onClick={() => navigate(`/series/${s.id}`)}
               />
             ))}
@@ -163,7 +171,11 @@ export function Home() {
                 title={item.title}
                 year={item.year}
                 imageUrl={item.imageUrl}
+                synopsis={item.synopsis}
                 variant="poster"
+                mediaId={item.id}
+                mediaType={item.type}
+                onPlay={() => navigate(item.type === "movie" ? `/play/movie/${item.id}` : `/series/${item.id}`)}
                 onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
               />
             ))}

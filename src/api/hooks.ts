@@ -2,10 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
+  AddItemToCustomListResponse,
   BulkEnrichResponse,
   CheckWatchlistResponse,
   ContinueWatchingItem,
   ContinueWatchingResponse,
+  CustomListDetailResponse,
+  CustomListItemOutput,
+  CustomListItemsResponse,
+  CustomListOutput,
+  CustomListsResponse,
   EnrichResponse,
   HealthResponse,
   ListMoviesResponse,
@@ -217,6 +223,90 @@ export function useToggleWatchlist() {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
       queryClient.invalidateQueries({ queryKey: ["watchlist", "check", vars.media_id] });
+    },
+  });
+}
+
+// ── Custom Lists ──────────────────────────────────────────
+
+export function useCustomLists() {
+  return useQuery({
+    queryKey: ["customLists"],
+    queryFn: async (): Promise<CustomListOutput[]> => {
+      const resp = await api.get<CustomListsResponse>("/custom-lists");
+      return resp.data;
+    },
+  });
+}
+
+export function useCustomListItems(listId: string) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["customLists", listId, "items", lang],
+    queryFn: async (): Promise<CustomListItemOutput[]> => {
+      const resp = await api.get<CustomListItemsResponse>(`/custom-lists/${listId}/items`, { lang });
+      return resp.data;
+    },
+    enabled: !!listId,
+  });
+}
+
+export function useCreateCustomList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (name: string) => api.post<CustomListDetailResponse>("/custom-lists", { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customLists"] });
+    },
+  });
+}
+
+export function useRenameCustomList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ listId, name }: { listId: string; name: string }) =>
+      api.patch<CustomListDetailResponse>(`/custom-lists/${listId}`, { name }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customLists"] });
+    },
+  });
+}
+
+export function useDeleteCustomList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (listId: string) => api.del(`/custom-lists/${listId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customLists"] });
+    },
+  });
+}
+
+export function useAddItemToCustomList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ listId, media_id, media_type }: { listId: string; media_id: string; media_type: string }) =>
+      api.post<AddItemToCustomListResponse>(`/custom-lists/${listId}/items`, { media_id, media_type }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["customLists"] });
+      queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey[0] === "customLists" && q.queryKey[1] === vars.listId && q.queryKey[2] === "items",
+      });
+    },
+  });
+}
+
+export function useRemoveItemFromCustomList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ listId, mediaId }: { listId: string; mediaId: string }) =>
+      api.del(`/custom-lists/${listId}/items/${mediaId}`),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["customLists"] });
+      queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey[0] === "customLists" && q.queryKey[1] === vars.listId && q.queryKey[2] === "items",
+      });
     },
   });
 }

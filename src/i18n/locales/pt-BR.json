@@ -28,7 +28,11 @@
     "addLibrary": "Adicionar Biblioteca"
   },
   "card": {
-    "noImage": "Sem Imagem"
+    "noImage": "Sem Imagem",
+    "play": "Assistir",
+    "addToWatchlist": "Adicionar à Fila",
+    "removeFromWatchlist": "Remover da Fila",
+    "addToList": "Adicionar à Lista"
   },
   "common": {
     "seasons": "{{count}} Temporada",
@@ -110,11 +114,42 @@
     "series": "Series"
   },
   "lists": {
-    "title": "Minha Lista",
+    "title": "Minhas Listas",
+    "watchlist": "Fila",
+    "customLists": "Listas Personalizadas",
     "empty": "Sua lista está vazia",
     "emptyHint": "Marque filmes e séries para adicioná-los aqui",
     "addToList": "Adicionar à Minha Lista",
-    "removeFromList": "Remover da Minha Lista"
+    "removeFromList": "Remover da Minha Lista",
+    "createList": "Criar Nova Lista",
+    "listName": "Nome da Lista",
+    "create": "Criar Lista",
+    "cancel": "Cancelar",
+    "rename": "Renomear",
+    "delete": "Deletar",
+    "renameList": "Renomear Lista",
+    "deleteConfirm": "Deletar esta lista? Esta ação não pode ser desfeita.",
+    "confirm": "Confirmar",
+    "listCount": "{{count}} / {{max}} listas",
+    "itemCount": "{{count}} Item",
+    "itemCount_other": "{{count}} Itens",
+    "updatedAt": "Atualizado em {{date}}",
+    "customListsEmpty": "Nenhuma lista personalizada",
+    "customListsEmptyHint": "Crie listas para organizar seus filmes e séries",
+    "addSeries": "+ Adicionar Série",
+    "listItemsEmpty": "Esta lista está vazia",
+    "listItemsEmptyHint": "Use a busca acima para adicionar itens, ou adicione pela página da mídia",
+    "backToLists": "Voltar às Listas",
+    "settings": "Configurações",
+    "limitReached": "Limite de listas atingido",
+    "addToListTitle": "Adicionar à Lista",
+    "createAndAdd": "Criar Nova Lista",
+    "noLists": "Nenhuma lista ainda. Crie uma primeiro!",
+    "added": "Adicionado!",
+    "alreadyInList": "Já está na lista",
+    "searchMedia": "Buscar filmes ou séries...",
+    "searchResults": "Resultados da Busca",
+    "noSearchResults": "Nenhum resultado para \"{{query}}\""
   },
   "settings": {
     "title": "Configuracoes",
