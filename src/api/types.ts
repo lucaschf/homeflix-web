@@ -39,6 +39,7 @@ export interface MovieDetail {
   directors: string[];
   writers: string[];
   content_rating: string | null;
+  trailer_url: string | null;
   file_path: string | null;
   file_size: number | null;
   resolution: string | null;
@@ -101,6 +102,7 @@ export interface SeriesDetail {
   backdrop_path: string | null;
   genres: string[];
   content_rating: string | null;
+  trailer_url: string | null;
   tmdb_id: number | null;
   imdb_id: string | null;
   season_count: number;
@@ -266,6 +268,7 @@ export interface FeaturedItem {
   genres: string[];
   backdrop_path: string | null;
   content_rating: string | null;
+  trailer_url: string | null;
 }
 
 export interface FeaturedResponse {

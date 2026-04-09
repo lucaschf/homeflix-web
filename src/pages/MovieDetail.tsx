@@ -9,11 +9,12 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Bookmark, Play, RefreshCw } from "lucide-react";
+import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEnrichMovie, useIsInWatchlist, useMovie, useProgress, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { TrailerDialog } from "../components/TrailerDialog";
 
 export function MovieDetail() {
   const { t } = useTranslation();
@@ -26,6 +27,7 @@ export function MovieDetail() {
   const toggleWatchlist = useToggleWatchlist();
   const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   if (isLoading || !movie) {
     return (
@@ -109,6 +111,22 @@ export function MovieDetail() {
                   <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
                 </IconButton>
               </Tooltip>
+              {movie.trailer_url && (
+                <Button
+                  variant="outlined"
+                  startIcon={<Clapperboard size={16} />}
+                  onClick={() => setTrailerOpen(true)}
+                  sx={{
+                    color: "text.secondary",
+                    borderColor: "rgba(255,255,255,0.2)",
+                    "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+                    height: 38,
+                    fontSize: { xs: "0.8rem", md: "0.875rem" },
+                  }}
+                >
+                  {t("detail.trailer")}
+                </Button>
+              )}
               {!movie.tmdb_id && (
                 <IconButton
                   onClick={() => enrichMutation.mutate({ movieId: movie.id })}
@@ -170,6 +188,10 @@ export function MovieDetail() {
           {movie.imdb_id && <DetailRow label="IMDb" value={movie.imdb_id} />}
         </Box>
       </Box>
+
+      {movie.trailer_url && (
+        <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} url={movie.trailer_url} />
+      )}
     </Box>
   );
 }
