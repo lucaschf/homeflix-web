@@ -51,9 +51,8 @@ export function MediaCard({
         width: fullWidth ? "100%" : { xs: 140, sm: 200, md: 240, lg: 280 },
         "&:hover .media-image": { transform: "scale(1.05)" },
         "&:hover .card-hover-overlay": { opacity: 1 },
-        // On hover: hide text, image fills entire card
+        // On hover: hide text; overlay covers entire card
         ...(hasActions && {
-          "&:hover .card-image-wrapper": { position: "absolute", inset: 0, aspectRatio: "auto" },
           "&:hover .card-text": { opacity: 0 },
         }),
         ...(!hasActions && {
