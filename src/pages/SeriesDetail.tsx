@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
+import { ContentRatingBadge } from "../components/ContentRatingBadge";
 
 export function SeriesDetail() {
   const { t } = useTranslation();
@@ -91,6 +92,7 @@ export function SeriesDetail() {
             </Typography>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
+              {series.content_rating && <ContentRatingBadge rating={series.content_rating} size={24} />}
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>
                 {series.start_year}{series.end_year ? `–${series.end_year}` : "–"}
               </Typography>
