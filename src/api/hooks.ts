@@ -290,7 +290,9 @@ export function useAddItemToCustomList() {
       api.post<AddItemToCustomListResponse>(`/custom-lists/${listId}/items`, { media_id, media_type }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["customLists"] });
-      queryClient.invalidateQueries({ queryKey: ["customLists", vars.listId, "items"] });
+      queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey[0] === "customLists" && q.queryKey[1] === vars.listId && q.queryKey[2] === "items",
+      });
     },
   });
 }
@@ -302,7 +304,9 @@ export function useRemoveItemFromCustomList() {
       api.del(`/custom-lists/${listId}/items/${mediaId}`),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["customLists"] });
-      queryClient.invalidateQueries({ queryKey: ["customLists", vars.listId, "items"] });
+      queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey[0] === "customLists" && q.queryKey[1] === vars.listId && q.queryKey[2] === "items",
+      });
     },
   });
 }

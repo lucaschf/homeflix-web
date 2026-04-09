@@ -96,11 +96,17 @@ function WatchlistTab() {
 
 // ── Custom Lists Tab ─────────────────────────────────────
 
+type ActiveDialog =
+  | { type: "create" }
+  | { type: "rename"; list: CustomListOutput }
+  | { type: "delete"; list: CustomListOutput }
+  | null;
+
 function CustomListsTab() {
   const { t } = useTranslation();
   const { data: lists, isLoading } = useCustomLists();
   const [selectedList, setSelectedList] = useState<CustomListOutput | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
 
   if (isLoading) {
     return (
@@ -130,7 +136,7 @@ function CustomListsTab() {
           size="small"
           startIcon={<Plus size={16} />}
           disabled={count >= MAX_LISTS}
-          onClick={() => setCreateOpen(true)}
+          onClick={() => setActiveDialog({ type: "create" })}
           sx={{ textTransform: "uppercase", fontWeight: 600, fontSize: "0.75rem" }}
         >
           {t("lists.createList")}
@@ -153,6 +159,8 @@ function CustomListsTab() {
               key={list.id}
               list={list}
               onClick={() => setSelectedList(list)}
+              onRename={() => setActiveDialog({ type: "rename", list })}
+              onDelete={() => setActiveDialog({ type: "delete", list })}
             />
           ))}
         </Box>
@@ -168,18 +176,43 @@ function CustomListsTab() {
         </Box>
       )}
 
-      <CreateListDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+      {activeDialog?.type === "create" && (
+        <CreateListDialog open onClose={() => setActiveDialog(null)} />
+      )}
+      {activeDialog?.type === "rename" && (
+        <RenameListDialog
+          key={activeDialog.list.id}
+          list={activeDialog.list}
+          open
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
+      {activeDialog?.type === "delete" && (
+        <DeleteListDialog
+          list={activeDialog.list}
+          open
+          onClose={() => setActiveDialog(null)}
+        />
+      )}
     </>
   );
 }
 
-// ── Custom List Card ─────────────────────────────────────
+// ── Custom List Card (presentational) ────────────────────
 
-function CustomListCard({ list, onClick }: { list: CustomListOutput; onClick: () => void }) {
+function CustomListCard({
+  list,
+  onClick,
+  onRename,
+  onDelete,
+}: {
+  list: CustomListOutput;
+  onClick: () => void;
+  onRename: () => void;
+  onDelete: () => void;
+}) {
   const { t } = useTranslation();
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const formattedDate = new Date(list.updated_at).toLocaleDateString();
 
@@ -227,7 +260,7 @@ function CustomListCard({ list, onClick }: { list: CustomListOutput; onClick: ()
         <MenuItem
           onClick={() => {
             setMenuAnchor(null);
-            setRenameOpen(true);
+            onRename();
           }}
         >
           {t("lists.rename")}
@@ -235,24 +268,13 @@ function CustomListCard({ list, onClick }: { list: CustomListOutput; onClick: ()
         <MenuItem
           onClick={() => {
             setMenuAnchor(null);
-            setDeleteOpen(true);
+            onDelete();
           }}
           sx={{ color: "error.main" }}
         >
           {t("lists.delete")}
         </MenuItem>
       </Menu>
-
-      <RenameListDialog
-        list={list}
-        open={renameOpen}
-        onClose={() => setRenameOpen(false)}
-      />
-      <DeleteListDialog
-        list={list}
-        open={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-      />
     </>
   );
 }
@@ -460,26 +482,37 @@ function MediaSearchResults({
   );
 }
 
-// ── Dialogs ──────────────────────────────────────────────
+// ── Reusable List Name Dialog ────────────────────────────
 
-function CreateListDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function ListNameDialog({
+  open,
+  title,
+  confirmLabel,
+  initialValue = "",
+  isPending,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean;
+  title: string;
+  confirmLabel: string;
+  initialValue?: string;
+  isPending?: boolean;
+  onClose: () => void;
+  onSubmit: (name: string) => void;
+}) {
   const { t } = useTranslation();
-  const [name, setName] = useState("");
-  const createList = useCreateCustomList();
+  const [name, setName] = useState(initialValue);
 
-  const handleCreate = () => {
-    if (!name.trim()) return;
-    createList.mutate(name.trim(), {
-      onSuccess: () => {
-        setName("");
-        onClose();
-      },
-    });
+  const trimmed = name.trim();
+  const handleSubmit = () => {
+    if (!trimmed) return;
+    onSubmit(trimmed);
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{t("lists.createList")}</DialogTitle>
+      <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
@@ -488,7 +521,7 @@ function CreateListDialog({ open, onClose }: { open: boolean; onClose: () => voi
           label={t("lists.listName")}
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           sx={{ mt: 1 }}
         />
       </DialogContent>
@@ -497,15 +530,33 @@ function CreateListDialog({ open, onClose }: { open: boolean; onClose: () => voi
           {t("lists.cancel")}
         </Button>
         <Button
-          onClick={handleCreate}
+          onClick={handleSubmit}
           color="primary"
           variant="contained"
-          disabled={!name.trim() || createList.isPending}
+          disabled={!trimmed || isPending}
         >
-          {t("lists.create")}
+          {confirmLabel}
         </Button>
       </DialogActions>
     </Dialog>
+  );
+}
+
+// ── Thin Dialog Wrappers ─────────────────────────────────
+
+function CreateListDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation();
+  const createList = useCreateCustomList();
+
+  return (
+    <ListNameDialog
+      open={open}
+      title={t("lists.createList")}
+      confirmLabel={t("lists.create")}
+      isPending={createList.isPending}
+      onClose={onClose}
+      onSubmit={(name) => createList.mutate(name, { onSuccess: onClose })}
+    />
   );
 }
 
@@ -519,46 +570,24 @@ function RenameListDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [name, setName] = useState(list.name);
   const renameList = useRenameCustomList();
 
-  const handleRename = () => {
-    if (!name.trim() || name.trim() === list.name) return;
-    renameList.mutate(
-      { listId: list.id, name: name.trim() },
-      { onSuccess: onClose },
-    );
-  };
-
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{t("lists.renameList")}</DialogTitle>
-      <DialogContent>
-        <TextField
-          autoFocus
-          fullWidth
-          variant="standard"
-          label={t("lists.listName")}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleRename()}
-          sx={{ mt: 1 }}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} color="primary" variant="outlined">
-          {t("lists.cancel")}
-        </Button>
-        <Button
-          onClick={handleRename}
-          color="primary"
-          variant="contained"
-          disabled={!name.trim() || name.trim() === list.name || renameList.isPending}
-        >
-          {t("lists.rename")}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <ListNameDialog
+      open={open}
+      title={t("lists.renameList")}
+      confirmLabel={t("lists.rename")}
+      initialValue={list.name}
+      isPending={renameList.isPending}
+      onClose={onClose}
+      onSubmit={(name) => {
+        if (name === list.name) {
+          onClose();
+          return;
+        }
+        renameList.mutate({ listId: list.id, name }, { onSuccess: onClose });
+      }}
+    />
   );
 }
 
@@ -574,10 +603,6 @@ function DeleteListDialog({
   const { t } = useTranslation();
   const deleteList = useDeleteCustomList();
 
-  const handleDelete = () => {
-    deleteList.mutate(list.id, { onSuccess: onClose });
-  };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle>{t("lists.delete")}</DialogTitle>
@@ -589,7 +614,7 @@ function DeleteListDialog({
           {t("lists.cancel")}
         </Button>
         <Button
-          onClick={handleDelete}
+          onClick={() => deleteList.mutate(list.id, { onSuccess: onClose })}
           color="error"
           variant="contained"
           disabled={deleteList.isPending}
