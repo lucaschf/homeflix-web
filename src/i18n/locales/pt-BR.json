@@ -41,6 +41,7 @@
     "episodes_other": "{{count}} Episodios"
   },
   "detail": {
+    "trailer": "Trailer",
     "watchNow": "Assistir Agora",
     "watch": "Assistir",
     "resume": "Continuar",

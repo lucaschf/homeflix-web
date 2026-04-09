@@ -146,7 +146,7 @@ export function SeriesDetail() {
                     fontSize: { xs: "0.8rem", md: "0.875rem" },
                   }}
                 >
-                  Trailer
+                  {t("detail.trailer")}
                 </Button>
               )}
               {!series.tmdb_id && (

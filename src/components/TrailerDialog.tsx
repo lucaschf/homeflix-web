@@ -7,9 +7,37 @@ interface TrailerDialogProps {
   url: string;
 }
 
+function getYouTubeVideoId(rawUrl: string): string | null {
+  try {
+    const parsed = new URL(rawUrl);
+    const hostname = parsed.hostname.replace(/^www\./, "");
+
+    let id: string | null = null;
+
+    if (hostname === "youtube.com") {
+      id = parsed.searchParams.get("v");
+      if (!id && parsed.pathname.startsWith("/embed/")) {
+        id = parsed.pathname.split("/")[2] ?? null;
+      }
+    } else if (hostname === "youtu.be") {
+      id = parsed.pathname.split("/").filter(Boolean)[0] ?? null;
+    }
+
+    if (!id) return null;
+
+    // Strip any remaining query/hash fragments
+    id = id.split(/[?#]/)[0];
+
+    return /^[A-Za-z0-9_-]+$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 export function TrailerDialog({ open, onClose, url }: TrailerDialogProps) {
-  // Extract YouTube video ID from URL
-  const videoId = url.match(/[?&]v=([^&]+)/)?.[1] ?? url.split("/").pop() ?? "";
+  const videoId = getYouTubeVideoId(url);
+
+  if (!videoId) return null;
 
   return (
     <Dialog

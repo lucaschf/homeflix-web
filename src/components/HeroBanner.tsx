@@ -262,18 +262,10 @@ export function HeroBanner({
                 height: 42,
               }}
             >
-              Trailer
+              {t("detail.trailer")}
             </Button>
           )}
         </Box>
-
-        {slide.trailerUrl && (
-          <TrailerDialog
-            open={trailerOpen}
-            onClose={() => setTrailerOpen(false)}
-            url={slide.trailerUrl}
-          />
-        )}
 
         {/* Dot Indicators — positioned near the first list below */}
         {count > 1 && (
@@ -300,6 +292,15 @@ export function HeroBanner({
           </Box>
         )}
       </Box>
+
+      {/* Single trailer dialog — rendered once, controlled by current slide */}
+      {slide.trailerUrl && (
+        <TrailerDialog
+          open={trailerOpen}
+          onClose={() => setTrailerOpen(false)}
+          url={slide.trailerUrl}
+        />
+      )}
     </Box>
   );
 }

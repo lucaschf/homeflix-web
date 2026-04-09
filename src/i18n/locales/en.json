@@ -41,6 +41,7 @@
     "episodes_other": "{{count}} Episodes"
   },
   "detail": {
+    "trailer": "Trailer",
     "watchNow": "Watch Now",
     "watch": "Watch",
     "resume": "Resume",
