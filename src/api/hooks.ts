@@ -4,6 +4,8 @@ import { api } from "./client";
 import type {
   AddItemToCustomListResponse,
   BulkEnrichResponse,
+  FeaturedItem,
+  FeaturedResponse,
   CheckWatchlistResponse,
   ContinueWatchingItem,
   ContinueWatchingResponse,
@@ -94,6 +96,22 @@ export function useHealth() {
       }
     },
     refetchInterval: 30000,
+  });
+}
+
+export function useFeatured(mediaType: "all" | "movie" | "series" = "all", limit = 6) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["featured", mediaType, limit, lang],
+    queryFn: async (): Promise<FeaturedItem[]> => {
+      const resp = await api.get<FeaturedResponse>("/featured", {
+        type: mediaType,
+        limit: String(limit),
+        lang,
+      });
+      return resp.data;
+    },
   });
 }
 

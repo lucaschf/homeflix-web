@@ -3,7 +3,7 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useContinueWatching, useMovies, useSeries } from "../api/hooks";
+import { useContinueWatching, useFeatured, useMovies, useSeries } from "../api/hooks";
 import type { MovieSummary, SeriesSummary } from "../api/types";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
@@ -42,6 +42,7 @@ export function Home() {
   const { data: moviesData, isLoading: moviesLoading } = useMovies();
   const { data: seriesData, isLoading: seriesLoading } = useSeries();
   const { data: continueWatching } = useContinueWatching();
+  const { data: featured } = useFeatured("all");
 
   const movies = moviesData?.movies ?? [];
   const series = seriesData?.series ?? [];
@@ -50,34 +51,20 @@ export function Home() {
 
   const genreSections = useMemo(() => buildGenreSections(movies, series), [movies, series]);
 
-  const heroSlides: HeroSlide[] = useMemo(() => {
-    const all: HeroSlide[] = [
-      ...movies
-        .filter((m) => m.backdrop_path)
-        .map((m) => ({
-          id: m.id,
-          type: "movie" as const,
-          title: m.title,
-          synopsis: m.synopsis,
-          year: m.year,
-          duration: m.duration_formatted,
-          genres: m.genres,
-          backdropUrl: m.backdrop_path,
-        })),
-      ...series
-        .filter((s) => s.backdrop_path)
-        .map((s) => ({
-          id: s.id,
-          type: "series" as const,
-          title: s.title,
-          synopsis: s.synopsis,
-          year: s.start_year,
-          genres: s.genres,
-          backdropUrl: s.backdrop_path,
-        })),
-    ];
-    return all.slice(0, 6);
-  }, [movies, series]);
+  const heroSlides: HeroSlide[] = useMemo(
+    () =>
+      (featured ?? []).map((f) => ({
+        id: f.id,
+        type: f.type,
+        title: f.title,
+        synopsis: f.synopsis,
+        year: f.year,
+        duration: f.duration_formatted ?? undefined,
+        genres: f.genres,
+        backdropUrl: f.backdrop_path,
+      })),
+    [featured],
+  );
 
   if (isLoading) {
     return (

@@ -253,3 +253,20 @@ export interface AddItemToCustomListResponse {
   type: string;
   data: { list_id: string; media_id: string; added: boolean };
 }
+
+// Featured
+export interface FeaturedItem {
+  id: string;
+  type: "movie" | "series";
+  title: string;
+  synopsis: string | null;
+  year: number;
+  duration_formatted: string | null;
+  genres: string[];
+  backdrop_path: string | null;
+}
+
+export interface FeaturedResponse {
+  type: string;
+  data: FeaturedItem[];
+}
