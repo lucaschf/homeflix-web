@@ -56,9 +56,13 @@ export function HeroBanner({
   }, [count, autoPlayInterval, clearTimer]);
 
   useEffect(() => {
-    startTimer();
+    if (trailerOpen) {
+      clearTimer();
+    } else {
+      startTimer();
+    }
     return clearTimer;
-  }, [startTimer, clearTimer]);
+  }, [startTimer, clearTimer, trailerOpen]);
 
   // Clamp current if slides shrink
   useEffect(() => {
