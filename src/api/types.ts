@@ -264,6 +264,7 @@ export interface FeaturedItem {
   duration_formatted: string | null;
   genres: string[];
   backdrop_path: string | null;
+  content_rating: string | null;
 }
 
 export interface FeaturedResponse {
