@@ -63,6 +63,10 @@ export interface EpisodeOutput {
   files: MediaFileOutput[];
   thumbnail_path: string | null;
   air_date: string | null;
+  progress_percentage: number | null;
+  position_seconds: number | null;
+  watch_status: string | null;
+  last_watched_at: string | null;
 }
 
 export interface SeasonOutput {
@@ -183,6 +187,10 @@ export interface ContinueWatchingItem {
   duration_seconds: number;
   percentage: number;
   last_watched_at: string;
+  series_id: string | null;
+  series_title: string | null;
+  season_number: number | null;
+  episode_number: number | null;
 }
 
 export interface ProgressResponse {

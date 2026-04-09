@@ -236,21 +236,20 @@ function findInProgressEpisode(
 ): { seasonNumber: number; episodeNumber: number } | null {
   if (!continueWatching || !series) return null;
 
-  // Build a set of episode IDs in this series for fast lookup
-  const episodeMap = new Map<string, { seasonNumber: number; episodeNumber: number }>();
-  for (const season of series.seasons) {
-    for (const ep of season.episodes) {
-      if (ep.id) {
-        episodeMap.set(ep.id, { seasonNumber: season.season_number, episodeNumber: ep.episode_number });
-      }
+  for (const item of continueWatching) {
+    if (item.media_type !== "episode") continue;
+    if (item.series_id === series.id && item.season_number != null && item.episode_number != null) {
+      return { seasonNumber: item.season_number, episodeNumber: item.episode_number };
     }
   }
 
-  // Find the first matching in-progress episode
-  for (const item of continueWatching) {
-    if (item.media_type !== "episode") continue;
-    const match = episodeMap.get(item.media_id);
-    if (match) return match;
+  // Fallback: check episode-level progress from API
+  for (const season of series.seasons) {
+    for (const ep of season.episodes) {
+      if (ep.watch_status === "in_progress") {
+        return { seasonNumber: season.season_number, episodeNumber: ep.episode_number };
+      }
+    }
   }
 
   return null;
@@ -297,7 +296,21 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
           </Box>
         </Box>
 
-        {/* Progress bar placeholder - will work with WatchProgress */}
+        {episode.progress_percentage != null && episode.progress_percentage > 0 && (
+          <LinearProgress
+            variant="determinate"
+            value={episode.progress_percentage}
+            sx={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 3,
+              bgcolor: "rgba(255,255,255,0.2)",
+              "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
+            }}
+          />
+        )}
       </Box>
 
       <Box sx={{ flex: 1, minWidth: 0 }}>

@@ -98,15 +98,19 @@ export function Home() {
             {continueWatching.map((item) => (
               <MediaCard
                 key={item.media_id}
-                title={item.title}
+                title={
+                  item.media_type === "episode" && item.series_title
+                    ? `${item.series_title} - S${String(item.season_number ?? 0).padStart(2, "0")}E${String(item.episode_number ?? 0).padStart(2, "0")}`
+                    : item.title
+                }
                 imageUrl={item.backdrop_path ?? item.poster_path ?? undefined}
                 progress={item.percentage}
                 variant="landscape"
                 onClick={() => {
                   if (item.media_type === "movie") {
                     navigate(`/play/movie/${item.media_id}`);
-                  } else if (item.media_type === "episode") {
-                    navigate(`/movie/${item.media_id}`);
+                  } else if (item.media_type === "episode" && item.series_id) {
+                    navigate(`/play/episode/${item.series_id}/${item.season_number}/${item.episode_number}`);
                   }
                 }}
               />
