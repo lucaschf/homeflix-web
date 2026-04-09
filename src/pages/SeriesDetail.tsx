@@ -12,7 +12,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Bookmark, Play, RefreshCw, Youtube } from "lucide-react";
+import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
@@ -136,7 +136,7 @@ export function SeriesDetail() {
               {series.trailer_url && (
                 <Button
                   variant="outlined"
-                  startIcon={<Youtube size={16} />}
+                  startIcon={<Clapperboard size={16} />}
                   onClick={() => setTrailerOpen(true)}
                   sx={{
                     color: "text.secondary",

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
-import { Bookmark, ChevronLeft, ChevronRight, Play, Youtube } from "lucide-react";
+import { Bookmark, ChevronLeft, ChevronRight, Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "./ContentRatingBadge";
@@ -249,7 +249,7 @@ export function HeroBanner({
           {slide.trailerUrl && (
             <Button
               variant="outlined"
-              startIcon={<Youtube size={18} />}
+              startIcon={<Clapperboard size={18} />}
               onClick={() => setTrailerOpen(true)}
               sx={{
                 color: "text.secondary",
