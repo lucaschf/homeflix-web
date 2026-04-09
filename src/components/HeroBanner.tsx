@@ -3,6 +3,7 @@ import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
 import { Bookmark, ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
+import { ContentRatingBadge } from "./ContentRatingBadge";
 
 export interface HeroSlide {
   id: string;
@@ -13,6 +14,7 @@ export interface HeroSlide {
   duration?: string;
   genres?: string[];
   backdropUrl?: string | null;
+  contentRating?: string | null;
 }
 
 interface HeroBannerProps {
@@ -181,6 +183,7 @@ export function HeroBanner({
         </Typography>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+          {slide.contentRating && <ContentRatingBadge rating={slide.contentRating} />}
           {slide.year && (
             <Typography variant="body2" color="text.secondary">
               {slide.year}

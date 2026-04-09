@@ -100,6 +100,7 @@ export interface SeriesDetail {
   poster_path: string | null;
   backdrop_path: string | null;
   genres: string[];
+  content_rating: string | null;
   tmdb_id: number | null;
   imdb_id: string | null;
   season_count: number;
@@ -264,6 +265,7 @@ export interface FeaturedItem {
   duration_formatted: string | null;
   genres: string[];
   backdrop_path: string | null;
+  content_rating: string | null;
 }
 
 export interface FeaturedResponse {

@@ -62,6 +62,7 @@ export function Home() {
         duration: f.duration_formatted ?? undefined,
         genres: f.genres,
         backdropUrl: f.backdrop_path,
+        contentRating: f.content_rating,
       })),
     [featured],
   );
