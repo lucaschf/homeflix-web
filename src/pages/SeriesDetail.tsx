@@ -12,12 +12,13 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Bookmark, Play, RefreshCw } from "lucide-react";
+import { Bookmark, Play, RefreshCw, Youtube } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { TrailerDialog } from "../components/TrailerDialog";
 
 export function SeriesDetail() {
   const { t } = useTranslation();
@@ -30,6 +31,7 @@ export function SeriesDetail() {
   const { data: continueWatching } = useContinueWatching();
   const [selectedSeason, setSelectedSeason] = useState(0);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const [trailerOpen, setTrailerOpen] = useState(false);
 
   if (isLoading || !series) {
     return (
@@ -131,6 +133,22 @@ export function SeriesDetail() {
                   <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
                 </IconButton>
               </Tooltip>
+              {series.trailer_url && (
+                <Button
+                  variant="outlined"
+                  startIcon={<Youtube size={16} />}
+                  onClick={() => setTrailerOpen(true)}
+                  sx={{
+                    color: "text.secondary",
+                    borderColor: "rgba(255,255,255,0.2)",
+                    "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+                    height: 38,
+                    fontSize: { xs: "0.8rem", md: "0.875rem" },
+                  }}
+                >
+                  Trailer
+                </Button>
+              )}
               {!series.tmdb_id && (
                 <IconButton
                   onClick={() => enrichMutation.mutate({ seriesId: series.id })}
@@ -145,6 +163,10 @@ export function SeriesDetail() {
           </Box>
         </Box>
       </Box>
+
+      {series.trailer_url && (
+        <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} url={series.trailer_url} />
+      )}
 
       {/* Body */}
       <Box sx={{ px: { xs: 2, sm: 3, md: 6 }, py: { xs: 3, md: 4 } }}>

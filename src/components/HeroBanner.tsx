@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
-import { Bookmark, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import { Bookmark, ChevronLeft, ChevronRight, Play, Youtube } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "./ContentRatingBadge";
+import { TrailerDialog } from "./TrailerDialog";
 
 export interface HeroSlide {
   id: string;
@@ -15,6 +16,7 @@ export interface HeroSlide {
   genres?: string[];
   backdropUrl?: string | null;
   contentRating?: string | null;
+  trailerUrl?: string | null;
 }
 
 interface HeroBannerProps {
@@ -32,6 +34,7 @@ export function HeroBanner({
 }: HeroBannerProps) {
   const { t } = useTranslation();
   const [current, setCurrent] = useState(0);
+  const [trailerOpen, setTrailerOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toggleWatchlist = useToggleWatchlist();
 
@@ -243,7 +246,30 @@ export function HeroBanner({
           >
             <Bookmark size={20} fill={inWatchlist ? "currentColor" : "none"} />
           </IconButton>
+          {slide.trailerUrl && (
+            <Button
+              variant="outlined"
+              startIcon={<Youtube size={18} />}
+              onClick={() => setTrailerOpen(true)}
+              sx={{
+                color: "text.secondary",
+                borderColor: "rgba(255,255,255,0.2)",
+                "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+                height: 42,
+              }}
+            >
+              Trailer
+            </Button>
+          )}
         </Box>
+
+        {slide.trailerUrl && (
+          <TrailerDialog
+            open={trailerOpen}
+            onClose={() => setTrailerOpen(false)}
+            url={slide.trailerUrl}
+          />
+        )}
 
         {/* Dot Indicators — positioned near the first list below */}
         {count > 1 && (

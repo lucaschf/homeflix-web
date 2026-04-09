@@ -63,6 +63,7 @@ export function Home() {
         genres: f.genres,
         backdropUrl: f.backdrop_path,
         contentRating: f.content_rating,
+        trailerUrl: f.trailer_url,
       })),
     [featured],
   );
