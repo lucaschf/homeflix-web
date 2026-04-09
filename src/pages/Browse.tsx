@@ -6,7 +6,7 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useMovies, useSeries } from "../api/hooks";
+import { useFeatured, useMovies, useSeries } from "../api/hooks";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
@@ -76,38 +76,23 @@ export function Browse() {
       .sort((a, b) => b.items.length - a.items.length);
   }, [filtered]);
 
-  const heroSlides: HeroSlide[] = useMemo(() => {
-    const movieSlides: HeroSlide[] = (moviesData?.movies ?? [])
-      .filter((m) => m.backdrop_path)
-      .map((m) => ({
-        id: m.id,
-        type: "movie" as const,
-        title: m.title,
-        synopsis: m.synopsis,
-        year: m.year,
-        duration: m.duration_formatted,
-        genres: m.genres,
-        backdropUrl: m.backdrop_path,
-      }));
+  const featuredType = typeFilter ?? "all";
+  const { data: featured } = useFeatured(featuredType as "all" | "movie" | "series");
 
-    const seriesSlides: HeroSlide[] = (seriesData?.series ?? [])
-      .filter((s) => s.backdrop_path)
-      .map((s) => ({
-        id: s.id,
-        type: "series" as const,
-        title: s.title,
-        synopsis: s.synopsis,
-        year: s.start_year,
-        genres: s.genres,
-        backdropUrl: s.backdrop_path,
-      }));
-
-    if (typeFilter === "movie") return movieSlides.slice(0, 6);
-    if (typeFilter === "series") return seriesSlides.slice(0, 6);
-    return [...movieSlides, ...seriesSlides]
-      .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
-      .slice(0, 6);
-  }, [moviesData, seriesData, typeFilter]);
+  const heroSlides: HeroSlide[] = useMemo(
+    () =>
+      (featured ?? []).map((f) => ({
+        id: f.id,
+        type: f.type,
+        title: f.title,
+        synopsis: f.synopsis,
+        year: f.year,
+        duration: f.duration_formatted ?? undefined,
+        genres: f.genres,
+        backdropUrl: f.backdrop_path,
+      })),
+    [featured],
+  );
 
   const isLoading = moviesLoading || seriesLoading;
 
