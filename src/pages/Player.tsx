@@ -836,7 +836,26 @@ export function Player() {
             size="small"
             onClick={goToNextEpisode}
             startIcon={<SkipForward size={14} />}
-            sx={{ minWidth: 0, px: 1.5 }}
+            sx={{
+              minWidth: 0,
+              px: 1.5,
+              position: "relative",
+              overflow: "hidden",
+              zIndex: 0,
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                inset: 0,
+                bgcolor: "rgba(255,255,255,0.2)",
+                transformOrigin: "left",
+                animation: "fill-progress 10s linear forwards",
+                zIndex: -1,
+              },
+              "@keyframes fill-progress": {
+                from: { transform: "scaleX(0)" },
+                to: { transform: "scaleX(1)" },
+              },
+            }}
           >
             {t("player.nextEpisode")}
           </Button>
