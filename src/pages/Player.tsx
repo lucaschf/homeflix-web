@@ -227,24 +227,6 @@ export function Player() {
     };
   }, [knownDuration]);
 
-  // Auto-advance to next episode when current one ends
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || isMovie) return;
-
-    const onEnded = () => {
-      saveCurrentProgress();
-      if (nextEpisode) {
-        navigate(`/play/episode/${params.seriesId}/${nextEpisode.season}/${nextEpisode.episode}`, { replace: true });
-      } else {
-        navigate(-1);
-      }
-    };
-
-    video.addEventListener("ended", onEnded);
-    return () => video.removeEventListener("ended", onEnded);
-  }, [isMovie, nextEpisode, navigate, params.seriesId, saveCurrentProgress]);
-
   // Initialize HLS
   const hlsRef = useRef<Hls | null>(null);
 
@@ -402,6 +384,24 @@ export function Player() {
     window.addEventListener("beforeunload", saveCurrentProgress);
     return () => window.removeEventListener("beforeunload", saveCurrentProgress);
   }, [saveCurrentProgress]);
+
+  // Auto-advance to next episode when current one ends
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || isMovie) return;
+
+    const onEnded = () => {
+      saveCurrentProgress();
+      if (nextEpisode) {
+        navigate(`/play/episode/${params.seriesId}/${nextEpisode.season}/${nextEpisode.episode}`, { replace: true });
+      } else {
+        navigate(-1);
+      }
+    };
+
+    video.addEventListener("ended", onEnded);
+    return () => video.removeEventListener("ended", onEnded);
+  }, [isMovie, nextEpisode, navigate, params.seriesId, saveCurrentProgress]);
 
   // Cleanup stray timers on unmount
   useEffect(() => {
