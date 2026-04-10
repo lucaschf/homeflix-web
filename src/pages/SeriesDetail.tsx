@@ -248,16 +248,23 @@ function findInProgressEpisode(
   }
   if (best) return { seasonNumber: best.seasonNumber, episodeNumber: best.episodeNumber };
 
-  // Fallback: check episode-level progress from API
+  // Fallback: pick the highest-numbered in-progress episode from API data
+  let fallback: { seasonNumber: number; episodeNumber: number } | null = null;
   for (const season of series.seasons) {
     for (const ep of season.episodes) {
       if (ep.watch_status === "in_progress") {
-        return { seasonNumber: season.season_number, episodeNumber: ep.episode_number };
+        if (
+          !fallback ||
+          season.season_number > fallback.seasonNumber ||
+          (season.season_number === fallback.seasonNumber && ep.episode_number > fallback.episodeNumber)
+        ) {
+          fallback = { seasonNumber: season.season_number, episodeNumber: ep.episode_number };
+        }
       }
     }
   }
 
-  return null;
+  return fallback;
 }
 
 function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput; seriesPoster: string | null; onPlay: () => void }) {
