@@ -86,14 +86,37 @@ export function Player() {
   const { data: seriesData, isLoading: seriesLoading } = useSeriesDetail(params.seriesId ?? "");
   const isLoading = isMovie ? movieLoading : seriesLoading;
 
+  const seasonNum = isMovie ? 0 : Number(params.season);
+  const episodeNum = isMovie ? 0 : Number(params.episode);
+
   // Find episode duration from series data
   const episodeDuration = (() => {
     if (isMovie || !seriesData) return 0;
-    const seasonNum = Number(params.season);
-    const episodeNum = Number(params.episode);
     const season = seriesData.seasons.find((s) => s.season_number === seasonNum);
     const episode = season?.episodes.find((e) => e.episode_number === episodeNum);
     return episode?.duration_seconds ?? 0;
+  })();
+
+  // Compute next episode for auto-advance
+  const nextEpisode = (() => {
+    if (isMovie || !seriesData) return null;
+    const sortedSeasons = [...seriesData.seasons].sort((a, b) => a.season_number - b.season_number);
+    const seasonIdx = sortedSeasons.findIndex((s) => s.season_number === seasonNum);
+    if (seasonIdx < 0) return null;
+    const season = sortedSeasons[seasonIdx];
+    const sortedEps = [...season.episodes].sort((a, b) => a.episode_number - b.episode_number);
+    const epIdx = sortedEps.findIndex((e) => e.episode_number === episodeNum);
+    // Next episode in same season
+    if (epIdx >= 0 && epIdx < sortedEps.length - 1) {
+      return { season: seasonNum, episode: sortedEps[epIdx + 1].episode_number };
+    }
+    // First episode of next season
+    if (seasonIdx < sortedSeasons.length - 1) {
+      const nextSeason = sortedSeasons[seasonIdx + 1];
+      const firstEp = [...nextSeason.episodes].sort((a, b) => a.episode_number - b.episode_number)[0];
+      if (firstEp) return { season: nextSeason.season_number, episode: firstEp.episode_number };
+    }
+    return null;
   })();
   const { data: savedProgress } = useProgress(mediaId);
   const saveProgress = useSaveProgress();
@@ -102,8 +125,6 @@ export function Player() {
   const title = isMovie
     ? movieData?.title ?? ""
     : (() => {
-        const seasonNum = Number(params.season);
-        const episodeNum = Number(params.episode);
         const season = seriesData?.seasons.find((s) => s.season_number === seasonNum);
         const episode = season?.episodes.find((e) => e.episode_number === episodeNum);
         const epTitle = episode?.title ?? "";
@@ -205,6 +226,24 @@ export function Player() {
       video.removeEventListener("waiting", onWaiting);
     };
   }, [knownDuration]);
+
+  // Auto-advance to next episode when current one ends
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || isMovie) return;
+
+    const onEnded = () => {
+      saveCurrentProgress();
+      if (nextEpisode) {
+        navigate(`/play/episode/${params.seriesId}/${nextEpisode.season}/${nextEpisode.episode}`, { replace: true });
+      } else {
+        navigate(-1);
+      }
+    };
+
+    video.addEventListener("ended", onEnded);
+    return () => video.removeEventListener("ended", onEnded);
+  }, [isMovie, nextEpisode, navigate, params.seriesId, saveCurrentProgress]);
 
   // Initialize HLS
   const hlsRef = useRef<Hls | null>(null);
