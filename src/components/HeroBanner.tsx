@@ -189,14 +189,14 @@ export function HeroBanner({
           flexDirection: "column",
           justifyContent: "flex-end",
           px: { xs: 3, md: 6 },
-          pb: { xs: 16, md: 22 },
+          pb: { xs: 8, md: 22 },
           maxWidth: 600,
           zIndex: 1,
         }}
       >
         <Typography
           variant="h1"
-          sx={{ fontSize: { xs: "1.75rem", md: "2.25rem" }, fontWeight: 700, mb: 1 }}
+          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.25rem" }, fontWeight: 700, mb: 1 }}
         >
           {slide.title}
         </Typography>
