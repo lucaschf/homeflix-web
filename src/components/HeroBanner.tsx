@@ -89,16 +89,18 @@ export function HeroBanner({
         width: "100%",
         height: "75dvh",
         minHeight: 500,
-        overflow: "hidden",
       }}
     >
-      {/* Backdrop Images — all rendered, only active visible */}
+      {/* Backdrop — extends beyond container to bleed under content below */}
       {slides.map((s, i) => (
         <Box
           key={s.id}
           sx={{
             position: "absolute",
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: { xs: -200, md: -250 },
             opacity: i === current ? 1 : 0,
             transition: "opacity 800ms ease-in-out",
           }}
@@ -114,11 +116,14 @@ export function HeroBanner({
         </Box>
       ))}
 
-      {/* Gradient Overlays */}
+      {/* Gradient Overlays — extend with the backdrop */}
       <Box
         sx={{
           position: "absolute",
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: { xs: -200, md: -250 },
           background: {
             xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)",
             md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
@@ -128,10 +133,13 @@ export function HeroBanner({
       <Box
         sx={{
           position: "absolute",
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: { xs: -200, md: -250 },
           background: {
-            xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.7) 30%, transparent 60%)",
-            md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.6) 25%, transparent 55%)",
+            xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)",
+            md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)",
           },
         }}
       />
