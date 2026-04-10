@@ -236,12 +236,17 @@ function findInProgressEpisode(
 ): { seasonNumber: number; episodeNumber: number } | null {
   if (!continueWatching || !series) return null;
 
+  // Find the most recently watched episode for this series
+  let best: { seasonNumber: number; episodeNumber: number; lastWatched: string } | null = null;
   for (const item of continueWatching) {
     if (item.media_type !== "episode") continue;
     if (item.series_id === series.id && item.season_number != null && item.episode_number != null) {
-      return { seasonNumber: item.season_number, episodeNumber: item.episode_number };
+      if (!best || item.last_watched_at > best.lastWatched) {
+        best = { seasonNumber: item.season_number, episodeNumber: item.episode_number, lastWatched: item.last_watched_at };
+      }
     }
   }
+  if (best) return { seasonNumber: best.seasonNumber, episodeNumber: best.episodeNumber };
 
   // Fallback: check episode-level progress from API
   for (const season of series.seasons) {

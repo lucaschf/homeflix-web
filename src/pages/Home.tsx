@@ -99,8 +99,11 @@ export function Home() {
               <MediaCard
                 key={item.media_id}
                 title={
-                  item.media_type === "episode" && item.series_title
-                    ? `${item.series_title} - S${String(item.season_number ?? 0).padStart(2, "0")}E${String(item.episode_number ?? 0).padStart(2, "0")}`
+                  item.media_type === "episode" &&
+                  item.series_title &&
+                  item.season_number != null &&
+                  item.episode_number != null
+                    ? `${item.series_title} - S${String(item.season_number).padStart(2, "0")}E${String(item.episode_number).padStart(2, "0")}`
                     : item.title
                 }
                 imageUrl={item.backdrop_path ?? item.poster_path ?? undefined}
@@ -109,7 +112,12 @@ export function Home() {
                 onClick={() => {
                   if (item.media_type === "movie") {
                     navigate(`/play/movie/${item.media_id}`);
-                  } else if (item.media_type === "episode" && item.series_id) {
+                  } else if (
+                    item.media_type === "episode" &&
+                    item.series_id &&
+                    item.season_number != null &&
+                    item.episode_number != null
+                  ) {
                     navigate(`/play/episode/${item.series_id}/${item.season_number}/${item.episode_number}`);
                   }
                 }}
