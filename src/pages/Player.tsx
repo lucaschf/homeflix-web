@@ -2,6 +2,7 @@ import Hls from "hls.js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
+  Button,
   CircularProgress,
   IconButton,
   Menu,
@@ -106,17 +107,35 @@ export function Player() {
     const season = sortedSeasons[seasonIdx];
     const sortedEps = [...season.episodes].sort((a, b) => a.episode_number - b.episode_number);
     const epIdx = sortedEps.findIndex((e) => e.episode_number === episodeNum);
-    // Next episode in same season
+
+    let nextSeason: number;
+    let nextEpNum: number;
+    let nextTitle: string;
+
     if (epIdx >= 0 && epIdx < sortedEps.length - 1) {
-      return { season: seasonNum, episode: sortedEps[epIdx + 1].episode_number };
+      // Next episode in same season
+      const ep = sortedEps[epIdx + 1];
+      nextSeason = seasonNum;
+      nextEpNum = ep.episode_number;
+      nextTitle = ep.title;
+    } else if (seasonIdx < sortedSeasons.length - 1) {
+      // First episode of next season
+      const ns = sortedSeasons[seasonIdx + 1];
+      const firstEp = [...ns.episodes].sort((a, b) => a.episode_number - b.episode_number)[0];
+      if (!firstEp) return null;
+      nextSeason = ns.season_number;
+      nextEpNum = firstEp.episode_number;
+      nextTitle = firstEp.title;
+    } else {
+      return null;
     }
-    // First episode of next season
-    if (seasonIdx < sortedSeasons.length - 1) {
-      const nextSeason = sortedSeasons[seasonIdx + 1];
-      const firstEp = [...nextSeason.episodes].sort((a, b) => a.episode_number - b.episode_number)[0];
-      if (firstEp) return { season: nextSeason.season_number, episode: firstEp.episode_number };
-    }
-    return null;
+
+    const label = `S${String(nextSeason).padStart(2, "0")}E${String(nextEpNum).padStart(2, "0")}`;
+    return {
+      season: nextSeason,
+      episode: nextEpNum,
+      title: nextTitle ? `${label} - ${nextTitle}` : label,
+    };
   })();
   const { data: savedProgress } = useProgress(mediaId);
   const saveProgress = useSaveProgress();
@@ -140,6 +159,8 @@ export function Player() {
 
   const [playing, setPlaying] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
+  const [nextEpCountdown, setNextEpCountdown] = useState<number | null>(null);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -385,29 +406,59 @@ export function Player() {
     return () => window.removeEventListener("beforeunload", saveCurrentProgress);
   }, [saveCurrentProgress]);
 
-  // Auto-advance to next episode when current one ends
+  const goToNextEpisode = useCallback(() => {
+    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    setNextEpCountdown(null);
+    if (nextEpisode) {
+      navigate(`/play/episode/${params.seriesId}/${nextEpisode.season}/${nextEpisode.episode}`, { replace: true });
+    } else {
+      navigate(-1);
+    }
+  }, [nextEpisode, navigate, params.seriesId]);
+
+  const cancelNextEpisode = useCallback(() => {
+    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    setNextEpCountdown(null);
+  }, []);
+
+  // Start countdown when episode ends
   useEffect(() => {
     const video = videoRef.current;
     if (!video || isMovie) return;
 
     const onEnded = () => {
       saveCurrentProgress();
-      if (nextEpisode) {
-        navigate(`/play/episode/${params.seriesId}/${nextEpisode.season}/${nextEpisode.episode}`, { replace: true });
-      } else {
+      if (!nextEpisode) {
         navigate(-1);
+        return;
       }
+      setNextEpCountdown(10);
+      countdownTimerRef.current = setInterval(() => {
+        setNextEpCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     };
 
     video.addEventListener("ended", onEnded);
     return () => video.removeEventListener("ended", onEnded);
-  }, [isMovie, nextEpisode, navigate, params.seriesId, saveCurrentProgress]);
+  }, [isMovie, nextEpisode, navigate, saveCurrentProgress]);
+
+  // Navigate when countdown reaches 0
+  useEffect(() => {
+    if (nextEpCountdown === 0) goToNextEpisode();
+  }, [nextEpCountdown, goToNextEpisode]);
 
   // Cleanup stray timers on unmount
   useEffect(() => {
     return () => {
       if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
       if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
+      if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     };
   }, []);
 
@@ -740,6 +791,57 @@ export function Player() {
           </Box>
         </Box>
       </Box>
+
+      {/* Next Episode Overlay */}
+      {nextEpCountdown !== null && nextEpisode && (
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: { xs: 80, md: 120 },
+            right: { xs: 16, md: 48 },
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            bgcolor: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(8px)",
+            borderRadius: 2,
+            p: { xs: 1.5, md: 2 },
+            zIndex: 10,
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+              {t("player.nextEpisodeIn", { seconds: nextEpCountdown })}
+            </Typography>
+            <Typography variant="body2" color="#fff" fontWeight={600} noWrap>
+              {nextEpisode.title}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={cancelNextEpisode}
+            sx={{
+              color: "text.secondary",
+              borderColor: "rgba(255,255,255,0.3)",
+              "&:hover": { borderColor: "rgba(255,255,255,0.5)" },
+              minWidth: 0,
+              px: 1.5,
+            }}
+          >
+            {t("player.cancel")}
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={goToNextEpisode}
+            startIcon={<SkipForward size={14} />}
+            sx={{ minWidth: 0, px: 1.5 }}
+          >
+            {t("player.nextEpisode")}
+          </Button>
+        </Box>
+      )}
 
       {/* Settings Menu */}
       <Menu
