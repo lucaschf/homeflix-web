@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   AudioLines,
   Check,
+  LayoutList,
   Maximize,
   Minimize,
   Pause,
@@ -31,6 +32,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMovie, useProgress, useSaveProgress, useSeriesDetail } from "../api/hooks";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { EpisodeDrawer } from "../components/EpisodeDrawer";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -160,6 +162,7 @@ export function Player() {
   const [playing, setPlaying] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
   const [nextEpCountdown, setNextEpCountdown] = useState<number | null>(null);
+  const [episodeDrawerOpen, setEpisodeDrawerOpen] = useState(false);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -771,6 +774,14 @@ export function Player() {
 
             <Box sx={{ flexGrow: 1 }} />
 
+            {!isMovie && seriesData && (
+              <IconButton
+                onClick={() => setEpisodeDrawerOpen((v) => !v)}
+                sx={{ color: episodeDrawerOpen ? "primary.main" : "#fff", p: { xs: 1, md: 0.75 } }}
+              >
+                <LayoutList size={20} />
+              </IconButton>
+            )}
             <IconButton onClick={openSettings} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
               <Settings size={20} />
             </IconButton>
@@ -862,6 +873,23 @@ export function Player() {
             {t("player.nextEpisode")}
           </Button>
         </Box>
+      )}
+
+      {/* Episode Drawer */}
+      {episodeDrawerOpen && !isMovie && seriesData && (
+        <EpisodeDrawer
+          series={seriesData}
+          currentSeason={seasonNum}
+          currentEpisode={episodeNum}
+          onSelect={(s, e) => {
+            setEpisodeDrawerOpen(false);
+            if (s !== seasonNum || e !== episodeNum) {
+              saveCurrentProgress();
+              navigate(`/play/episode/${params.seriesId}/${s}/${e}`, { replace: true });
+            }
+          }}
+          onClose={() => setEpisodeDrawerOpen(false)}
+        />
       )}
 
       {/* Settings Menu */}
@@ -961,3 +989,4 @@ function SettingsBackItem({ label, onClick }: { label: string; onClick: () => vo
     </MenuItem>
   );
 }
+
