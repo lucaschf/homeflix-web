@@ -169,7 +169,7 @@ export function SeriesDetail() {
       )}
 
       {/* Body */}
-      <Box sx={{ px: { xs: 2, sm: 3, md: 6 }, py: { xs: 3, md: 4 } }}>
+      <Box sx={{ position: "relative", zIndex: 1, px: { xs: 2, sm: 3, md: 6 }, py: { xs: 3, md: 4 } }}>
         {series.synopsis && (
           <>
             <Collapse in={synopsisExpanded} collapsedSize={44}>

@@ -143,7 +143,7 @@ export function MovieDetail() {
       </Box>
 
       {/* Body */}
-      <Box sx={{ px: { xs: 2, sm: 3, md: 6 }, py: { xs: 3, md: 4 }, maxWidth: 1000 }}>
+      <Box sx={{ position: "relative", zIndex: 1, px: { xs: 2, sm: 3, md: 6 }, py: { xs: 3, md: 4 }, maxWidth: 1000 }}>
         {movie.synopsis && (
           <>
             <Typography variant="h2" sx={{ mb: 1.5, fontSize: { xs: "1.1rem", md: "1.375rem" } }}>{t("detail.synopsis")}</Typography>
