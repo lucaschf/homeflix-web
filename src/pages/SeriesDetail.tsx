@@ -60,7 +60,7 @@ export function SeriesDetail() {
   return (
     <Box>
       {/* Hero Header */}
-      <Box sx={{ position: "relative", width: "100%", height: { xs: 400, sm: 480, md: 600 }, overflow: "hidden" }}>
+      <Box sx={{ position: "relative", width: "100%", height: "75dvh", minHeight: 500, overflow: "hidden" }}>
         {series.backdrop_path && (
           <Box
             component="img"
@@ -69,8 +69,8 @@ export function SeriesDetail() {
             sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
           />
         )}
-        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.7) 35%, transparent 65%)" }} />
-        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.4) 25%, transparent 50%)" }} />
+        <Box sx={{ position: "absolute", inset: 0, background: { xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)", md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)" } }} />
+        <Box sx={{ position: "absolute", inset: 0, background: { xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.7) 30%, transparent 60%)", md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.6) 25%, transparent 55%)" } }} />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 3, md: 6 }, gap: { xs: 2, md: 4 } }}>
           {series.poster_path && (

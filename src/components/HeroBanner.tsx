@@ -119,16 +119,20 @@ export function HeroBanner({
         sx={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
+          background: {
+            xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)",
+            md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
+          },
         }}
       />
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          background:
-            "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.6) 25%, transparent 55%)",
+          background: {
+            xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.7) 30%, transparent 60%)",
+            md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.6) 25%, transparent 55%)",
+          },
         }}
       />
 
