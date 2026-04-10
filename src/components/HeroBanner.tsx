@@ -22,6 +22,7 @@ export interface HeroSlide {
 interface HeroBannerProps {
   slides: HeroSlide[];
   onPlay?: (slide: HeroSlide) => void;
+  onDetails?: (slide: HeroSlide) => void;
   onAddToList?: (slide: HeroSlide) => void;
   autoPlayInterval?: number;
 }
@@ -29,6 +30,7 @@ interface HeroBannerProps {
 export function HeroBanner({
   slides,
   onPlay,
+  onDetails,
   onAddToList,
   autoPlayInterval = 8000,
 }: HeroBannerProps) {
@@ -177,7 +179,14 @@ export function HeroBanner({
       >
         <Typography
           variant="h1"
-          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.25rem" }, fontWeight: 700, mb: 1 }}
+          onClick={() => onDetails?.(slide)}
+          sx={{
+            fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.25rem" },
+            fontWeight: 700,
+            mb: 1,
+            cursor: onDetails ? "pointer" : "default",
+            "&:hover": onDetails ? { textDecoration: "underline", textUnderlineOffset: 4 } : {},
+          }}
         >
           {slide.title}
         </Typography>

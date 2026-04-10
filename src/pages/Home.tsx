@@ -86,6 +86,10 @@ export function Home() {
         <HeroBanner
           slides={heroSlides}
           onPlay={(slide) => {
+            if (slide.type === "movie") navigate(`/play/movie/${slide.id}`);
+            else navigate(`/series/${slide.id}`);
+          }}
+          onDetails={(slide) => {
             if (slide.type === "movie") navigate(`/movie/${slide.id}`);
             else navigate(`/series/${slide.id}`);
           }}
