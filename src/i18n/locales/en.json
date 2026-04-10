@@ -76,7 +76,8 @@
     "playNow": "Play Now",
     "cancel": "Cancel",
     "back": "Back",
-    "preparing": "Preparing video…"
+    "preparing": "Preparing video…",
+    "episodes": "Episodes"
   },
   "rating": {
     "L": "General audiences",
