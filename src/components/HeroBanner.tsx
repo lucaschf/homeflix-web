@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
-import { Bookmark, ChevronLeft, ChevronRight, Play, Clapperboard } from "lucide-react";
+import { Bookmark, Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "./ContentRatingBadge";
@@ -161,44 +161,6 @@ export function HeroBanner({
         }}
       />
 
-      {/* Navigation Arrows */}
-      {count > 1 && (
-        <>
-          <IconButton
-            aria-label="Previous slide"
-            onClick={() => goTo(current - 1)}
-            sx={{
-              display: { xs: "none", sm: "flex" },
-              position: "absolute",
-              left: { sm: 4, md: 16 },
-              top: { sm: "30%", lg: "45%" },
-              transform: "translateY(-50%)",
-              color: "rgba(255,255,255,0.5)",
-              "&:hover": { color: "#fff", bgcolor: "rgba(0,0,0,0.3)" },
-              zIndex: 2,
-            }}
-          >
-            <ChevronLeft size={32} />
-          </IconButton>
-          <IconButton
-            aria-label="Next slide"
-            onClick={() => goTo(current + 1)}
-            sx={{
-              display: { xs: "none", sm: "flex" },
-              position: "absolute",
-              right: { sm: 4, md: 16 },
-              top: { sm: "30%", lg: "45%" },
-              transform: "translateY(-50%)",
-              color: "rgba(255,255,255,0.5)",
-              "&:hover": { color: "#fff", bgcolor: "rgba(0,0,0,0.3)" },
-              zIndex: 2,
-            }}
-          >
-            <ChevronRight size={32} />
-          </IconButton>
-        </>
-      )}
-
       {/* Content */}
       <Box
         sx={{
@@ -310,9 +272,9 @@ export function HeroBanner({
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") goTo(i); }}
               onClick={() => goTo(i)}
               sx={{
-                width: i === current ? 24 : 8,
-                height: 8,
-                borderRadius: 4,
+                width: i === current ? 32 : 10,
+                height: 10,
+                borderRadius: 5,
                 bgcolor: i === current ? "primary.main" : "rgba(255,255,255,0.4)",
                 cursor: "pointer",
                 transition: "all 300ms",
