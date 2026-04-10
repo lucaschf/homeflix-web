@@ -77,6 +77,21 @@ export function HeroBanner({
     [count, startTimer],
   );
 
+  // Touch swipe support for mobile
+  const touchStartX = useRef(0);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const delta = e.changedTouches[0].clientX - touchStartX.current;
+      if (Math.abs(delta) > 50) {
+        goTo(delta > 0 ? current - 1 : current + 1);
+      }
+    },
+    [current, goTo],
+  );
+
   if (count === 0) return null;
 
   const slide = slides[current];
@@ -84,6 +99,8 @@ export function HeroBanner({
 
   return (
     <Box
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       sx={{
         position: "relative",
         width: "100%",
@@ -151,8 +168,9 @@ export function HeroBanner({
             aria-label="Previous slide"
             onClick={() => goTo(current - 1)}
             sx={{
+              display: { xs: "none", sm: "flex" },
               position: "absolute",
-              left: { xs: 4, md: 16 },
+              left: { sm: 4, md: 16 },
               top: "45%",
               transform: "translateY(-50%)",
               color: "rgba(255,255,255,0.7)",
@@ -166,8 +184,9 @@ export function HeroBanner({
             aria-label="Next slide"
             onClick={() => goTo(current + 1)}
             sx={{
+              display: { xs: "none", sm: "flex" },
               position: "absolute",
-              right: { xs: 4, md: 16 },
+              right: { sm: 4, md: 16 },
               top: "45%",
               transform: "translateY(-50%)",
               color: "rgba(255,255,255,0.7)",
