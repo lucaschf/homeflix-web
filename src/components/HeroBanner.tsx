@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
-import { Bookmark, ChevronLeft, ChevronRight, Play, Clapperboard } from "lucide-react";
+import { Bookmark, Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "./ContentRatingBadge";
@@ -77,6 +77,21 @@ export function HeroBanner({
     [count, startTimer],
   );
 
+  // Touch swipe support for mobile
+  const touchStartX = useRef(0);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const delta = e.changedTouches[0].clientX - touchStartX.current;
+      if (Math.abs(delta) > 50) {
+        goTo(delta > 0 ? current - 1 : current + 1);
+      }
+    },
+    [current, goTo],
+  );
+
   if (count === 0) return null;
 
   const slide = slides[current];
@@ -84,21 +99,25 @@ export function HeroBanner({
 
   return (
     <Box
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       sx={{
         position: "relative",
         width: "100%",
         height: "75dvh",
         minHeight: 500,
-        overflow: "hidden",
       }}
     >
-      {/* Backdrop Images — all rendered, only active visible */}
+      {/* Backdrop — extends beyond container to bleed under content below */}
       {slides.map((s, i) => (
         <Box
           key={s.id}
           sx={{
             position: "absolute",
-            inset: 0,
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: { xs: -200, md: -250 },
             opacity: i === current ? 1 : 0,
             transition: "opacity 800ms ease-in-out",
           }}
@@ -114,59 +133,33 @@ export function HeroBanner({
         </Box>
       ))}
 
-      {/* Gradient Overlays */}
+      {/* Gradient Overlays — extend with the backdrop */}
       <Box
         sx={{
           position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: { xs: -200, md: -250 },
+          background: {
+            xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)",
+            md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
+          },
         }}
       />
       <Box
         sx={{
           position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.6) 25%, transparent 55%)",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: { xs: -200, md: -250 },
+          background: {
+            xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)",
+            md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)",
+          },
         }}
       />
-
-      {/* Navigation Arrows */}
-      {count > 1 && (
-        <>
-          <IconButton
-            aria-label="Previous slide"
-            onClick={() => goTo(current - 1)}
-            sx={{
-              position: "absolute",
-              left: { xs: 4, md: 16 },
-              top: "45%",
-              transform: "translateY(-50%)",
-              color: "rgba(255,255,255,0.7)",
-              "&:hover": { color: "#fff", bgcolor: "transparent" },
-              zIndex: 2,
-            }}
-          >
-            <ChevronLeft size={36} />
-          </IconButton>
-          <IconButton
-            aria-label="Next slide"
-            onClick={() => goTo(current + 1)}
-            sx={{
-              position: "absolute",
-              right: { xs: 4, md: 16 },
-              top: "45%",
-              transform: "translateY(-50%)",
-              color: "rgba(255,255,255,0.7)",
-              "&:hover": { color: "#fff", bgcolor: "transparent" },
-              zIndex: 2,
-            }}
-          >
-            <ChevronRight size={36} />
-          </IconButton>
-        </>
-      )}
 
       {/* Content */}
       <Box
@@ -177,14 +170,14 @@ export function HeroBanner({
           flexDirection: "column",
           justifyContent: "flex-end",
           px: { xs: 3, md: 6 },
-          pb: { xs: 16, md: 22 },
+          pb: { xs: 8, md: 22 },
           maxWidth: 600,
           zIndex: 1,
         }}
       >
         <Typography
           variant="h1"
-          sx={{ fontSize: { xs: "1.75rem", md: "2.25rem" }, fontWeight: 700, mb: 1 }}
+          sx={{ fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.25rem" }, fontWeight: 700, mb: 1 }}
         >
           {slide.title}
         </Typography>
@@ -279,9 +272,9 @@ export function HeroBanner({
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") goTo(i); }}
               onClick={() => goTo(i)}
               sx={{
-                width: i === current ? 24 : 8,
-                height: 8,
-                borderRadius: 4,
+                width: i === current ? 32 : 10,
+                height: 10,
+                borderRadius: 5,
                 bgcolor: i === current ? "primary.main" : "rgba(255,255,255,0.4)",
                 cursor: "pointer",
                 transition: "all 300ms",
