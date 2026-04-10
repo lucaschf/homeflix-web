@@ -171,14 +171,14 @@ export function HeroBanner({
               display: { xs: "none", sm: "flex" },
               position: "absolute",
               left: { sm: 4, md: 16 },
-              top: "45%",
+              top: { sm: "30%", lg: "45%" },
               transform: "translateY(-50%)",
-              color: "rgba(255,255,255,0.7)",
-              "&:hover": { color: "#fff", bgcolor: "transparent" },
+              color: "rgba(255,255,255,0.5)",
+              "&:hover": { color: "#fff", bgcolor: "rgba(0,0,0,0.3)" },
               zIndex: 2,
             }}
           >
-            <ChevronLeft size={36} />
+            <ChevronLeft size={32} />
           </IconButton>
           <IconButton
             aria-label="Next slide"
@@ -187,14 +187,14 @@ export function HeroBanner({
               display: { xs: "none", sm: "flex" },
               position: "absolute",
               right: { sm: 4, md: 16 },
-              top: "45%",
+              top: { sm: "30%", lg: "45%" },
               transform: "translateY(-50%)",
-              color: "rgba(255,255,255,0.7)",
-              "&:hover": { color: "#fff", bgcolor: "transparent" },
+              color: "rgba(255,255,255,0.5)",
+              "&:hover": { color: "#fff", bgcolor: "rgba(0,0,0,0.3)" },
               zIndex: 2,
             }}
           >
-            <ChevronRight size={36} />
+            <ChevronRight size={32} />
           </IconButton>
         </>
       )}
