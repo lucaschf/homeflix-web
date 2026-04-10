@@ -1,5 +1,5 @@
 import Hls from "hls.js";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -99,7 +99,7 @@ export function Player() {
   })();
 
   // Compute next episode for auto-advance
-  const nextEpisode = (() => {
+  const nextEpisode = useMemo(() => {
     if (isMovie || !seriesData) return null;
     const sortedSeasons = [...seriesData.seasons].sort((a, b) => a.season_number - b.season_number);
     const seasonIdx = sortedSeasons.findIndex((s) => s.season_number === seasonNum);
@@ -136,7 +136,7 @@ export function Player() {
       episode: nextEpNum,
       title: nextTitle ? `${label} - ${nextTitle}` : label,
     };
-  })();
+  }, [isMovie, seriesData, seasonNum, episodeNum]);
   const { data: savedProgress } = useProgress(mediaId);
   const saveProgress = useSaveProgress();
   const saveProgressRef = useRef(saveProgress.mutate);
@@ -406,15 +406,17 @@ export function Player() {
     return () => window.removeEventListener("beforeunload", saveCurrentProgress);
   }, [saveCurrentProgress]);
 
+  const seriesDetailPath = params.seriesId ? `/series/${params.seriesId}` : "/";
+
   const goToNextEpisode = useCallback(() => {
     if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     setNextEpCountdown(null);
     if (nextEpisode) {
       navigate(`/play/episode/${params.seriesId}/${nextEpisode.season}/${nextEpisode.episode}`, { replace: true });
     } else {
-      navigate(-1);
+      navigate(seriesDetailPath, { replace: true });
     }
-  }, [nextEpisode, navigate, params.seriesId]);
+  }, [nextEpisode, navigate, params.seriesId, seriesDetailPath]);
 
   const cancelNextEpisode = useCallback(() => {
     if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
@@ -429,7 +431,7 @@ export function Player() {
     const onEnded = () => {
       saveCurrentProgress();
       if (!nextEpisode) {
-        navigate(-1);
+        navigate(seriesDetailPath, { replace: true });
         return;
       }
       setNextEpCountdown(10);
