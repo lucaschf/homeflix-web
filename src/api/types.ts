@@ -116,11 +116,26 @@ export interface SeriesDetail {
   updated_at: string;
 }
 
-// API wraps responses in { type, data, metadata }
+// Cursor pagination metadata returned by paginated list endpoints.
+// `next_cursor` is an opaque string the client passes back as `?cursor=`
+// to fetch the next page; `null` means there are no more pages.
+export interface PaginationMetadata {
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+// API wraps responses in { type, data, metadata }. Both `pagination` and
+// `total_count` are optional: pagination is only present on paginated
+// endpoints, and total_count is opt-in via `?include_count=true` because
+// the COUNT(*) is the most expensive part of a list query and infinite-
+// scroll consumers don't need it.
 export interface ApiListResponse<T> {
   type: string;
   data: T[];
-  metadata: { total_count: number };
+  metadata: {
+    pagination?: PaginationMetadata;
+    total_count?: number;
+  };
 }
 
 export interface ApiDetailResponse<T> {
