@@ -724,7 +724,7 @@ export function Player() {
         >
           <CircularProgress color="primary" size={48} />
           {!hlsReady && (
-            <Typography variant="body1" color="#fff">
+            <Typography variant="body1" color="overlayText.primary">
               {t("player.preparing")}
             </Typography>
           )}
@@ -795,27 +795,25 @@ export function Player() {
           {/* Title and remaining time above seek bar */}
           <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mb: 0.75, gap: 2 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography
-                variant="body1"
-                fontWeight={600}
-                color="#fff"
-                noWrap
-                sx={{ fontSize: { xs: "0.95rem", md: "1.1rem" }, lineHeight: 1.25 }}
-              >
+              <Typography variant="overlayTitle" color="overlayText.primary" noWrap>
                 {heading.title}
               </Typography>
               {heading.subtitle && (
                 <Typography
-                  variant="body2"
-                  color="rgba(255,255,255,0.7)"
+                  variant="overlaySubtitle"
+                  color="overlayText.secondary"
                   noWrap
-                  sx={{ fontSize: { xs: "0.78rem", md: "0.85rem" }, lineHeight: 1.25, mt: 0.25 }}
+                  sx={{ mt: 0.25 }}
                 >
                   {heading.subtitle}
                 </Typography>
               )}
             </Box>
-            <Typography variant="body1" color="rgba(255,255,255,0.7)" sx={{ whiteSpace: "nowrap", fontSize: { xs: "0.85rem", md: "0.95rem" } }}>
+            <Typography
+              variant="overlayTimestamp"
+              color="overlayText.secondary"
+              sx={{ whiteSpace: "nowrap" }}
+            >
               {displayDuration > 0 ? `${formatTime(currentTime)} / -${formatTime(Math.max(0, displayDuration - currentTime))}` : ""}
             </Typography>
           </Box>
@@ -928,7 +926,7 @@ export function Player() {
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
               {t("player.nextEpisodeIn", { seconds: nextEpCountdown })}
             </Typography>
-            <Typography variant="body2" color="#fff" fontWeight={600} noWrap>
+            <Typography variant="body2" color="overlayText.primary" fontWeight={600} noWrap>
               {nextEpisode.title}
             </Typography>
           </Box>
@@ -1086,7 +1084,9 @@ export function Player() {
 function SettingsBackItem({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <MenuItem onClick={onClick}>
-      <ListItemIcon><ChevronLeft size={16} color="#fff" /></ListItemIcon>
+      <ListItemIcon sx={{ color: "overlayText.primary" }}>
+        <ChevronLeft size={16} />
+      </ListItemIcon>
       <ListItemText primary={label} />
     </MenuItem>
   );

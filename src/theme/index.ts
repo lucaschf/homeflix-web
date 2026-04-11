@@ -1,6 +1,66 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 import { error, info, neutral, peach, success, warning } from "./colors";
 
+// -- Overlay token namespace ---------------------------------------------------
+//
+// Tokens used by components that paint text on top of dark video frames or
+// gradient overlays — currently the player heading, time readout, "preparing
+// video" loader, and the auto-advance countdown. They live in the MUI palette
+// and typography slots so consumers can use the standard `color="..."` and
+// `variant="..."` props instead of inlining hex strings and responsive
+// fontSize literals.
+//
+// When you find yourself reaching for `color="#fff"` or
+// `color="rgba(255,255,255,0.7)"` on a dark surface, use these instead. New
+// overlay components (EpisodeDrawer, SubtitleMenu, etc.) should default to
+// these tokens.
+//
+// Sub-tokens:
+// - `overlayText.primary`   — high-contrast white for the main label
+// - `overlayText.secondary` — dimmer 70% white for captions and metadata
+// - typography variants `overlayTitle` / `overlaySubtitle` / `overlayTimestamp`
+//   carry the responsive font sizes (xs/md ≥ 900px) used by the player heading
+//   row, so each Typography stays a single line of JSX.
+
+declare module "@mui/material/styles" {
+  interface Palette {
+    overlayText: {
+      primary: string;
+      secondary: string;
+    };
+  }
+  interface PaletteOptions {
+    overlayText?: {
+      primary: string;
+      secondary: string;
+    };
+  }
+  interface TypographyVariants {
+    overlayTitle: React.CSSProperties;
+    overlaySubtitle: React.CSSProperties;
+    overlayTimestamp: React.CSSProperties;
+  }
+  interface TypographyVariantsOptions {
+    overlayTitle?: React.CSSProperties;
+    overlaySubtitle?: React.CSSProperties;
+    overlayTimestamp?: React.CSSProperties;
+  }
+}
+
+declare module "@mui/material/Typography" {
+  interface TypographyPropsVariantOverrides {
+    overlayTitle: true;
+    overlaySubtitle: true;
+    overlayTimestamp: true;
+  }
+}
+
+const OVERLAY_TEXT_PRIMARY = "#FFFFFF";
+const OVERLAY_TEXT_SECONDARY = "rgba(255, 255, 255, 0.7)";
+// 900px is MUI's default `md` breakpoint, matching what the migrated inline
+// `{ xs: ..., md: ... }` fontSize literals were resolving to before.
+const OVERLAY_BREAKPOINT_MD = "@media (min-width:900px)";
+
 const themeOptions: ThemeOptions = {
   colorSchemes: {
     dark: {
@@ -27,6 +87,10 @@ const themeOptions: ThemeOptions = {
           disabled: `rgba(255, 255, 255, 0.3)`,
           disabledBackground: `rgba(255, 255, 255, 0.12)`,
         },
+        overlayText: {
+          primary: OVERLAY_TEXT_PRIMARY,
+          secondary: OVERLAY_TEXT_SECONDARY,
+        },
       },
     },
   },
@@ -40,6 +104,28 @@ const themeOptions: ThemeOptions = {
     body2: { fontSize: "0.75rem", lineHeight: 1.5 },
     caption: { fontSize: "0.6875rem", fontWeight: 500, lineHeight: 1.4 },
     button: { textTransform: "none", fontWeight: 600 },
+    overlayTitle: {
+      fontSize: "0.95rem",
+      fontWeight: 600,
+      lineHeight: 1.25,
+      [OVERLAY_BREAKPOINT_MD]: {
+        fontSize: "1.1rem",
+      },
+    },
+    overlaySubtitle: {
+      fontSize: "0.78rem",
+      lineHeight: 1.25,
+      [OVERLAY_BREAKPOINT_MD]: {
+        fontSize: "0.85rem",
+      },
+    },
+    overlayTimestamp: {
+      fontSize: "0.85rem",
+      lineHeight: 1.5,
+      [OVERLAY_BREAKPOINT_MD]: {
+        fontSize: "0.95rem",
+      },
+    },
   },
   shape: {
     borderRadius: 8,
