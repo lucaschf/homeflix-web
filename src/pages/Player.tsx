@@ -335,9 +335,21 @@ export function Player() {
   // anti-cascading-render rule). Pure derivation removes the effect and
   // the cascade entirely: the override state survives across re-renders,
   // and the default falls out of `files` whenever it resolves.
+  //
+  // The override is validated against the current `files` on every render
+  // so navigating from a movie that has 1080p (override = "1080p") to a
+  // movie that doesn't carries no stale state — the validity check fails
+  // and we fall through to the primary/first/empty fallback chain. The
+  // override state itself is NOT cleared (no setState in render), so if
+  // the user later navigates back to a movie that does have 1080p, the
+  // override "wakes up" again. This is intentional: the override stores
+  // intent ("I prefer 1080p"), and the validation enforces feasibility.
   const [qualityOverride, setQualityOverride] = useState<string | null>(null);
+  const overrideMatchesAvailableFile =
+    qualityOverride !== null &&
+    (files?.some((f) => f.resolution === qualityOverride) ?? false);
   const quality =
-    qualityOverride ??
+    (overrideMatchesAvailableFile ? qualityOverride : null) ??
     files?.find((f) => f.is_primary)?.resolution ??
     files?.[0]?.resolution ??
     "";
@@ -700,16 +712,32 @@ export function Player() {
   // the callback closes over its value; the only time the identity changes
   // is when the Box mounts/unmounts (once per session), so the keyboard
   // effect re-bind is a no-op for the user.
+  //
+  // Note: this only ASKS the browser to enter or exit fullscreen — the
+  // actual `isFullscreen` state is updated by the `fullscreenchange`
+  // listener below, so it stays correct even when the user exits via
+  // Esc, F11, or any other browser-native exit path.
   const toggleFullscreen = useCallback(() => {
     if (!containerEl) return;
     if (document.fullscreenElement) {
       document.exitFullscreen();
-      setIsFullscreen(false);
     } else {
       containerEl.requestFullscreen();
-      setIsFullscreen(true);
     }
   }, [containerEl]);
+
+  // Source-of-truth sync for `isFullscreen`. Without this, pressing Esc
+  // (browser-native fullscreen exit) leaves `isFullscreen === true`,
+  // which breaks the keyboard handler's Esc branch and any UI that
+  // depends on the flag. Listening to `fullscreenchange` and reading
+  // back from `document.fullscreenElement` is the canonical pattern.
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement !== null);
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
