@@ -74,11 +74,7 @@ export function Player() {
     episode?: string;
   }>();
 
-  // Determine HLS playlist URL
   const isMovie = !!params.movieId;
-  const hlsUrl = isMovie
-    ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8`
-    : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8`;
 
   const mediaId = isMovie
     ? params.movieId ?? ""
@@ -87,7 +83,30 @@ export function Player() {
 
   const { data: movieData, isLoading: movieLoading } = useMovie(params.movieId ?? "");
   const { data: seriesData, isLoading: seriesLoading } = useSeriesDetail(params.seriesId ?? "");
-  const isLoading = isMovie ? movieLoading : seriesLoading;
+  const { data: savedProgress, isPending: progressPending } = useProgress(mediaId);
+  const mediaLoading = isMovie ? movieLoading : seriesLoading;
+  // Wait for both media metadata AND saved progress to resolve before mounting
+  // HLS — we need the progress to know whether to pass ?start=X and also to
+  // avoid a re-mount when the progress query returns.
+  const isLoading = mediaLoading || progressPending;
+
+  // Start offset passed to the backend via ?start=X. FFmpeg seeks to this
+  // position in the source so the HLS output starts at (original time =
+  // startOffset). We only honor it for in-progress items; completed items
+  // always restart from 0.
+  const startOffset = useMemo(() => {
+    if (!savedProgress || savedProgress.status === "completed") return 0;
+    return Math.max(0, Math.floor(savedProgress.position_seconds));
+  }, [savedProgress]);
+
+  // Determine HLS playlist URL with optional start offset
+  const hlsUrl = (() => {
+    if (isLoading) return "";
+    const base = isMovie
+      ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8`
+      : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8`;
+    return startOffset > 0 ? `${base}?start=${startOffset}` : base;
+  })();
 
   const seasonNum = isMovie ? 0 : Number(params.season);
   const episodeNum = isMovie ? 0 : Number(params.episode);
@@ -139,7 +158,6 @@ export function Player() {
       title: nextTitle ? `${label} - ${nextTitle}` : label,
     };
   }, [isMovie, seriesData, seasonNum, episodeNum]);
-  const { data: savedProgress } = useProgress(mediaId);
   const saveProgress = useSaveProgress();
   const saveProgressRef = useRef(saveProgress.mutate);
   saveProgressRef.current = saveProgress.mutate;
@@ -219,7 +237,10 @@ export function Player() {
     const video = videoRef.current;
     if (!video) return;
 
-    const onTimeUpdate = () => setCurrentTime(video.currentTime);
+    // currentTime state stores the DISPLAY time (video.currentTime + startOffset)
+    // so the scrubber and timestamp reflect the absolute position in the
+    // original source, even when the backend trimmed via ?start=X.
+    const onTimeUpdate = () => setCurrentTime(video.currentTime + startOffset);
     const onLoadedMetadata = () => {
       if (!knownDuration) setDuration(video.duration);
     };
@@ -249,7 +270,7 @@ export function Player() {
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("waiting", onWaiting);
     };
-  }, [knownDuration]);
+  }, [knownDuration, startOffset]);
 
   // Initialize HLS
   const hlsRef = useRef<Hls | null>(null);
@@ -341,7 +362,11 @@ export function Player() {
     return undefined;
   }, [hlsUrl]);
 
-  // Restore saved progress (position, audio, subtitle) on first play
+  // Restore saved audio/subtitle track selection on first play. Position is
+  // already handled by the backend via the ?start=startOffset query param —
+  // ffmpeg starts transcoding from that point, so the video element begins
+  // at internal currentTime = 0, which corresponds to display time =
+  // startOffset. No seek is needed here.
   useEffect(() => {
     if (!savedProgress || progressRestoredRef.current) return;
     const video = videoRef.current;
@@ -349,9 +374,6 @@ export function Player() {
     if (!video || !hlsReady) return;
 
     progressRestoredRef.current = true;
-    if (savedProgress.position_seconds > 0 && savedProgress.status !== "completed") {
-      video.currentTime = savedProgress.position_seconds;
-    }
     if (savedProgress.audio_track != null && hls) {
       hls.audioTrack = savedProgress.audio_track;
     }
@@ -366,35 +388,37 @@ export function Player() {
     const interval = setInterval(() => {
       const video = videoRef.current;
       if (!video || video.paused || !mediaId) return;
-      const dur = displayDuration || video.duration;
+      const dur = displayDuration || video.duration + startOffset;
       if (!dur) return;
       saveProgressRef.current({
         media_id: mediaId,
         media_type: mediaType,
-        position_seconds: Math.floor(video.currentTime),
+        position_seconds: Math.floor(video.currentTime + startOffset),
         duration_seconds: Math.floor(dur),
         audio_track: hlsRef.current?.audioTrack,
         subtitle_track: hlsRef.current?.subtitleTrack,
       });
     }, 10_000);
     return () => clearInterval(interval);
-  }, [playing, mediaId, mediaType, displayDuration]);
+  }, [playing, mediaId, mediaType, displayDuration, startOffset]);
 
   // Save progress on pause or unmount
   const saveCurrentProgress = useCallback(() => {
     const video = videoRef.current;
     if (!video || !mediaId) return;
-    const dur = displayDuration || video.duration;
-    if (!dur || video.currentTime === 0) return;
+    const dur = displayDuration || video.duration + startOffset;
+    // Don't save if nothing has been watched yet (avoid overwriting a
+    // resumable position with 0 on quick unmount).
+    if (!dur || (video.currentTime === 0 && startOffset === 0)) return;
     saveProgressRef.current({
       media_id: mediaId,
       media_type: mediaType,
-      position_seconds: Math.floor(video.currentTime),
+      position_seconds: Math.floor(video.currentTime + startOffset),
       duration_seconds: Math.floor(dur),
       audio_track: hlsRef.current?.audioTrack,
       subtitle_track: hlsRef.current?.subtitleTrack,
     });
-  }, [mediaId, mediaType, displayDuration]);
+  }, [mediaId, mediaType, displayDuration, startOffset]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -483,7 +507,7 @@ export function Player() {
           resetHideTimer();
           break;
         case "arrowright":
-          video.currentTime = Math.min(displayDuration, video.currentTime + 30);
+          video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 30);
           resetHideTimer();
           break;
         case "arrowup":
@@ -520,17 +544,27 @@ export function Player() {
     video.paused ? video.play() : video.pause();
   };
 
-  const seek = (value: number) => {
+  const seek = (displayValue: number) => {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = value;
-    setCurrentTime(value);
+    // Convert display time to internal (trimmed) time. Clamp to [0, trimmed
+    // duration]: seeking before startOffset is not possible with the current
+    // trimmed transcode, so we silently clamp to the earliest available
+    // frame. (TODO: trigger a reload with ?start=0 if the user wants to
+    // rewind before startOffset.)
+    const internalTime = Math.max(
+      0,
+      Math.min(video.duration || Infinity, displayValue - startOffset),
+    );
+    video.currentTime = internalTime;
+    setCurrentTime(internalTime + startOffset);
   };
 
   const skip = (seconds: number) => {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = Math.max(0, Math.min(displayDuration, video.currentTime + seconds));
+    const maxInternal = video.duration || Infinity;
+    video.currentTime = Math.max(0, Math.min(maxInternal, video.currentTime + seconds));
     resetHideTimer();
   };
 
