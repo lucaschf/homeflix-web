@@ -290,8 +290,17 @@ export function Player() {
   const displayDuration =
     knownDuration > 0 ? knownDuration : duration > 0 ? duration + startOffset : 0;
 
-  // Quality from movie files
-  const qualities = movieData?.files?.map((f) => f.resolution) ?? [];
+  // Quality list pulled from the movie's file variants. Memoized so the
+  // array identity is stable across renders — without `useMemo` the
+  // `?.map(...)` chain produces a fresh array reference on every render
+  // and the downstream useEffect's `qualities` dependency changes identity
+  // every render, re-firing the effect for nothing. The body is guarded
+  // by `!quality` so it short-circuits in practice, but it's pointless
+  // work and a foot-gun if the body ever grows past the guard.
+  const qualities = useMemo(
+    () => movieData?.files?.map((f) => f.resolution) ?? [],
+    [movieData?.files],
+  );
   const [quality, setQuality] = useState("");
 
   useEffect(() => {
