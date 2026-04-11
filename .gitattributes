@@ -1,0 +1,32 @@
+# Force LF line endings for all text files, regardless of the OS the
+# contributor is checking out on. Without this, an editor or IDE running
+# on Windows can silently rewrite a file with CRLF and create a "phantom"
+# diff of hundreds of lines that contain no real content change.
+#
+# `text=auto` lets git decide what is text vs binary by content sniffing,
+# and `eol=lf` overrides the working-tree line ending to LF on every
+# checkout.
+* text=auto eol=lf
+
+# Explicit binary opt-outs so git never tries to normalize them.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.avif binary
+*.svg  text eol=lf
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.otf   binary
+*.mp4 binary
+*.webm binary
+*.mp3  binary
+*.wav  binary
+*.pdf  binary
+*.zip  binary
+*.gz   binary
+*.tar  binary
