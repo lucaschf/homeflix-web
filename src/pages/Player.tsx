@@ -755,6 +755,7 @@ export function Player() {
           {/* Seek Bar */}
           <Slider
             value={currentTime}
+            min={startOffset}
             max={displayDuration || 1}
             onChange={(_, v) => seek(v as number)}
             sx={{
