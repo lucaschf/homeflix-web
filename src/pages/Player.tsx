@@ -290,25 +290,29 @@ export function Player() {
   const displayDuration =
     knownDuration > 0 ? knownDuration : duration > 0 ? duration + startOffset : 0;
 
-  // Quality list pulled from the movie's file variants. Memoized so the
-  // array identity is stable across renders — without `useMemo` the
-  // `?.map(...)` chain produces a fresh array reference on every render
-  // and the downstream useEffect's `qualities` dependency changes identity
-  // every render, re-firing the effect for nothing. The body is guarded
-  // by `!quality` so it short-circuits in practice, but it's pointless
-  // work and a foot-gun if the body ever grows past the guard.
+  // Quality list pulled from the movie's file variants. `files` is hoisted
+  // into a local so the same reference feeds both the memo and the effect
+  // below — kept as `T[] | undefined` (NOT `?? []`) on purpose: a fallback
+  // empty array would be a fresh reference on every render during loading
+  // and would defeat the whole point of the memo by making `files` change
+  // identity every pass. With `undefined` the dep stays stable until
+  // TanStack Query actually delivers a real array.
+  //
+  // Once memoized, `qualities` only re-creates when the underlying file
+  // list changes, so the downstream useEffect doesn't re-fire for nothing.
+  const files = movieData?.files;
   const qualities = useMemo(
-    () => movieData?.files?.map((f) => f.resolution) ?? [],
-    [movieData?.files],
+    () => files?.map((f) => f.resolution) ?? [],
+    [files],
   );
   const [quality, setQuality] = useState("");
 
   useEffect(() => {
     if (qualities.length > 0 && !quality) {
-      const primary = movieData?.files?.find((f) => f.is_primary);
+      const primary = files?.find((f) => f.is_primary);
       setQuality(primary?.resolution ?? qualities[0]);
     }
-  }, [qualities, quality, movieData]);
+  }, [qualities, quality, files]);
 
   // Settings menu
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
