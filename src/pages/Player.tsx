@@ -179,14 +179,20 @@ export function Player() {
   const saveProgress = useSaveProgress();
   const saveProgressRef = useRef(saveProgress.mutate);
   saveProgressRef.current = saveProgress.mutate;
-  const title = isMovie
-    ? movieData?.title ?? ""
+  // Heading shown above the seek bar. Movies are a single line; series get
+  // the show name on top with the SxxExx (+ episode title when available)
+  // as a second smaller line below.
+  const heading: { title: string; subtitle?: string } = isMovie
+    ? { title: movieData?.title ?? "" }
     : (() => {
         const season = seriesData?.seasons.find((s) => s.season_number === seasonNum);
         const episode = season?.episodes.find((e) => e.episode_number === episodeNum);
         const epTitle = episode?.title ?? "";
         const prefix = `S${String(seasonNum).padStart(2, "0")}E${String(episodeNum).padStart(2, "0")}`;
-        return epTitle ? `${prefix} - ${epTitle}` : prefix;
+        return {
+          title: seriesData?.title ?? "",
+          subtitle: epTitle ? `${prefix} · ${epTitle}` : prefix,
+        };
       })();
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -787,10 +793,28 @@ export function Player() {
         {/* Bottom Controls */}
         <Box sx={{ px: { xs: 1.5, md: 5 }, pb: { xs: 1.5, md: 3 }, pt: 6, background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
           {/* Title and remaining time above seek bar */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 0.75 }}>
-            <Typography variant="body1" fontWeight={600} color="#fff" noWrap sx={{ fontSize: { xs: "0.95rem", md: "1.1rem" }, flex: 1, mr: 2 }}>
-              {title}
-            </Typography>
+          <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mb: 0.75, gap: 2 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant="body1"
+                fontWeight={600}
+                color="#fff"
+                noWrap
+                sx={{ fontSize: { xs: "0.95rem", md: "1.1rem" }, lineHeight: 1.25 }}
+              >
+                {heading.title}
+              </Typography>
+              {heading.subtitle && (
+                <Typography
+                  variant="body2"
+                  color="rgba(255,255,255,0.7)"
+                  noWrap
+                  sx={{ fontSize: { xs: "0.78rem", md: "0.85rem" }, lineHeight: 1.25, mt: 0.25 }}
+                >
+                  {heading.subtitle}
+                </Typography>
+              )}
+            </Box>
             <Typography variant="body1" color="rgba(255,255,255,0.7)" sx={{ whiteSpace: "nowrap", fontSize: { xs: "0.85rem", md: "0.95rem" } }}>
               {displayDuration > 0 ? `${formatTime(currentTime)} / -${formatTime(Math.max(0, displayDuration - currentTime))}` : ""}
             </Typography>
