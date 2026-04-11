@@ -1,4 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
@@ -34,16 +40,61 @@ import type {
 
 // ── Queries ──────────────────────────────────────────────
 
+// Page size used by both useMovies and useSeries. Matches the backend
+// `DEFAULT_PAGE_SIZE` (20) — kept in sync manually because the constant
+// can't cross the network boundary at the type level. PR2 will switch
+// each consumer to a hook-specific size where it makes sense, but for
+// the foundation PR we use a single value everywhere.
+const LIST_PAGE_SIZE = 20;
+
+// Eagerly fetches every page on mount until there are no more. The
+// Home and Browse pages still need every movie / series in memory at
+// once because they group items into genre carousels client-side; PR2
+// of the cursor-pagination work introduces per-genre endpoints and
+// switches the consumers to incremental rendering. Until then this
+// hook reproduces the previous "fetch the whole catalogue" behavior on
+// top of the new paginated endpoints.
 export function useMovies() {
   const { i18n } = useTranslation();
   const lang = i18n.language;
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: ["movies", lang],
-    queryFn: async (): Promise<{ movies: MovieSummary[]; total_count: number }> => {
-      const resp = await api.get<ListMoviesResponse>("/movies", { lang });
-      return { movies: resp.data, total_count: resp.metadata.total_count };
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const params: Record<string, string> = {
+        lang,
+        limit: String(LIST_PAGE_SIZE),
+      };
+      if (pageParam) params.cursor = pageParam;
+      return api.get<ListMoviesResponse>("/movies", params);
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
   });
+
+  // Destructure the query fields the effect closes over so the
+  // exhaustive-deps lint can verify their stability — listing the
+  // whole `query` object as a dep would re-run the effect on every
+  // render and trigger an infinite loop.
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
+
+  // Auto-advance through every page until the cursor is exhausted.
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const movies = useMemo<MovieSummary[]>(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
+
+  // Treat the listing as "loading" while any page is still in flight,
+  // so consumers don't see the carousels half-built and re-grouping
+  // every render — matches the pre-pagination single-shot UX.
+  const isLoading = query.isLoading || isFetchingNextPage || hasNextPage;
+
+  return { data: { movies }, isLoading };
 }
 
 export function useMovie(movieId: string) {
@@ -59,16 +110,41 @@ export function useMovie(movieId: string) {
   });
 }
 
+// Mirror of `useMovies` for the series listing — see the comment over
+// there for why we eagerly fetch every page on mount in PR1.
 export function useSeries() {
   const { i18n } = useTranslation();
   const lang = i18n.language;
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: ["series", lang],
-    queryFn: async (): Promise<{ series: SeriesSummary[]; total_count: number }> => {
-      const resp = await api.get<ListSeriesResponse>("/series", { lang });
-      return { series: resp.data, total_count: resp.metadata.total_count };
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const params: Record<string, string> = {
+        lang,
+        limit: String(LIST_PAGE_SIZE),
+      };
+      if (pageParam) params.cursor = pageParam;
+      return api.get<ListSeriesResponse>("/series", params);
     },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
   });
+
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
+
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const series = useMemo<SeriesSummary[]>(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
+
+  const isLoading = query.isLoading || isFetchingNextPage || hasNextPage;
+
+  return { data: { series }, isLoading };
 }
 
 export function useSeriesDetail(seriesId: string) {
