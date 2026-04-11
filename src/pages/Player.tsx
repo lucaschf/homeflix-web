@@ -87,35 +87,50 @@ export function Player() {
   const mediaLoading = isMovie ? movieLoading : seriesLoading;
 
   // Start offset passed to the backend via ?start=X. CRITICAL: this must be
-  // captured exactly ONCE per player mount, on the first time savedProgress
-  // resolves. If we recomputed it from savedProgress on every render, the
-  // 10-second auto-save would invalidate the progress query, the refetched
-  // data would carry the just-saved position, the offset would change,
-  // hlsUrl would change, the HLS effect would re-run, and the player would
-  // be destroyed mid-playback every 10 seconds (the symptom: "preparing
-  // video toda hora" + audio cuts + visible jumps to other parts of the
-  // video). Storing it in useState pins it to the original mount value.
-  // `pinnedStartOffset === null` while the value is being resolved; once
-  // set it never changes for the lifetime of this player mount.
-  const [pinnedStartOffset, setPinnedStartOffset] = useState<number | null>(null);
+  // captured exactly ONCE per (mediaId, savedProgress-resolution) pair, NOT
+  // once per component mount.
+  //
+  // - Pinning it to the first savedProgress for a given mediaId is what
+  //   stops the 10-second auto-save from invalidating the query, refetching
+  //   the just-saved position, recomputing the offset, mutating hlsUrl, and
+  //   destroying the HLS instance every 10 seconds (the original "preparing
+  //   video toda hora" + audio-cut + jump-around bug).
+  //
+  // - Re-pinning when mediaId changes is what stops the auto-advance flow
+  //   from carrying the previous episode's offset into the next one. The
+  //   <Player /> route component does NOT unmount across episode navigation
+  //   (the React Router path stays `/play/episode/:seriesId/:season/:episode`,
+  //   only the params change), so a mount-scoped pin would otherwise survive
+  //   into the next episode and ffmpeg would trim the new playlist starting
+  //   at the previous episode's resume position.
+  //
+  // We track which mediaId the current pinned offset belongs to. When that
+  // tag doesn't match the current mediaId, the player is treated as loading
+  // until the new media's progress resolves and the offset is re-pinned.
+  const [pinnedStartOffset, setPinnedStartOffset] = useState<number>(0);
+  const [pinnedForMediaId, setPinnedForMediaId] = useState<string | null>(null);
   useEffect(() => {
-    if (pinnedStartOffset !== null) return;
+    if (pinnedForMediaId === mediaId) return;
     if (progressPending) return;
     const offset =
       savedProgress && savedProgress.status !== "completed"
         ? Math.max(0, Math.floor(savedProgress.position_seconds))
         : 0;
     setPinnedStartOffset(offset);
-  }, [progressPending, savedProgress, pinnedStartOffset]);
+    setPinnedForMediaId(mediaId);
+  }, [mediaId, progressPending, savedProgress, pinnedForMediaId]);
 
-  // Derived numeric offset usable in display math. Defaults to 0 before the
-  // pinned offset resolves; the loading gate prevents this from ever being
-  // observed by the video element (HLS isn't mounted until ready).
-  const startOffset = pinnedStartOffset ?? 0;
+  // Only safe to consume the offset for display math / HLS URL once it has
+  // been pinned for the CURRENT mediaId. Until then `isLoading` keeps the
+  // player in the loading state and the HLS effect stays unmounted, so the
+  // (still stale from the previous episode) `pinnedStartOffset` is never
+  // read by anything user-visible.
+  const isReadyForCurrentMedia = pinnedForMediaId === mediaId;
+  const startOffset = isReadyForCurrentMedia ? pinnedStartOffset : 0;
 
-  // Wait for both media metadata AND the initial start offset to be pinned
-  // before mounting HLS.
-  const isLoading = mediaLoading || pinnedStartOffset === null;
+  // Wait for both media metadata AND the start offset to be pinned for the
+  // current mediaId before mounting HLS.
+  const isLoading = mediaLoading || !isReadyForCurrentMedia;
 
   // Determine HLS playlist URL with optional start offset
   const hlsUrl = (() => {
@@ -197,7 +212,12 @@ export function Player() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const progressRestoredRef = useRef(false);
+  // Holds the mediaId whose audio/subtitle selection has already been
+  // restored from savedProgress, so the restore effect runs again the first
+  // time `mediaId` changes (e.g. on auto-advance to the next episode). A
+  // simple boolean would lock after the first episode and silently skip
+  // restoring tracks for every episode after that.
+  const progressRestoredForMediaIdRef = useRef<string | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -404,13 +424,19 @@ export function Player() {
   // ffmpeg starts transcoding from that point, so the video element begins
   // at internal currentTime = 0, which corresponds to display time =
   // startOffset. No seek is needed here.
+  //
+  // The "already restored" guard is keyed on mediaId so the effect re-runs
+  // the first time hls becomes ready for a new episode (auto-advance) — a
+  // simple boolean flag would lock after the first episode and silently
+  // skip restoring tracks for every episode after that.
   useEffect(() => {
-    if (!savedProgress || progressRestoredRef.current) return;
+    if (!savedProgress) return;
+    if (progressRestoredForMediaIdRef.current === mediaId) return;
     const video = videoRef.current;
     const hls = hlsRef.current;
     if (!video || !hlsReady) return;
 
-    progressRestoredRef.current = true;
+    progressRestoredForMediaIdRef.current = mediaId;
     // Only restore audio track if the saved value is non-default AND
     // different from the current selection. Setting hls.audioTrack on
     // HLS.js — even to the same value it already is — can trigger a
@@ -432,7 +458,7 @@ export function Player() {
     ) {
       hls.subtitleTrack = savedProgress.subtitle_track;
     }
-  }, [savedProgress, hlsReady]);
+  }, [savedProgress, hlsReady, mediaId]);
 
   // Auto-save progress every 10 seconds during playback
   useEffect(() => {
