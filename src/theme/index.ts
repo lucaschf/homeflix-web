@@ -19,21 +19,23 @@ import { error, info, neutral, peach, success, warning } from "./colors";
 // - `overlayText.primary`   — high-contrast white for the main label
 // - `overlayText.secondary` — dimmer 70% white for captions and metadata
 // - typography variants `overlayTitle` / `overlaySubtitle` / `overlayTimestamp`
-//   carry the responsive font sizes (xs/md ≥ 900px) used by the player heading
-//   row, so each Typography stays a single line of JSX.
+//   carry the responsive font sizes (xs/md) used by the player heading row, so
+//   each Typography stays a single line of JSX.
+
+// Shared overlay color shape — declared once and referenced by both the
+// required `Palette` and the optional `PaletteOptions` interfaces so the two
+// sides can't drift when a new sub-token is added.
+interface OverlayText {
+  primary: string;
+  secondary: string;
+}
 
 declare module "@mui/material/styles" {
   interface Palette {
-    overlayText: {
-      primary: string;
-      secondary: string;
-    };
+    overlayText: OverlayText;
   }
   interface PaletteOptions {
-    overlayText?: {
-      primary: string;
-      secondary: string;
-    };
+    overlayText?: OverlayText;
   }
   interface TypographyVariants {
     overlayTitle: React.CSSProperties;
@@ -57,9 +59,13 @@ declare module "@mui/material/Typography" {
 
 const OVERLAY_TEXT_PRIMARY = "#FFFFFF";
 const OVERLAY_TEXT_SECONDARY = "rgba(255, 255, 255, 0.7)";
-// 900px is MUI's default `md` breakpoint, matching what the migrated inline
-// `{ xs: ..., md: ... }` fontSize literals were resolving to before.
-const OVERLAY_BREAKPOINT_MD = "@media (min-width:900px)";
+
+// Build a throwaway default theme just to read the canonical breakpoint
+// helper. The breakpoint media query string then tracks any future change to
+// `breakpoints.values.md` automatically — no hardcoded `@media (min-width:Xpx)`
+// constants to keep in sync.
+const defaultTheme = createTheme();
+const OVERLAY_BREAKPOINT_MD = defaultTheme.breakpoints.up("md");
 
 const themeOptions: ThemeOptions = {
   colorSchemes: {
