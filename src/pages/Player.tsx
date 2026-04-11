@@ -85,19 +85,37 @@ export function Player() {
   const { data: seriesData, isLoading: seriesLoading } = useSeriesDetail(params.seriesId ?? "");
   const { data: savedProgress, isPending: progressPending } = useProgress(mediaId);
   const mediaLoading = isMovie ? movieLoading : seriesLoading;
-  // Wait for both media metadata AND saved progress to resolve before mounting
-  // HLS — we need the progress to know whether to pass ?start=X and also to
-  // avoid a re-mount when the progress query returns.
-  const isLoading = mediaLoading || progressPending;
 
-  // Start offset passed to the backend via ?start=X. FFmpeg seeks to this
-  // position in the source so the HLS output starts at (original time =
-  // startOffset). We only honor it for in-progress items; completed items
-  // always restart from 0.
-  const startOffset = useMemo(() => {
-    if (!savedProgress || savedProgress.status === "completed") return 0;
-    return Math.max(0, Math.floor(savedProgress.position_seconds));
-  }, [savedProgress]);
+  // Start offset passed to the backend via ?start=X. CRITICAL: this must be
+  // captured exactly ONCE per player mount, on the first time savedProgress
+  // resolves. If we recomputed it from savedProgress on every render, the
+  // 10-second auto-save would invalidate the progress query, the refetched
+  // data would carry the just-saved position, the offset would change,
+  // hlsUrl would change, the HLS effect would re-run, and the player would
+  // be destroyed mid-playback every 10 seconds (the symptom: "preparing
+  // video toda hora" + audio cuts + visible jumps to other parts of the
+  // video). Storing it in useState pins it to the original mount value.
+  // `pinnedStartOffset === null` while the value is being resolved; once
+  // set it never changes for the lifetime of this player mount.
+  const [pinnedStartOffset, setPinnedStartOffset] = useState<number | null>(null);
+  useEffect(() => {
+    if (pinnedStartOffset !== null) return;
+    if (progressPending) return;
+    const offset =
+      savedProgress && savedProgress.status !== "completed"
+        ? Math.max(0, Math.floor(savedProgress.position_seconds))
+        : 0;
+    setPinnedStartOffset(offset);
+  }, [progressPending, savedProgress, pinnedStartOffset]);
+
+  // Derived numeric offset usable in display math. Defaults to 0 before the
+  // pinned offset resolves; the loading gate prevents this from ever being
+  // observed by the video element (HLS isn't mounted until ready).
+  const startOffset = pinnedStartOffset ?? 0;
+
+  // Wait for both media metadata AND the initial start offset to be pinned
+  // before mounting HLS.
+  const isLoading = mediaLoading || pinnedStartOffset === null;
 
   // Determine HLS playlist URL with optional start offset
   const hlsUrl = (() => {
