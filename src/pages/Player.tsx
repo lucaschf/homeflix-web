@@ -64,6 +64,34 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
+// Persisted player preferences. Stored in localStorage under the
+// `homeflix.player.*` namespace so future preferences (default playback
+// speed, default subtitle language, etc.) can share the same prefix.
+const VOLUME_STORAGE_KEY = "homeflix.player.volume";
+const MUTED_STORAGE_KEY = "homeflix.player.muted";
+
+function readPersistedVolume(): number {
+  try {
+    const raw = localStorage.getItem(VOLUME_STORAGE_KEY);
+    if (raw === null) return 1;
+    const parsed = parseFloat(raw);
+    if (!Number.isFinite(parsed)) return 1;
+    // Clamp defensively against tampered/corrupt values.
+    return Math.min(1, Math.max(0, parsed));
+  } catch {
+    // localStorage can throw in private mode or when disabled.
+    return 1;
+  }
+}
+
+function readPersistedMuted(): boolean {
+  try {
+    return localStorage.getItem(MUTED_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
 export function Player() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -231,8 +259,14 @@ export function Player() {
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [muted, setMuted] = useState(false);
+  // Persisted via localStorage so the volume and mute state survive across
+  // navigations and reloads. Without this the <video> element resets to its
+  // browser default of volume=1 every time the player mounts. The state is
+  // pushed back into the actual video element by an effect below — setting
+  // the React state alone isn't enough because the video element default
+  // overrides it on attach.
+  const [volume, setVolume] = useState<number>(readPersistedVolume);
+  const [muted, setMuted] = useState<boolean>(readPersistedMuted);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [speed, setSpeed] = useState(1);
@@ -420,6 +454,38 @@ export function Player() {
 
     return undefined;
   }, [hlsUrl]);
+
+  // Push the persisted volume / muted state into the actual <video> element
+  // every time it becomes ready (hlsReady flips when a new media starts) or
+  // when the user changes those values via the controls. Without this the
+  // browser default of volume=1 wins on every fresh attach because the
+  // React state alone doesn't reach the underlying element.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.volume = volume;
+    video.muted = muted;
+  }, [volume, muted, hlsReady]);
+
+  // Persist volume changes to localStorage so the next session starts at
+  // the same level. Wrapped in try/catch because localStorage can throw in
+  // private mode or with a full quota — failing to persist is not worth
+  // breaking playback over.
+  useEffect(() => {
+    try {
+      localStorage.setItem(VOLUME_STORAGE_KEY, String(volume));
+    } catch {
+      /* persistence is best-effort */
+    }
+  }, [volume]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MUTED_STORAGE_KEY, String(muted));
+    } catch {
+      /* persistence is best-effort */
+    }
+  }, [muted]);
 
   // Restore saved audio/subtitle track selection on first play. Position is
   // already handled by the backend via the ?start=startOffset query param —
