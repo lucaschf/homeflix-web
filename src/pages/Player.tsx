@@ -467,25 +467,21 @@ export function Player() {
     video.muted = muted;
   }, [volume, muted, hlsReady]);
 
-  // Persist volume changes to localStorage so the next session starts at
-  // the same level. Wrapped in try/catch because localStorage can throw in
-  // private mode or with a full quota — failing to persist is not worth
-  // breaking playback over.
+  // Persist volume / mute changes to localStorage so the next session
+  // starts at the same level. Wrapped in try/catch because localStorage
+  // can throw in private mode or with a full quota — failing to persist
+  // is not worth breaking playback over. Both writes share one effect so
+  // there's a single best-effort boundary; the small extra `setItem` when
+  // only one of the two changes is microseconds and never measurable
+  // even on a fast slider drag.
   useEffect(() => {
     try {
       localStorage.setItem(VOLUME_STORAGE_KEY, String(volume));
-    } catch {
-      /* persistence is best-effort */
-    }
-  }, [volume]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem(MUTED_STORAGE_KEY, String(muted));
     } catch {
       /* persistence is best-effort */
     }
-  }, [muted]);
+  }, [volume, muted]);
 
   // Restore saved audio/subtitle track selection on first play. Position is
   // already handled by the backend via the ?start=startOffset query param —
