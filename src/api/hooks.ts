@@ -22,8 +22,7 @@ import type {
   CustomListsResponse,
   EnrichResponse,
   HealthResponse,
-  ListMoviesResponse,
-  ListSeriesResponse,
+  ApiListResponse,
   MovieDetail,
   MovieDetailResponse,
   MovieSummary,
@@ -40,41 +39,48 @@ import type {
 
 // ── Queries ──────────────────────────────────────────────
 
-// Page size used by both useMovies and useSeries. Matches the backend
-// `DEFAULT_PAGE_SIZE` (20) — kept in sync manually because the constant
-// can't cross the network boundary at the type level. PR2 will switch
-// each consumer to a hook-specific size where it makes sense, but for
-// the foundation PR we use a single value everywhere.
-const LIST_PAGE_SIZE = 20;
+// Default page size for the eagerly-loaded list hooks. The frontend
+// passes this value explicitly on every request, so it does NOT have
+// to match the backend's `DEFAULT_PAGE_SIZE` — the two are
+// independent. Lives next to the only helper that consumes it so
+// there's exactly one place to change.
+const EAGER_LIST_PAGE_SIZE = 20;
 
-// Eagerly fetches every page on mount until there are no more. The
-// Home and Browse pages still need every movie / series in memory at
-// once because they group items into genre carousels client-side; PR2
-// of the cursor-pagination work introduces per-genre endpoints and
-// switches the consumers to incremental rendering. Until then this
-// hook reproduces the previous "fetch the whole catalogue" behavior on
-// top of the new paginated endpoints.
-export function useMovies() {
-  const { i18n } = useTranslation();
-  const lang = i18n.language;
+/**
+ * Eagerly walks every page of a cursor-paginated list endpoint and
+ * returns the flattened items plus a single `isLoading` flag that
+ * stays `true` until the entire catalog is in memory.
+ *
+ * Used by both `useMovies` and `useSeries` (and, in PR2, by the
+ * per-genre carousels) to back the genre-grouping the Home and Browse
+ * pages still do client-side. Once PR2 lands its per-carousel
+ * endpoints the eager-walk goes away and consumers switch to the
+ * incremental `fetchNextPage` API directly — at that point this
+ * helper will lose the auto-advance effect but keep the same shape.
+ */
+function useEagerInfiniteList<T>(
+  queryKey: readonly unknown[],
+  endpoint: string,
+  baseParams: Record<string, string>,
+): { items: T[]; isLoading: boolean } {
   const query = useInfiniteQuery({
-    queryKey: ["movies", lang],
+    queryKey,
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const params: Record<string, string> = {
-        lang,
-        limit: String(LIST_PAGE_SIZE),
+        ...baseParams,
+        limit: String(EAGER_LIST_PAGE_SIZE),
       };
       if (pageParam) params.cursor = pageParam;
-      return api.get<ListMoviesResponse>("/movies", params);
+      return api.get<ApiListResponse<T>>(endpoint, params);
     },
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
   });
 
-  // Destructure the query fields the effect closes over so the
-  // exhaustive-deps lint can verify their stability — listing the
-  // whole `query` object as a dep would re-run the effect on every
-  // render and trigger an infinite loop.
+  // Destructure the fields the effect closes over so the
+  // exhaustive-deps lint can verify their stability — passing the
+  // whole `query` object as a dep would re-run the effect every
+  // render and infinite-loop.
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
 
   // Auto-advance through every page until the cursor is exhausted.
@@ -84,7 +90,7 @@ export function useMovies() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const movies = useMemo<MovieSummary[]>(
+  const items = useMemo<T[]>(
     () => query.data?.pages.flatMap((p) => p.data) ?? [],
     [query.data],
   );
@@ -94,7 +100,18 @@ export function useMovies() {
   // every render — matches the pre-pagination single-shot UX.
   const isLoading = query.isLoading || isFetchingNextPage || hasNextPage;
 
-  return { data: { movies }, isLoading };
+  return { items, isLoading };
+}
+
+export function useMovies() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  const { items, isLoading } = useEagerInfiniteList<MovieSummary>(
+    ["movies", lang],
+    "/movies",
+    { lang },
+  );
+  return { data: { movies: items }, isLoading };
 }
 
 export function useMovie(movieId: string) {
@@ -110,41 +127,15 @@ export function useMovie(movieId: string) {
   });
 }
 
-// Mirror of `useMovies` for the series listing — see the comment over
-// there for why we eagerly fetch every page on mount in PR1.
 export function useSeries() {
   const { i18n } = useTranslation();
   const lang = i18n.language;
-  const query = useInfiniteQuery({
-    queryKey: ["series", lang],
-    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
-      const params: Record<string, string> = {
-        lang,
-        limit: String(LIST_PAGE_SIZE),
-      };
-      if (pageParam) params.cursor = pageParam;
-      return api.get<ListSeriesResponse>("/series", params);
-    },
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
-  });
-
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
-
-  useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const series = useMemo<SeriesSummary[]>(
-    () => query.data?.pages.flatMap((p) => p.data) ?? [],
-    [query.data],
+  const { items, isLoading } = useEagerInfiniteList<SeriesSummary>(
+    ["series", lang],
+    "/series",
+    { lang },
   );
-
-  const isLoading = query.isLoading || isFetchingNextPage || hasNextPage;
-
-  return { data: { series }, isLoading };
+  return { data: { series: items }, isLoading };
 }
 
 export function useSeriesDetail(seriesId: string) {
