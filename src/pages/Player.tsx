@@ -144,6 +144,15 @@ export function Player() {
       savedProgress && savedProgress.status !== "completed"
         ? Math.max(0, Math.floor(savedProgress.position_seconds))
         : 0;
+    // Synchronizing async query state into local state — there is no
+    // pure derivation here because we need to "snapshot" the saved
+    // position the first time it resolves for a given mediaId and then
+    // hold it stable for the rest of the player's lifetime on that
+    // mediaId. Pure derivation would refetch + recompute the offset on
+    // every progress invalidation, which is the original "preparing
+    // video toda hora" bug. The cascading-render warning is acknowledged
+    // and the cascade is bounded (one render per mediaId change).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPinned({ mediaId, offset });
   }, [mediaId, progressPending, savedProgress, pinned]);
 
@@ -221,9 +230,18 @@ export function Player() {
       title: nextTitle ? `${label} - ${nextTitle}` : label,
     };
   }, [isMovie, seriesData, seasonNum, episodeNum]);
+  // Stable handle to the latest mutate function so the auto-save interval
+  // and saveCurrentProgress callback don't have to take `saveProgress.mutate`
+  // as a dependency (which would re-bind the interval every render and
+  // re-fire downstream effects). The ref is updated in an effect — NOT
+  // during render — because writing to a ref's `.current` during render
+  // is unsafe under concurrent rendering (this is the official React 19
+  // guidance enforced by `react-hooks/refs`).
   const saveProgress = useSaveProgress();
   const saveProgressRef = useRef(saveProgress.mutate);
-  saveProgressRef.current = saveProgress.mutate;
+  useEffect(() => {
+    saveProgressRef.current = saveProgress.mutate;
+  }, [saveProgress.mutate]);
   // Heading shown above the seek bar. Movies are a single line; series get
   // the show name on top with the SxxExx (+ episode title when available)
   // as a second smaller line below.
@@ -241,7 +259,15 @@ export function Player() {
       })();
 
   const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Stored as state (set via the callback ref `setContainerEl`) instead of
+  // a useRef so the MUI Menu `container` props below — which need the DOM
+  // element to portal into — can read the value without touching `.current`
+  // during render. `react-hooks/refs` (React 19) flags ref reads in render
+  // because the ref is null on the first pass and only populated on commit,
+  // so passing it directly produces a flicker / wrong portal target on the
+  // initial render. State plus a callback ref makes the element observable
+  // and triggers a re-render once the Box is attached.
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
   // Holds the mediaId whose audio/subtitle selection has already been
   // restored from savedProgress, so the restore effect runs again the first
   // time `mediaId` changes (e.g. on auto-advance to the next episode). A
@@ -291,28 +317,42 @@ export function Player() {
     knownDuration > 0 ? knownDuration : duration > 0 ? duration + startOffset : 0;
 
   // Quality list pulled from the movie's file variants. `files` is hoisted
-  // into a local so the same reference feeds both the memo and the effect
-  // below — kept as `T[] | undefined` (NOT `?? []`) on purpose: a fallback
-  // empty array would be a fresh reference on every render during loading
-  // and would defeat the whole point of the memo by making `files` change
-  // identity every pass. With `undefined` the dep stays stable until
-  // TanStack Query actually delivers a real array.
-  //
-  // Once memoized, `qualities` only re-creates when the underlying file
-  // list changes, so the downstream useEffect doesn't re-fire for nothing.
+  // into a local so the same reference feeds both the memo and the derived
+  // `quality` value below — kept as `T[] | undefined` (NOT `?? []`) on
+  // purpose: a fallback empty array would be a fresh reference on every
+  // render during loading and would defeat the whole point of the memo by
+  // making `files` change identity every pass.
   const files = movieData?.files;
   const qualities = useMemo(
     () => files?.map((f) => f.resolution) ?? [],
     [files],
   );
-  const [quality, setQuality] = useState("");
 
-  useEffect(() => {
-    if (qualities.length > 0 && !quality) {
-      const primary = files?.find((f) => f.is_primary);
-      setQuality(primary?.resolution ?? qualities[0]);
-    }
-  }, [qualities, quality, files]);
+  // `quality` is derived from the user's manual override (if any) plus the
+  // file list's default — primary file → first file → empty. This used to
+  // be a state plus a useEffect that called setQuality after files arrived,
+  // but that pattern trips `react-hooks/set-state-in-effect` (React 19's
+  // anti-cascading-render rule). Pure derivation removes the effect and
+  // the cascade entirely: the override state survives across re-renders,
+  // and the default falls out of `files` whenever it resolves.
+  //
+  // The override is validated against the current `files` on every render
+  // so navigating from a movie that has 1080p (override = "1080p") to a
+  // movie that doesn't carries no stale state — the validity check fails
+  // and we fall through to the primary/first/empty fallback chain. The
+  // override state itself is NOT cleared (no setState in render), so if
+  // the user later navigates back to a movie that does have 1080p, the
+  // override "wakes up" again. This is intentional: the override stores
+  // intent ("I prefer 1080p"), and the validation enforces feasibility.
+  const [qualityOverride, setQualityOverride] = useState<string | null>(null);
+  const overrideMatchesAvailableFile =
+    qualityOverride !== null &&
+    (files?.some((f) => f.resolution === qualityOverride) ?? false);
+  const quality =
+    (overrideMatchesAvailableFile ? qualityOverride : null) ??
+    files?.find((f) => f.is_primary)?.resolution ??
+    files?.[0]?.resolution ??
+    "";
 
   // Settings menu
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
@@ -385,6 +425,13 @@ export function Player() {
     const video = videoRef.current;
     if (!video || !hlsUrl) return;
 
+    // Resetting `hlsReady` is intentional: every time hlsUrl changes
+    // (new movie, new episode, ?start=X switch) the previous HLS
+    // instance is destroyed and a new one is built below — playback is
+    // not ready until the new instance fires `playing` again. The
+    // cascading render is bounded (one per hlsUrl change) and is what
+    // gates the loading overlay across episode transitions.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHlsReady(false);
 
     if (Hls.isSupported()) {
@@ -636,10 +683,17 @@ export function Player() {
 
     video.addEventListener("ended", onEnded);
     return () => video.removeEventListener("ended", onEnded);
-  }, [isMovie, nextEpisode, navigate, saveCurrentProgress]);
+  }, [isMovie, nextEpisode, navigate, saveCurrentProgress, seriesDetailPath]);
 
-  // Navigate when countdown reaches 0
+  // Navigate when countdown reaches 0. The state-in-effect lint is
+  // unavoidable here: `goToNextEpisode` calls `navigate(...)` AND
+  // `setNextEpCountdown(null)` to clean up. Inlining the navigate into
+  // the setInterval that decrements the countdown would mean calling
+  // setState inside another setState updater, which is worse than the
+  // bounded one-shot cascade this effect produces (one render when
+  // countdown hits 0, then the next-episode mount takes over).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (nextEpCountdown === 0) goToNextEpisode();
   }, [nextEpCountdown, goToNextEpisode]);
 
@@ -652,6 +706,39 @@ export function Player() {
     };
   }, []);
 
+  // Hoisted above the keyboard handler effect (and wrapped in useCallback)
+  // so the effect can list it as a dependency without triggering eslint's
+  // "used before declared" error. `containerEl` is in the deps because
+  // the callback closes over its value; the only time the identity changes
+  // is when the Box mounts/unmounts (once per session), so the keyboard
+  // effect re-bind is a no-op for the user.
+  //
+  // Note: this only ASKS the browser to enter or exit fullscreen — the
+  // actual `isFullscreen` state is updated by the `fullscreenchange`
+  // listener below, so it stays correct even when the user exits via
+  // Esc, F11, or any other browser-native exit path.
+  const toggleFullscreen = useCallback(() => {
+    if (!containerEl) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      containerEl.requestFullscreen();
+    }
+  }, [containerEl]);
+
+  // Source-of-truth sync for `isFullscreen`. Without this, pressing Esc
+  // (browser-native fullscreen exit) leaves `isFullscreen === true`,
+  // which breaks the keyboard handler's Esc branch and any UI that
+  // depends on the flag. Listening to `fullscreenchange` and reading
+  // back from `document.fullscreenElement` is the canonical pattern.
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement !== null);
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
@@ -661,7 +748,8 @@ export function Player() {
         case " ":
         case "k":
           e.preventDefault();
-          video.paused ? video.play() : video.pause();
+          if (video.paused) video.play().catch(() => {});
+          else video.pause();
           break;
         case "arrowleft":
           video.currentTime = Math.max(0, video.currentTime - 10);
@@ -697,12 +785,13 @@ export function Player() {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [displayDuration, isFullscreen, navigate, resetHideTimer]);
+  }, [displayDuration, isFullscreen, navigate, resetHideTimer, toggleFullscreen]);
 
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    video.paused ? video.play() : video.pause();
+    if (video.paused) video.play().catch(() => {});
+    else video.pause();
   };
 
   const seek = (displayValue: number) => {
@@ -761,18 +850,6 @@ export function Player() {
     setSubtitleAnchor(null);
   };
 
-  const toggleFullscreen = () => {
-    const el = containerRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    } else {
-      el.requestFullscreen();
-      setIsFullscreen(true);
-    }
-  };
-
   const openSettings = (e: React.MouseEvent<HTMLElement>) => {
     setSettingsAnchor(e.currentTarget);
     setSettingsPanel("main");
@@ -795,12 +872,11 @@ export function Player() {
     );
   }
 
-  const currentAudioName = audioTracks.find((t) => t.id === currentAudioTrack)?.name ?? "";
   const subtitlesActive = currentSubtitleTrack >= 0;
 
   return (
     <Box
-      ref={containerRef}
+      ref={setContainerEl}
       onMouseMove={resetHideTimer}
       sx={{
         position: "fixed",
@@ -1110,7 +1186,7 @@ export function Player() {
         onClose={() => { setSettingsAnchor(null); setSettingsPanel("main"); }}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "bottom", horizontal: "right" }}
-        container={containerRef.current}
+        container={containerEl}
         slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 220, borderRadius: 2 } } }}
       >
         {settingsPanel === "main" && [
@@ -1131,7 +1207,7 @@ export function Player() {
         {settingsPanel === "quality" && [
           <SettingsBackItem key="back" label={t("player.quality")} onClick={() => setSettingsPanel("main")} />,
           ...qualities.map((q) => (
-            <MenuItem key={q} onClick={() => { setQuality(q); setSettingsPanel("main"); }}>
+            <MenuItem key={q} onClick={() => { setQualityOverride(q); setSettingsPanel("main"); }}>
               {quality === q && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
               <ListItemText inset={quality !== q} primary={q} />
             </MenuItem>
@@ -1156,7 +1232,7 @@ export function Player() {
         onClose={() => setAudioAnchor(null)}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "bottom", horizontal: "right" }}
-        container={containerRef.current}
+        container={containerEl}
         slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
       >
         {audioTracks.map((track) => (
@@ -1174,7 +1250,7 @@ export function Player() {
         onClose={() => setSubtitleAnchor(null)}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "bottom", horizontal: "right" }}
-        container={containerRef.current}
+        container={containerEl}
         slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
       >
         <MenuItem onClick={() => changeSubtitleTrack(-1)}>
