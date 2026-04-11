@@ -217,9 +217,16 @@ export function Player() {
   const [subtitleTracks, setSubtitleTracks] = useState<HlsSubtitleTrack[]>([]);
   const [currentSubtitleTrack, setCurrentSubtitleTrack] = useState(-1);
 
-  // Use metadata duration as authoritative source (movie or episode)
+  // Use metadata duration as authoritative source (movie or episode).
+  // When the API doesn't expose a canonical duration we fall back to the
+  // <video> element's own duration, but that one reflects the TRIMMED HLS
+  // (the ?start=X cut), so we add startOffset back to recover the original
+  // source duration. This single value is the source of truth for both the
+  // scrubber max AND the duration_seconds we POST to /watch-progress, so
+  // both stay aligned without per-call fallback chains.
   const knownDuration = isMovie ? (movieData?.duration_seconds ?? 0) : episodeDuration;
-  const displayDuration = knownDuration > 0 ? knownDuration : duration;
+  const displayDuration =
+    knownDuration > 0 ? knownDuration : duration > 0 ? duration + startOffset : 0;
 
   // Quality from movie files
   const qualities = movieData?.files?.map((f) => f.resolution) ?? [];
@@ -427,13 +434,12 @@ export function Player() {
     const interval = setInterval(() => {
       const video = videoRef.current;
       if (!video || video.paused || !mediaId) return;
-      const dur = displayDuration || video.duration + startOffset;
-      if (!dur) return;
+      if (!displayDuration) return;
       saveProgressRef.current({
         media_id: mediaId,
         media_type: mediaType,
         position_seconds: Math.floor(video.currentTime + startOffset),
-        duration_seconds: Math.floor(dur),
+        duration_seconds: Math.floor(displayDuration),
         audio_track: hlsRef.current?.audioTrack,
         subtitle_track: hlsRef.current?.subtitleTrack,
       });
@@ -445,15 +451,14 @@ export function Player() {
   const saveCurrentProgress = useCallback(() => {
     const video = videoRef.current;
     if (!video || !mediaId) return;
-    const dur = displayDuration || video.duration + startOffset;
     // Don't save if nothing has been watched yet (avoid overwriting a
     // resumable position with 0 on quick unmount).
-    if (!dur || (video.currentTime === 0 && startOffset === 0)) return;
+    if (!displayDuration || (video.currentTime === 0 && startOffset === 0)) return;
     saveProgressRef.current({
       media_id: mediaId,
       media_type: mediaType,
       position_seconds: Math.floor(video.currentTime + startOffset),
-      duration_seconds: Math.floor(dur),
+      duration_seconds: Math.floor(displayDuration),
       audio_track: hlsRef.current?.audioTrack,
       subtitle_track: hlsRef.current?.subtitleTrack,
     });
