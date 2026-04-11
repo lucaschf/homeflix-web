@@ -288,7 +288,13 @@ export function Player() {
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("waiting", onWaiting);
     };
-  }, [knownDuration, startOffset]);
+    // isLoading is in the deps so this effect re-runs when the loading
+    // overlay clears and the <video> element appears in the DOM. Without
+    // it, the listeners would attach during the first render (when
+    // videoRef.current is still null because of the early-return loading
+    // screen) and never re-attach, leaving the player stuck on the
+    // "preparing video" overlay even after playback starts.
+  }, [knownDuration, startOffset, isLoading]);
 
   // Initialize HLS
   const hlsRef = useRef<Hls | null>(null);
