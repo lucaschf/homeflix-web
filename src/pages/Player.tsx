@@ -104,29 +104,31 @@ export function Player() {
   //   into the next episode and ffmpeg would trim the new playlist starting
   //   at the previous episode's resume position.
   //
-  // We track which mediaId the current pinned offset belongs to. When that
-  // tag doesn't match the current mediaId, the player is treated as loading
-  // until the new media's progress resolves and the offset is re-pinned.
-  const [pinnedStartOffset, setPinnedStartOffset] = useState<number>(0);
-  const [pinnedForMediaId, setPinnedForMediaId] = useState<string | null>(null);
+  // The pinned record is a single object so the (mediaId, offset) pair can
+  // never be partially updated by a future refactor — both fields move
+  // together by construction. `null` means "not pinned for any media yet";
+  // a value means "this offset belongs to exactly THIS mediaId".
+  const [pinned, setPinned] = useState<{ mediaId: string; offset: number } | null>(null);
   useEffect(() => {
-    if (pinnedForMediaId === mediaId) return;
+    if (pinned?.mediaId === mediaId) return;
     if (progressPending) return;
     const offset =
       savedProgress && savedProgress.status !== "completed"
         ? Math.max(0, Math.floor(savedProgress.position_seconds))
         : 0;
-    setPinnedStartOffset(offset);
-    setPinnedForMediaId(mediaId);
-  }, [mediaId, progressPending, savedProgress, pinnedForMediaId]);
+    setPinned({ mediaId, offset });
+  }, [mediaId, progressPending, savedProgress, pinned]);
 
   // Only safe to consume the offset for display math / HLS URL once it has
   // been pinned for the CURRENT mediaId. Until then `isLoading` keeps the
   // player in the loading state and the HLS effect stays unmounted, so the
-  // (still stale from the previous episode) `pinnedStartOffset` is never
-  // read by anything user-visible.
-  const isReadyForCurrentMedia = pinnedForMediaId === mediaId;
-  const startOffset = isReadyForCurrentMedia ? pinnedStartOffset : 0;
+  // (still stale from the previous episode) offset is never read by
+  // anything user-visible. Code paths that touch `startOffset` directly
+  // (the save handlers below) ALSO bail out on `!isReadyForCurrentMedia`
+  // to make the coupling explicit instead of relying on indirect guards
+  // like `video.paused` having already updated.
+  const isReadyForCurrentMedia = pinned?.mediaId === mediaId;
+  const startOffset = isReadyForCurrentMedia ? pinned.offset : 0;
 
   // Wait for both media metadata AND the start offset to be pinned for the
   // current mediaId before mounting HLS.
@@ -463,6 +465,11 @@ export function Player() {
   // Auto-save progress every 10 seconds during playback
   useEffect(() => {
     if (!playing) return;
+    // Explicit guard: startOffset only carries the correct value once the
+    // pin matches the current mediaId. Without this, the brief window
+    // between params change and pin re-resolution could fire a save with
+    // startOffset=0 against the new mediaId.
+    if (!isReadyForCurrentMedia) return;
     const interval = setInterval(() => {
       const video = videoRef.current;
       if (!video || video.paused || !mediaId) return;
@@ -477,12 +484,15 @@ export function Player() {
       });
     }, 10_000);
     return () => clearInterval(interval);
-  }, [playing, mediaId, mediaType, displayDuration, startOffset]);
+  }, [playing, mediaId, mediaType, displayDuration, startOffset, isReadyForCurrentMedia]);
 
   // Save progress on pause or unmount
   const saveCurrentProgress = useCallback(() => {
     const video = videoRef.current;
     if (!video || !mediaId) return;
+    // Same explicit guard as the auto-save interval — never POST a
+    // position computed from a stale startOffset against the new mediaId.
+    if (!isReadyForCurrentMedia) return;
     // Don't save if nothing has been watched yet (avoid overwriting a
     // resumable position with 0 on quick unmount).
     if (!displayDuration || (video.currentTime === 0 && startOffset === 0)) return;
@@ -494,7 +504,7 @@ export function Player() {
       audio_track: hlsRef.current?.audioTrack,
       subtitle_track: hlsRef.current?.subtitleTrack,
     });
-  }, [mediaId, mediaType, displayDuration, startOffset]);
+  }, [mediaId, mediaType, displayDuration, startOffset, isReadyForCurrentMedia]);
 
   useEffect(() => {
     const video = videoRef.current;
