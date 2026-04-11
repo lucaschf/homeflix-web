@@ -74,11 +74,7 @@ export function Player() {
     episode?: string;
   }>();
 
-  // Determine HLS playlist URL
   const isMovie = !!params.movieId;
-  const hlsUrl = isMovie
-    ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8`
-    : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8`;
 
   const mediaId = isMovie
     ? params.movieId ?? ""
@@ -87,7 +83,48 @@ export function Player() {
 
   const { data: movieData, isLoading: movieLoading } = useMovie(params.movieId ?? "");
   const { data: seriesData, isLoading: seriesLoading } = useSeriesDetail(params.seriesId ?? "");
-  const isLoading = isMovie ? movieLoading : seriesLoading;
+  const { data: savedProgress, isPending: progressPending } = useProgress(mediaId);
+  const mediaLoading = isMovie ? movieLoading : seriesLoading;
+
+  // Start offset passed to the backend via ?start=X. CRITICAL: this must be
+  // captured exactly ONCE per player mount, on the first time savedProgress
+  // resolves. If we recomputed it from savedProgress on every render, the
+  // 10-second auto-save would invalidate the progress query, the refetched
+  // data would carry the just-saved position, the offset would change,
+  // hlsUrl would change, the HLS effect would re-run, and the player would
+  // be destroyed mid-playback every 10 seconds (the symptom: "preparing
+  // video toda hora" + audio cuts + visible jumps to other parts of the
+  // video). Storing it in useState pins it to the original mount value.
+  // `pinnedStartOffset === null` while the value is being resolved; once
+  // set it never changes for the lifetime of this player mount.
+  const [pinnedStartOffset, setPinnedStartOffset] = useState<number | null>(null);
+  useEffect(() => {
+    if (pinnedStartOffset !== null) return;
+    if (progressPending) return;
+    const offset =
+      savedProgress && savedProgress.status !== "completed"
+        ? Math.max(0, Math.floor(savedProgress.position_seconds))
+        : 0;
+    setPinnedStartOffset(offset);
+  }, [progressPending, savedProgress, pinnedStartOffset]);
+
+  // Derived numeric offset usable in display math. Defaults to 0 before the
+  // pinned offset resolves; the loading gate prevents this from ever being
+  // observed by the video element (HLS isn't mounted until ready).
+  const startOffset = pinnedStartOffset ?? 0;
+
+  // Wait for both media metadata AND the initial start offset to be pinned
+  // before mounting HLS.
+  const isLoading = mediaLoading || pinnedStartOffset === null;
+
+  // Determine HLS playlist URL with optional start offset
+  const hlsUrl = (() => {
+    if (isLoading) return "";
+    const base = isMovie
+      ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8`
+      : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8`;
+    return startOffset > 0 ? `${base}?start=${startOffset}` : base;
+  })();
 
   const seasonNum = isMovie ? 0 : Number(params.season);
   const episodeNum = isMovie ? 0 : Number(params.episode);
@@ -139,7 +176,6 @@ export function Player() {
       title: nextTitle ? `${label} - ${nextTitle}` : label,
     };
   }, [isMovie, seriesData, seasonNum, episodeNum]);
-  const { data: savedProgress } = useProgress(mediaId);
   const saveProgress = useSaveProgress();
   const saveProgressRef = useRef(saveProgress.mutate);
   saveProgressRef.current = saveProgress.mutate;
@@ -181,9 +217,16 @@ export function Player() {
   const [subtitleTracks, setSubtitleTracks] = useState<HlsSubtitleTrack[]>([]);
   const [currentSubtitleTrack, setCurrentSubtitleTrack] = useState(-1);
 
-  // Use metadata duration as authoritative source (movie or episode)
+  // Use metadata duration as authoritative source (movie or episode).
+  // When the API doesn't expose a canonical duration we fall back to the
+  // <video> element's own duration, but that one reflects the TRIMMED HLS
+  // (the ?start=X cut), so we add startOffset back to recover the original
+  // source duration. This single value is the source of truth for both the
+  // scrubber max AND the duration_seconds we POST to /watch-progress, so
+  // both stay aligned without per-call fallback chains.
   const knownDuration = isMovie ? (movieData?.duration_seconds ?? 0) : episodeDuration;
-  const displayDuration = knownDuration > 0 ? knownDuration : duration;
+  const displayDuration =
+    knownDuration > 0 ? knownDuration : duration > 0 ? duration + startOffset : 0;
 
   // Quality from movie files
   const qualities = movieData?.files?.map((f) => f.resolution) ?? [];
@@ -219,7 +262,10 @@ export function Player() {
     const video = videoRef.current;
     if (!video) return;
 
-    const onTimeUpdate = () => setCurrentTime(video.currentTime);
+    // currentTime state stores the DISPLAY time (video.currentTime + startOffset)
+    // so the scrubber and timestamp reflect the absolute position in the
+    // original source, even when the backend trimmed via ?start=X.
+    const onTimeUpdate = () => setCurrentTime(video.currentTime + startOffset);
     const onLoadedMetadata = () => {
       if (!knownDuration) setDuration(video.duration);
     };
@@ -249,7 +295,13 @@ export function Player() {
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("waiting", onWaiting);
     };
-  }, [knownDuration]);
+    // isLoading is in the deps so this effect re-runs when the loading
+    // overlay clears and the <video> element appears in the DOM. Without
+    // it, the listeners would attach during the first render (when
+    // videoRef.current is still null because of the early-return loading
+    // screen) and never re-attach, leaving the player stuck on the
+    // "preparing video" overlay even after playback starts.
+  }, [knownDuration, startOffset, isLoading]);
 
   // Initialize HLS
   const hlsRef = useRef<Hls | null>(null);
@@ -341,7 +393,11 @@ export function Player() {
     return undefined;
   }, [hlsUrl]);
 
-  // Restore saved progress (position, audio, subtitle) on first play
+  // Restore saved audio/subtitle track selection on first play. Position is
+  // already handled by the backend via the ?start=startOffset query param —
+  // ffmpeg starts transcoding from that point, so the video element begins
+  // at internal currentTime = 0, which corresponds to display time =
+  // startOffset. No seek is needed here.
   useEffect(() => {
     if (!savedProgress || progressRestoredRef.current) return;
     const video = videoRef.current;
@@ -349,13 +405,25 @@ export function Player() {
     if (!video || !hlsReady) return;
 
     progressRestoredRef.current = true;
-    if (savedProgress.position_seconds > 0 && savedProgress.status !== "completed") {
-      video.currentTime = savedProgress.position_seconds;
-    }
-    if (savedProgress.audio_track != null && hls) {
+    // Only restore audio track if the saved value is non-default AND
+    // different from the current selection. Setting hls.audioTrack on
+    // HLS.js — even to the same value it already is — can trigger a
+    // buffer flush of the audio segments, which manifests as the audio
+    // dropping out for a few seconds right after playback starts.
+    if (
+      savedProgress.audio_track != null &&
+      savedProgress.audio_track !== 0 &&
+      hls &&
+      hls.audioTrack !== savedProgress.audio_track
+    ) {
       hls.audioTrack = savedProgress.audio_track;
     }
-    if (savedProgress.subtitle_track != null && hls) {
+    if (
+      savedProgress.subtitle_track != null &&
+      savedProgress.subtitle_track !== -1 &&
+      hls &&
+      hls.subtitleTrack !== savedProgress.subtitle_track
+    ) {
       hls.subtitleTrack = savedProgress.subtitle_track;
     }
   }, [savedProgress, hlsReady]);
@@ -366,35 +434,35 @@ export function Player() {
     const interval = setInterval(() => {
       const video = videoRef.current;
       if (!video || video.paused || !mediaId) return;
-      const dur = displayDuration || video.duration;
-      if (!dur) return;
+      if (!displayDuration) return;
       saveProgressRef.current({
         media_id: mediaId,
         media_type: mediaType,
-        position_seconds: Math.floor(video.currentTime),
-        duration_seconds: Math.floor(dur),
+        position_seconds: Math.floor(video.currentTime + startOffset),
+        duration_seconds: Math.floor(displayDuration),
         audio_track: hlsRef.current?.audioTrack,
         subtitle_track: hlsRef.current?.subtitleTrack,
       });
     }, 10_000);
     return () => clearInterval(interval);
-  }, [playing, mediaId, mediaType, displayDuration]);
+  }, [playing, mediaId, mediaType, displayDuration, startOffset]);
 
   // Save progress on pause or unmount
   const saveCurrentProgress = useCallback(() => {
     const video = videoRef.current;
     if (!video || !mediaId) return;
-    const dur = displayDuration || video.duration;
-    if (!dur || video.currentTime === 0) return;
+    // Don't save if nothing has been watched yet (avoid overwriting a
+    // resumable position with 0 on quick unmount).
+    if (!displayDuration || (video.currentTime === 0 && startOffset === 0)) return;
     saveProgressRef.current({
       media_id: mediaId,
       media_type: mediaType,
-      position_seconds: Math.floor(video.currentTime),
-      duration_seconds: Math.floor(dur),
+      position_seconds: Math.floor(video.currentTime + startOffset),
+      duration_seconds: Math.floor(displayDuration),
       audio_track: hlsRef.current?.audioTrack,
       subtitle_track: hlsRef.current?.subtitleTrack,
     });
-  }, [mediaId, mediaType, displayDuration]);
+  }, [mediaId, mediaType, displayDuration, startOffset]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -483,7 +551,7 @@ export function Player() {
           resetHideTimer();
           break;
         case "arrowright":
-          video.currentTime = Math.min(displayDuration, video.currentTime + 30);
+          video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 30);
           resetHideTimer();
           break;
         case "arrowup":
@@ -520,17 +588,27 @@ export function Player() {
     video.paused ? video.play() : video.pause();
   };
 
-  const seek = (value: number) => {
+  const seek = (displayValue: number) => {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = value;
-    setCurrentTime(value);
+    // Convert display time to internal (trimmed) time. Clamp to [0, trimmed
+    // duration]: seeking before startOffset is not possible with the current
+    // trimmed transcode, so we silently clamp to the earliest available
+    // frame. (TODO: trigger a reload with ?start=0 if the user wants to
+    // rewind before startOffset.)
+    const internalTime = Math.max(
+      0,
+      Math.min(video.duration || Infinity, displayValue - startOffset),
+    );
+    video.currentTime = internalTime;
+    setCurrentTime(internalTime + startOffset);
   };
 
   const skip = (seconds: number) => {
     const video = videoRef.current;
     if (!video) return;
-    video.currentTime = Math.max(0, Math.min(displayDuration, video.currentTime + seconds));
+    const maxInternal = video.duration || Infinity;
+    video.currentTime = Math.max(0, Math.min(maxInternal, video.currentTime + seconds));
     resetHideTimer();
   };
 
