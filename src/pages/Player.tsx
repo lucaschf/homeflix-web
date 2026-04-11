@@ -398,10 +398,25 @@ export function Player() {
     if (!video || !hlsReady) return;
 
     progressRestoredRef.current = true;
-    if (savedProgress.audio_track != null && hls) {
+    // Only restore audio track if the saved value is non-default AND
+    // different from the current selection. Setting hls.audioTrack on
+    // HLS.js — even to the same value it already is — can trigger a
+    // buffer flush of the audio segments, which manifests as the audio
+    // dropping out for a few seconds right after playback starts.
+    if (
+      savedProgress.audio_track != null &&
+      savedProgress.audio_track !== 0 &&
+      hls &&
+      hls.audioTrack !== savedProgress.audio_track
+    ) {
       hls.audioTrack = savedProgress.audio_track;
     }
-    if (savedProgress.subtitle_track != null && hls) {
+    if (
+      savedProgress.subtitle_track != null &&
+      savedProgress.subtitle_track !== -1 &&
+      hls &&
+      hls.subtitleTrack !== savedProgress.subtitle_track
+    ) {
       hls.subtitleTrack = savedProgress.subtitle_track;
     }
   }, [savedProgress, hlsReady]);
@@ -779,7 +794,6 @@ export function Player() {
           {/* Seek Bar */}
           <Slider
             value={currentTime}
-            min={startOffset}
             max={displayDuration || 1}
             onChange={(_, v) => seek(v as number)}
             sx={{
