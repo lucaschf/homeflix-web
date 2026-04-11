@@ -131,6 +131,23 @@ const themeOptions: ThemeOptions = {
     borderRadius: 8,
   },
   components: {
+    MuiTypography: {
+      defaultProps: {
+        // Custom typography variants registered via module augmentation
+        // (overlayTitle / overlaySubtitle / overlayTimestamp) need an
+        // explicit HTML element here. MUI's built-in fallback for unknown
+        // variants is `<span>`, which is inline — that made the player
+        // heading title and subtitle land side-by-side instead of
+        // stacking. `<div>` keeps them as block elements while staying
+        // semantically neutral (they are short overlay labels, not
+        // paragraphs, so `<p>` would be wrong).
+        variantMapping: {
+          overlayTitle: "div",
+          overlaySubtitle: "div",
+          overlayTimestamp: "div",
+        },
+      },
+    },
     MuiCssBaseline: {
       styleOverrides: {
         body: {
