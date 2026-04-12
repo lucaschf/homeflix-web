@@ -190,7 +190,6 @@
     "metadata": "Metadata",
     "tmdbApiKey": "TMDB API Key",
     "testKey": "Test",
-    "autoEnrich": "Auto-enrich on scan",
     "enrichAll": "Enrich All",
     "enriching": "Enriching...",
     "about": "About",

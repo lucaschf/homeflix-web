@@ -13,7 +13,6 @@ import {
   InputLabel,
   MenuItem,
   Select,
-  Switch,
   TextField,
   Typography,
 } from "@mui/material";
@@ -30,6 +29,10 @@ import {
 import { useTranslation } from "react-i18next";
 import { useBulkEnrich, useHealth, useScan } from "../api/hooks";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
+import {
+  usePlaybackPreferences,
+  type SubtitleMode,
+} from "../hooks/usePlaybackPreferences";
 
 const LIBRARIES_STORAGE_KEY = "homeflix-libraries";
 
@@ -59,11 +62,10 @@ export function Settings() {
   const enrichMutation = useBulkEnrich();
   const { data: health } = useHealth();
 
-  const [audioLang, setAudioLang] = useState("pt-BR");
-  const [subtitleLang, setSubtitleLang] = useState("pt-BR");
-  const [subtitleMode, setSubtitleMode] = useState("foreignOnly");
-  const [defaultQuality, setDefaultQuality] = useState("best");
-  const [autoEnrich, setAutoEnrich] = useState(true);
+  // Playback preferences are persisted to localStorage via this
+  // hook and consumed by the Player on first play of a new media.
+  // The partial-update setter lets each Select be a one-liner.
+  const [playbackPrefs, setPlaybackPrefs] = usePlaybackPreferences();
 
   const handleAddLibrary = useCallback(
     (name: string, path: string) => {
@@ -180,7 +182,11 @@ export function Settings() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
           <FormControl size="small" fullWidth>
             <InputLabel>{t("settings.preferredAudio")}</InputLabel>
-            <Select value={audioLang} onChange={(e) => setAudioLang(e.target.value)} label={t("settings.preferredAudio")}>
+            <Select
+              value={playbackPrefs.audioLang}
+              onChange={(e) => setPlaybackPrefs({ audioLang: e.target.value })}
+              label={t("settings.preferredAudio")}
+            >
               <MenuItem value="pt-BR">Português (Brasil)</MenuItem>
               <MenuItem value="en">English</MenuItem>
               <MenuItem value="ja">日本語</MenuItem>
@@ -188,7 +194,11 @@ export function Settings() {
           </FormControl>
           <FormControl size="small" fullWidth>
             <InputLabel>{t("settings.preferredSubtitle")}</InputLabel>
-            <Select value={subtitleLang} onChange={(e) => setSubtitleLang(e.target.value)} label={t("settings.preferredSubtitle")}>
+            <Select
+              value={playbackPrefs.subtitleLang}
+              onChange={(e) => setPlaybackPrefs({ subtitleLang: e.target.value })}
+              label={t("settings.preferredSubtitle")}
+            >
               <MenuItem value="pt-BR">Português (Brasil)</MenuItem>
               <MenuItem value="en">English</MenuItem>
               <MenuItem value="off">{t("settings.subtitleModes.off")}</MenuItem>
@@ -196,7 +206,13 @@ export function Settings() {
           </FormControl>
           <FormControl size="small" fullWidth>
             <InputLabel>{t("settings.subtitleMode")}</InputLabel>
-            <Select value={subtitleMode} onChange={(e) => setSubtitleMode(e.target.value)} label={t("settings.subtitleMode")}>
+            <Select
+              value={playbackPrefs.subtitleMode}
+              onChange={(e) =>
+                setPlaybackPrefs({ subtitleMode: e.target.value as SubtitleMode })
+              }
+              label={t("settings.subtitleMode")}
+            >
               <MenuItem value="always">{t("settings.subtitleModes.always")}</MenuItem>
               <MenuItem value="foreignOnly">{t("settings.subtitleModes.foreignOnly")}</MenuItem>
               <MenuItem value="forcedOnly">{t("settings.subtitleModes.forcedOnly")}</MenuItem>
@@ -205,7 +221,11 @@ export function Settings() {
           </FormControl>
           <FormControl size="small" fullWidth>
             <InputLabel>{t("settings.defaultQuality")}</InputLabel>
-            <Select value={defaultQuality} onChange={(e) => setDefaultQuality(e.target.value)} label={t("settings.defaultQuality")}>
+            <Select
+              value={playbackPrefs.defaultQuality}
+              onChange={(e) => setPlaybackPrefs({ defaultQuality: e.target.value })}
+              label={t("settings.defaultQuality")}
+            >
               <MenuItem value="best">{t("settings.qualityOptions.best")}</MenuItem>
               <MenuItem value="1080p">{t("settings.qualityOptions.1080p")}</MenuItem>
               <MenuItem value="720p">{t("settings.qualityOptions.720p")}</MenuItem>
@@ -215,11 +235,13 @@ export function Settings() {
       </SettingsSection>
 
       {/* ── Metadata ─────────────────────────────────────── */}
+      {/* The old "auto-enrich on scan" toggle was removed — every
+          scan now enriches automatically so exposing a switch that
+          defaulted to on and only affected an unused state hook
+          was pure friction. Manual re-enrich stays available for
+          one-shot refreshes of the whole catalog. */}
       <SettingsSection icon={Database} title={t("settings.metadata")}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
-          <SettingsRow label={t("settings.autoEnrich")}>
-            <Switch checked={autoEnrich} onChange={(_, checked) => setAutoEnrich(checked)} color="primary" size="small" />
-          </SettingsRow>
           <Button
             variant="outlined"
             onClick={() => enrichMutation.mutate(false)}
