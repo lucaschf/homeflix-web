@@ -10,6 +10,17 @@ import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { peach } from "../theme/colors";
 
+function formatRemaining(positionSeconds: number, durationSeconds: number): string {
+  const remaining = Math.max(0, durationSeconds - positionSeconds);
+  const minutes = Math.ceil(remaining / 60);
+  if (minutes >= 60) {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+  }
+  return `${minutes} min`;
+}
+
 export function Home() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -81,6 +92,7 @@ export function Home() {
                 }
                 imageUrl={item.backdrop_path ?? item.poster_path ?? undefined}
                 progress={item.percentage}
+                progressLabel={formatRemaining(item.position_seconds, item.duration_seconds)}
                 variant="landscape"
                 onClick={() => {
                   if (item.media_type === "movie") {

@@ -11,6 +11,8 @@ interface MediaCardProps {
   imageUrl?: string;
   year?: number;
   progress?: number;
+  /** Short label shown above the progress bar (e.g. "42 min left"). */
+  progressLabel?: string;
   subtitle?: string;
   synopsis?: string;
   variant?: "poster" | "landscape" | "episode";
@@ -27,6 +29,7 @@ export function MediaCard({
   imageUrl,
   year,
   progress,
+  progressLabel,
   subtitle,
   synopsis,
   variant = "poster",
@@ -137,22 +140,45 @@ export function MediaCard({
           </Box>
         )}
 
-        {/* Progress bar */}
+        {/* Progress bar + remaining time label */}
         {progress !== undefined && progress > 0 && (
-          <LinearProgress
-            variant="determinate"
-            value={progress}
-            sx={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 4,
-              zIndex: 2,
-              bgcolor: "rgba(255,255,255,0.2)",
-              "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
-            }}
-          />
+          <>
+            {progressLabel && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 8,
+                  left: 8,
+                  zIndex: 3,
+                  bgcolor: "rgba(0,0,0,0.7)",
+                  borderRadius: 0.75,
+                  px: 0.75,
+                  py: 0.25,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: "0.6rem", fontWeight: 600, color: "common.white" }}
+                >
+                  {progressLabel}
+                </Typography>
+              </Box>
+            )}
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{
+                position: "absolute",
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: 4,
+                zIndex: 2,
+                bgcolor: "rgba(255,255,255,0.2)",
+                "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
+              }}
+            />
+          </>
         )}
       </Box>
 
