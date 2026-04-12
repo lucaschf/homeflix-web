@@ -148,6 +148,36 @@ export type ListSeriesResponse = ApiListResponse<SeriesSummary>;
 export type MovieDetailResponse = ApiDetailResponse<MovieDetail>;
 export type SeriesDetailResponse = ApiDetailResponse<SeriesDetail>;
 
+// One row in the catalog genres listing returned by /api/v1/catalog/genres.
+// `id` is the canonical English genre name (used as the filter key for the
+// by-genre endpoint, stable across UI language changes); `name` is the
+// localized display label, falling back to the canonical name when no
+// translation exists.
+export interface Genre {
+  id: string;
+  name: string;
+  count: number;
+}
+
+export type GenresResponse = ApiListResponse<Genre>;
+
+// One row in the catalog by-genre listing — discriminated union of movie
+// and series via the `type` field. The shape carries the same fields the
+// existing card components already render so a single MediaCard variant
+// can handle both.
+export interface CatalogItem {
+  id: string;
+  type: "movie" | "series";
+  title: string;
+  year: number;
+  synopsis: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  genres: string[];
+}
+
+export type CatalogByGenreResponse = ApiListResponse<CatalogItem>;
+
 export interface ScanResponse {
   movies_created: number;
   movies_updated: number;
