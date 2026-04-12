@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -30,6 +30,19 @@ export function MovieDetail() {
   const [trailerOpen, setTrailerOpen] = useState(false);
   const synopsisRef = useRef<HTMLDivElement>(null);
   const SYNOPSIS_COLLAPSED = 60;
+  // Track whether the synopsis text overflows the collapsed height
+  // via state so the "Show more" link can render without reading
+  // ref.current during render (which React 19 flags as unsafe).
+  const [synopsisOverflows, setSynopsisOverflows] = useState(false);
+  useEffect(() => {
+    const el = synopsisRef.current;
+    if (!el) return;
+    const check = () => setSynopsisOverflows(el.scrollHeight > SYNOPSIS_COLLAPSED);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [SYNOPSIS_COLLAPSED]);
 
   if (isLoading || !movie) {
     return (
@@ -156,7 +169,7 @@ export function MovieDetail() {
                 {movie.synopsis}
               </Typography>
             </Collapse>
-            {(synopsisRef.current?.scrollHeight ?? 0) > SYNOPSIS_COLLAPSED && (
+            {synopsisOverflows && (
               <Typography
                 variant="body2"
                 onClick={() => setSynopsisExpanded(!synopsisExpanded)}

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -34,6 +34,16 @@ export function SeriesDetail() {
   const [trailerOpen, setTrailerOpen] = useState(false);
   const synopsisRef = useRef<HTMLDivElement>(null);
   const SYNOPSIS_COLLAPSED = 44;
+  const [synopsisOverflows, setSynopsisOverflows] = useState(false);
+  useEffect(() => {
+    const el = synopsisRef.current;
+    if (!el) return;
+    const check = () => setSynopsisOverflows(el.scrollHeight > SYNOPSIS_COLLAPSED);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [SYNOPSIS_COLLAPSED]);
 
   if (isLoading || !series) {
     return (
@@ -181,7 +191,7 @@ export function SeriesDetail() {
                 {series.synopsis}
               </Typography>
             </Collapse>
-            {(synopsisRef.current?.scrollHeight ?? 0) > SYNOPSIS_COLLAPSED && (
+            {synopsisOverflows && (
               <Typography
                 variant="body2"
                 onClick={() => setSynopsisExpanded(!synopsisExpanded)}
