@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
+  CircularProgress,
   Dialog,
   IconButton,
   InputBase,
@@ -9,7 +10,8 @@ import {
 import { Film, Search, Tv, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useMovies, useSeries } from "../api/hooks";
+import { useSearch } from "../api/hooks";
+import type { CatalogItem } from "../api/types";
 import { neutral } from "../theme/colors";
 
 const RECENT_STORAGE_KEY = "homeflix-recent-searches";
@@ -25,18 +27,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
-  const { data: moviesData } = useMovies();
-  const { data: seriesData } = useSeries();
-
-  const allItems = useMemo(() => {
-    const movies = (moviesData?.movies ?? []).map((m) => ({
-      id: m.id, title: m.title, year: m.year, type: "movie" as const,
-    }));
-    const series = (seriesData?.series ?? []).map((s) => ({
-      id: s.id, title: s.title, year: s.start_year, type: "series" as const,
-    }));
-    return [...movies, ...series];
-  }, [moviesData, seriesData]);
+  const { data: searchResults, isLoading: searchLoading } = useSearch(query);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) || "[]");
@@ -84,7 +75,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     localStorage.removeItem(RECENT_STORAGE_KEY);
   }, []);
 
-  const handleSelect = (item: (typeof allItems)[0]) => {
+  const handleSelect = (item: CatalogItem) => {
     saveRecentSearch(item.title);
     onClose();
     navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`);
@@ -94,16 +85,12 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     setQuery(term);
   };
 
-  // Filter results
-  const normalizedQuery = query.toLowerCase().trim();
-  const results = normalizedQuery.length >= 1
-    ? allItems.filter((item) => item.title.toLowerCase().includes(normalizedQuery))
-    : [];
-
-  const movies = results.filter((r) => r.type === "movie");
-  const series = results.filter((r) => r.type === "series");
-  const hasResults = results.length > 0;
-  const showNoResults = normalizedQuery.length >= 1 && !hasResults;
+  // Results come from the server, already ranked by relevance.
+  const normalizedQuery = query.trim();
+  const movies = searchResults.filter((r) => r.type === "movie");
+  const series = searchResults.filter((r) => r.type === "series");
+  const hasResults = searchResults.length > 0;
+  const showNoResults = normalizedQuery.length >= 1 && !searchLoading && !hasResults;
 
   return (
     <Dialog
@@ -175,6 +162,13 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           </Box>
         )}
 
+        {/* Loading spinner */}
+        {searchLoading && (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress size={24} color="primary" />
+          </Box>
+        )}
+
         {/* Results */}
         {movies.length > 0 && (
           <ResultSection
@@ -211,9 +205,9 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
 interface ResultSectionProps {
   title: string;
-  items: { id: string; title: string; year: number; type: "movie" | "series" }[];
+  items: CatalogItem[];
   icon: React.ReactNode;
-  onSelect: (item: { id: string; title: string; year: number; type: "movie" | "series" }) => void;
+  onSelect: (item: CatalogItem) => void;
 }
 
 function ResultSection({ title, items, icon, onSelect }: ResultSectionProps) {
