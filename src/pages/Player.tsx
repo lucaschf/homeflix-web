@@ -33,6 +33,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useMovie, useProgress, useSaveProgress, useSeriesDetail } from "../api/hooks";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeDrawer } from "../components/EpisodeDrawer";
+import {
+  usePlaybackPreferences,
+  type SubtitleMode,
+} from "../hooks/usePlaybackPreferences";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -54,6 +58,128 @@ interface HlsSubtitleTrack {
   id: number;
   name: string;
   lang: string;
+}
+
+/**
+ * Normalize a language tag so preferences and HLS track `lang`
+ * values compare regardless of case, region, or ISO variant.
+ *
+ * A few media files ship `pt-BR`, others `pt_br`, `por`, `pt`, or
+ * `BRAZILIAN PORTUGUESE`. Matching needs to collapse all of them
+ * to a canonical two-letter bucket so a preference of `"pt-BR"`
+ * also picks up an audio track tagged just `por`. We:
+ *
+ *   1. Lowercase.
+ *   2. Split on `-` / `_` / space and take the first segment —
+ *      region tags live after the separator and aren't useful
+ *      for language matching (we want `pt` to cover `pt-BR` and
+ *      `pt-PT`; the user rarely cares about Portugal-vs-Brazil
+ *      at the track level).
+ *   3. Collapse common ISO 639-2 three-letter codes to their
+ *      ISO 639-1 equivalents via the `ISO_ALIASES` map. Unknown
+ *      codes fall through unchanged; exact string matches still
+ *      work for languages we haven't explicitly aliased.
+ */
+const ISO_ALIASES: Record<string, string> = {
+  por: "pt",
+  eng: "en",
+  spa: "es",
+  fra: "fr",
+  fre: "fr",
+  ger: "de",
+  deu: "de",
+  ita: "it",
+  jpn: "ja",
+  kor: "ko",
+  chi: "zh",
+  zho: "zh",
+  rus: "ru",
+};
+
+function normalizeLang(tag: string | null | undefined): string {
+  if (!tag) return "";
+  const head = tag.toLowerCase().split(/[-_\s]/)[0] ?? "";
+  return ISO_ALIASES[head] ?? head;
+}
+
+/**
+ * Find the track whose `lang` best matches the preference.
+ *
+ * Returns `null` if no track carries language metadata matching
+ * the preference — the caller keeps the HLS default (usually
+ * track index 0) in that case. The helper is deliberately tiny
+ * because the preference system is opt-in; if a user's catalog
+ * has tracks without `lang` tags, the preference silently becomes
+ * a no-op and the player falls back to its legacy behavior.
+ */
+function findTrackByLang<T extends { id: number; lang: string }>(
+  tracks: readonly T[],
+  preferredLang: string,
+): T | null {
+  const want = normalizeLang(preferredLang);
+  if (!want) return null;
+  return tracks.find((track) => normalizeLang(track.lang) === want) ?? null;
+}
+
+/**
+ * Pick the subtitle track id to auto-enable for a new media,
+ * respecting the user's mode + language preferences.
+ *
+ * Returns `null` when nothing should be auto-enabled — the
+ * caller then leaves `hls.subtitleTrack` at its default (-1,
+ * "no subtitles"). This keeps the call-site logic straight: if
+ * the helper returns a number, assign it; otherwise do nothing.
+ *
+ * The `chosenAudioLang` argument is the *normalized* language of
+ * the audio track the player just committed to (saved value or
+ * preference match or HLS default), NOT the user's audio
+ * preference. `foreignOnly` specifically needs to compare the
+ * ACTUAL audio being played against the viewer's native language
+ * (represented by `preferredSubLang`), so passing the preference
+ * here would be wrong when the user is watching a catalog item
+ * whose only audio happens to match their subtitle language.
+ */
+function pickPreferredSubtitleId(
+  hls: Hls,
+  chosenAudioLang: string,
+  preferredSubLang: string,
+  mode: SubtitleMode,
+): number | null {
+  // Two equivalent off switches: the mode itself, or setting the
+  // preferred subtitle language to "off" in the dropdown. Either
+  // one short-circuits the whole pick.
+  if (mode === "off" || preferredSubLang === "off") return null;
+
+  if (mode === "forcedOnly") {
+    // HLS manifests can tag a subtitle track as FORCED — typically
+    // used for foreign-dialogue signs embedded in an otherwise
+    // same-language release. hls.js propagates the attribute on
+    // each subtitle track but the TS definitions don't expose it
+    // directly on the public type, so we read it through a narrow
+    // structural cast instead of the whole `MediaPlaylist`.
+    const forced = hls.subtitleTracks.find(
+      (t) => (t as unknown as { forced?: boolean }).forced === true,
+    );
+    return forced?.id ?? null;
+  }
+
+  const langMatch = findTrackByLang(hls.subtitleTracks, preferredSubLang);
+  if (!langMatch) return null;
+
+  if (mode === "always") return langMatch.id;
+
+  if (mode === "foreignOnly") {
+    // Show subs only when the selected audio is in a different
+    // language from the viewer's native (= their subtitle lang).
+    // A viewer with sub pref "pt-BR" watching a pt-BR audio track
+    // gets no subs; the same viewer on a "ja" audio track gets
+    // the Portuguese subtitle track auto-enabled.
+    return chosenAudioLang !== normalizeLang(preferredSubLang)
+      ? langMatch.id
+      : null;
+  }
+
+  return null;
 }
 
 function formatTime(seconds: number): string {
@@ -113,6 +239,12 @@ export function Player() {
   const { data: seriesData, isLoading: seriesLoading } = useSeriesDetail(params.seriesId ?? "");
   const { data: savedProgress, isPending: progressPending } = useProgress(mediaId);
   const mediaLoading = isMovie ? movieLoading : seriesLoading;
+
+  // User-level playback preferences from localStorage. Read-only
+  // in the Player — Settings is the only writer — so we intentionally
+  // ignore the setter. Used below as fallback defaults for quality
+  // and audio/subtitle tracks when there's no saved progress.
+  const [playbackPrefs] = usePlaybackPreferences();
 
   // Start offset passed to the backend via ?start=X. CRITICAL: this must be
   // captured exactly ONCE per (mediaId, savedProgress-resolution) pair, NOT
@@ -328,28 +460,44 @@ export function Player() {
     [files],
   );
 
-  // `quality` is derived from the user's manual override (if any) plus the
-  // file list's default — primary file → first file → empty. This used to
-  // be a state plus a useEffect that called setQuality after files arrived,
-  // but that pattern trips `react-hooks/set-state-in-effect` (React 19's
-  // anti-cascading-render rule). Pure derivation removes the effect and
-  // the cascade entirely: the override state survives across re-renders,
-  // and the default falls out of `files` whenever it resolves.
+  // `quality` is derived from, in order:
+  //   1. The user's manual override for THIS session (wins over
+  //      everything once they click a resolution in the player menu).
+  //   2. The `defaultQuality` preference from Settings (e.g. always
+  //      pick 1080p when available), but only when that resolution
+  //      actually exists in the file list and the user hasn't chosen
+  //      "best" — "best" means "let the file list decide".
+  //   3. The file marked as `is_primary`.
+  //   4. The first file in the list.
+  //   5. Empty string (no files yet — the player shows the loading
+  //      overlay in this case).
   //
-  // The override is validated against the current `files` on every render
-  // so navigating from a movie that has 1080p (override = "1080p") to a
-  // movie that doesn't carries no stale state — the validity check fails
-  // and we fall through to the primary/first/empty fallback chain. The
-  // override state itself is NOT cleared (no setState in render), so if
-  // the user later navigates back to a movie that does have 1080p, the
-  // override "wakes up" again. This is intentional: the override stores
-  // intent ("I prefer 1080p"), and the validation enforces feasibility.
+  // This used to be a state plus a useEffect that called setQuality
+  // after files arrived, but that pattern trips
+  // `react-hooks/set-state-in-effect` (React 19's anti-cascading-render
+  // rule). Pure derivation removes the effect and the cascade entirely:
+  // the override state survives across re-renders, and every default
+  // falls out of `files` whenever it resolves.
+  //
+  // Both the override and the preference are validated against the
+  // current `files` on every render so navigating from a movie that
+  // has 1080p to one that doesn't carries no stale state — the
+  // validity check fails and we fall through the chain. Neither
+  // state is cleared (no setState in render), so if the user later
+  // navigates back to a movie that does have 1080p, the override /
+  // preference "wakes up" again. This is intentional: both store
+  // intent, validation enforces feasibility.
   const [qualityOverride, setQualityOverride] = useState<string | null>(null);
   const overrideMatchesAvailableFile =
     qualityOverride !== null &&
     (files?.some((f) => f.resolution === qualityOverride) ?? false);
+  const preferredQuality = playbackPrefs.defaultQuality;
+  const preferenceMatchesAvailableFile =
+    preferredQuality !== "best" &&
+    (files?.some((f) => f.resolution === preferredQuality) ?? false);
   const quality =
     (overrideMatchesAvailableFile ? qualityOverride : null) ??
+    (preferenceMatchesAvailableFile ? preferredQuality : null) ??
     files?.find((f) => f.is_primary)?.resolution ??
     files?.[0]?.resolution ??
     "";
@@ -543,46 +691,88 @@ export function Player() {
     }
   }, [volume, muted]);
 
-  // Restore saved audio/subtitle track selection on first play. Position is
-  // already handled by the backend via the ?start=startOffset query param —
-  // ffmpeg starts transcoding from that point, so the video element begins
-  // at internal currentTime = 0, which corresponds to display time =
-  // startOffset. No seek is needed here.
+  // Restore audio/subtitle track selection on first play.
   //
-  // The "already restored" guard is keyed on mediaId so the effect re-runs
-  // the first time hls becomes ready for a new episode (auto-advance) — a
-  // simple boolean flag would lock after the first episode and silently
-  // skip restoring tracks for every episode after that.
+  // Priority order for each track:
+  //   1. Saved per-media selection from `savedProgress` (the user
+  //      picked a specific track last time they watched this item).
+  //   2. Global language preference from Settings, matched against
+  //      the HLS track metadata.
+  //   3. HLS default (audio track 0, subtitles off).
+  //
+  // Position is already handled by the backend via `?start=startOffset` —
+  // ffmpeg starts transcoding from that point, so the video element
+  // begins at internal currentTime = 0 and no seek is needed here.
+  //
+  // The "already restored" guard is keyed on mediaId so the effect
+  // re-runs the first time hls becomes ready for a new episode
+  // (auto-advance) — a simple boolean flag would lock after the
+  // first episode and silently skip restoring tracks for every
+  // episode after that.
+  //
+  // We gate on `!progressPending` (not just `!!savedProgress`) so
+  // a cold load where savedProgress resolves a beat later than the
+  // video doesn't race: the effect waits for the query to settle,
+  // then picks saved-or-preference in a single pass. Without this
+  // guard, preferences would be applied first and then the guard
+  // would block the saved value from ever landing.
   useEffect(() => {
-    if (!savedProgress) return;
+    if (progressPending) return;
     if (progressRestoredForMediaIdRef.current === mediaId) return;
     const video = videoRef.current;
     const hls = hlsRef.current;
-    if (!video || !hlsReady) return;
+    if (!video || !hlsReady || !hls) return;
 
     progressRestoredForMediaIdRef.current = mediaId;
-    // Only restore audio track if the saved value is non-default AND
-    // different from the current selection. Setting hls.audioTrack on
-    // HLS.js — even to the same value it already is — can trigger a
-    // buffer flush of the audio segments, which manifests as the audio
-    // dropping out for a few seconds right after playback starts.
-    if (
-      savedProgress.audio_track != null &&
-      savedProgress.audio_track !== 0 &&
-      hls &&
-      hls.audioTrack !== savedProgress.audio_track
-    ) {
-      hls.audioTrack = savedProgress.audio_track;
+
+    // ── Audio ───────────────────────────────────────────────
+    // Setting hls.audioTrack on HLS.js — even to the same value
+    // it already is — can trigger a buffer flush of the audio
+    // segments, which manifests as the audio dropping out for a
+    // few seconds right after playback starts. So we compare
+    // before assigning in every branch.
+    const savedAudio = savedProgress?.audio_track;
+    let chosenAudioLang = normalizeLang(
+      hls.audioTracks[hls.audioTrack]?.lang ?? "",
+    );
+    if (savedAudio != null && savedAudio !== 0) {
+      if (hls.audioTrack !== savedAudio) hls.audioTrack = savedAudio;
+      chosenAudioLang = normalizeLang(hls.audioTracks[savedAudio]?.lang ?? "");
+    } else {
+      const audioMatch = findTrackByLang(hls.audioTracks, playbackPrefs.audioLang);
+      if (audioMatch && hls.audioTrack !== audioMatch.id) {
+        hls.audioTrack = audioMatch.id;
+        chosenAudioLang = normalizeLang(audioMatch.lang);
+      }
     }
-    if (
-      savedProgress.subtitle_track != null &&
-      savedProgress.subtitle_track !== -1 &&
-      hls &&
-      hls.subtitleTrack !== savedProgress.subtitle_track
-    ) {
-      hls.subtitleTrack = savedProgress.subtitle_track;
+
+    // ── Subtitles ───────────────────────────────────────────
+    // Decide the preferred subtitle id BASED on the audio lang we
+    // just committed to (not the audio preference) so foreignOnly
+    // compares against the track that's actually going to play.
+    const savedSub = savedProgress?.subtitle_track;
+    if (savedSub != null && savedSub !== -1) {
+      if (hls.subtitleTrack !== savedSub) hls.subtitleTrack = savedSub;
+    } else {
+      const subtitleChoice = pickPreferredSubtitleId(
+        hls,
+        chosenAudioLang,
+        playbackPrefs.subtitleLang,
+        playbackPrefs.subtitleMode,
+      );
+      if (subtitleChoice != null && hls.subtitleTrack !== subtitleChoice) {
+        hls.subtitleTrack = subtitleChoice;
+      }
     }
-  }, [savedProgress, hlsReady, mediaId]);
+  }, [
+    savedProgress,
+    progressPending,
+    hlsReady,
+    mediaId,
+    playbackPrefs.audioLang,
+    playbackPrefs.subtitleLang,
+    playbackPrefs.subtitleMode,
+  ]);
 
   // Auto-save progress every 10 seconds during playback
   useEffect(() => {

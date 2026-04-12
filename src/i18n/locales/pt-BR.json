@@ -190,7 +190,6 @@
     "metadata": "Metadados",
     "tmdbApiKey": "Chave da API TMDB",
     "testKey": "Testar",
-    "autoEnrich": "Enriquecer automaticamente ao escanear",
     "enrichAll": "Enriquecer Todos",
     "enriching": "Enriquecendo...",
     "about": "Sobre",
