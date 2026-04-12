@@ -10,6 +10,7 @@ import {
 import { Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SeriesDetail } from "../api/types";
+import { peach } from "../theme/colors";
 
 interface EpisodeDrawerProps {
   series: SeriesDetail;
@@ -88,7 +89,7 @@ export function EpisodeDrawer({
       >
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1.5, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-          <Typography variant="subtitle1" fontWeight={700} color="#fff" sx={{ fontSize: "0.95rem" }}>
+          <Typography variant="subtitle1" fontWeight={700} color="overlayText.primary" sx={{ fontSize: "0.95rem" }}>
             {series.title}
           </Typography>
           <IconButton onClick={onClose} sx={{ color: "text.secondary" }} size="small" aria-label={t("player.cancel")}>
@@ -153,7 +154,7 @@ export function EpisodeDrawer({
                   )}
                   {isCurrent && (
                     <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.5)" }}>
-                      <Play size={20} color="#E8926F" fill="#E8926F" />
+                      <Play size={20} color={peach.main} fill={peach.main} />
                     </Box>
                   )}
                   {ep.progress_percentage != null && ep.progress_percentage > 0 && (

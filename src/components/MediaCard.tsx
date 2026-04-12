@@ -4,6 +4,7 @@ import { Bookmark, BookmarkCheck, ListPlus, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
+import { neutral } from "../theme/colors";
 
 interface MediaCardProps {
   title: string;
@@ -131,7 +132,7 @@ export function MediaCard({
                 justifyContent: "center",
               }}
             >
-              <Play size={20} color="#0D0D0D" fill="#0D0D0D" />
+              <Play size={20} color={neutral[950]} fill={neutral[950]} />
             </Box>
           </Box>
         )}

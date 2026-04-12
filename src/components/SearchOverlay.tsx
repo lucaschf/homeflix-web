@@ -10,6 +10,7 @@ import { Film, Search, Tv, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useMovies, useSeries } from "../api/hooks";
+import { neutral } from "../theme/colors";
 
 const RECENT_STORAGE_KEY = "homeflix-recent-searches";
 const MAX_RECENT = 5;
@@ -124,7 +125,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     >
       {/* Search Input */}
       <Box sx={{ display: "flex", alignItems: "center", px: 2.5, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
-        <Search size={20} color="#A0A0A0" />
+        <Search size={20} color={neutral[400]} />
         <InputBase
           inputRef={inputRef}
           value={query}

@@ -51,7 +51,7 @@ export function ContentRatingBadge({ rating, size = 28 }: ContentRatingBadgeProp
     >
       <Typography
         sx={{
-          color: "#fff",
+          color: "common.white",
           fontWeight: 800,
           fontSize,
           lineHeight: 1,

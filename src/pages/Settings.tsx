@@ -29,6 +29,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useBulkEnrich, useHealth, useScan } from "../api/hooks";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
+import { neutral } from "../theme/colors";
 import {
   usePlaybackPreferences,
   type SubtitleMode,
@@ -120,7 +121,7 @@ export function Settings() {
                 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
-                  <FolderOpen size={18} color="#A0A0A0" />
+                  <FolderOpen size={18} color={neutral[400]} />
                   <Box sx={{ minWidth: 0 }}>
                     <Typography variant="body2" fontWeight={600} noWrap title={lib.name}>
                       {lib.name}
@@ -153,7 +154,7 @@ export function Settings() {
           ))
         ) : (
           <Box sx={{ textAlign: "center", py: 5 }}>
-            <FolderOpen size={32} color="#555" />
+            <FolderOpen size={32} color={neutral[600]} />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               {t("settings.noLibraries")}
             </Typography>
@@ -301,7 +302,7 @@ function SettingsSection({
   return (
     <Box sx={{ mb: last ? 0 : 4 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-        <Icon size={18} color="#888" />
+        <Icon size={18} color={neutral[400]} />
         <Typography variant="h2" sx={{ fontSize: "1.1rem", fontWeight: 600 }}>
           {title}
         </Typography>

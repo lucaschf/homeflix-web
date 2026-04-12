@@ -20,6 +20,7 @@ import {
   useCreateCustomList,
   useCustomLists,
 } from "../api/hooks";
+import { success } from "../theme/colors";
 
 interface AddToListDialogProps {
   open: boolean;
@@ -104,7 +105,7 @@ export function AddToListDialog({ open, onClose, mediaId, mediaType }: AddToList
                       primary={list.name}
                       secondary={t("lists.itemCount", { count: list.item_count })}
                     />
-                    {wasAdded && <Check size={18} color="#4ADE80" />}
+                    {wasAdded && <Check size={18} color={success.main} />}
                   </ListItemButton>
                 );
               })}

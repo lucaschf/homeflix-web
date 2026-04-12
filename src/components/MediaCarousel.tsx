@@ -148,10 +148,10 @@ export function MediaCarousel({
               top: "50%",
               transform: "translateY(-50%)",
               zIndex: 2,
-              color: "rgba(255,255,255,0.7)",
+              color: "overlayText.secondary",
               opacity: 0,
               transition: "opacity 200ms",
-              "&:hover": { color: "#fff", bgcolor: "transparent" },
+              "&:hover": { color: "overlayText.primary", bgcolor: "transparent" },
             }}
           >
             <ChevronLeft size={32} />
@@ -170,10 +170,10 @@ export function MediaCarousel({
               top: "50%",
               transform: "translateY(-50%)",
               zIndex: 2,
-              color: "rgba(255,255,255,0.7)",
+              color: "overlayText.secondary",
               opacity: 0,
               transition: "opacity 200ms",
-              "&:hover": { color: "#fff", bgcolor: "transparent" },
+              "&:hover": { color: "overlayText.primary", bgcolor: "transparent" },
             }}
           >
             <ChevronRight size={32} />
