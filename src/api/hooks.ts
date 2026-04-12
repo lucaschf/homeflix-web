@@ -12,7 +12,6 @@ import type {
   BulkEnrichResponse,
   FeaturedItem,
   FeaturedResponse,
-  CheckWatchlistResponse,
   ContinueWatchingItem,
   ContinueWatchingResponse,
   CustomListDetailResponse,
@@ -289,15 +288,31 @@ export function useWatchlist() {
   });
 }
 
+/**
+ * "Is this media in the user's watchlist?" derived from the cached
+ * full watchlist instead of a per-id endpoint.
+ *
+ * The previous implementation called `GET /watchlist/check/{id}`
+ * for every consumer, which fired one network request per
+ * `MediaCard` and produced an N+1 storm on Home / Browse (one
+ * request per visible card across every carousel). The fix is to
+ * read from the same `useWatchlist()` query that the watchlist page
+ * already uses — TanStack Query deduplicates by query key, so all
+ * cards on the page share a single underlying request, the result
+ * is cached, and `set.has(id)` is O(1) and synchronous.
+ *
+ * The return shape stays `{ data: boolean | undefined }` so the
+ * existing consumers (MediaCard, HeroBanner, MovieDetail,
+ * SeriesDetail) don't need to change.
+ */
 export function useIsInWatchlist(mediaId: string) {
-  return useQuery({
-    queryKey: ["watchlist", "check", mediaId],
-    queryFn: async (): Promise<boolean> => {
-      const resp = await api.get<CheckWatchlistResponse>(`/watchlist/check/${mediaId}`);
-      return resp.data.in_list;
-    },
-    enabled: !!mediaId,
-  });
+  const { data: watchlist } = useWatchlist();
+  const inWatchlist = useMemo(() => {
+    if (!watchlist) return undefined;
+    if (!mediaId) return false;
+    return watchlist.some((item) => item.media_id === mediaId);
+  }, [watchlist, mediaId]);
+  return { data: inWatchlist };
 }
 
 export function useToggleWatchlist() {
@@ -305,9 +320,10 @@ export function useToggleWatchlist() {
   return useMutation({
     mutationFn: (data: { media_id: string; media_type: string }) =>
       api.post<ToggleWatchlistResponse>("/watchlist/toggle", data),
-    onSuccess: (_, vars) => {
+    onSuccess: () => {
+      // Only one query key to invalidate now — the per-id check
+      // queries no longer exist, so the cache flush is single-shot.
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
-      queryClient.invalidateQueries({ queryKey: ["watchlist", "check", vars.media_id] });
     },
   });
 }
