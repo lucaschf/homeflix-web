@@ -12,7 +12,6 @@ import type {
   BulkEnrichResponse,
   FeaturedItem,
   FeaturedResponse,
-  CheckWatchlistResponse,
   ContinueWatchingItem,
   ContinueWatchingResponse,
   CustomListDetailResponse,
@@ -289,15 +288,50 @@ export function useWatchlist() {
   });
 }
 
+/**
+ * "Is this media in the user's watchlist?" derived from the cached
+ * full watchlist instead of a per-id endpoint.
+ *
+ * The previous implementation called `GET /watchlist/check/{id}`
+ * for every consumer, which fired one network request per
+ * `MediaCard` and produced an N+1 storm on Home / Browse (one
+ * request per visible card across every carousel). The fix is to
+ * read from the same `useWatchlist()` query that the watchlist page
+ * already uses — TanStack Query deduplicates by query key, so all
+ * cards on the page share a single underlying request and the
+ * membership check is a synchronous `array.some(...)` over the
+ * cached list (typically <100 items, so the O(N) cost is
+ * microseconds and dominated by render overhead).
+ *
+ * Why not a `Set` for O(1) lookup? Each `useIsInWatchlist` call is
+ * its own hook instance, so a `useMemo`-built `Set` would be
+ * rebuilt per component and the total work would still be O(M*N).
+ * Sharing the `Set` across components would require a TanStack
+ * Query `select` with a module-level function reference — possible,
+ * but the actual perf delta at this scale is unmeasurable, and the
+ * extra indirection isn't worth it for a list this small.
+ *
+ * The return shape stays `{ data: boolean | undefined }` so the
+ * existing consumers (MediaCard, HeroBanner, MovieDetail,
+ * SeriesDetail) don't need to change. `data` stays `undefined`
+ * both while the watchlist is loading AND when `mediaId` is
+ * falsy — matching the previous hook's `enabled: !!mediaId`
+ * behaviour so callers that distinguish "unknown" from "not in
+ * list" continue to work.
+ */
 export function useIsInWatchlist(mediaId: string) {
-  return useQuery({
-    queryKey: ["watchlist", "check", mediaId],
-    queryFn: async (): Promise<boolean> => {
-      const resp = await api.get<CheckWatchlistResponse>(`/watchlist/check/${mediaId}`);
-      return resp.data.in_list;
-    },
-    enabled: !!mediaId,
-  });
+  const { data: watchlist } = useWatchlist();
+  const inWatchlist = useMemo(() => {
+    // Match the old `enabled: !!mediaId` semantics: a falsy id
+    // never resolves to a boolean — it stays "unknown" forever so
+    // callers that branch on `data === undefined` (e.g. show a
+    // placeholder while the parent props are still settling) keep
+    // working unchanged.
+    if (!mediaId) return undefined;
+    if (!watchlist) return undefined;
+    return watchlist.some((item) => item.media_id === mediaId);
+  }, [watchlist, mediaId]);
+  return { data: inWatchlist };
 }
 
 export function useToggleWatchlist() {
@@ -305,9 +339,10 @@ export function useToggleWatchlist() {
   return useMutation({
     mutationFn: (data: { media_id: string; media_type: string }) =>
       api.post<ToggleWatchlistResponse>("/watchlist/toggle", data),
-    onSuccess: (_, vars) => {
+    onSuccess: () => {
+      // Only one query key to invalidate now — the per-id check
+      // queries no longer exist, so the cache flush is single-shot.
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
-      queryClient.invalidateQueries({ queryKey: ["watchlist", "check", vars.media_id] });
     },
   });
 }
