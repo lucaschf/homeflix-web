@@ -127,18 +127,46 @@ export function useMovies() {
 const BY_GENRE_PAGE_SIZE = 20;
 
 /**
+ * Narrow alias for the ``?type=`` query param. Shared by the catalog
+ * hooks and the Browse page so a typo in one place breaks the
+ * type-check instead of silently diverging.
+ */
+export type CatalogTypeFilter = "movie" | "series";
+
+interface CatalogQueryOptions {
+  /**
+   * Optional ``?type=`` filter forwarded to the backend. When set,
+   * the genres response only aggregates counts for that media type
+   * and the by-genre response only pulls from the matching stream,
+   * so the Movies and Series tabs can show a narrowed catalog.
+   */
+  type?: CatalogTypeFilter;
+}
+
+/**
  * Single fetch of every genre present in the library, with counts
  * and localized display names. The Home and Browse pages use the
  * result to lay out one carousel per genre and to know which genres
  * exist before mounting any per-genre infinite query.
+ *
+ * ``options.type`` narrows the result to a single media type — the
+ * Movies and Series tabs pass ``"movie"`` / ``"series"`` so their
+ * carousel layout excludes genres that only exist on the other
+ * side of the catalog.
  */
-export function useGenres() {
+export function useGenres(options: CatalogQueryOptions = {}) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
+  const { type } = options;
   return useQuery({
-    queryKey: ["catalog", "genres", lang],
+    // `type` is part of the key so the Movies and Series tabs get
+    // independent caches — switching tabs doesn't hand one tab the
+    // other tab's genre counts for a frame until the request lands.
+    queryKey: ["catalog", "genres", lang, type ?? null],
     queryFn: async (): Promise<Genre[]> => {
-      const resp = await api.get<GenresResponse>("/catalog/genres", { lang });
+      const params: Record<string, string> = { lang };
+      if (type) params.type = type;
+      const resp = await api.get<GenresResponse>("/catalog/genres", params);
       return resp.data;
     },
   });
@@ -155,18 +183,27 @@ export function useGenres() {
  * The hook is disabled when `genreId` is empty so consumers can
  * defer mounting it until the parent has resolved which genre to
  * render.
+ *
+ * ``options.type`` restricts the merged stream to one side — the
+ * Movies and Series tabs pass the filter through so a single-type
+ * carousel never mixes in the other media type.
  */
-export function useByGenre(genreId: string) {
+export function useByGenre(genreId: string, options: CatalogQueryOptions = {}) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
+  const { type } = options;
   const query = useInfiniteQuery({
-    queryKey: ["catalog", "by-genre", genreId, lang],
+    // `type` is in the key so filtered and unfiltered listings keep
+    // independent caches — otherwise a Movies-tab request would
+    // serve its trimmed page to an All-tab consumer and vice versa.
+    queryKey: ["catalog", "by-genre", genreId, lang, type ?? null],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const params: Record<string, string> = {
         lang,
         limit: String(BY_GENRE_PAGE_SIZE),
       };
       if (pageParam) params.cursor = pageParam;
+      if (type) params.type = type;
       return api.get<CatalogByGenreResponse>(
         `/catalog/by-genre/${encodeURIComponent(genreId)}`,
         params,

@@ -2,10 +2,19 @@ import { useEffect, useMemo, useRef } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useByGenre, useFeatured, useGenres } from "../api/hooks";
+import { useByGenre, useFeatured, useGenres, type CatalogTypeFilter } from "../api/hooks";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
+
+/**
+ * Narrow an unvalidated ``?type=`` URL param down to the
+ * `CatalogTypeFilter` union. Unknown / absent values degrade to
+ * `undefined` (no filter) so a tampered URL doesn't crash the page.
+ */
+function parseTypeFilter(raw: string | null): CatalogTypeFilter | undefined {
+  return raw === "movie" || raw === "series" ? raw : undefined;
+}
 
 export function Browse() {
   const { t } = useTranslation();
@@ -13,12 +22,17 @@ export function Browse() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const genreFilter = searchParams.get("genre");
+  const typeFilter = parseTypeFilter(searchParams.get("type"));
 
   // Carousel-mode data: list every genre and let each carousel pull
-  // its own first page lazily as it scrolls into view.
-  const { data: genres, isLoading: genresLoading } = useGenres();
+  // its own first page lazily as it scrolls into view. The `type`
+  // filter narrows the list to the corresponding tab's half of the
+  // catalog — the Movies tab never sees a series-only genre.
+  const { data: genres, isLoading: genresLoading } = useGenres({ type: typeFilter });
 
-  const { data: featured } = useFeatured("all");
+  // Hero rotates through the same media-type the tab is showing —
+  // the Movies tab shouldn't banner a series on top of its carousels.
+  const { data: featured } = useFeatured(typeFilter ?? "all");
 
   const heroSlides: HeroSlide[] = useMemo(
     () =>
@@ -77,6 +91,7 @@ export function Browse() {
         {genreFilter ? (
           <GenreGrid
             genreId={genreFilter}
+            type={typeFilter}
             displayName={
               genres?.find((g) => g.id === genreFilter)?.name ?? genreFilter
             }
@@ -87,7 +102,7 @@ export function Browse() {
           />
         ) : (genres?.length ?? 0) > 0 ? (
           (genres ?? []).map((genre) => (
-            <LazyGenreCarousel key={genre.id} genre={genre} />
+            <LazyGenreCarousel key={genre.id} genre={genre} type={typeFilter} />
           ))
         ) : (
           <Box sx={{ textAlign: "center", py: 10 }}>
@@ -105,6 +120,12 @@ interface GenreGridProps {
   genreId: string;
   displayName: string;
   onClearFilter: () => void;
+  /**
+   * Optional media-type filter forwarded to `useByGenre`. Keeps the
+   * grid scoped to the parent tab when the user opened it from a
+   * Movies- or Series-tab carousel's "See all" link.
+   */
+  type?: CatalogTypeFilter;
 }
 
 /**
@@ -115,11 +136,12 @@ interface GenreGridProps {
  * reference, with a 400px rootMargin so the next page is in flight
  * by the time the user reaches the end of the visible rows.
  */
-function GenreGrid({ genreId, displayName, onClearFilter }: GenreGridProps) {
+function GenreGrid({ genreId, displayName, onClearFilter, type }: GenreGridProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { items, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useByGenre(
     genreId,
+    { type },
   );
 
   const sentinelRef = useRef<HTMLDivElement>(null);
