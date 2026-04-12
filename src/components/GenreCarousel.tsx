@@ -141,7 +141,9 @@ export function LazyGenreCarousel({ genre }: LazyGenreCarouselProps) {
   // mount. The count comes from the cheap `/catalog/genres`
   // response, so we know up-front which carousels would resolve
   // to nothing — no need to reserve vertical space for them.
-  if (genre.count === 0) return null;
+  // `!genre.count` covers both 0 and any defensive undefined
+  // from an older API response that predates the count field.
+  if (!genre.count) return null;
 
   if (isVisible) {
     return <GenreCarousel genre={genre} />;
