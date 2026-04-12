@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useByGenre } from "../api/hooks";
+import { useByGenre, type CatalogTypeFilter } from "../api/hooks";
 import type { Genre } from "../api/types";
 import { CarouselSkeleton } from "./CarouselSkeleton";
 import { MediaCard } from "./MediaCard";
@@ -10,6 +10,12 @@ import { MediaCarousel } from "./MediaCarousel";
 
 interface GenreCarouselProps {
   genre: Genre;
+  /**
+   * Optional media-type filter forwarded to `useByGenre`. Passed
+   * through from the Browse page's `?type=` URL param so the
+   * Movies and Series tabs each see their own half of the catalog.
+   */
+  type?: CatalogTypeFilter;
 }
 
 /**
@@ -34,11 +40,11 @@ interface GenreCarouselProps {
  *   items but they were soft-deleted between the genres call and
  *   the by-genre call — rare and acceptable.
  */
-export function GenreCarousel({ genre }: GenreCarouselProps) {
+export function GenreCarousel({ genre, type }: GenreCarouselProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { items, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useByGenre(genre.id);
+    useByGenre(genre.id, { type });
 
   // Stable callback for the carousel's IntersectionObserver. Without
   // useCallback the parent re-render hands MediaCarousel a brand-new
@@ -48,9 +54,14 @@ export function GenreCarousel({ genre }: GenreCarouselProps) {
     void fetchNextPage();
   }, [fetchNextPage]);
 
+  // Preserve the current `?type=` filter (if any) when jumping into
+  // the genre-grid view, so the "See all" link from a Movies-tab
+  // carousel keeps the user on the Movies tab.
   const handleSeeAll = useCallback(() => {
-    navigate(`/browse?genre=${encodeURIComponent(genre.id)}`);
-  }, [navigate, genre.id]);
+    const params = new URLSearchParams({ genre: genre.id });
+    if (type) params.set("type", type);
+    navigate(`/browse?${params.toString()}`);
+  }, [navigate, genre.id, type]);
 
   if (isLoading) {
     return <CarouselSkeleton title={genre.name} />;
@@ -103,6 +114,11 @@ export function GenreCarousel({ genre }: GenreCarouselProps) {
 
 interface LazyGenreCarouselProps {
   genre: Genre;
+  /**
+   * Optional media-type filter forwarded to `GenreCarousel`. Passed
+   * through from the Browse page's `?type=` URL param.
+   */
+  type?: CatalogTypeFilter;
 }
 
 /**
@@ -119,7 +135,7 @@ interface LazyGenreCarouselProps {
  * to nothing. The Home and Browse pages can still pass the full
  * genres list and let this component filter.
  */
-export function LazyGenreCarousel({ genre }: LazyGenreCarouselProps) {
+export function LazyGenreCarousel({ genre, type }: LazyGenreCarouselProps) {
   const [isVisible, setIsVisible] = useState(false);
   const placeholderRef = useRef<HTMLDivElement>(null);
 
@@ -146,7 +162,7 @@ export function LazyGenreCarousel({ genre }: LazyGenreCarouselProps) {
   if (!genre.count) return null;
 
   if (isVisible) {
-    return <GenreCarousel genre={genre} />;
+    return <GenreCarousel genre={genre} type={type} />;
   }
 
   // Placeholder skeleton matches the real layout's dimensions so
