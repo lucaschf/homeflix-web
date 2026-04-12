@@ -44,10 +44,14 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     }
   });
 
-  // Focus input on open
+  // Focus input and clear query on open. The `setQuery("")` is a
+  // bounded one-shot cascade (one extra render per open, no loop)
+  // and is the simplest way to clear stale search text without
+  // forcing a remount via `key`. The lint suppression is intentional.
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 100);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery("");
     }
   }, [open]);

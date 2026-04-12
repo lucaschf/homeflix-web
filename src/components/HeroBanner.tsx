@@ -66,8 +66,12 @@ export function HeroBanner({
     return clearTimer;
   }, [startTimer, clearTimer, trailerOpen]);
 
-  // Clamp current if slides shrink
+  // Clamp current if slides shrink. The setCurrent is a bounded
+  // one-shot cascade (only when the slides array changes length),
+  // and there's no pure derivation alternative since `current` is
+  // also user-driven (swipe / dot click).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrent((idx) => (count > 0 ? Math.min(idx, count - 1) : 0));
   }, [count]);
 
@@ -94,10 +98,13 @@ export function HeroBanner({
     [current, goTo],
   );
 
-  if (count === 0) return null;
-
   const slide = slides[current];
+  // Hook must be called unconditionally (before any early return)
+  // to satisfy the rules-of-hooks. When count is 0, `slide` is
+  // undefined, so the hook receives "" and returns a no-op result.
   const { data: inWatchlist } = useIsInWatchlist(slide?.id ?? "");
+
+  if (count === 0) return null;
 
   return (
     <Box

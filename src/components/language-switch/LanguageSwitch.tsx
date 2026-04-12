@@ -10,14 +10,19 @@ const flags: Record<string, string> = {
 
 export function LanguageSwitch() {
   const { i18n } = useTranslation();
-  const popover = usePopover();
+  // Destructured into separate bindings so the React 19 refs lint
+  // can see that `anchorEl`, `open`, and `handleClose` are plain
+  // state / stable callbacks — bundling them in a single object
+  // alongside the callback ref taints every property as "ref-like"
+  // in the compiler's conservative analysis.
+  const { anchorRef, anchorEl, open, handleOpen, handleClose } = usePopover();
 
   const currentFlag = flags[i18n.language] || flags.en;
 
   return (
     <>
       <Tooltip title="Language">
-        <IconButton onClick={popover.handleOpen} ref={popover.anchorRef} size="small">
+        <IconButton onClick={handleOpen} ref={anchorRef} size="small">
           <Box
             sx={{
               width: 24,
@@ -32,9 +37,9 @@ export function LanguageSwitch() {
         </IconButton>
       </Tooltip>
       <LanguagePopover
-        anchorEl={popover.anchorRef.current}
-        open={popover.open}
-        onClose={popover.handleClose}
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
       />
     </>
   );
