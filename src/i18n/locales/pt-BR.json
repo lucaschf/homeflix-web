@@ -38,7 +38,8 @@
     "seasons": "{{count}} Temporada",
     "seasons_other": "{{count}} Temporadas",
     "episodes": "{{count}} Episodio",
-    "episodes_other": "{{count}} Episodios"
+    "episodes_other": "{{count}} Episodios",
+    "errorLoadingSection": "Não foi possível carregar esta seção. Tente novamente mais tarde."
   },
   "detail": {
     "trailer": "Trailer",
