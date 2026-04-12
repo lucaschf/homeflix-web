@@ -78,7 +78,8 @@
     "cancel": "Cancel",
     "back": "Back",
     "preparing": "Preparing video…",
-    "episodes": "Episodes"
+    "episodes": "Episodes",
+    "notAvailable": "not available"
   },
   "rating": {
     "L": "General audiences",

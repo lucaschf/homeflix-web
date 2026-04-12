@@ -441,6 +441,10 @@ export function Player() {
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  // The furthest buffered position in DISPLAY time (internal + startOffset).
+  // Updated on the `progress` event so the seek bar can show a secondary
+  // fill representing the already-downloaded portion of the stream.
+  const [bufferedEnd, setBufferedEnd] = useState(0);
   // Persisted via localStorage so the volume and mute state survive across
   // navigations and reloads. Without this the <video> element resets to its
   // browser default of volume=1 every time the player mounts. The state is
@@ -529,6 +533,25 @@ export function Player() {
     files?.[0]?.resolution ??
     "";
 
+  // Show a brief toast when the user's preferred quality can't be
+  // honoured for this media — so the viewer knows the resolution
+  // dropped instead of silently getting a lower-quality stream.
+  // Runs once per mediaId when files resolve; the ref prevents
+  // re-firing on every render.
+  const qualityToastFiredForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!files || files.length === 0) return;
+    if (qualityToastFiredForRef.current === mediaId) return;
+    if (preferredQuality === "best" || preferenceMatchesAvailableFile) return;
+    // Preference is set to a specific resolution that doesn't exist
+    // on this media — the chain fell through to the primary/first.
+    qualityToastFiredForRef.current = mediaId;
+    showAction(
+      <Settings size={24} />,
+      `${preferredQuality} ${t("player.notAvailable")}, ${quality}`,
+    );
+  }, [files, mediaId, preferredQuality, preferenceMatchesAvailableFile, quality, showAction, t]);
+
   // Settings menu
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
   type SettingsPanel = "main" | "quality" | "speed";
@@ -569,6 +592,15 @@ export function Player() {
     const onPause = () => { setPlaying(false); setShowControls(true); };
     const onPlaying = () => { setHlsReady(true); setBuffering(false); };
     const onWaiting = () => setBuffering(true);
+    // `progress` fires as the browser downloads segments. We read
+    // the furthest buffered byte-range and expose it as display-time
+    // so the seek bar can paint the buffered zone.
+    const onProgress = () => {
+      if (video.buffered.length > 0) {
+        const end = video.buffered.end(video.buffered.length - 1);
+        setBufferedEnd(end + startOffset);
+      }
+    };
 
     video.addEventListener("timeupdate", onTimeUpdate);
     video.addEventListener("loadedmetadata", onLoadedMetadata);
@@ -576,6 +608,7 @@ export function Player() {
     video.addEventListener("pause", onPause);
     video.addEventListener("playing", onPlaying);
     video.addEventListener("waiting", onWaiting);
+    video.addEventListener("progress", onProgress);
 
     return () => {
       video.removeEventListener("timeupdate", onTimeUpdate);
@@ -584,6 +617,7 @@ export function Player() {
       video.removeEventListener("pause", onPause);
       video.removeEventListener("playing", onPlaying);
       video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("progress", onProgress);
     };
     // isLoading is in the deps so this effect re-runs when the loading
     // overlay clears and the <video> element appears in the DOM. Without
@@ -1037,6 +1071,17 @@ export function Player() {
           });
           resetHideTimer();
           break;
+        case "a":
+          // Toggle audio track menu. Uses containerEl as the anchor
+          // since there's no mouse position; the menu's anchorOrigin
+          // places it in the bottom-right corner near the controls.
+          setAudioAnchor((prev) => (prev ? null : containerEl));
+          showAction(<AudioLines size={28} />);
+          break;
+        case "s":
+          setSubtitleAnchor((prev) => (prev ? null : containerEl));
+          showAction(<Subtitles size={28} />);
+          break;
         case "escape":
           if (isFullscreen) document.exitFullscreen();
           else navigate(-1);
@@ -1046,7 +1091,7 @@ export function Player() {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [displayDuration, isFullscreen, navigate, resetHideTimer, showAction, toggleFullscreen]);
+  }, [containerEl, displayDuration, isFullscreen, navigate, resetHideTimer, showAction, toggleFullscreen]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -1308,25 +1353,50 @@ export function Player() {
             </Typography>
           </Box>
 
-          {/* Seek Bar */}
-          <Slider
-            value={currentTime}
-            max={displayDuration || 1}
-            onChange={(_, v) => seek(v as number)}
-            sx={{
-              color: "primary.main",
-              height: { xs: 3, md: 4 },
-              p: 0,
-              mb: { xs: 0.5, md: 1 },
-              "& .MuiSlider-thumb": {
-                width: { xs: 16, md: 14 },
-                height: { xs: 16, md: 14 },
-                transition: "0.1s",
-                "&:hover": { width: 18, height: 18 },
-              },
-              "& .MuiSlider-rail": { bgcolor: "rgba(255,255,255,0.3)" },
-            }}
-          />
+          {/* Seek Bar — wrapped in a position:relative Box so the
+              buffer indicator can sit behind the MUI Slider track.
+              The indicator width is driven by `bufferedEnd / duration`
+              and sits on the same rail layer (slightly brighter than
+              the rail, dimmer than the played track). */}
+          <Box sx={{ position: "relative", mb: { xs: 0.5, md: 1 } }}>
+            {displayDuration > 0 && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  // Center vertically on the rail. The Slider has
+                  // height 3/4 depending on breakpoint; the rail
+                  // itself is centered within that, so this box
+                  // needs to match.
+                  top: "50%",
+                  left: 0,
+                  transform: "translateY(-50%)",
+                  height: { xs: 3, md: 4 },
+                  width: `${Math.min(100, (bufferedEnd / displayDuration) * 100)}%`,
+                  bgcolor: "rgba(255,255,255,0.15)",
+                  borderRadius: 1,
+                  pointerEvents: "none",
+                  transition: "width 0.5s ease-out",
+                }}
+              />
+            )}
+            <Slider
+              value={currentTime}
+              max={displayDuration || 1}
+              onChange={(_, v) => seek(v as number)}
+              sx={{
+                color: "primary.main",
+                height: { xs: 3, md: 4 },
+                p: 0,
+                "& .MuiSlider-thumb": {
+                  width: { xs: 16, md: 14 },
+                  height: { xs: 16, md: 14 },
+                  transition: "0.1s",
+                  "&:hover": { width: 18, height: 18 },
+                },
+                "& .MuiSlider-rail": { bgcolor: "rgba(255,255,255,0.15)" },
+              }}
+            />
+          </Box>
 
           {/* Controls Row */}
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 0.5 } }}>
@@ -1445,18 +1515,19 @@ export function Player() {
               position: "relative",
               overflow: "hidden",
               zIndex: 0,
+              // The progress fill is driven by the JS countdown
+              // state so it stays in sync even if the browser
+              // throttles the tab (background). The `transition`
+              // smooths each 1-second step instead of jumping.
               "&::before": {
                 content: '""',
                 position: "absolute",
                 inset: 0,
                 bgcolor: "rgba(255,255,255,0.2)",
                 transformOrigin: "left",
-                animation: "fill-progress 10s linear forwards",
+                transform: `scaleX(${1 - (nextEpCountdown ?? 10) / 10})`,
+                transition: "transform 1s linear",
                 zIndex: -1,
-              },
-              "@keyframes fill-progress": {
-                from: { transform: "scaleX(0)" },
-                to: { transform: "scaleX(1)" },
               },
             }}
           >
