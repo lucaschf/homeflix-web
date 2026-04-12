@@ -4,11 +4,11 @@ Frontend for the HomeFlix personal streaming platform. Manages and plays movies 
 
 ## Stack
 
-- **Framework:** React 19, TypeScript 5.9
-- **Build:** Vite 8
-- **UI:** MUI 7 (Material UI), Lucide React (icons)
-- **Data:** TanStack Query v5
-- **Routing:** React Router DOM v7
+- **Framework:** React, TypeScript
+- **Build:** Vite
+- **UI:** MUI (Material UI), Lucide React (icons)
+- **Data:** TanStack Query
+- **Routing:** React Router DOM
 - **i18n:** i18next (en + pt-BR)
 - **Player:** hls.js
 
