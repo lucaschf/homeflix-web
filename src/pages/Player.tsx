@@ -1353,50 +1353,36 @@ export function Player() {
             </Typography>
           </Box>
 
-          {/* Seek Bar — wrapped in a position:relative Box so the
-              buffer indicator can sit behind the MUI Slider track.
-              The indicator width is driven by `bufferedEnd / duration`
-              and sits on the same rail layer (slightly brighter than
-              the rail, dimmer than the played track). */}
-          <Box sx={{ position: "relative", mb: { xs: 0.5, md: 1 } }}>
-            {displayDuration > 0 && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  // Center vertically on the rail. The Slider has
-                  // height 3/4 depending on breakpoint; the rail
-                  // itself is centered within that, so this box
-                  // needs to match.
-                  top: "50%",
-                  left: 0,
-                  transform: "translateY(-50%)",
-                  height: { xs: 3, md: 4 },
-                  width: `${Math.min(100, (bufferedEnd / displayDuration) * 100)}%`,
-                  bgcolor: "rgba(255,255,255,0.15)",
-                  borderRadius: 1,
-                  pointerEvents: "none",
-                  transition: "width 0.5s ease-out",
-                }}
-              />
-            )}
-            <Slider
-              value={currentTime}
-              max={displayDuration || 1}
-              onChange={(_, v) => seek(v as number)}
-              sx={{
-                color: "primary.main",
-                height: { xs: 3, md: 4 },
-                p: 0,
-                "& .MuiSlider-thumb": {
-                  width: { xs: 16, md: 14 },
-                  height: { xs: 16, md: 14 },
-                  transition: "0.1s",
-                  "&:hover": { width: 18, height: 18 },
-                },
-                "& .MuiSlider-rail": { bgcolor: "rgba(255,255,255,0.15)" },
-              }}
-            />
-          </Box>
+          {/* Seek Bar — the buffer indicator is painted directly on
+              the MUI Slider rail via a gradient background so it
+              stays pixel-aligned with the track and thumb. The
+              gradient transitions from the buffer color (brighter
+              gray) to the unloaded rail color at the buffered
+              percentage, creating the same two-tone fill YouTube
+              and Netflix use. */}
+          <Slider
+            value={currentTime}
+            max={displayDuration || 1}
+            onChange={(_, v) => seek(v as number)}
+            sx={{
+              color: "primary.main",
+              height: { xs: 3, md: 4 },
+              p: 0,
+              mb: { xs: 0.5, md: 1 },
+              "& .MuiSlider-thumb": {
+                width: { xs: 16, md: 14 },
+                height: { xs: 16, md: 14 },
+                transition: "0.1s",
+                "&:hover": { width: 18, height: 18 },
+              },
+              "& .MuiSlider-rail": {
+                background: displayDuration > 0
+                  ? `linear-gradient(to right, rgba(255,255,255,0.35) ${(bufferedEnd / displayDuration) * 100}%, rgba(255,255,255,0.15) ${(bufferedEnd / displayDuration) * 100}%)`
+                  : "rgba(255,255,255,0.15)",
+                opacity: 1,
+              },
+            }}
+          />
 
           {/* Controls Row */}
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 0.5 } }}>
