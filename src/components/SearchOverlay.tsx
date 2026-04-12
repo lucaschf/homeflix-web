@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
+  Chip,
   CircularProgress,
   Dialog,
   IconButton,
@@ -87,8 +88,6 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
   // Results come from the server, already ranked by relevance.
   const normalizedQuery = query.trim();
-  const movies = searchResults.filter((r) => r.type === "movie");
-  const series = searchResults.filter((r) => r.type === "series");
   const hasResults = searchResults.length > 0;
   const showNoResults = normalizedQuery.length >= 1 && !searchLoading && !hasResults;
 
@@ -169,22 +168,17 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           </Box>
         )}
 
-        {/* Results */}
-        {movies.length > 0 && (
-          <ResultSection
-            title={t("search.movies")}
-            items={movies}
-            icon={<Film size={16} />}
-            onSelect={handleSelect}
-          />
-        )}
-        {series.length > 0 && (
-          <ResultSection
-            title={t("search.series")}
-            items={series}
-            icon={<Tv size={16} />}
-            onSelect={handleSelect}
-          />
+        {/* Results — unified list ranked by relevance */}
+        {hasResults && (
+          <Box sx={{ px: 1.5, py: 1 }}>
+            {searchResults.map((item) => (
+              <SearchResultRow
+                key={item.id}
+                item={item}
+                onSelect={handleSelect}
+              />
+            ))}
+          </Box>
         )}
 
         {/* No Results */}
@@ -203,45 +197,82 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   );
 }
 
-interface ResultSectionProps {
-  title: string;
-  items: CatalogItem[];
-  icon: React.ReactNode;
+function SearchResultRow({
+  item,
+  onSelect,
+}: {
+  item: CatalogItem;
   onSelect: (item: CatalogItem) => void;
-}
-
-function ResultSection({ title, items, icon, onSelect }: ResultSectionProps) {
+}) {
+  const { t } = useTranslation();
   return (
-    <Box sx={{ px: 2.5, py: 1.5 }}>
-      <Typography variant="body2" color="text.secondary" fontWeight={600} sx={{ mb: 1 }}>
-        {title} ({items.length})
-      </Typography>
-      {items.map((item) => (
-        <Box
-          key={item.id}
-          onClick={() => onSelect(item)}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            py: 1,
-            px: 1,
-            borderRadius: 1,
-            cursor: "pointer",
-            "&:hover": { bgcolor: "action.hover" },
-          }}
-        >
-          <Box sx={{ color: "text.secondary", flexShrink: 0 }}>{icon}</Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" fontWeight={500} noWrap>
-              {item.title}
-            </Typography>
+    <Box
+      onClick={() => onSelect(item)}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.5,
+        py: 0.75,
+        px: 1,
+        borderRadius: 1.5,
+        cursor: "pointer",
+        "&:hover": { bgcolor: "action.hover" },
+      }}
+    >
+      {/* Poster thumbnail or placeholder */}
+      <Box
+        sx={{
+          width: 40,
+          height: 56,
+          borderRadius: 1,
+          overflow: "hidden",
+          flexShrink: 0,
+          bgcolor: "action.hover",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {item.poster_path ? (
+          <Box
+            component="img"
+            src={item.poster_path}
+            alt=""
+            sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <Box sx={{ color: "text.disabled" }}>
+            {item.type === "movie" ? <Film size={16} /> : <Tv size={16} />}
           </Box>
+        )}
+      </Box>
+
+      {/* Title + metadata */}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={500} noWrap>
+          {item.title}
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.25 }}>
+          <Chip
+            label={item.type === "movie" ? t("search.movies") : t("search.series")}
+            size="small"
+            sx={{
+              height: 18,
+              fontSize: "0.6rem",
+              fontWeight: 600,
+              bgcolor: "action.selected",
+            }}
+          />
           <Typography variant="caption" color="text.secondary">
             {item.year}
           </Typography>
+          {item.genres.length > 0 && (
+            <Typography variant="caption" color="text.disabled" noWrap>
+              · {item.genres.slice(0, 2).join(", ")}
+            </Typography>
+          )}
         </Box>
-      ))}
+      </Box>
     </Box>
   );
 }
