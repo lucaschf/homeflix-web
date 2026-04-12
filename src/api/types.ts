@@ -178,6 +178,14 @@ export interface CatalogItem {
 
 export type CatalogByGenreResponse = ApiListResponse<CatalogItem>;
 
+// Search endpoint response — same item shape as the catalog but with
+// a `total` count in metadata instead of pagination cursors.
+export interface SearchResponse {
+  type: string;
+  data: CatalogItem[];
+  metadata: { total: number };
+}
+
 export interface ScanResponse {
   movies_created: number;
   movies_updated: number;

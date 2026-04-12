@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   useInfiniteQuery,
   useMutation,
@@ -32,6 +32,7 @@ import type {
   ProgressOutput,
   ProgressResponse,
   ScanResponse,
+  SearchResponse,
   SeriesDetail,
   SeriesDetailResponse,
   SeriesSummary,
@@ -226,6 +227,52 @@ export function useByGenre(genreId: string, options: CatalogQueryOptions = {}) {
     hasNextPage: !!query.hasNextPage,
     fetchNextPage: query.fetchNextPage,
     isError: query.isError,
+  };
+}
+
+// ── Search ──────────────────────────────────────────────
+
+const SEARCH_DEBOUNCE_MS = 300;
+
+/**
+ * Server-side full-text search with debounced queries.
+ *
+ * Calls `GET /api/v1/search?q=...` after the user stops typing for
+ * 300ms. Returns the ranked result list directly — no eager-load,
+ * no client-side filter, no full-catalog download.
+ *
+ * The query is disabled when `query` is empty so the overlay
+ * starts in the "recent searches" state without a wasted request.
+ */
+export function useSearch(query: string) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+
+  // Debounce: only fire the request once the user pauses typing.
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  const trimmed = debouncedQuery.trim();
+  const result = useQuery({
+    queryKey: ["search", trimmed, lang],
+    queryFn: async (): Promise<CatalogItem[]> => {
+      const resp = await api.get<SearchResponse>("/search", {
+        q: trimmed,
+        lang,
+        limit: "30",
+      });
+      return resp.data;
+    },
+    enabled: trimmed.length >= 1,
+  });
+
+  return {
+    data: result.data ?? [],
+    isLoading: trimmed.length >= 1 && result.isLoading,
+    isError: result.isError,
   };
 }
 
