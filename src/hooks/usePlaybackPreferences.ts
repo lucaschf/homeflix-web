@@ -56,6 +56,13 @@ export interface PlaybackPreferences {
   subtitleLang: PreferredLanguage;
   subtitleMode: SubtitleMode;
   defaultQuality: DefaultQuality;
+  /**
+   * Preferred playback speed (1 = normal). Persisted so binge-watchers
+   * don't have to re-open the speed menu on every episode or movie.
+   * Applied to the `<video>` element whenever a new HLS instance is
+   * ready, alongside the audio/subtitle restore effect.
+   */
+  speed: number;
 }
 
 // ── Constants ────────────────────────────────────────────────────
@@ -74,6 +81,7 @@ const DEFAULT_PREFS: Readonly<PlaybackPreferences> = Object.freeze({
   subtitleLang: "pt-BR",
   subtitleMode: "foreignOnly",
   defaultQuality: "best",
+  speed: 1,
 });
 
 // ── Persistence ──────────────────────────────────────────────────
