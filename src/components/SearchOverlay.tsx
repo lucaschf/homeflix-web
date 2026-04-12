@@ -124,7 +124,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     >
       {/* Search Input */}
       <Box sx={{ display: "flex", alignItems: "center", px: 2.5, py: 1.5, borderBottom: 1, borderColor: "divider" }}>
-        <Search size={20} color="#A0A0A0" />
+        <Search size={20} color="var(--mui-palette-text-secondary)" />
         <InputBase
           inputRef={inputRef}
           value={query}

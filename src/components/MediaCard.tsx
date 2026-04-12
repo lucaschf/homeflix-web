@@ -131,7 +131,7 @@ export function MediaCard({
                 justifyContent: "center",
               }}
             >
-              <Play size={20} color="#0D0D0D" fill="#0D0D0D" />
+              <Play size={20} color="var(--mui-palette-background-default)" fill="var(--mui-palette-background-default)" />
             </Box>
           </Box>
         )}

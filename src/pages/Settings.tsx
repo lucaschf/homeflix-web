@@ -120,7 +120,7 @@ export function Settings() {
                 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
-                  <FolderOpen size={18} color="#A0A0A0" />
+                  <FolderOpen size={18} color="var(--mui-palette-text-secondary)" />
                   <Box sx={{ minWidth: 0 }}>
                     <Typography variant="body2" fontWeight={600} noWrap title={lib.name}>
                       {lib.name}
@@ -153,7 +153,7 @@ export function Settings() {
           ))
         ) : (
           <Box sx={{ textAlign: "center", py: 5 }}>
-            <FolderOpen size={32} color="#555" />
+            <FolderOpen size={32} color="var(--mui-palette-text-disabled)" />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               {t("settings.noLibraries")}
             </Typography>
@@ -301,7 +301,7 @@ function SettingsSection({
   return (
     <Box sx={{ mb: last ? 0 : 4 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-        <Icon size={18} color="#888" />
+        <Icon size={18} color="var(--mui-palette-text-secondary)" />
         <Typography variant="h2" sx={{ fontSize: "1.1rem", fontWeight: 600 }}>
           {title}
         </Typography>

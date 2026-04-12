@@ -47,7 +47,7 @@ export function TrailerDialog({ open, onClose, url }: TrailerDialogProps) {
       fullWidth
       slotProps={{
         paper: {
-          sx: { bgcolor: "#000", overflow: "hidden", borderRadius: 2 },
+          sx: { bgcolor: "common.black", overflow: "hidden", borderRadius: 2 },
         },
       }}
     >
@@ -58,7 +58,7 @@ export function TrailerDialog({ open, onClose, url }: TrailerDialogProps) {
           top: 8,
           right: 8,
           zIndex: 1,
-          color: "#fff",
+          color: "overlayText.primary",
           bgcolor: "rgba(0,0,0,0.5)",
           "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
         }}

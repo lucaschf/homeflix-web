@@ -1032,7 +1032,7 @@ export function Player() {
           e.preventDefault();
           if (video.paused) {
             video.play().catch(() => {});
-            showAction(<Play size={36} fill="#fff" />);
+            showAction(<Play size={36} fill="var(--mui-palette-overlayText-primary)" />);
           } else {
             video.pause();
             showAction(<Pause size={36} />);
@@ -1098,7 +1098,7 @@ export function Player() {
     if (!video) return;
     if (video.paused) {
       video.play().catch(() => {});
-      showAction(<Play size={36} fill="#fff" />);
+      showAction(<Play size={36} fill="var(--mui-palette-overlayText-primary)" />);
     } else {
       video.pause();
       showAction(<Pause size={36} />);
@@ -1177,7 +1177,7 @@ export function Player() {
   // Show loading while fetching movie data
   if (isLoading) {
     return (
-      <Box sx={{ position: "fixed", inset: 0, bgcolor: "#000", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Box sx={{ position: "fixed", inset: 0, bgcolor: "common.black", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <CircularProgress color="primary" />
       </Box>
     );
@@ -1193,7 +1193,7 @@ export function Player() {
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        bgcolor: "#000",
+        bgcolor: "common.black",
         cursor: showControls ? "default" : "none",
         userSelect: "none",
         WebkitUserSelect: "none",
@@ -1242,7 +1242,7 @@ export function Player() {
             flexDirection: "column",
             alignItems: "center",
             gap: 0.5,
-            color: "#fff",
+            color: "overlayText.primary",
             bgcolor: "rgba(0,0,0,0.5)",
             borderRadius: "50%",
             width: 80,
@@ -1281,7 +1281,7 @@ export function Player() {
       >
         {/* Top Bar */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, p: { xs: 1, md: 2 }, background: "linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)" }}>
-          <IconButton onClick={() => navigate(-1)} sx={{ color: "#fff" }}>
+          <IconButton onClick={() => navigate(-1)} sx={{ color: "overlayText.primary" }}>
             <ChevronLeft size={28} />
           </IconButton>
           {movieData?.content_rating && (
@@ -1315,11 +1315,11 @@ export function Player() {
                   width: 72,
                   height: 72,
                   bgcolor: "rgba(232,146,111,0.9)",
-                  color: "#0D0D0D",
+                  color: "background.default",
                   pointerEvents: "none",
                 }}
               >
-                <Play size={36} fill="#0D0D0D" />
+                <Play size={36} fill="var(--mui-palette-background-default)" />
               </IconButton>
             </Box>
           )}
@@ -1386,19 +1386,19 @@ export function Player() {
 
           {/* Controls Row */}
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 0.5 } }}>
-            <IconButton onClick={() => skip(-10)} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
+            <IconButton onClick={() => skip(-10)} sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}>
               <SkipBack size={20} />
             </IconButton>
-            <IconButton onClick={togglePlay} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
-              {playing ? <Pause size={24} /> : <Play size={24} fill="#fff" />}
+            <IconButton onClick={togglePlay} sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}>
+              {playing ? <Pause size={24} /> : <Play size={24} fill="var(--mui-palette-overlayText-primary)" />}
             </IconButton>
-            <IconButton onClick={() => skip(30)} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
+            <IconButton onClick={() => skip(30)} sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}>
               <SkipForward size={20} />
             </IconButton>
 
             <IconButton
               onClick={() => { const m = !muted; setMuted(m); if (videoRef.current) videoRef.current.muted = m; }}
-              sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}
+              sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}
             >
               {muted || volume === 0 ? <VolumeX size={20} /> : <Volume2 size={20} />}
             </IconButton>
@@ -1410,7 +1410,7 @@ export function Player() {
               onChange={changeVolume}
               sx={{
                 width: 80,
-                color: "#fff",
+                color: "overlayText.primary",
                 mx: 1,
                 display: { xs: "none", md: "block" },
                 "& .MuiSlider-thumb": { width: 12, height: 12 },
@@ -1423,28 +1423,28 @@ export function Player() {
             {!isMovie && seriesData && (
               <IconButton
                 onClick={() => setEpisodeDrawerOpen((v) => !v)}
-                sx={{ color: episodeDrawerOpen ? "primary.main" : "#fff", p: { xs: 1, md: 0.75 } }}
+                sx={{ color: episodeDrawerOpen ? "primary.main" : "overlayText.primary", p: { xs: 1, md: 0.75 } }}
               >
                 <LayoutList size={20} />
               </IconButton>
             )}
-            <IconButton onClick={openSettings} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
+            <IconButton onClick={openSettings} sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}>
               <Settings size={20} />
             </IconButton>
             {audioTracks.length > 1 && (
-              <IconButton onClick={openAudio} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
+              <IconButton onClick={openAudio} sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}>
                 <AudioLines size={20} />
               </IconButton>
             )}
             {subtitleTracks.length > 0 && (
               <IconButton
                 onClick={openSubtitles}
-                sx={{ color: subtitlesActive ? "primary.main" : "#fff", p: { xs: 1, md: 0.75 } }}
+                sx={{ color: subtitlesActive ? "primary.main" : "overlayText.primary", p: { xs: 1, md: 0.75 } }}
               >
                 <Subtitles size={20} />
               </IconButton>
             )}
-            <IconButton onClick={toggleFullscreen} sx={{ color: "#fff", p: { xs: 1, md: 0.75 } }}>
+            <IconButton onClick={toggleFullscreen} sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}>
               {isFullscreen ? <Minimize size={20} /> : <Maximize size={20} />}
             </IconButton>
           </Box>
@@ -1568,7 +1568,7 @@ export function Player() {
           <SettingsBackItem key="back" label={t("player.quality")} onClick={() => setSettingsPanel("main")} />,
           ...qualities.map((q) => (
             <MenuItem key={q} onClick={() => { setQualityOverride(q); setSettingsPanel("main"); }}>
-              {quality === q && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
+              {quality === q && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
               <ListItemText inset={quality !== q} primary={q} />
             </MenuItem>
           )),
@@ -1578,7 +1578,7 @@ export function Player() {
           <SettingsBackItem key="back" label={t("player.speed")} onClick={() => setSettingsPanel("main")} />,
           ...SPEEDS.map((s) => (
             <MenuItem key={s} onClick={() => changeSpeed(s)}>
-              {speed === s && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
+              {speed === s && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
               <ListItemText inset={speed !== s} primary={s === 1 ? t("player.normal") : `${s}x`} />
             </MenuItem>
           )),
@@ -1597,7 +1597,7 @@ export function Player() {
       >
         {audioTracks.map((track) => (
           <MenuItem key={track.id} onClick={() => changeAudioTrack(track.id)}>
-            {currentAudioTrack === track.id && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
+            {currentAudioTrack === track.id && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
             <ListItemText inset={currentAudioTrack !== track.id} primary={track.name} />
           </MenuItem>
         ))}
@@ -1614,12 +1614,12 @@ export function Player() {
         slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
       >
         <MenuItem onClick={() => changeSubtitleTrack(-1)}>
-          {currentSubtitleTrack === -1 && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
+          {currentSubtitleTrack === -1 && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
           <ListItemText inset={currentSubtitleTrack !== -1} primary={t("player.off")} />
         </MenuItem>
         {subtitleTracks.map((track) => (
           <MenuItem key={track.id} onClick={() => changeSubtitleTrack(track.id)}>
-            {currentSubtitleTrack === track.id && <ListItemIcon><Check size={16} color="#E8926F" /></ListItemIcon>}
+            {currentSubtitleTrack === track.id && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
             <ListItemText inset={currentSubtitleTrack !== track.id} primary={track.name} />
           </MenuItem>
         ))}

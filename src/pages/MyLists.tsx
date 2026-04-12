@@ -53,7 +53,7 @@ function WatchlistTab() {
   if (!items?.length) {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
-        <Bookmark size={48} color="#555" />
+        <Bookmark size={48} color="var(--mui-palette-text-disabled)" />
         <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
           {t("lists.empty")}
         </Typography>
@@ -166,7 +166,7 @@ function CustomListsTab() {
         </Box>
       ) : (
         <Box sx={{ textAlign: "center", py: 10 }}>
-          <Bookmark size={48} color="#555" />
+          <Bookmark size={48} color="var(--mui-palette-text-disabled)" />
           <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
             {t("lists.customListsEmpty")}
           </Typography>
@@ -313,7 +313,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search size={16} color="#737373" />
+                  <Search size={16} color="var(--mui-palette-text-disabled)" />
                 </InputAdornment>
               ),
               endAdornment: searchQuery ? (
@@ -372,7 +372,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
         </Box>
       ) : !searchQuery.trim() ? (
         <Box sx={{ textAlign: "center", py: 10 }}>
-          <Bookmark size={48} color="#555" />
+          <Bookmark size={48} color="var(--mui-palette-text-disabled)" />
           <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
             {t("lists.listItemsEmpty")}
           </Typography>

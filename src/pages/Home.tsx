@@ -133,7 +133,7 @@ function EmptyState() {
           mb: 3,
         }}
       >
-        <Film size={32} color="#E8926F" />
+        <Film size={32} color="var(--mui-palette-primary-main)" />
       </Box>
       <Typography variant="h1" gutterBottom>
         {t("empty.welcome")}

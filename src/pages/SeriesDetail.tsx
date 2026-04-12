@@ -318,7 +318,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
           }}
         >
           <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Play size={20} color="#0D0D0D" fill="#0D0D0D" />
+            <Play size={20} color="var(--mui-palette-background-default)" fill="var(--mui-palette-background-default)" />
           </Box>
         </Box>
 

@@ -104,7 +104,7 @@ export function AddToListDialog({ open, onClose, mediaId, mediaType }: AddToList
                       primary={list.name}
                       secondary={t("lists.itemCount", { count: list.item_count })}
                     />
-                    {wasAdded && <Check size={18} color="#4ADE80" />}
+                    {wasAdded && <Check size={18} color="var(--mui-palette-success-main)" />}
                   </ListItemButton>
                 );
               })}
