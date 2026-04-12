@@ -52,7 +52,15 @@ export function CarouselSkeleton({ title, cardCount = 6 }: CarouselSkeletonProps
       {/* Row of card-shaped skeletons matching MediaCard's poster
           dimensions exactly: 2/3 aspect ratio + responsive width
           breakpoints. The wave animation makes it feel "alive"
-          instead of frozen. */}
+          instead of frozen.
+
+          Wrapped in a Box that owns the responsive width and the
+          aspect ratio so the inner Skeleton can fill it 100%/100%.
+          MUI Skeleton has its own internal `height` default that
+          ignores `aspectRatio` from `sx` — passing the dimensions
+          on a wrapper Box and letting the Skeleton be a 100% / 100%
+          child is the canonical pattern, otherwise the row collapses
+          to a sliver of skeletons a few pixels tall. */}
       <Box
         sx={{
           display: "flex",
@@ -62,17 +70,20 @@ export function CarouselSkeleton({ title, cardCount = 6 }: CarouselSkeletonProps
         }}
       >
         {Array.from({ length: cardCount }, (_, index) => (
-          <Skeleton
+          <Box
             key={index}
-            variant="rounded"
-            animation="wave"
             sx={{
               flexShrink: 0,
               width: { xs: 140, sm: 200, md: 240, lg: 280 },
               aspectRatio: "2/3",
-              borderRadius: 2,
             }}
-          />
+          >
+            <Skeleton
+              variant="rounded"
+              animation="wave"
+              sx={{ width: "100%", height: "100%", borderRadius: 2 }}
+            />
+          </Box>
         ))}
       </Box>
     </Box>
