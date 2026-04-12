@@ -1,73 +1,81 @@
-# React + TypeScript + Vite
+# HomeFlix Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend for the HomeFlix personal streaming platform. Manages and plays movies and series stored on a local drive.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Framework:** React 19, TypeScript 5.9
+- **Build:** Vite 8
+- **UI:** MUI 7 (Material UI), Lucide React (icons)
+- **Data:** TanStack Query v5
+- **Routing:** React Router DOM v7
+- **i18n:** i18next (en + pt-BR)
+- **Player:** hls.js
 
-## React Compiler
+## Getting started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+yarn install
+yarn dev        # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The backend must be running separately (Vite proxies `/api` to it in dev).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Command | Description |
+|---------|-------------|
+| `yarn dev` | Start dev server with HMR |
+| `yarn build` | Production build |
+| `yarn preview` | Preview production build |
+| `yarn lint` | Run ESLint (full repo) |
+
+## Keyboard shortcuts
+
+### Global
+
+| Key | Action |
+|-----|--------|
+| `Ctrl+K` / `Cmd+K` | Open search overlay |
+
+### Player
+
+| Key | Action |
+|-----|--------|
+| `Space` / `K` | Play / Pause |
+| `←` | Rewind 10s |
+| `→` | Forward 30s |
+| `↑` | Volume up |
+| `↓` | Volume down |
+| `M` | Mute / Unmute |
+| `F` | Toggle fullscreen |
+| `A` | Toggle audio track menu |
+| `S` | Toggle subtitle menu |
+| `Esc` | Exit fullscreen / Go back |
+
+All player shortcuts show a brief animated indicator in the center of the viewport confirming the action.
+
+## Project structure
+
 ```
+src/
+├── api/            # HTTP client + TanStack Query hooks
+├── components/     # Reusable UI (Navbar, HeroBanner, MediaCard, etc.)
+├── hooks/          # Custom hooks (usePopover, usePlaybackPreferences)
+├── i18n/           # i18next config + en.json / pt-BR.json
+├── pages/          # Route pages (Home, Browse, Player, Settings, etc.)
+├── theme/          # MUI dark theme (colors, typography)
+├── App.tsx         # Routes + providers
+└── main.tsx        # Entry point
+```
+
+## Playback preferences
+
+Persisted per-device in `localStorage` and consumed by the Player:
+
+- **Preferred audio language** — auto-selects the matching HLS audio track on first play.
+- **Preferred subtitle language + mode** — `always`, `foreignOnly`, `forcedOnly`, or `off`.
+- **Default quality** — picks the resolution when available, falls through to the primary file otherwise.
+- **Playback speed** — survives across episodes and sessions.
+
+Configured in Settings (`/settings`).
