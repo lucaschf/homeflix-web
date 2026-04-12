@@ -3,53 +3,21 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useContinueWatching, useFeatured, useMovies, useSeries } from "../api/hooks";
-import type { MovieSummary, SeriesSummary } from "../api/types";
+import { useContinueWatching, useFeatured, useGenres } from "../api/hooks";
+import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 
-interface GenreSection {
-  genre: string;
-  items: Array<{ id: string; title: string; year: number; type: "movie" | "series"; imageUrl?: string; synopsis?: string }>;
-}
-
-function buildGenreSections(movies: MovieSummary[], series: SeriesSummary[]): GenreSection[] {
-  const genreMap = new Map<string, GenreSection["items"]>();
-
-  for (const m of movies) {
-    for (const g of m.genres) {
-      if (!genreMap.has(g)) genreMap.set(g, []);
-      genreMap.get(g)!.push({ id: m.id, title: m.title, year: m.year, type: "movie", imageUrl: m.poster_path ?? undefined, synopsis: m.synopsis ?? undefined });
-    }
-  }
-
-  for (const s of series) {
-    for (const g of s.genres) {
-      if (!genreMap.has(g)) genreMap.set(g, []);
-      genreMap.get(g)!.push({ id: s.id, title: s.title, year: s.start_year, type: "series", imageUrl: s.poster_path ?? undefined, synopsis: s.synopsis ?? undefined });
-    }
-  }
-
-  return [...genreMap.entries()]
-    .map(([genre, items]) => ({ genre, items }))
-    .sort((a, b) => b.items.length - a.items.length);
-}
-
 export function Home() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data: moviesData, isLoading: moviesLoading } = useMovies();
-  const { data: seriesData, isLoading: seriesLoading } = useSeries();
+  const { data: genres, isLoading: genresLoading } = useGenres();
   const { data: continueWatching } = useContinueWatching();
   const { data: featured } = useFeatured("all");
 
-  const movies = moviesData?.movies ?? [];
-  const series = seriesData?.series ?? [];
-  const isLoading = moviesLoading || seriesLoading;
-  const hasContent = movies.length > 0 || series.length > 0;
-
-  const genreSections = useMemo(() => buildGenreSections(movies, series), [movies, series]);
+  const isLoading = genresLoading;
+  const hasContent = (genres?.length ?? 0) > 0;
 
   const heroSlides: HeroSlide[] = useMemo(
     () =>
@@ -130,61 +98,8 @@ export function Home() {
           </MediaCarousel>
         )}
 
-        {movies.length > 0 && (
-          <MediaCarousel title={t("home.movies")} onSeeAll={() => navigate("/browse?type=movie")}>
-            {movies.map((movie) => (
-              <MediaCard
-                key={movie.id}
-                title={movie.title}
-                year={movie.year}
-                imageUrl={movie.poster_path ?? undefined}
-                synopsis={movie.synopsis ?? undefined}
-                variant="poster"
-                mediaId={movie.id}
-                mediaType="movie"
-                onPlay={() => navigate(`/play/movie/${movie.id}`)}
-                onClick={() => navigate(`/movie/${movie.id}`)}
-              />
-            ))}
-          </MediaCarousel>
-        )}
-
-        {series.length > 0 && (
-          <MediaCarousel title={t("home.series")} onSeeAll={() => navigate("/browse?type=series")}>
-            {series.map((s) => (
-              <MediaCard
-                key={s.id}
-                title={s.title}
-                year={s.start_year}
-                imageUrl={s.poster_path ?? undefined}
-                synopsis={s.synopsis ?? undefined}
-                variant="poster"
-                mediaId={s.id}
-                mediaType="series"
-                onPlay={() => navigate(`/series/${s.id}`)}
-                onClick={() => navigate(`/series/${s.id}`)}
-              />
-            ))}
-          </MediaCarousel>
-        )}
-
-        {genreSections.map((section) => (
-          <MediaCarousel key={section.genre} title={section.genre} onSeeAll={() => navigate(`/browse?genre=${encodeURIComponent(section.genre)}`)}>
-            {section.items.map((item) => (
-              <MediaCard
-                key={item.id}
-                title={item.title}
-                year={item.year}
-                imageUrl={item.imageUrl}
-                synopsis={item.synopsis}
-                variant="poster"
-                mediaId={item.id}
-                mediaType={item.type}
-                onPlay={() => navigate(item.type === "movie" ? `/play/movie/${item.id}` : `/series/${item.id}`)}
-                onClick={() => navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)}
-              />
-            ))}
-          </MediaCarousel>
+        {(genres ?? []).map((genre) => (
+          <LazyGenreCarousel key={genre.id} genre={genre} />
         ))}
       </Box>
     </Box>

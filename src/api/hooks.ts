@@ -9,9 +9,10 @@ import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   AddItemToCustomListResponse,
+  ApiListResponse,
   BulkEnrichResponse,
-  FeaturedItem,
-  FeaturedResponse,
+  CatalogByGenreResponse,
+  CatalogItem,
   ContinueWatchingItem,
   ContinueWatchingResponse,
   CustomListDetailResponse,
@@ -20,8 +21,11 @@ import type {
   CustomListOutput,
   CustomListsResponse,
   EnrichResponse,
+  FeaturedItem,
+  FeaturedResponse,
+  Genre,
+  GenresResponse,
   HealthResponse,
-  ApiListResponse,
   MovieDetail,
   MovieDetailResponse,
   MovieSummary,
@@ -111,6 +115,81 @@ export function useMovies() {
     { lang },
   );
   return { data: { movies: items }, isLoading };
+}
+
+// ── Catalog (per-genre) ─────────────────────────────────
+
+// Page size for the by-genre infinite query. Independent of the
+// backend default — frontend always passes this explicitly. Picked
+// to fill ~2-3 viewport widths of a horizontal carousel on a wide
+// desktop, with enough buffer that the user rarely sees a loading
+// spinner mid-scroll.
+const BY_GENRE_PAGE_SIZE = 20;
+
+/**
+ * Single fetch of every genre present in the library, with counts
+ * and localized display names. The Home and Browse pages use the
+ * result to lay out one carousel per genre and to know which genres
+ * exist before mounting any per-genre infinite query.
+ */
+export function useGenres() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["catalog", "genres", lang],
+    queryFn: async (): Promise<Genre[]> => {
+      const resp = await api.get<GenresResponse>("/catalog/genres", { lang });
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Cursor-paginated infinite query for one specific genre's items
+ * (movies + series merged alphabetically by title). Unlike
+ * `useMovies` / `useSeries`, this does NOT eagerly walk every
+ * page on mount — the consumer drives pagination by calling
+ * `fetchNextPage` from a horizontal-scroll IntersectionObserver,
+ * one carousel at a time.
+ *
+ * The hook is disabled when `genreId` is empty so consumers can
+ * defer mounting it until the parent has resolved which genre to
+ * render.
+ */
+export function useByGenre(genreId: string) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  const query = useInfiniteQuery({
+    queryKey: ["catalog", "by-genre", genreId, lang],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const params: Record<string, string> = {
+        lang,
+        limit: String(BY_GENRE_PAGE_SIZE),
+      };
+      if (pageParam) params.cursor = pageParam;
+      return api.get<CatalogByGenreResponse>(
+        `/catalog/by-genre/${encodeURIComponent(genreId)}`,
+        params,
+      );
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
+    enabled: !!genreId,
+  });
+
+  const items = useMemo<CatalogItem[]>(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
+
+  return {
+    items,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    hasNextPage: !!query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    isError: query.isError,
+  };
 }
 
 export function useMovie(movieId: string) {
