@@ -25,6 +25,9 @@ import type {
   Genre,
   GenresResponse,
   HealthResponse,
+  LibrariesResponse,
+  Library,
+  LibraryResponse,
   MovieDetail,
   MovieDetailResponse,
   ProgressOutput,
@@ -502,6 +505,50 @@ export function useRemoveItemFromCustomList() {
       queryClient.invalidateQueries({
         predicate: (q) => q.queryKey[0] === "customLists" && q.queryKey[1] === vars.listId && q.queryKey[2] === "items",
       });
+    },
+  });
+}
+
+// ── Libraries ───────────────────────────────────────────
+
+/**
+ * Fetch all non-deleted libraries from the backend.
+ *
+ * Replaces the old localStorage-based `loadLibraries()` — libraries
+ * are now persisted server-side so they survive across devices and
+ * browser clears.
+ */
+export function useLibraries() {
+  return useQuery({
+    queryKey: ["libraries"],
+    queryFn: async (): Promise<Library[]> => {
+      const resp = await api.get<LibrariesResponse>("/libraries");
+      return resp.data;
+    },
+  });
+}
+
+export function useCreateLibrary() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: {
+      name: string;
+      library_type: string;
+      paths: string[];
+      language?: string;
+    }) => api.post<LibraryResponse>("/libraries", body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+    },
+  });
+}
+
+export function useDeleteLibrary() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (libraryId: string) => api.del(`/libraries/${libraryId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
     },
   });
 }

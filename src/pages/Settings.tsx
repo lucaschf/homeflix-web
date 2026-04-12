@@ -1,8 +1,9 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -27,7 +28,15 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useBulkEnrich, useHealth, useScan } from "../api/hooks";
+import {
+  useBulkEnrich,
+  useCreateLibrary,
+  useDeleteLibrary,
+  useHealth,
+  useLibraries,
+  useScan,
+} from "../api/hooks";
+import type { Library } from "../api/types";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
 import { neutral } from "../theme/colors";
 import {
@@ -35,33 +44,59 @@ import {
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
 
-const LIBRARIES_STORAGE_KEY = "homeflix-libraries";
-
-interface Library {
-  id: string;
-  name: string;
-  path: string;
-}
-
-function loadLibraries(): Library[] {
-  try {
-    return JSON.parse(localStorage.getItem(LIBRARIES_STORAGE_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveLibraries(libs: Library[]) {
-  localStorage.setItem(LIBRARIES_STORAGE_KEY, JSON.stringify(libs));
-}
+// Key used by the old localStorage-only implementation. Checked
+// once on mount for a one-shot migration to the backend, then
+// removed so the migration never re-runs.
+const LEGACY_LIBRARIES_KEY = "homeflix-libraries";
 
 export function Settings() {
   const { t } = useTranslation();
-  const [libraries, setLibraries] = useState<Library[]>(loadLibraries);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const scanMutation = useScan();
   const enrichMutation = useBulkEnrich();
   const { data: health } = useHealth();
+
+  // ── Libraries (backend-backed) ──────────────────────────
+  const { data: libraries, isLoading: librariesLoading } = useLibraries();
+  const createLibrary = useCreateLibrary();
+  const deleteLibrary = useDeleteLibrary();
+
+  // One-shot migration: if the user had libraries in localStorage
+  // (from before this integration), push them to the backend the
+  // first time the query resolves empty, then clear localStorage
+  // so the migration never re-fires.
+  const migrationDoneRef = useRef(false);
+  useEffect(() => {
+    if (librariesLoading || migrationDoneRef.current) return;
+    if ((libraries?.length ?? 0) > 0) {
+      // Backend already has libraries — no migration needed.
+      localStorage.removeItem(LEGACY_LIBRARIES_KEY);
+      migrationDoneRef.current = true;
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(LEGACY_LIBRARIES_KEY);
+      if (!raw) { migrationDoneRef.current = true; return; }
+      const legacy: { name: string; path: string }[] = JSON.parse(raw);
+      if (!Array.isArray(legacy) || legacy.length === 0) {
+        migrationDoneRef.current = true;
+        return;
+      }
+      migrationDoneRef.current = true;
+      // Fire-and-forget — each create invalidates the query, so the
+      // UI will progressively populate as responses land.
+      for (const lib of legacy) {
+        createLibrary.mutate({
+          name: lib.name,
+          library_type: "mixed",
+          paths: [lib.path],
+        });
+      }
+      localStorage.removeItem(LEGACY_LIBRARIES_KEY);
+    } catch {
+      migrationDoneRef.current = true;
+    }
+  }, [libraries, librariesLoading, createLibrary]);
 
   // Playback preferences are persisted to localStorage via this
   // hook and consumed by the Player on first play of a new media.
@@ -70,30 +105,29 @@ export function Settings() {
 
   const handleAddLibrary = useCallback(
     (name: string, path: string) => {
-      const newLib: Library = { id: `lib_${Date.now()}`, name, path };
-      const updated = [...libraries, newLib];
-      setLibraries(updated);
-      saveLibraries(updated);
+      createLibrary.mutate({
+        name,
+        library_type: "mixed",
+        paths: [path],
+      });
       setAddDialogOpen(false);
     },
-    [libraries],
+    [createLibrary],
   );
 
   const handleDeleteLibrary = useCallback(
     (id: string) => {
-      const updated = libraries.filter((l) => l.id !== id);
-      setLibraries(updated);
-      saveLibraries(updated);
+      deleteLibrary.mutate(id);
     },
-    [libraries],
+    [deleteLibrary],
   );
 
   const handleScan = (lib: Library) => {
-    scanMutation.mutate([lib.path]);
+    scanMutation.mutate(lib.paths);
   };
 
   const handleScanAll = () => {
-    const paths = libraries.map((l) => l.path);
+    const paths = (libraries ?? []).flatMap((l) => l.paths);
     if (paths.length > 0) scanMutation.mutate(paths);
   };
 
@@ -107,8 +141,12 @@ export function Settings() {
 
       {/* ── Libraries ────────────────────────────────────── */}
       <SettingsSection icon={HardDrive} title={t("settings.libraries")}>
-        {libraries.length > 0 ? (
-          libraries.map((lib, idx) => (
+        {librariesLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : (libraries ?? []).length > 0 ? (
+          (libraries ?? []).map((lib, idx) => (
             <Box key={lib.id}>
               {idx > 0 && <Divider sx={{ borderColor: "rgba(255,255,255,0.06)" }} />}
               <Box
@@ -126,8 +164,8 @@ export function Settings() {
                     <Typography variant="body2" fontWeight={600} noWrap title={lib.name}>
                       {lib.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }} title={lib.path}>
-                      {lib.path}
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }} title={lib.paths.join(", ")}>
+                      {lib.paths.join(", ")}
                     </Typography>
                   </Box>
                 </Box>
@@ -165,7 +203,7 @@ export function Settings() {
           <Button startIcon={<Plus size={16} />} size="small" onClick={() => setAddDialogOpen(true)}>
             {t("settings.addLibrary")}
           </Button>
-          {libraries.length > 0 && (
+          {(libraries ?? []).length > 0 && (
             <Button
               size="small"
               startIcon={<RefreshCw size={14} />}

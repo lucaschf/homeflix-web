@@ -336,3 +336,40 @@ export interface FeaturedResponse {
   type: string;
   data: FeaturedItem[];
 }
+
+// ── Library ─────────────────────────────────────────────
+
+export interface LibraryMetadataProvider {
+  provider: string;
+  priority: number;
+  enabled: boolean;
+}
+
+export interface LibrarySettings {
+  preferred_audio_language: string;
+  preferred_subtitle_language: string | null;
+  subtitle_mode: string;
+  generate_thumbnails: boolean;
+  detect_intros: boolean;
+  auto_refresh_metadata: boolean;
+}
+
+export interface Library {
+  id: string;
+  name: string;
+  library_type: string;
+  paths: string[];
+  language: string;
+  metadata_providers: LibraryMetadataProvider[];
+  scan_schedule: string | null;
+  settings: LibrarySettings;
+}
+
+export interface LibraryResponse {
+  data: Library;
+}
+
+export interface LibrariesResponse {
+  type: string;
+  data: Library[];
+}
