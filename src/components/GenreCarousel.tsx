@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-import { Box, CircularProgress } from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useByGenre } from "../api/hooks";
 import type { Genre } from "../api/types";
+import { CarouselSkeleton } from "./CarouselSkeleton";
 import { MediaCard } from "./MediaCard";
 import { MediaCarousel } from "./MediaCarousel";
 
@@ -19,19 +21,50 @@ interface GenreCarouselProps {
  * sentinel — see `MediaCarousel`'s `onLoadMore` prop for how the
  * IntersectionObserver is wired against the inner scroll container.
  *
- * Renders nothing when the genre is empty (e.g. every item was
- * soft-deleted) so the page doesn't show ghost carousels.
+ * Render states:
+ * - Initial load: `<CarouselSkeleton title=... />` mimicking the
+ *   final layout, so the transition is a content swap rather than a
+ *   layout change.
+ * - Error: a single dimmed line below the title so the user knows
+ *   something failed instead of staring at a silently-disappearing
+ *   carousel.
+ * - Empty (after a successful load): returns `null`. The page-level
+ *   `LazyGenreCarousel` already pre-filters genres with `count > 0`
+ *   from `useGenres`, so reaching this branch means the genre had
+ *   items but they were soft-deleted between the genres call and
+ *   the by-genre call — rare and acceptable.
  */
 export function GenreCarousel({ genre }: GenreCarouselProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const { items, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useByGenre(
-    genre.id,
-  );
+  const { items, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useByGenre(genre.id);
+
+  // Stable callback for the carousel's IntersectionObserver. Without
+  // useCallback the parent re-render hands MediaCarousel a brand-new
+  // arrow each time, which would force the observer to be torn down
+  // and rebuilt every render and burn cycles for nothing.
+  const handleLoadMore = useCallback(() => {
+    void fetchNextPage();
+  }, [fetchNextPage]);
+
+  const handleSeeAll = useCallback(() => {
+    navigate(`/browse?genre=${encodeURIComponent(genre.id)}`);
+  }, [navigate, genre.id]);
 
   if (isLoading) {
+    return <CarouselSkeleton title={genre.name} />;
+  }
+
+  if (isError) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 240 }}>
-        <CircularProgress color="primary" size={28} />
+      <Box sx={{ mb: 4, px: { xs: 3, md: 6 } }}>
+        <Typography variant="h2" gutterBottom>
+          {genre.name}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {t("common.errorLoadingSection")}
+        </Typography>
       </Box>
     );
   }
@@ -41,10 +74,8 @@ export function GenreCarousel({ genre }: GenreCarouselProps) {
   return (
     <MediaCarousel
       title={genre.name}
-      onSeeAll={() => navigate(`/browse?genre=${encodeURIComponent(genre.id)}`)}
-      onLoadMore={() => {
-        void fetchNextPage();
-      }}
+      onSeeAll={handleSeeAll}
+      onLoadMore={handleLoadMore}
       hasMore={hasNextPage}
       loadingMore={isFetchingNextPage}
     >
@@ -77,13 +108,16 @@ interface LazyGenreCarouselProps {
 /**
  * Vertical lazy-mount wrapper around `GenreCarousel`.
  *
- * Reserves vertical space for the carousel and only mounts the
- * underlying `GenreCarousel` (which triggers the network request)
- * when the placeholder enters the viewport. Used by the Home and
- * Browse pages so a library with many genres doesn't fire a fetch
- * for every carousel on initial page load — only the ones near the
- * fold are loaded immediately, and the rest stream in as the user
- * scrolls down.
+ * Renders a `CarouselSkeleton` (with the genre title baked in) as
+ * the placeholder, so the page is anchored — the user knows which
+ * carousel is loading even before its data is in flight. When the
+ * placeholder enters the viewport (with a 600px buffer), the inner
+ * `GenreCarousel` mounts and triggers its first network request.
+ *
+ * Genres with `count === 0` are skipped entirely — there's no
+ * point reserving vertical space for a carousel that will resolve
+ * to nothing. The Home and Browse pages can still pass the full
+ * genres list and let this component filter.
  */
 export function LazyGenreCarousel({ genre }: LazyGenreCarouselProps) {
   const [isVisible, setIsVisible] = useState(false);
@@ -103,13 +137,24 @@ export function LazyGenreCarousel({ genre }: LazyGenreCarouselProps) {
     return () => observer.disconnect();
   }, [isVisible]);
 
+  // Suppress empty genres at the lazy level so they don't even
+  // mount. The count comes from the cheap `/catalog/genres`
+  // response, so we know up-front which carousels would resolve
+  // to nothing — no need to reserve vertical space for them.
+  if (genre.count === 0) return null;
+
   if (isVisible) {
     return <GenreCarousel genre={genre} />;
   }
 
-  // Placeholder reserves enough vertical space for a full carousel
-  // (header + a row of poster cards) so the page doesn't reflow
-  // when the real component mounts and IntersectionObserver doesn't
-  // trip on a zero-height element.
-  return <Box ref={placeholderRef} sx={{ minHeight: 280, mb: 4 }} />;
+  // Placeholder skeleton matches the real layout's dimensions so
+  // the post-mount transition is a content swap, not a reflow.
+  // The genre title is rendered immediately (we already have it
+  // from `useGenres`) so the page is anchored before any per-genre
+  // request fires.
+  return (
+    <Box ref={placeholderRef}>
+      <CarouselSkeleton title={genre.name} />
+    </Box>
+  );
 }

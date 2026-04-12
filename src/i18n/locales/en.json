@@ -38,7 +38,8 @@
     "seasons": "{{count}} Season",
     "seasons_other": "{{count}} Seasons",
     "episodes": "{{count}} Episode",
-    "episodes_other": "{{count}} Episodes"
+    "episodes_other": "{{count}} Episodes",
+    "errorLoadingSection": "Couldn't load this section. Try again later."
   },
   "detail": {
     "trailer": "Trailer",

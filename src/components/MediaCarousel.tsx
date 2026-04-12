@@ -62,6 +62,13 @@ export function MediaCarousel({
   // edge), fire the callback. We anchor the IntersectionObserver to
   // the inner scroll container so horizontal-scroll triggers it the
   // same way vertical-scroll triggers a normal infinite list.
+  //
+  // `childCount` is intentionally NOT in the dep array even though
+  // appending new items changes how many cards sit before the
+  // sentinel. The sentinel is the same DOM node before and after
+  // the append (React keeps it mounted), so the observer is still
+  // watching the right element. Re-creating the observer on every
+  // append would burn cycles for nothing.
   const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!onLoadMore || !hasMore || loadingMore) return;
@@ -76,7 +83,7 @@ export function MediaCarousel({
     );
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [onLoadMore, hasMore, loadingMore, childCount]);
+  }, [onLoadMore, hasMore, loadingMore]);
 
   const scroll = (direction: "left" | "right") => {
     const el = scrollRef.current;
