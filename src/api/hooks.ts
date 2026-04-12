@@ -9,7 +9,6 @@ import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   AddItemToCustomListResponse,
-  ApiListResponse,
   BulkEnrichResponse,
   CatalogByGenreResponse,
   CatalogItem,
@@ -28,95 +27,18 @@ import type {
   HealthResponse,
   MovieDetail,
   MovieDetailResponse,
-  MovieSummary,
   ProgressOutput,
   ProgressResponse,
   ScanResponse,
   SearchResponse,
   SeriesDetail,
   SeriesDetailResponse,
-  SeriesSummary,
   ToggleWatchlistResponse,
   WatchlistItemOutput,
   WatchlistResponse,
 } from "./types";
 
 // ── Queries ──────────────────────────────────────────────
-
-// Default page size for the eagerly-loaded list hooks. The frontend
-// passes this value explicitly on every request, so it does NOT have
-// to match the backend's `DEFAULT_PAGE_SIZE` — the two are
-// independent. Lives next to the only helper that consumes it so
-// there's exactly one place to change.
-const EAGER_LIST_PAGE_SIZE = 20;
-
-/**
- * Eagerly walks every page of a cursor-paginated list endpoint and
- * returns the flattened items plus a single `isLoading` flag that
- * stays `true` until the entire catalog is in memory.
- *
- * Used by both `useMovies` and `useSeries` (and, in PR2, by the
- * per-genre carousels) to back the genre-grouping the Home and Browse
- * pages still do client-side. Once PR2 lands its per-carousel
- * endpoints the eager-walk goes away and consumers switch to the
- * incremental `fetchNextPage` API directly — at that point this
- * helper will lose the auto-advance effect but keep the same shape.
- */
-function useEagerInfiniteList<T>(
-  queryKey: readonly unknown[],
-  endpoint: string,
-  baseParams: Record<string, string>,
-): { items: T[]; isLoading: boolean } {
-  const query = useInfiniteQuery({
-    queryKey,
-    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
-      const params: Record<string, string> = {
-        ...baseParams,
-        limit: String(EAGER_LIST_PAGE_SIZE),
-      };
-      if (pageParam) params.cursor = pageParam;
-      return api.get<ApiListResponse<T>>(endpoint, params);
-    },
-    initialPageParam: null as string | null,
-    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
-  });
-
-  // Destructure the fields the effect closes over so the
-  // exhaustive-deps lint can verify their stability — passing the
-  // whole `query` object as a dep would re-run the effect every
-  // render and infinite-loop.
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
-
-  // Auto-advance through every page until the cursor is exhausted.
-  useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const items = useMemo<T[]>(
-    () => query.data?.pages.flatMap((p) => p.data) ?? [],
-    [query.data],
-  );
-
-  // Treat the listing as "loading" while any page is still in flight,
-  // so consumers don't see the carousels half-built and re-grouping
-  // every render — matches the pre-pagination single-shot UX.
-  const isLoading = query.isLoading || isFetchingNextPage || hasNextPage;
-
-  return { items, isLoading };
-}
-
-export function useMovies() {
-  const { i18n } = useTranslation();
-  const lang = i18n.language;
-  const { items, isLoading } = useEagerInfiniteList<MovieSummary>(
-    ["movies", lang],
-    "/movies",
-    { lang },
-  );
-  return { data: { movies: items }, isLoading };
-}
 
 // ── Catalog (per-genre) ─────────────────────────────────
 
@@ -288,17 +210,6 @@ export function useMovie(movieId: string) {
     },
     enabled: !!movieId,
   });
-}
-
-export function useSeries() {
-  const { i18n } = useTranslation();
-  const lang = i18n.language;
-  const { items, isLoading } = useEagerInfiniteList<SeriesSummary>(
-    ["series", lang],
-    "/series",
-    { lang },
-  );
-  return { data: { series: items }, isLoading };
 }
 
 export function useSeriesDetail(seriesId: string) {

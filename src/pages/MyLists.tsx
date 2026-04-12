@@ -25,9 +25,8 @@ import {
   useCustomListItems,
   useCustomLists,
   useDeleteCustomList,
-  useMovies,
   useRenameCustomList,
-  useSeries,
+  useSearch,
   useWatchlist,
 } from "../api/hooks";
 import type { CustomListOutput } from "../api/types";
@@ -398,21 +397,21 @@ function MediaSearchResults({
   existingMediaIds: Set<string>;
 }) {
   const { t } = useTranslation();
-  const { data: moviesData } = useMovies();
-  const { data: seriesData } = useSeries();
+  const { data: searchResults } = useSearch(query);
   const addItem = useAddItemToCustomList();
   const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
-  const results = useMemo(() => {
-    const q = query.toLowerCase();
-    const movies = (moviesData?.movies ?? [])
-      .filter((m) => m.title.toLowerCase().includes(q))
-      .map((m) => ({ id: m.id, title: m.title, type: "movie" as const, imageUrl: m.poster_path ?? undefined, year: m.year }));
-    const series = (seriesData?.series ?? [])
-      .filter((s) => s.title.toLowerCase().includes(q))
-      .map((s) => ({ id: s.id, title: s.title, type: "series" as const, imageUrl: s.poster_path ?? undefined, year: s.start_year }));
-    return [...movies, ...series].slice(0, 12);
-  }, [query, moviesData, seriesData]);
+  const results = useMemo(
+    () =>
+      searchResults.map((item) => ({
+        id: item.id,
+        title: item.title,
+        type: item.type,
+        imageUrl: item.poster_path ?? undefined,
+        year: item.year,
+      })).slice(0, 12),
+    [searchResults],
+  );
 
   const handleAdd = (mediaId: string, mediaType: "movie" | "series") => {
     addItem.mutate(
