@@ -240,11 +240,11 @@ export function Player() {
   const { data: savedProgress, isPending: progressPending } = useProgress(mediaId);
   const mediaLoading = isMovie ? movieLoading : seriesLoading;
 
-  // User-level playback preferences from localStorage. Read-only
-  // in the Player — Settings is the only writer — so we intentionally
-  // ignore the setter. Used below as fallback defaults for quality
-  // and audio/subtitle tracks when there's no saved progress.
-  const [playbackPrefs] = usePlaybackPreferences();
+  // User-level playback preferences from localStorage. The Player
+  // reads most prefs (audio/sub/quality) and writes back `speed`
+  // when the user changes it so the choice survives across episodes
+  // and navigation.
+  const [playbackPrefs, setPlaybackPrefs] = usePlaybackPreferences();
 
   // Start offset passed to the backend via ?start=X. CRITICAL: this must be
   // captured exactly ONCE per (mediaId, savedProgress-resolution) pair, NOT
@@ -409,6 +409,30 @@ export function Player() {
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Transient action indicator — shows a brief icon + label in the
+  // center of the viewport when a keyboard shortcut fires (e.g.
+  // "⏪ -10s", "▶ Play", "🔇 Muted"). Cleared by a 600ms timer so
+  // the indicator fades out automatically. `null` = nothing to show.
+  // A monotonic `seq` counter forces React to re-mount the Box (via
+  // `key`) on every trigger so the CSS animation restarts — using
+  // `Date.now()` would trip the react-hooks/purity lint.
+  const actionSeqRef = useRef(0);
+  const [actionIndicator, setActionIndicator] = useState<{
+    seq: number;
+    icon: React.ReactNode;
+    label?: string;
+  } | null>(null);
+  const actionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showAction = useCallback(
+    (icon: React.ReactNode, label?: string) => {
+      if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
+      actionSeqRef.current += 1;
+      setActionIndicator({ seq: actionSeqRef.current, icon, label });
+      actionTimerRef.current = setTimeout(() => setActionIndicator(null), 600);
+    },
+    [],
+  );
+
   const [playing, setPlaying] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
   const [nextEpCountdown, setNextEpCountdown] = useState<number | null>(null);
@@ -427,7 +451,10 @@ export function Player() {
   const [muted, setMuted] = useState<boolean>(readPersistedMuted);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [speed, setSpeed] = useState(1);
+  // Speed is derived from playbackPrefs so it persists across
+  // episodes and sessions. The local alias avoids a rename cascade
+  // throughout the JSX.
+  const speed = playbackPrefs.speed;
   const [hlsReady, setHlsReady] = useState(false);
   const [buffering, setBuffering] = useState(false);
 
@@ -673,7 +700,11 @@ export function Player() {
     if (!video) return;
     video.volume = volume;
     video.muted = muted;
-  }, [volume, muted, hlsReady]);
+    // Re-apply persisted speed alongside volume so a binge-watcher's
+    // 1.5x survives across episode auto-advances — the new HLS
+    // instance resets `playbackRate` to 1 on attach.
+    video.playbackRate = speed;
+  }, [volume, muted, speed, hlsReady]);
 
   // Persist volume / mute changes to localStorage so the next session
   // starts at the same level. Wrapped in try/catch because localStorage
@@ -825,11 +856,37 @@ export function Player() {
     return () => video.removeEventListener("pause", saveCurrentProgress);
   }, [saveCurrentProgress]);
 
-  // Save on page unload
+  // Save on page unload via `sendBeacon`, which is the only
+  // reliable way to get data out during `beforeunload` — a normal
+  // `fetch` is frequently cancelled by the browser before it reaches
+  // the network. `sendBeacon` is a fire-and-forget POST that the
+  // browser guarantees to dispatch even after the page is torn down.
+  //
+  // We still use the regular mutation for pause saves (which need
+  // cache invalidation / retry); the beacon is the last-ditch path
+  // for tab-close / navigation-away only.
   useEffect(() => {
-    window.addEventListener("beforeunload", saveCurrentProgress);
-    return () => window.removeEventListener("beforeunload", saveCurrentProgress);
-  }, [saveCurrentProgress]);
+    const onBeforeUnload = () => {
+      const video = videoRef.current;
+      if (!video || !mediaId || !isReadyForCurrentMedia) return;
+      if (!displayDuration || (video.currentTime === 0 && startOffset === 0)) return;
+      const body = JSON.stringify({
+        media_id: mediaId,
+        media_type: mediaType,
+        position_seconds: Math.floor(video.currentTime + startOffset),
+        duration_seconds: Math.floor(displayDuration),
+        audio_track: hlsRef.current?.audioTrack,
+        subtitle_track: hlsRef.current?.subtitleTrack,
+      });
+      // Wrap in a Blob with the correct Content-Type — sendBeacon
+      // defaults to text/plain for bare strings, and the backend
+      // expects application/json.
+      const blob = new Blob([body], { type: "application/json" });
+      navigator.sendBeacon("/api/v1/progress", blob);
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [mediaId, mediaType, displayDuration, startOffset, isReadyForCurrentMedia]);
 
   const seriesDetailPath = params.seriesId ? `/series/${params.seriesId}` : "/";
 
@@ -893,6 +950,7 @@ export function Player() {
       if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
       if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+      if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
     };
   }, []);
 
@@ -938,32 +996,45 @@ export function Player() {
         case " ":
         case "k":
           e.preventDefault();
-          if (video.paused) video.play().catch(() => {});
-          else video.pause();
+          if (video.paused) {
+            video.play().catch(() => {});
+            showAction(<Play size={36} fill="#fff" />);
+          } else {
+            video.pause();
+            showAction(<Pause size={36} />);
+          }
           break;
         case "arrowleft":
           video.currentTime = Math.max(0, video.currentTime - 10);
+          showAction(<SkipBack size={32} />, "-10s");
           resetHideTimer();
           break;
         case "arrowright":
           video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 30);
+          showAction(<SkipForward size={32} />, "+30s");
           resetHideTimer();
           break;
         case "arrowup":
           e.preventDefault();
           setVolume((v) => { const nv = Math.min(1, v + 0.1); video.volume = nv; return nv; });
+          showAction(<Volume2 size={32} />);
           resetHideTimer();
           break;
         case "arrowdown":
           e.preventDefault();
           setVolume((v) => { const nv = Math.max(0, v - 0.1); video.volume = nv; return nv; });
+          showAction(<VolumeX size={32} />);
           resetHideTimer();
           break;
         case "f":
           toggleFullscreen();
           break;
         case "m":
-          setMuted((m) => { video.muted = !m; return !m; });
+          setMuted((m) => {
+            video.muted = !m;
+            showAction(!m ? <VolumeX size={32} /> : <Volume2 size={32} />);
+            return !m;
+          });
           resetHideTimer();
           break;
         case "escape":
@@ -975,7 +1046,7 @@ export function Player() {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [displayDuration, isFullscreen, navigate, resetHideTimer, toggleFullscreen]);
+  }, [displayDuration, isFullscreen, navigate, resetHideTimer, showAction, toggleFullscreen]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -1021,7 +1092,7 @@ export function Player() {
     const video = videoRef.current;
     if (!video) return;
     video.playbackRate = s;
-    setSpeed(s);
+    setPlaybackPrefs({ speed: s });
     setSettingsAnchor(null);
     setSettingsPanel("main");
   };
@@ -1103,6 +1174,43 @@ export function Player() {
           {!hlsReady && (
             <Typography variant="body1" color="overlayText.primary">
               {t("player.preparing")}
+            </Typography>
+          )}
+        </Box>
+      )}
+
+      {/* Keyboard action indicator — brief icon + label feedback */}
+      {actionIndicator && (
+        <Box
+          key={actionIndicator.seq}
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 0.5,
+            color: "#fff",
+            bgcolor: "rgba(0,0,0,0.5)",
+            borderRadius: "50%",
+            width: 80,
+            height: 80,
+            justifyContent: "center",
+            pointerEvents: "none",
+            zIndex: 5,
+            animation: "action-fade 600ms ease-out forwards",
+            "@keyframes action-fade": {
+              "0%": { opacity: 1, transform: "translate(-50%, -50%) scale(1)" },
+              "100%": { opacity: 0, transform: "translate(-50%, -50%) scale(1.3)" },
+            },
+          }}
+        >
+          {actionIndicator.icon}
+          {actionIndicator.label && (
+            <Typography variant="caption" sx={{ fontSize: "0.7rem", fontWeight: 600 }}>
+              {actionIndicator.label}
             </Typography>
           )}
         </Box>
