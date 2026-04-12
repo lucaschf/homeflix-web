@@ -11,6 +11,7 @@ import { Film, Search, Tv, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../api/hooks";
+import type { CatalogItem } from "../api/types";
 import { neutral } from "../theme/colors";
 
 const RECENT_STORAGE_KEY = "homeflix-recent-searches";
@@ -74,7 +75,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     localStorage.removeItem(RECENT_STORAGE_KEY);
   }, []);
 
-  const handleSelect = (item: { id: string; title: string; type: string }) => {
+  const handleSelect = (item: CatalogItem) => {
     saveRecentSearch(item.title);
     onClose();
     navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`);
@@ -204,9 +205,9 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
 interface ResultSectionProps {
   title: string;
-  items: { id: string; title: string; year: number; type: "movie" | "series" }[];
+  items: CatalogItem[];
   icon: React.ReactNode;
-  onSelect: (item: { id: string; title: string; year: number; type: "movie" | "series" }) => void;
+  onSelect: (item: CatalogItem) => void;
 }
 
 function ResultSection({ title, items, icon, onSelect }: ResultSectionProps) {

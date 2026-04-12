@@ -258,19 +258,20 @@ export function useSearch(query: string) {
   const trimmed = debouncedQuery.trim();
   const result = useQuery({
     queryKey: ["search", trimmed, lang],
-    queryFn: async (): Promise<CatalogItem[]> => {
+    queryFn: async () => {
       const resp = await api.get<SearchResponse>("/search", {
         q: trimmed,
         lang,
         limit: "30",
       });
-      return resp.data;
+      return { items: resp.data, total: resp.metadata.total };
     },
     enabled: trimmed.length >= 1,
   });
 
   return {
-    data: result.data ?? [],
+    data: result.data?.items ?? [],
+    total: result.data?.total ?? 0,
     isLoading: trimmed.length >= 1 && result.isLoading,
     isError: result.isError,
   };
