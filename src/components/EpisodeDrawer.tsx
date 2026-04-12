@@ -10,6 +10,7 @@ import {
 import { Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SeriesDetail } from "../api/types";
+import { peach } from "../theme/colors";
 
 interface EpisodeDrawerProps {
   series: SeriesDetail;
@@ -153,7 +154,7 @@ export function EpisodeDrawer({
                   )}
                   {isCurrent && (
                     <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.5)" }}>
-                      <Play size={20} color="var(--mui-palette-primary-main)" fill="var(--mui-palette-primary-main)" />
+                      <Play size={20} color={peach.main} fill={peach.main} />
                     </Box>
                   )}
                   {ep.progress_percentage != null && ep.progress_percentage > 0 && (

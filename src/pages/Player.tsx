@@ -37,6 +37,7 @@ import {
   usePlaybackPreferences,
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
+import { neutral, peach } from "../theme/colors";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -1032,7 +1033,7 @@ export function Player() {
           e.preventDefault();
           if (video.paused) {
             video.play().catch(() => {});
-            showAction(<Play size={36} fill="var(--mui-palette-overlayText-primary)" />);
+            showAction(<Play size={36} fill={neutral[50]} />);
           } else {
             video.pause();
             showAction(<Pause size={36} />);
@@ -1098,7 +1099,7 @@ export function Player() {
     if (!video) return;
     if (video.paused) {
       video.play().catch(() => {});
-      showAction(<Play size={36} fill="var(--mui-palette-overlayText-primary)" />);
+      showAction(<Play size={36} fill={neutral[50]} />);
     } else {
       video.pause();
       showAction(<Pause size={36} />);
@@ -1319,7 +1320,7 @@ export function Player() {
                   pointerEvents: "none",
                 }}
               >
-                <Play size={36} fill="var(--mui-palette-background-default)" />
+                <Play size={36} fill={neutral[950]} />
               </IconButton>
             </Box>
           )}
@@ -1390,7 +1391,7 @@ export function Player() {
               <SkipBack size={20} />
             </IconButton>
             <IconButton onClick={togglePlay} sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}>
-              {playing ? <Pause size={24} /> : <Play size={24} fill="var(--mui-palette-overlayText-primary)" />}
+              {playing ? <Pause size={24} /> : <Play size={24} fill={neutral[50]} />}
             </IconButton>
             <IconButton onClick={() => skip(30)} sx={{ color: "overlayText.primary", p: { xs: 1, md: 0.75 } }}>
               <SkipForward size={20} />
@@ -1568,7 +1569,7 @@ export function Player() {
           <SettingsBackItem key="back" label={t("player.quality")} onClick={() => setSettingsPanel("main")} />,
           ...qualities.map((q) => (
             <MenuItem key={q} onClick={() => { setQualityOverride(q); setSettingsPanel("main"); }}>
-              {quality === q && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
+              {quality === q && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
               <ListItemText inset={quality !== q} primary={q} />
             </MenuItem>
           )),
@@ -1578,7 +1579,7 @@ export function Player() {
           <SettingsBackItem key="back" label={t("player.speed")} onClick={() => setSettingsPanel("main")} />,
           ...SPEEDS.map((s) => (
             <MenuItem key={s} onClick={() => changeSpeed(s)}>
-              {speed === s && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
+              {speed === s && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
               <ListItemText inset={speed !== s} primary={s === 1 ? t("player.normal") : `${s}x`} />
             </MenuItem>
           )),
@@ -1597,7 +1598,7 @@ export function Player() {
       >
         {audioTracks.map((track) => (
           <MenuItem key={track.id} onClick={() => changeAudioTrack(track.id)}>
-            {currentAudioTrack === track.id && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
+            {currentAudioTrack === track.id && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
             <ListItemText inset={currentAudioTrack !== track.id} primary={track.name} />
           </MenuItem>
         ))}
@@ -1614,12 +1615,12 @@ export function Player() {
         slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
       >
         <MenuItem onClick={() => changeSubtitleTrack(-1)}>
-          {currentSubtitleTrack === -1 && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
+          {currentSubtitleTrack === -1 && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
           <ListItemText inset={currentSubtitleTrack !== -1} primary={t("player.off")} />
         </MenuItem>
         {subtitleTracks.map((track) => (
           <MenuItem key={track.id} onClick={() => changeSubtitleTrack(track.id)}>
-            {currentSubtitleTrack === track.id && <ListItemIcon><Check size={16} color="var(--mui-palette-primary-main)" /></ListItemIcon>}
+            {currentSubtitleTrack === track.id && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
             <ListItemText inset={currentSubtitleTrack !== track.id} primary={track.name} />
           </MenuItem>
         ))}

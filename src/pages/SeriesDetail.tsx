@@ -19,6 +19,7 @@ import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { neutral } from "../theme/colors";
 
 export function SeriesDetail() {
   const { t } = useTranslation();
@@ -318,7 +319,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
           }}
         >
           <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Play size={20} color="var(--mui-palette-background-default)" fill="var(--mui-palette-background-default)" />
+            <Play size={20} color={neutral[950]} fill={neutral[950]} />
           </Box>
         </Box>
 

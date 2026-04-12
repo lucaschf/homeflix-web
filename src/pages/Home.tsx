@@ -8,6 +8,7 @@ import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { peach } from "../theme/colors";
 
 export function Home() {
   const { t } = useTranslation();
@@ -133,7 +134,7 @@ function EmptyState() {
           mb: 3,
         }}
       >
-        <Film size={32} color="var(--mui-palette-primary-main)" />
+        <Film size={32} color={peach.main} />
       </Box>
       <Typography variant="h1" gutterBottom>
         {t("empty.welcome")}
