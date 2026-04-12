@@ -1051,8 +1051,13 @@ export function Player() {
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (video.paused) video.play().catch(() => {});
-    else video.pause();
+    if (video.paused) {
+      video.play().catch(() => {});
+      showAction(<Play size={36} fill="#fff" />);
+    } else {
+      video.pause();
+      showAction(<Pause size={36} />);
+    }
   };
 
   const seek = (displayValue: number) => {
