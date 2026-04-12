@@ -78,7 +78,8 @@
     "cancel": "Cancelar",
     "back": "Voltar",
     "preparing": "Preparando vídeo…",
-    "episodes": "Episódios"
+    "episodes": "Episódios",
+    "notAvailable": "indisponível"
   },
   "rating": {
     "L": "Livre para todos os públicos",
