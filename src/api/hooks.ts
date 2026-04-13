@@ -335,6 +335,35 @@ export function useContinueWatching() {
   });
 }
 
+export function useClearProgress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (mediaId: string) => api.del(`/progress/${mediaId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey[0] === "continueWatching",
+      });
+    },
+  });
+}
+
+/**
+ * Bulk-delete all episode progress for a series so dismiss from
+ * "Continue Watching" actually removes the series instead of just
+ * surfacing the next in-progress episode.
+ */
+export function useClearSeriesProgress() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (seriesId: string) => api.del(`/progress/series/${seriesId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey[0] === "continueWatching",
+      });
+    },
+  });
+}
+
 export function useSaveProgress() {
   const queryClient = useQueryClient();
   return useMutation({

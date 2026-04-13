@@ -3,7 +3,7 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useContinueWatching, useFeatured, useGenres } from "../api/hooks";
+import { useClearProgress, useClearSeriesProgress, useContinueWatching, useFeatured, useGenres } from "../api/hooks";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
@@ -26,6 +26,8 @@ export function Home() {
   const navigate = useNavigate();
   const { data: genres, isLoading: genresLoading } = useGenres();
   const { data: continueWatching } = useContinueWatching();
+  const clearProgress = useClearProgress();
+  const clearSeriesProgress = useClearSeriesProgress();
   const { data: featured } = useFeatured("all");
 
   const isLoading = genresLoading;
@@ -94,6 +96,13 @@ export function Home() {
                 progress={item.percentage}
                 progressLabel={formatRemaining(item.position_seconds, item.duration_seconds)}
                 variant="landscape"
+                onDismiss={() => {
+                  if (item.media_type === "episode" && item.series_id) {
+                    clearSeriesProgress.mutate(item.series_id);
+                  } else {
+                    clearProgress.mutate(item.media_id);
+                  }
+                }}
                 onClick={() => {
                   if (item.media_type === "movie") {
                     navigate(`/play/movie/${item.media_id}`);
