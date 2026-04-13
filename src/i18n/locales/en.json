@@ -188,6 +188,26 @@
       "1080p": "1080p",
       "720p": "720p"
     },
+    "subtitleAppearance": "Subtitle Appearance",
+    "subtitleColor": "Text Color",
+    "subtitleBackground": "Background",
+    "subtitleSize": "Font Size",
+    "colors": {
+      "white": "White",
+      "yellow": "Yellow",
+      "green": "Green",
+      "cyan": "Cyan"
+    },
+    "backgrounds": {
+      "semiTransparent": "Semi-transparent",
+      "solid": "Solid black",
+      "none": "None"
+    },
+    "sizes": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
     "metadata": "Metadata",
     "tmdbApiKey": "TMDB API Key",
     "testKey": "Test",

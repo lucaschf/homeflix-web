@@ -15,15 +15,32 @@ export type DefaultQuality = "best" | string;
  * throughout the frontend; the hook translates to/from the
  * snake_case API contract under the hood.
  */
+/** Subtitle appearance options applied via CSS ``::cue``. */
+export interface SubtitleAppearance {
+  /** Text color — any CSS color value. */
+  color: string;
+  /** Background behind text — typically semi-transparent black. */
+  background: string;
+  /** Relative font size: "small" | "medium" | "large". */
+  fontSize: "small" | "medium" | "large";
+}
+
 export interface PlaybackPreferences {
   audioLang: PreferredLanguage;
   subtitleLang: PreferredLanguage;
   subtitleMode: SubtitleMode;
   defaultQuality: DefaultQuality;
   speed: number;
+  subtitleAppearance: SubtitleAppearance;
 }
 
 // ── Defaults ─────────────────────────────────────────────────────
+
+const DEFAULT_SUBTITLE_APPEARANCE: Readonly<SubtitleAppearance> = Object.freeze({
+  color: "#FFFFFF",
+  background: "rgba(0, 0, 0, 0.75)",
+  fontSize: "medium",
+});
 
 const DEFAULT_PREFS: Readonly<PlaybackPreferences> = Object.freeze({
   audioLang: "pt-BR",
@@ -31,6 +48,7 @@ const DEFAULT_PREFS: Readonly<PlaybackPreferences> = Object.freeze({
   subtitleMode: "foreignOnly",
   defaultQuality: "best",
   speed: 1,
+  subtitleAppearance: { ...DEFAULT_SUBTITLE_APPEARANCE },
 });
 
 // ── localStorage cache ───────────────────────────────────────────
@@ -46,7 +64,16 @@ function loadCached(): PlaybackPreferences {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...DEFAULT_PREFS };
     const parsed = JSON.parse(raw) as Partial<PlaybackPreferences>;
-    return { ...DEFAULT_PREFS, ...parsed };
+    return {
+      ...DEFAULT_PREFS,
+      ...parsed,
+      // Deep-merge subtitleAppearance so a cached blob with only
+      // e.g. { color: "yellow" } still inherits the other defaults.
+      subtitleAppearance: {
+        ...DEFAULT_SUBTITLE_APPEARANCE,
+        ...(parsed.subtitleAppearance ?? {}),
+      },
+    };
   } catch {
     return { ...DEFAULT_PREFS };
   }
@@ -69,6 +96,10 @@ function fromApi(data: PlaybackPreferencesData): PlaybackPreferences {
     subtitleMode: data.subtitle_mode as SubtitleMode,
     defaultQuality: data.default_quality,
     speed: data.speed,
+    // subtitleAppearance is frontend-only (CSS ::cue) — the API
+    // doesn't store it. Carry forward from the localStorage cache
+    // so the user's choice survives an API-driven refresh.
+    subtitleAppearance: loadCached().subtitleAppearance,
   };
 }
 

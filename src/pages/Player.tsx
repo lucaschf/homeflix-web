@@ -725,6 +725,35 @@ export function Player() {
     return undefined;
   }, [hlsUrl]);
 
+  // Apply subtitle appearance via a dynamic <style> tag targeting ::cue.
+  // This is the standard way to style WebVTT captions rendered by the
+  // browser's native text track engine — there's no React-level API for
+  // it because the cues live in an internal shadow DOM that only CSS can
+  // reach. The tag is created once and updated on every pref change.
+  const { subtitleAppearance } = playbackPrefs;
+  useEffect(() => {
+    const STYLE_ID = "homeflix-subtitle-style";
+    let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+    if (!style) {
+      style = document.createElement("style");
+      style.id = STYLE_ID;
+      document.head.appendChild(style);
+    }
+    const fontSizeMap = { small: "1rem", medium: "1.4rem", large: "2rem" };
+    const size = fontSizeMap[subtitleAppearance.fontSize] ?? fontSizeMap.medium;
+    style.textContent = `
+      video::cue {
+        color: ${subtitleAppearance.color};
+        background-color: ${subtitleAppearance.background};
+        font-size: ${size};
+        font-family: "Inter", sans-serif;
+      }
+    `;
+    return () => {
+      style?.remove();
+    };
+  }, [subtitleAppearance]);
+
   // Push the persisted volume / muted state into the actual <video> element
   // every time it becomes ready (hlsReady flips when a new media starts) or
   // when the user changes those values via the controls. Without this the
