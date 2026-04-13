@@ -28,6 +28,8 @@ import type {
   LibrariesResponse,
   Library,
   LibraryResponse,
+  PlaybackPreferencesData,
+  PreferencesResponse,
   MovieDetail,
   MovieDetailResponse,
   ProgressOutput,
@@ -549,6 +551,39 @@ export function useDeleteLibrary() {
     mutationFn: (libraryId: string) => api.del(`/libraries/${libraryId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
+    },
+  });
+}
+
+// ── Preferences ─────────────────────────────────────────
+
+/**
+ * Fetch the current user's playback preferences from the backend.
+ *
+ * Returns snake_case field names matching the API contract. The
+ * `usePlaybackPreferences` hook in `src/hooks/` translates between
+ * this shape and the camelCase `PlaybackPreferences` the rest of
+ * the frontend consumes.
+ */
+export function usePreferencesQuery() {
+  return useQuery({
+    queryKey: ["preferences"],
+    queryFn: async (): Promise<PlaybackPreferencesData> => {
+      const resp = await api.get<PreferencesResponse>("/preferences");
+      return resp.data;
+    },
+  });
+}
+
+export function useUpdatePreferences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Partial<PlaybackPreferencesData>) =>
+      api.put<PreferencesResponse>("/preferences", body),
+    onSuccess: (resp) => {
+      // Optimistic in-cache update so every subscriber sees the
+      // new value immediately without waiting for a refetch.
+      queryClient.setQueryData(["preferences"], resp.data);
     },
   });
 }
