@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, IconButton, LinearProgress, Tooltip, Typography } from "@mui/material";
-import { Bookmark, BookmarkCheck, ListPlus, Play } from "lucide-react";
+import { Bookmark, BookmarkCheck, ListPlus, Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
@@ -22,6 +22,9 @@ interface MediaCardProps {
   mediaId?: string;
   mediaType?: "movie" | "series";
   onPlay?: () => void;
+  /** When set, renders a dismiss (X) button on the card. Used by the
+   *  "Continue Watching" row to let the user remove an item. */
+  onDismiss?: () => void;
 }
 
 export function MediaCard({
@@ -38,6 +41,7 @@ export function MediaCard({
   mediaId,
   mediaType,
   onPlay,
+  onDismiss,
 }: MediaCardProps) {
   const { t } = useTranslation();
   const aspectRatio = variant === "poster" ? "2/3" : "16/9";
@@ -107,6 +111,29 @@ export function MediaCard({
               {t("card.noImage")}
             </Typography>
           </Box>
+        )}
+
+        {/* Dismiss button — shown on continue-watching cards */}
+        {onDismiss && (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDismiss();
+            }}
+            sx={{
+              position: "absolute",
+              top: 4,
+              right: 4,
+              zIndex: 2,
+              bgcolor: "rgba(0,0,0,0.6)",
+              color: "#fff",
+              p: 0.5,
+              "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
+            }}
+          >
+            <X size={14} />
+          </IconButton>
         )}
 
         {/* Simple play overlay (no-actions cards only) */}

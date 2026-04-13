@@ -1175,6 +1175,29 @@ export function Player() {
     setSubtitleAnchor(e.currentTarget);
   };
 
+  // Mouse wheel → volume control. Scroll up = louder, down = softer.
+  const handleWheel = useCallback(
+    (e: React.WheelEvent) => {
+      e.preventDefault();
+      const video = videoRef.current;
+      if (!video) return;
+      const delta = e.deltaY < 0 ? 0.05 : -0.05;
+      const next = Math.min(1, Math.max(0, volume + delta));
+      video.volume = next;
+      setVolume(next);
+      if (next === 0) {
+        setMuted(true);
+        video.muted = true;
+      } else if (muted) {
+        setMuted(false);
+        video.muted = false;
+      }
+      showAction(next === 0 ? <VolumeX size={32} /> : <Volume2 size={32} />, `${Math.round(next * 100)}%`);
+      resetHideTimer();
+    },
+    [volume, muted, resetHideTimer, showAction],
+  );
+
   // Show loading while fetching movie data
   if (isLoading) {
     return (
@@ -1190,6 +1213,7 @@ export function Player() {
     <Box
       ref={setContainerEl}
       onMouseMove={resetHideTimer}
+      onWheel={handleWheel}
       sx={{
         position: "fixed",
         inset: 0,
