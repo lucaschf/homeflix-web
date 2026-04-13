@@ -373,3 +373,17 @@ export interface LibrariesResponse {
   type: string;
   data: Library[];
 }
+
+// ── Preferences ─────────────────────────────────────────
+
+export interface PlaybackPreferencesData {
+  audio_lang: string;
+  subtitle_lang: string;
+  subtitle_mode: string;
+  default_quality: string;
+  speed: number;
+}
+
+export interface PreferencesResponse {
+  data: PlaybackPreferencesData;
+}
