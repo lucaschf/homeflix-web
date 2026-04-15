@@ -394,11 +394,9 @@ export function Settings() {
 }
 
 /**
- * Build the "Last scanned … · Every hour" status line for a library.
- * Omits the schedule suffix when no schedule is set. Casing of the
- * preset label comes from the i18n string itself — don't rewrite it
- * here, since locales may capitalise differently and custom crons
- * are raw expressions where lowercasing would be meaningless.
+ * Build the "Last scanned … · Every hour · 47 movies · 5 series"
+ * status line for a library. Each segment is optional; only the
+ * ones that have meaningful data are joined.
  */
 function formatLibraryStatus(
   lib: Library,
@@ -411,7 +409,11 @@ function formatLibraryStatus(
       })
     : t("settings.neverScanned");
   const sched = describeCron(lib.scan_schedule, t);
-  return sched ? `${when} · ${sched}` : when;
+  const counts = t("settings.libraryCounts", {
+    movies: lib.movie_count,
+    series: lib.series_count,
+  });
+  return [when, sched, counts].filter(Boolean).join(" · ");
 }
 
 // ── Shared Components ──────────────────────────────────────────────
