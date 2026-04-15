@@ -397,9 +397,10 @@ export function Settings() {
  * Build the "Last scanned … · Every hour · 47 movies · 5 series"
  * status line for a library. Each segment is optional; only the
  * ones that have meaningful data are joined. The counts segment is
- * skipped entirely when the backend hasn't sent either count (older
- * server, or the field is still being backfilled) — zero is kept
- * because "0 movies" is a legitimate state worth surfacing.
+ * skipped when either field is missing so a partial response during
+ * backfill never renders "123 movies · 0 series" — zero is kept
+ * only when both counts are present, because "0 movies" is a
+ * legitimate empty-library state.
  */
 function formatLibraryStatus(
   lib: Library,
@@ -412,12 +413,15 @@ function formatLibraryStatus(
       })
     : t("settings.neverScanned");
   const sched = describeCron(lib.scan_schedule, t, locale);
+  // Require both counts to avoid showing "123 movies · 0 series"
+  // during a rollout where only one field is populated — a missing
+  // count should read as "unknown", not "zero".
   const hasCounts =
-    lib.movie_count !== undefined || lib.series_count !== undefined;
+    lib.movie_count !== undefined && lib.series_count !== undefined;
   const counts = hasCounts
     ? t("settings.libraryCounts", {
-        movies: lib.movie_count ?? 0,
-        series: lib.series_count ?? 0,
+        movies: lib.movie_count,
+        series: lib.series_count,
       })
     : "";
   return [when, sched, counts].filter(Boolean).join(" · ");
