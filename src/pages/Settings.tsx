@@ -215,6 +215,11 @@ export function Settings() {
                     <Typography
                       variant="caption"
                       color="text.secondary"
+                      title={
+                        lib.last_scan_at
+                          ? new Date(lib.last_scan_at).toLocaleString(i18n.language)
+                          : undefined
+                      }
                       sx={{ display: "block", opacity: 0.7, fontSize: "0.7rem" }}
                     >
                       {formatLibraryStatus(lib, i18n.language, t)}
