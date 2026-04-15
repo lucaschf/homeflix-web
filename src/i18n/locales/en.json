@@ -182,6 +182,7 @@
     "scheduleCustomInvalid": "Expected 5 space-separated fields",
     "lastScannedAt": "Last scanned {{when}}",
     "neverScanned": "Never scanned",
+    "libraryCounts": "{{movies}} movies · {{series}} series",
     "justNow": "just now",
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
