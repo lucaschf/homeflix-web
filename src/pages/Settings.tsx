@@ -10,6 +10,7 @@ import {
   DialogTitle,
   Divider,
   FormControl,
+  FormHelperText,
   IconButton,
   InputLabel,
   MenuItem,
@@ -23,6 +24,7 @@ import {
   HardDrive,
   Info,
   MonitorPlay,
+  Pencil,
   Plus,
   RefreshCw,
   Trash2,
@@ -35,6 +37,7 @@ import {
   useHealth,
   useLibraries,
   useScan,
+  useUpdateLibrary,
 } from "../api/hooks";
 import type { Library } from "../api/types";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
@@ -43,6 +46,15 @@ import {
   usePlaybackPreferences,
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
+import {
+  CUSTOM_SENTINEL,
+  SCHEDULE_PRESETS,
+  describeCron,
+  formatRelativeTime,
+  isPlausibleCron,
+  matchPreset,
+  type PresetKey,
+} from "../utils/schedule";
 
 // Key used by the old localStorage-only implementation. Checked
 // once on mount for a one-shot migration to the backend, then
@@ -50,8 +62,9 @@ import {
 const LEGACY_LIBRARIES_KEY = "homeflix-libraries";
 
 export function Settings() {
-  const { t } = useTranslation();
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const { t, i18n } = useTranslation();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingLibrary, setEditingLibrary] = useState<Library | null>(null);
   const scanMutation = useScan();
   const enrichMutation = useBulkEnrich();
   const { data: health } = useHealth();
@@ -59,6 +72,7 @@ export function Settings() {
   // ── Libraries (backend-backed) ──────────────────────────
   const { data: libraries, isLoading: librariesLoading } = useLibraries();
   const createLibrary = useCreateLibrary();
+  const updateLibrary = useUpdateLibrary();
   const deleteLibrary = useDeleteLibrary();
 
   // One-shot migration: if the user had libraries in localStorage
@@ -90,6 +104,7 @@ export function Settings() {
           name: lib.name,
           library_type: "mixed",
           paths: [lib.path],
+          scan_schedule: null,
         });
       }
       localStorage.removeItem(LEGACY_LIBRARIES_KEY);
@@ -103,16 +118,46 @@ export function Settings() {
   // The partial-update setter lets each Select be a one-liner.
   const [playbackPrefs, setPlaybackPrefs] = usePlaybackPreferences();
 
-  const handleAddLibrary = useCallback(
-    (name: string, path: string) => {
-      createLibrary.mutate({
-        name,
-        library_type: "mixed",
-        paths: [path],
-      });
-      setAddDialogOpen(false);
+  const handleOpenCreate = useCallback(() => {
+    setEditingLibrary(null);
+    setDialogOpen(true);
+  }, []);
+
+  const handleOpenEdit = useCallback((lib: Library) => {
+    setEditingLibrary(lib);
+    setDialogOpen(true);
+  }, []);
+
+  const handleCloseDialog = useCallback(() => {
+    setDialogOpen(false);
+  }, []);
+
+  const handleSubmitLibrary = useCallback(
+    (body: {
+      name: string;
+      path: string;
+      scan_schedule: string | null;
+    }) => {
+      if (editingLibrary) {
+        updateLibrary.mutate({
+          id: editingLibrary.id,
+          body: {
+            name: body.name,
+            paths: [body.path],
+            scan_schedule: body.scan_schedule,
+          },
+        });
+      } else {
+        createLibrary.mutate({
+          name: body.name,
+          library_type: "mixed",
+          paths: [body.path],
+          scan_schedule: body.scan_schedule,
+        });
+      }
+      setDialogOpen(false);
     },
-    [createLibrary],
+    [editingLibrary, createLibrary, updateLibrary],
   );
 
   const handleDeleteLibrary = useCallback(
@@ -167,6 +212,18 @@ export function Settings() {
                     <Typography variant="caption" color="text.secondary" sx={{ display: "block" }} title={lib.paths.join(", ")}>
                       {lib.paths.join(", ")}
                     </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      title={
+                        lib.last_scan_at
+                          ? new Date(lib.last_scan_at).toLocaleString(i18n.language)
+                          : undefined
+                      }
+                      sx={{ display: "block", opacity: 0.7, fontSize: "0.7rem" }}
+                    >
+                      {formatLibraryStatus(lib, i18n.language, t)}
+                    </Typography>
                   </Box>
                 </Box>
                 <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
@@ -179,6 +236,14 @@ export function Settings() {
                   >
                     {scanMutation.isPending ? t("settings.scanning") : t("settings.scan")}
                   </Button>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleOpenEdit(lib)}
+                    title={t("settings.editLibrary")}
+                    sx={{ color: "text.secondary", "&:hover": { color: "primary.main" } }}
+                  >
+                    <Pencil size={15} />
+                  </IconButton>
                   <IconButton
                     size="small"
                     onClick={() => handleDeleteLibrary(lib.id)}
@@ -200,7 +265,7 @@ export function Settings() {
         )}
         <Divider sx={{ borderColor: "rgba(255,255,255,0.06)" }} />
         <Box sx={{ display: "flex", justifyContent: "space-between", px: 2.5, py: 1.5 }}>
-          <Button startIcon={<Plus size={16} />} size="small" onClick={() => setAddDialogOpen(true)}>
+          <Button startIcon={<Plus size={16} />} size="small" onClick={handleOpenCreate}>
             {t("settings.addLibrary")}
           </Button>
           {(libraries ?? []).length > 0 && (
@@ -314,14 +379,39 @@ export function Settings() {
         </Box>
       </SettingsSection>
 
-      {/* Add Library Dialog */}
-      <AddLibraryDialog
-        open={addDialogOpen}
-        onClose={() => setAddDialogOpen(false)}
-        onAdd={handleAddLibrary}
+      {/* Create / Edit Library Dialog.
+          The `key` forces a remount whenever the target library changes,
+          so internal form state resets cleanly — no setState-in-effect. */}
+      <LibraryDialog
+        key={editingLibrary?.id ?? "create"}
+        open={dialogOpen}
+        library={editingLibrary}
+        onClose={handleCloseDialog}
+        onSubmit={handleSubmitLibrary}
       />
     </Box>
   );
+}
+
+/**
+ * Build the "Last scanned … · Every hour" status line for a library.
+ * Omits the schedule suffix when no schedule is set. Casing of the
+ * preset label comes from the i18n string itself — don't rewrite it
+ * here, since locales may capitalise differently and custom crons
+ * are raw expressions where lowercasing would be meaningless.
+ */
+function formatLibraryStatus(
+  lib: Library,
+  locale: string,
+  t: (k: string, o?: Record<string, unknown>) => string,
+): string {
+  const when = lib.last_scan_at
+    ? t("settings.lastScannedAt", {
+        when: formatRelativeTime(lib.last_scan_at, locale, t),
+      })
+    : t("settings.neverScanned");
+  const sched = describeCron(lib.scan_schedule, t);
+  return sched ? `${when} · ${sched}` : when;
 }
 
 // ── Shared Components ──────────────────────────────────────────────
@@ -370,37 +460,75 @@ function SettingsRow({ label, children }: { label: string; children: React.React
   );
 }
 
-function AddLibraryDialog({
+interface LibraryDialogSubmit {
+  name: string;
+  path: string;
+  scan_schedule: string | null;
+}
+
+/**
+ * Create/edit dialog for libraries.
+ *
+ * When ``library`` is null, behaves as a create form. Otherwise it
+ * pre-fills from the given library and switches copy + submit handler
+ * to the edit path. The caller decides which mutation to fire.
+ */
+function LibraryDialog({
   open,
+  library,
   onClose,
-  onAdd,
+  onSubmit,
 }: {
   open: boolean;
+  library: Library | null;
   onClose: () => void;
-  onAdd: (name: string, path: string) => void;
+  onSubmit: (body: LibraryDialogSubmit) => void;
 }) {
   const { t } = useTranslation();
-  const [name, setName] = useState("");
-  const [path, setPath] = useState("");
+  const isEdit = library !== null;
 
-  const handleSubmit = () => {
-    if (name.trim() && path.trim()) {
-      onAdd(name.trim(), path.trim());
-      setName("");
-      setPath("");
+  // Derive the initial values once per mount — the parent rekeys this
+  // component when the target library changes, so useState initializers
+  // are the correct place to read from props.
+  const savedPreset = library ? matchPreset(library.scan_schedule) : "never";
+  const [name, setName] = useState(library?.name ?? "");
+  const [path, setPath] = useState(library?.paths[0] ?? "");
+  const [preset, setPreset] = useState<PresetKey>(savedPreset);
+  const [customCron, setCustomCron] = useState(
+    savedPreset === CUSTOM_SENTINEL ? (library?.scan_schedule ?? "") : "",
+  );
+
+  const cronInvalid =
+    preset === CUSTOM_SENTINEL &&
+    customCron.trim().length > 0 &&
+    !isPlausibleCron(customCron);
+
+  const canSubmit =
+    name.trim().length > 0 &&
+    path.trim().length > 0 &&
+    (preset !== CUSTOM_SENTINEL || (customCron.trim().length > 0 && !cronInvalid));
+
+  const resolveSchedule = (): string | null => {
+    if (preset === CUSTOM_SENTINEL) {
+      return customCron.trim() || null;
     }
+    const hit = SCHEDULE_PRESETS.find((p) => p.key === preset);
+    return hit?.cron ?? null;
   };
 
-  const handleClose = () => {
-    setName("");
-    setPath("");
-    onClose();
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    onSubmit({
+      name: name.trim(),
+      path: path.trim(),
+      scan_schedule: resolveSchedule(),
+    });
   };
 
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -412,7 +540,9 @@ function AddLibraryDialog({
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 600 }}>{t("settings.addLibraryTitle")}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 600 }}>
+        {isEdit ? t("settings.editLibraryTitle") : t("settings.addLibraryTitle")}
+      </DialogTitle>
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: "16px !important" }}>
         <TextField
           autoFocus
@@ -421,6 +551,7 @@ function AddLibraryDialog({
           placeholder={t("settings.libraryNamePlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           size="small"
         />
         <TextField
@@ -432,13 +563,46 @@ function AddLibraryDialog({
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           size="small"
         />
+        <FormControl size="small" fullWidth>
+          <InputLabel>{t("settings.schedule")}</InputLabel>
+          <Select
+            value={preset}
+            label={t("settings.schedule")}
+            onChange={(e) => setPreset(e.target.value as PresetKey)}
+          >
+            {SCHEDULE_PRESETS.map((p) => (
+              <MenuItem key={p.key} value={p.key}>
+                {t(p.labelKey)}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        {preset === CUSTOM_SENTINEL && (
+          <FormControl error={cronInvalid} fullWidth>
+            <TextField
+              fullWidth
+              label={t("settings.scheduleCustomLabel")}
+              placeholder="0 3 * * *"
+              value={customCron}
+              onChange={(e) => setCustomCron(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              size="small"
+              error={cronInvalid}
+            />
+            <FormHelperText>
+              {cronInvalid
+                ? t("settings.scheduleCustomInvalid")
+                : t("settings.scheduleCustomHelp")}
+            </FormHelperText>
+          </FormControl>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={handleClose} color="inherit" size="small">
+        <Button onClick={onClose} color="inherit" size="small">
           {t("settings.cancel")}
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={!name.trim() || !path.trim()} size="small">
-          {t("settings.add")}
+        <Button onClick={handleSubmit} variant="contained" disabled={!canSubmit} size="small">
+          {isEdit ? t("settings.save") : t("settings.add")}
         </Button>
       </DialogActions>
     </Dialog>

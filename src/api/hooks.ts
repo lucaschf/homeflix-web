@@ -567,7 +567,27 @@ export function useCreateLibrary() {
       library_type: string;
       paths: string[];
       language?: string;
+      scan_schedule?: string | null;
     }) => api.post<LibraryResponse>("/libraries", body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["libraries"] });
+    },
+  });
+}
+
+export function useUpdateLibrary() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: {
+      id: string;
+      body: {
+        name?: string;
+        library_type?: string;
+        paths?: string[];
+        language?: string;
+        scan_schedule?: string | null;
+      };
+    }) => api.put<LibraryResponse>(`/libraries/${vars.id}`, vars.body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
     },

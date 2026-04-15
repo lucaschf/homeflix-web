@@ -362,6 +362,7 @@ export interface Library {
   language: string;
   metadata_providers: LibraryMetadataProvider[];
   scan_schedule: string | null;
+  last_scan_at: string | null;
   settings: LibrarySettings;
 }
 
