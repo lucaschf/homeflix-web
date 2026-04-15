@@ -363,8 +363,10 @@ export interface Library {
   metadata_providers: LibraryMetadataProvider[];
   scan_schedule: string | null;
   last_scan_at: string | null;
-  movie_count: number;
-  series_count: number;
+  // Optional so the UI degrades gracefully if the client talks to an
+  // older backend that predates the counts fields.
+  movie_count?: number;
+  series_count?: number;
   settings: LibrarySettings;
 }
 
