@@ -7,7 +7,12 @@
  * "Custom" escape hatch for advanced users.
  */
 
-import type { TFunction } from "i18next";
+/**
+ * Minimal translation function shape these helpers depend on.
+ * Avoids coupling the module to i18next's ``TFunction`` so callers
+ * can pass the ``t`` from ``useTranslation`` without casts.
+ */
+type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 /** Value stored in the Select when Custom is chosen. Never a valid cron. */
 export const CUSTOM_SENTINEL = "__custom__";
@@ -55,7 +60,7 @@ export function matchPreset(cron: string | null): PresetKey {
  * Returns the translated preset label when ``cron`` matches one;
  * otherwise the raw cron string (custom).
  */
-export function describeCron(cron: string | null, t: TFunction): string {
+export function describeCron(cron: string | null, t: Translate): string {
   const key = matchPreset(cron);
   if (key === CUSTOM_SENTINEL) return cron ?? "";
   const preset = SCHEDULE_PRESETS.find((p) => p.key === key);
@@ -78,12 +83,16 @@ export function isPlausibleCron(value: string): boolean {
 export function formatRelativeTime(
   iso: string | null,
   locale: string,
-  t: TFunction,
+  t: Translate,
 ): string {
   if (!iso) return t("settings.neverScanned");
 
-  const now = Date.now();
   const then = new Date(iso).getTime();
+  // Guard: malformed ISO strings produce NaN, which would silently
+  // propagate through the comparisons below and end up as "NaN days".
+  if (Number.isNaN(then)) return t("settings.neverScanned");
+
+  const now = Date.now();
   const diffSec = Math.round((then - now) / 1000);
   const absSec = Math.abs(diffSec);
 

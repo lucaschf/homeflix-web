@@ -394,8 +394,11 @@ export function Settings() {
 }
 
 /**
- * Build the "Last scanned … · every hour" status line for a library.
- * Omits the schedule suffix when no schedule is set.
+ * Build the "Last scanned … · Every hour" status line for a library.
+ * Omits the schedule suffix when no schedule is set. Casing of the
+ * preset label comes from the i18n string itself — don't rewrite it
+ * here, since locales may capitalise differently and custom crons
+ * are raw expressions where lowercasing would be meaningless.
  */
 function formatLibraryStatus(
   lib: Library,
@@ -404,11 +407,11 @@ function formatLibraryStatus(
 ): string {
   const when = lib.last_scan_at
     ? t("settings.lastScannedAt", {
-        when: formatRelativeTime(lib.last_scan_at, locale, t as never),
+        when: formatRelativeTime(lib.last_scan_at, locale, t),
       })
     : t("settings.neverScanned");
-  const sched = describeCron(lib.scan_schedule, t as never);
-  return sched ? `${when} · ${sched.toLowerCase()}` : when;
+  const sched = describeCron(lib.scan_schedule, t);
+  return sched ? `${when} · ${sched}` : when;
 }
 
 // ── Shared Components ──────────────────────────────────────────────
@@ -548,6 +551,7 @@ function LibraryDialog({
           placeholder={t("settings.libraryNamePlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           size="small"
         />
         <TextField
@@ -556,6 +560,7 @@ function LibraryDialog({
           placeholder={t("settings.libraryPathPlaceholder")}
           value={path}
           onChange={(e) => setPath(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           size="small"
         />
         <FormControl size="small" fullWidth>
