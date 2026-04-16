@@ -14,6 +14,26 @@ export interface MovieSummary {
   genres: string[];
 }
 
+export interface AudioTrackOutput {
+  index: number;
+  language: string;
+  codec: string;
+  channels: number;
+  channel_layout: string;
+  title: string | null;
+  is_default: boolean;
+}
+
+export interface SubtitleTrackOutput {
+  index: number;
+  language: string;
+  format: string;
+  title: string | null;
+  is_default: boolean;
+  is_forced: boolean;
+  is_external: boolean;
+}
+
 export interface MediaFileOutput {
   file_path: string;
   file_size: number;
@@ -22,6 +42,8 @@ export interface MediaFileOutput {
   video_bitrate: number | null;
   hdr_format: string | null;
   is_primary: boolean;
+  audio_tracks: AudioTrackOutput[];
+  subtitle_tracks: SubtitleTrackOutput[];
 }
 
 export interface MovieDetail {

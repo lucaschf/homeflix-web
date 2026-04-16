@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -15,6 +15,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEnrichMovie, useIsInWatchlist, useMovie, useProgress, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { formatLanguage, uniqueLanguages } from "../utils/languages";
 
 export function MovieDetail() {
   const { t } = useTranslation();
@@ -26,6 +27,7 @@ export function MovieDetail() {
   const { data: inWatchlist } = useIsInWatchlist(movieId!);
   const toggleWatchlist = useToggleWatchlist();
   const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
+  const langs = useMemo(() => uniqueLanguages(movie?.files ?? []), [movie?.files]);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
   const synopsisRef = useRef<HTMLDivElement>(null);
@@ -202,6 +204,12 @@ export function MovieDetail() {
             <DetailRow label={t("detail.originalTitle")} value={movie.original_title} />
           )}
           {movie.resolution && <DetailRow label="Resolution" value={movie.resolution} />}
+          {langs.audio.length > 0 && (
+            <DetailRow label={t("detail.audio")} value={langs.audio.map(formatLanguage).join(", ")} />
+          )}
+          {langs.subtitle.length > 0 && (
+            <DetailRow label={t("detail.subtitles")} value={langs.subtitle.map(formatLanguage).join(", ")} />
+          )}
           {movie.imdb_id && <DetailRow label="IMDb" value={movie.imdb_id} />}
         </Box>
       </Box>
