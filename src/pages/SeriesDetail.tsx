@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
+import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { neutral } from "../theme/colors";
@@ -284,6 +285,7 @@ function findInProgressEpisode(
 
 function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput; seriesPoster: string | null; onPlay: () => void }) {
   const { t } = useTranslation();
+  const langs = uniqueLanguages(episode.files ?? []);
 
   return (
     <Box
@@ -349,10 +351,22 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
             {episode.title}
           </Typography>
         </Box>
-        <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block", fontSize: { xs: "0.65rem", md: "0.7rem" } }}>
-          {episode.duration_formatted}
-          {episode.air_date && ` | ${episode.air_date}`}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5, flexWrap: "wrap" }}>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: "0.65rem", md: "0.7rem" } }}>
+            {episode.duration_formatted}
+            {episode.air_date && ` | ${episode.air_date}`}
+          </Typography>
+          {langs.audio.length > 0 && (
+            <Tooltip title={`${t("detail.audio")}: ${langs.audio.map(formatLanguage).join(", ")}`} arrow>
+              <Chip label={langs.audio.map((l) => l.toUpperCase()).join(" · ")} size="small" sx={{ height: 16, fontSize: "0.55rem", bgcolor: "rgba(255,255,255,0.08)", color: "text.secondary" }} />
+            </Tooltip>
+          )}
+          {langs.subtitle.length > 0 && (
+            <Tooltip title={`${t("detail.subtitles")}: ${langs.subtitle.map(formatLanguage).join(", ")}`} arrow>
+              <Chip label={`CC ${langs.subtitle.length}`} size="small" sx={{ height: 16, fontSize: "0.55rem", bgcolor: "rgba(255,255,255,0.08)", color: "text.secondary" }} />
+            </Tooltip>
+          )}
+        </Box>
         {episode.synopsis && (
           <Typography
             variant="body2"
