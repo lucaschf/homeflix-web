@@ -1,3 +1,5 @@
+import type { MediaFileOutput } from "../api/types";
+
 const LANGUAGE_NAMES: Record<string, string> = {
   en: "English",
   pt: "Português",
@@ -28,24 +30,29 @@ const LANGUAGE_NAMES: Record<string, string> = {
   ms: "Bahasa Melayu",
   he: "עברית",
   hi: "हिन्दी",
-  un: "Unknown",
 };
 
+const UNKNOWN_CODE = "un";
+
 export function formatLanguage(code: string): string {
-  return LANGUAGE_NAMES[code] ?? code.toUpperCase();
+  const normalized = code.toLowerCase();
+  return LANGUAGE_NAMES[normalized] ?? normalized.toUpperCase();
 }
 
 export function uniqueLanguages(
-  files: { audio_tracks?: { language: string }[]; subtitle_tracks?: { language: string }[] }[],
+  files: MediaFileOutput[],
 ): { audio: string[]; subtitle: string[] } {
   const audioSet = new Set<string>();
   const subtitleSet = new Set<string>();
   for (const f of files) {
-    for (const t of f.audio_tracks ?? []) audioSet.add(t.language);
-    for (const t of f.subtitle_tracks ?? []) subtitleSet.add(t.language);
+    for (const t of f.audio_tracks ?? []) {
+      const lang = t.language?.toLowerCase();
+      if (lang && lang !== UNKNOWN_CODE) audioSet.add(lang);
+    }
+    for (const t of f.subtitle_tracks ?? []) {
+      const lang = t.language?.toLowerCase();
+      if (lang && lang !== UNKNOWN_CODE) subtitleSet.add(lang);
+    }
   }
-  return {
-    audio: [...audioSet].filter((l) => l !== "un"),
-    subtitle: [...subtitleSet].filter((l) => l !== "un"),
-  };
+  return { audio: [...audioSet], subtitle: [...subtitleSet] };
 }
