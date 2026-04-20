@@ -114,14 +114,47 @@ export function findFrame(frames: ScrubFrame[], time: number): ScrubFrame | null
 }
 
 /**
+ * Wait helper that resolves after ``ms`` OR rejects if the abort
+ * signal fires first. Extracted so the retry loop reads linearly
+ * and so tests can stub a shorter delay if needed.
+ */
+function delay(ms: number, signal: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new DOMException("aborted", "AbortError"));
+      return;
+    }
+    const id = setTimeout(resolve, ms);
+    signal.addEventListener("abort", () => {
+      clearTimeout(id);
+      reject(new DOMException("aborted", "AbortError"));
+    });
+  });
+}
+
+// Number of fetch attempts before giving up. The backend generates
+// the sprite in the background and a full-movie sprite typically
+// takes 1-3 minutes, so ten tries at ``RETRY_INTERVAL_MS`` covers
+// the realistic worst case without hammering the server.
+const MAX_ATTEMPTS = 10;
+
+// Gap between retry attempts when the VTT is still 404. Short
+// enough that a user who keeps the player open catches the sprite
+// soon after it's ready; long enough that the polling cost is
+// negligible compared to segment requests.
+const RETRY_INTERVAL_MS = 15000;
+
+/**
  * Fetch and parse the thumbnail VTT for the cache bucket at ``vttUrl``.
  *
  * Returns ``[]`` until the fetch resolves so the Player can render
- * the normal seek bar without any preview. Every failure mode — the
- * sprite thread hasn't finished yet (404), network hiccup, malformed
- * VTT — collapses to "no previews this session" rather than surfacing
- * an error the user would see. This mirrors the backend's best-effort
- * stance: thumbs are nice-to-have, the player works without them.
+ * the normal seek bar without any preview. The backend generates the
+ * sprite in the background after the first playback starts, so the
+ * initial fetch will often 404 — the hook retries at ``RETRY_INTERVAL_MS``
+ * up to ``MAX_ATTEMPTS`` times so thumbnails light up mid-session
+ * once ffmpeg finishes. Non-404 failures (network, malformed VTT)
+ * still collapse silently to "no previews", matching the backend's
+ * best-effort stance.
  *
  * ``vttUrl`` of an empty string disables the effect entirely so the
  * caller can pass whatever they compute before the hash is known
@@ -142,24 +175,33 @@ export function useScrubThumbnails(vttUrl: string): ScrubFrame[] {
       return;
     }
     const controller = new AbortController();
-    let cancelled = false;
 
     (async () => {
-      try {
-        const response = await fetch(vttUrl, { signal: controller.signal });
-        if (!response.ok) return;
-        const text = await response.text();
-        if (cancelled) return;
-        // Resolve sprite refs against the final URL (``response.url``)
-        // so any redirect the backend may add later still works.
-        setFrames(parseThumbnailVtt(text, response.url || vttUrl));
-      } catch {
-        // Abort or network error — silently keep frames empty.
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        try {
+          const response = await fetch(vttUrl, { signal: controller.signal });
+          if (response.status === 404) {
+            // Sprite thread hasn't finished yet. Wait and try again.
+            await delay(RETRY_INTERVAL_MS, controller.signal);
+            continue;
+          }
+          if (!response.ok) return;
+          const text = await response.text();
+          if (controller.signal.aborted) return;
+          // Resolve sprite refs against the final URL (``response.url``)
+          // so any redirect the backend may add later still works.
+          setFrames(parseThumbnailVtt(text, response.url || vttUrl));
+          return;
+        } catch {
+          // Abort (effect cleanup) or network error. In both cases
+          // stop retrying — an abort means the caller moved on, and
+          // a generic network failure isn't worth pounding on.
+          return;
+        }
       }
     })();
 
     return () => {
-      cancelled = true;
       controller.abort();
     };
   }, [vttUrl]);
