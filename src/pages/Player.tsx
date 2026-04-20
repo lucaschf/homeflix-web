@@ -37,7 +37,20 @@ import {
   usePlaybackPreferences,
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
+import {
+  findFrame,
+  useScrubThumbnails,
+  type ScrubFrame,
+} from "../hooks/useScrubThumbnails";
 import { neutral, peach } from "../theme/colors";
+
+// The backend publishes the scrub-preview sprite + VTT under
+// ``<cache>/<path_hash>/thumbnails/sprite.vtt`` inside the HLS
+// cache bucket. hls.js gives us the rewritten level URL in
+// MANIFEST_PARSED; this regex pulls the ``path_hash`` segment out
+// so the Player can build the thumbnails URL without a separate
+// backend endpoint.
+const HLS_PATH_HASH_RE = /\/stream\/hls\/([a-f0-9]+)\//;
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -189,6 +202,90 @@ function formatTime(seconds: number): string {
   const s = Math.floor(seconds % 60);
   if (h > 0) return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/**
+ * Floating thumbnail + timestamp shown above the seek bar while the
+ * pointer hovers over it.
+ *
+ * The component is positioned absolutely against the seek-bar Box so
+ * ``hoverX`` lines it up horizontally with the cursor. We clamp the
+ * left offset to ``[halfWidth, barWidth - halfWidth]`` so the preview
+ * never clips off the screen at either end of the bar. The tile
+ * background is rendered with ``background-image`` + ``background-position``
+ * / ``-size`` so the single sprite request serves every hover frame
+ * without extra network cost.
+ */
+function ScrubPreview({
+  frame,
+  time,
+  hoverX,
+  barWidth,
+}: {
+  frame: ScrubFrame | null;
+  time: number;
+  hoverX: number;
+  barWidth: number;
+}) {
+  // No frame available yet (VTT still loading, or we're off the edge of
+  // the covered range) — show only the timestamp bubble so the user
+  // still gets feedback, and the layout stays stable once the sprite
+  // loads partway through hovering.
+  const tile = frame ? (
+    <Box
+      sx={{
+        width: frame.width,
+        height: frame.height,
+        backgroundImage: `url("${frame.spriteUrl}")`,
+        backgroundPosition: `-${frame.x}px -${frame.y}px`,
+        // Keep the intrinsic sprite size so background-position math
+        // stays correct regardless of CSS scaling.
+        backgroundSize: "auto",
+        borderRadius: 1,
+        border: "1px solid rgba(255,255,255,0.2)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+      }}
+    />
+  ) : null;
+
+  const previewWidth = frame?.width ?? 96;
+  const halfWidth = previewWidth / 2;
+  const clampedLeft =
+    barWidth > 0
+      ? Math.max(halfWidth, Math.min(barWidth - halfWidth, hoverX))
+      : hoverX;
+
+  return (
+    <Box
+      sx={{
+        position: "absolute",
+        bottom: "100%",
+        left: clampedLeft,
+        transform: "translateX(-50%)",
+        mb: 1,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 0.5,
+        pointerEvents: "none",
+      }}
+    >
+      {tile}
+      <Typography
+        variant="overlayTimestamp"
+        sx={{
+          color: "overlayText.primary",
+          bgcolor: "rgba(0,0,0,0.7)",
+          px: 0.75,
+          py: 0.25,
+          borderRadius: 0.5,
+          whiteSpace: "nowrap",
+        }}
+      >
+        {formatTime(time)}
+      </Typography>
+    </Box>
+  );
 }
 
 // Persisted player preferences. Stored in localStorage under the
@@ -401,6 +498,20 @@ export function Player() {
   // initial render. State plus a callback ref makes the element observable
   // and triggers a re-render once the Box is attached.
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+  // Thumbnails URL — built once hls.js reports its first level URL,
+  // because that's where the rewritten ``path_hash`` lands. Empty
+  // string while we don't yet know the hash; the hook treats that as
+  // "disabled" and keeps the frame array empty.
+  const [thumbnailsVttUrl, setThumbnailsVttUrl] = useState("");
+  // Seek-bar hover state drives the preview popover below the slider.
+  // ``null`` means the cursor isn't over the bar so we skip the render
+  // entirely instead of toggling opacity — avoids paying for a
+  // background-image swap while the user is scrubbing a different
+  // control, and prevents accidental previews when an overlay menu
+  // is open above the seek bar.
+  const [scrubHover, setScrubHover] = useState<{ time: number; x: number } | null>(null);
+  const [seekBarEl, setSeekBarEl] = useState<HTMLDivElement | null>(null);
+  const scrubFrames = useScrubThumbnails(thumbnailsVttUrl);
   // Holds the mediaId whose audio/subtitle selection has already been
   // restored from savedProgress, so the restore effect runs again the first
   // time `mediaId` changes (e.g. on auto-advance to the next episode). A
@@ -643,6 +754,10 @@ export function Player() {
     // gates the loading overlay across episode transitions.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHlsReady(false);
+    // Drop the previous bucket's thumbnails so hovering the seek bar
+    // during the transition doesn't flash preview tiles from the old
+    // media. The URL is refilled when the new manifest parses.
+    setThumbnailsVttUrl("");
 
     if (Hls.isSupported()) {
       const hls = new Hls({
@@ -656,6 +771,21 @@ export function Player() {
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         video.play().catch(() => {});
+        // Pull the rewritten path_hash out of the first level URL so
+        // we can fetch ``thumbnails/sprite.vtt`` from the same cache
+        // bucket without adding a backend endpoint. On the very first
+        // play of a movie the VTT may not exist yet (the ffmpeg thread
+        // is still running) and the fetch 404s silently — subsequent
+        // plays pick it up once ready.
+        const levelUrl = hls.levels[0]?.url?.[0];
+        if (levelUrl) {
+          const match = HLS_PATH_HASH_RE.exec(levelUrl);
+          if (match) {
+            setThumbnailsVttUrl(
+              `/api/v1/stream/hls/${match[1]}/thumbnails/sprite.vtt`,
+            );
+          }
+        }
       });
 
       // Track audio tracks from HLS manifest
@@ -1384,30 +1514,55 @@ export function Player() {
               gradient transitions from the buffer color (brighter
               gray) to the unloaded rail color at the buffered
               percentage, creating the same two-tone fill YouTube
-              and Netflix use. */}
-          <Slider
-            value={currentTime}
-            max={displayDuration || 1}
-            onChange={(_, v) => seek(v as number)}
-            sx={{
-              color: "primary.main",
-              height: { xs: 3, md: 4 },
-              p: 0,
-              mb: { xs: 0.5, md: 1 },
-              "& .MuiSlider-thumb": {
-                width: { xs: 16, md: 14 },
-                height: { xs: 16, md: 14 },
-                transition: "0.1s",
-                "&:hover": { width: 18, height: 18 },
-              },
-              "& .MuiSlider-rail": {
-                background: displayDuration > 0
-                  ? `linear-gradient(to right, rgba(255,255,255,0.35) ${(bufferedEnd / displayDuration) * 100}%, rgba(255,255,255,0.15) ${(bufferedEnd / displayDuration) * 100}%)`
-                  : "rgba(255,255,255,0.15)",
-                opacity: 1,
-              },
+              and Netflix use. The wrapping Box captures hover
+              coordinates so the scrub-preview thumbnail below can
+              be positioned in sync with the cursor. */}
+          <Box
+            ref={setSeekBarEl}
+            onMouseMove={(e) => {
+              if (displayDuration <= 0 || scrubFrames.length === 0) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              // Clamp x to the bar width so the preview never drifts
+              // past the rail edges on fast pointer moves.
+              const x = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+              const time = (x / rect.width) * displayDuration;
+              setScrubHover({ time, x });
             }}
-          />
+            onMouseLeave={() => setScrubHover(null)}
+            sx={{ position: "relative" }}
+          >
+            <Slider
+              value={currentTime}
+              max={displayDuration || 1}
+              onChange={(_, v) => seek(v as number)}
+              sx={{
+                color: "primary.main",
+                height: { xs: 3, md: 4 },
+                p: 0,
+                mb: { xs: 0.5, md: 1 },
+                "& .MuiSlider-thumb": {
+                  width: { xs: 16, md: 14 },
+                  height: { xs: 16, md: 14 },
+                  transition: "0.1s",
+                  "&:hover": { width: 18, height: 18 },
+                },
+                "& .MuiSlider-rail": {
+                  background: displayDuration > 0
+                    ? `linear-gradient(to right, rgba(255,255,255,0.35) ${(bufferedEnd / displayDuration) * 100}%, rgba(255,255,255,0.15) ${(bufferedEnd / displayDuration) * 100}%)`
+                    : "rgba(255,255,255,0.15)",
+                  opacity: 1,
+                },
+              }}
+            />
+            {scrubHover && (
+              <ScrubPreview
+                frame={findFrame(scrubFrames, scrubHover.time)}
+                time={scrubHover.time}
+                hoverX={scrubHover.x}
+                barWidth={seekBarEl?.clientWidth ?? 0}
+              />
+            )}
+          </Box>
 
           {/* Controls Row */}
           <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 0.5 } }}>
