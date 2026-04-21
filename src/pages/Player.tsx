@@ -872,8 +872,18 @@ export function Player() {
     // Seek to the saved position before touching audio/subtitle
     // tracks so the buffer flush those assignments may trigger
     // happens once the playhead is at its final spot.
+    //
+    // Clamp the target to ``video.duration - 1`` so a save that
+    // landed a few tenths of a second past the real end (DB metadata
+    // and HLS duration can disagree on the last partial segment)
+    // doesn't seek into the "ended" state and immediately fire the
+    // end-of-media countdown.
     if (savedProgress && savedProgress.status !== "completed") {
-      const target = Math.max(0, Math.floor(savedProgress.position_seconds));
+      const saved = Math.max(0, Math.floor(savedProgress.position_seconds));
+      const upperBound = Number.isFinite(video.duration)
+        ? Math.max(0, video.duration - 1)
+        : saved;
+      const target = Math.min(saved, upperBound);
       if (target > 0 && Math.abs(video.currentTime - target) > 0.5) {
         video.currentTime = target;
       }
@@ -928,7 +938,10 @@ export function Player() {
     playbackPrefs.subtitleMode,
   ]);
 
-  // Auto-save progress every 10 seconds during playback
+  // Auto-save progress every 10 seconds during playback. ``playing``
+  // is already gated on the video element having fired ``playing``,
+  // so the interval only runs once the stream has actual frames —
+  // no extra ``readyState`` check needed here.
   useEffect(() => {
     if (!playing) return;
     const interval = setInterval(() => {
@@ -947,12 +960,14 @@ export function Player() {
     return () => clearInterval(interval);
   }, [playing, mediaId, mediaType, displayDuration]);
 
-  // Save progress on pause or unmount
+  // Save progress on pause or unmount. Gate on
+  // ``readyState >= HAVE_CURRENT_DATA`` (=2) so a snappy mount→unmount
+  // (user clicks the wrong card, Ctrl+W) that never rendered a frame
+  // doesn't overwrite the persisted resume point with 0.
   const saveCurrentProgress = useCallback(() => {
     const video = videoRef.current;
     if (!video || !mediaId) return;
-    // Don't save if nothing has been watched yet (avoid overwriting a
-    // resumable position with 0 on quick unmount).
+    if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
     if (!displayDuration || video.currentTime === 0) return;
     saveProgressRef.current({
       media_id: mediaId,
@@ -984,6 +999,11 @@ export function Player() {
     const onBeforeUnload = () => {
       const video = videoRef.current;
       if (!video || !mediaId) return;
+      // Same ``readyState`` gate as ``saveCurrentProgress`` — a
+      // beforeunload that fires while the element is still
+      // ``HAVE_NOTHING``/``HAVE_METADATA`` shouldn't overwrite
+      // a real saved position with 0.
+      if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
       if (!displayDuration || video.currentTime === 0) return;
       const body = JSON.stringify({
         media_id: mediaId,
