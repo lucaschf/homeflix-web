@@ -87,6 +87,7 @@ export function EpisodeDrawer({
           outline: "none",
         }}
         onClick={(e) => e.stopPropagation()}
+        onWheel={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1.5, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
