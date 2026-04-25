@@ -13,6 +13,7 @@ import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEnrichMovie, useIsInWatchlist, useMovie, useProgress, useToggleWatchlist } from "../api/hooks";
+import { CastRow } from "../components/CastRow";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
@@ -237,10 +238,8 @@ export function MovieDetail() {
 
           {movie.cast.length > 0 && (
             <>
-              <Typography variant="h2" sx={{ mt: 3, mb: 1, fontSize: { xs: "1.25rem", md: "1.5rem" } }}>{t("detail.cast")}</Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.9rem", md: "1.0rem" } }}>
-                {movie.cast.join(", ")}
-              </Typography>
+              <Typography variant="h2" sx={{ mt: 3, mb: 1.5, fontSize: { xs: "1.25rem", md: "1.5rem" } }}>{t("detail.cast")}</Typography>
+              <CastRow members={movie.cast} />
             </>
           )}
         </Box>
