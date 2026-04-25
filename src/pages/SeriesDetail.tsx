@@ -4,7 +4,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Collapse,
   IconButton,
   LinearProgress,
   Tab,
@@ -34,20 +33,21 @@ export function SeriesDetail() {
   const toggleWatchlist = useToggleWatchlist();
   const { data: continueWatching } = useContinueWatching();
   const [selectedSeason, setSelectedSeason] = useState(0);
-  const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
   const synopsisRef = useRef<HTMLDivElement>(null);
-  const SYNOPSIS_COLLAPSED = 44;
+  const SYNOPSIS_LINES = 3;
   const [synopsisOverflows, setSynopsisOverflows] = useState(false);
   useEffect(() => {
+    if (expanded) return;
     const el = synopsisRef.current;
     if (!el) return;
-    const check = () => setSynopsisOverflows(el.scrollHeight > SYNOPSIS_COLLAPSED);
+    const check = () => setSynopsisOverflows(el.scrollHeight > el.clientHeight + 1);
     check();
     const observer = new ResizeObserver(check);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [SYNOPSIS_COLLAPSED]);
+  }, [series?.synopsis, expanded]);
 
   if (isLoading || !series) {
     return (
@@ -194,21 +194,43 @@ export function SeriesDetail() {
       )}
 
       {/* Body */}
-      <Box sx={{ position: "relative", zIndex: 1, px: { xs: 2, sm: 3, md: 6 }, pt: { xs: 2, md: 3 }, pb: { xs: 3, md: 4 } }}>
+      <Box sx={{ position: "relative", zIndex: 1, px: { xs: 2, sm: 3, md: 6 }, pt: { xs: 1, md: 1 }, pb: { xs: 3, md: 4 } }}>
         {series.synopsis && (
           <>
-            <Collapse in={synopsisExpanded} collapsedSize={SYNOPSIS_COLLAPSED}>
-              <Typography ref={synopsisRef} variant="body1" color="text.secondary" sx={{ maxWidth: 800, fontSize: { xs: "0.9rem", md: "1.0rem" } }}>
-                {series.synopsis}
-              </Typography>
-            </Collapse>
+            <Typography
+              ref={synopsisRef}
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                maxWidth: 800,
+                fontSize: { xs: "0.9rem", md: "1.0rem" },
+                ...(expanded
+                  ? {}
+                  : {
+                      display: "-webkit-box",
+                      WebkitLineClamp: SYNOPSIS_LINES,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }),
+              }}
+            >
+              {series.synopsis}
+            </Typography>
             {synopsisOverflows && (
               <Typography
                 variant="body2"
-                onClick={() => setSynopsisExpanded(!synopsisExpanded)}
-                sx={{ color: "primary.main", cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}
+                onClick={() => setExpanded(!expanded)}
+                sx={{
+                  color: "primary.main",
+                  cursor: "pointer",
+                  mt: 1.5,
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: 0.5,
+                  "&:hover": { textDecoration: "underline" },
+                }}
               >
-                {synopsisExpanded ? t("detail.showLess") : t("detail.showMore")}
+                {expanded ? t("detail.lessDetails") : t("detail.moreDetails")}
               </Typography>
             )}
           </>
