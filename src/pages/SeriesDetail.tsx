@@ -19,6 +19,7 @@ import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { neutral } from "../theme/colors";
 
@@ -105,9 +106,14 @@ export function SeriesDetail() {
           )}
 
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-            <Typography variant="h1" sx={{ fontSize: { xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }, fontWeight: 700, mb: 0.5 }}>
-              {series.title}
-            </Typography>
+            <TitleLogo
+              logoUrl={series.logo_path}
+              title={series.title}
+              maxHeight={{ xs: 50, sm: 70, md: 100 }}
+              fallbackVariant="h1"
+              fallbackFontSize={{ xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }}
+              sx={{ mb: 0.5 }}
+            />
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
               {series.content_rating && <ContentRatingBadge rating={series.content_rating} size={24} />}

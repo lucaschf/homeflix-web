@@ -4,6 +4,7 @@ import { Bookmark, Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "./ContentRatingBadge";
+import { TitleLogo } from "./TitleLogo";
 import { TrailerDialog } from "./TrailerDialog";
 
 export interface HeroSlide {
@@ -15,6 +16,7 @@ export interface HeroSlide {
   duration?: string;
   genres?: string[];
   backdropUrl?: string | null;
+  logoUrl?: string | null;
   contentRating?: string | null;
   trailerUrl?: string | null;
 }
@@ -184,19 +186,14 @@ export function HeroBanner({
           zIndex: 1,
         }}
       >
-        <Typography
-          variant="h1"
-          onClick={() => onDetails?.(slide)}
-          sx={{
-            fontSize: { xs: "1.5rem", sm: "1.75rem", md: "2.25rem" },
-            fontWeight: 700,
-            mb: 1,
-            cursor: onDetails ? "pointer" : "default",
-            "&:hover": onDetails ? { textDecoration: "underline", textUnderlineOffset: 4 } : {},
-          }}
-        >
-          {slide.title}
-        </Typography>
+        <TitleLogo
+          logoUrl={slide.logoUrl}
+          title={slide.title}
+          maxHeight={{ xs: 60, sm: 80, md: 110 }}
+          onClick={onDetails ? () => onDetails(slide) : undefined}
+          fallbackVariant="h1"
+          fallbackFontSize={{ xs: "1.5rem", sm: "1.75rem", md: "2.25rem" }}
+        />
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
           {slide.contentRating && <ContentRatingBadge rating={slide.contentRating} />}

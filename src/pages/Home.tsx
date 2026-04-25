@@ -44,6 +44,7 @@ export function Home() {
         duration: f.duration_formatted ?? undefined,
         genres: f.genres,
         backdropUrl: f.backdrop_path,
+        logoUrl: f.logo_path,
         contentRating: f.content_rating,
         trailerUrl: f.trailer_url,
       })),

@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEnrichMovie, useIsInWatchlist, useMovie, useProgress, useToggleWatchlist } from "../api/hooks";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 
@@ -88,9 +89,14 @@ export function MovieDetail() {
           )}
 
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-            <Typography variant="h1" sx={{ fontSize: { xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }, fontWeight: 700, mb: 0.5 }}>
-              {movie.title}
-            </Typography>
+            <TitleLogo
+              logoUrl={movie.logo_path}
+              title={movie.title}
+              maxHeight={{ xs: 50, sm: 70, md: 100 }}
+              fallbackVariant="h1"
+              fallbackFontSize={{ xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }}
+              sx={{ mb: 0.5 }}
+            />
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
               {movie.content_rating && (

@@ -56,6 +56,7 @@ export interface MovieDetail {
   synopsis: string | null;
   poster_path: string | null;
   backdrop_path: string | null;
+  logo_path: string | null;
   genres: string[];
   cast: string[];
   directors: string[];
@@ -126,6 +127,7 @@ export interface SeriesDetail {
   synopsis: string | null;
   poster_path: string | null;
   backdrop_path: string | null;
+  logo_path: string | null;
   genres: string[];
   content_rating: string | null;
   trailer_url: string | null;
@@ -350,6 +352,7 @@ export interface FeaturedItem {
   duration_formatted: string | null;
   genres: string[];
   backdrop_path: string | null;
+  logo_path: string | null;
   content_rating: string | null;
   trailer_url: string | null;
 }
