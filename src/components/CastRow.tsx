@@ -58,7 +58,7 @@ export function CastRow({ members }: CastRowProps) {
           key={`${member.name}-${member.role ?? ""}`}
           sx={{
             flex: "0 0 auto",
-            width: 110,
+            width: { xs: 110, md: 144 },
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -69,11 +69,11 @@ export function CastRow({ members }: CastRowProps) {
             src={member.profile_path ?? undefined}
             alt={member.name}
             sx={{
-              width: 80,
-              height: 80,
+              width: { xs: 80, md: 116 },
+              height: { xs: 80, md: 116 },
               mb: 1,
               bgcolor: "rgba(255,255,255,0.08)",
-              fontSize: "1.25rem",
+              fontSize: { xs: "1.25rem", md: "1.6rem" },
               fontWeight: 600,
             }}
           >

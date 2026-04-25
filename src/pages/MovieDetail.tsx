@@ -261,13 +261,16 @@ export function MovieDetail() {
       </Box>
 
       {movie.cast.length > 0 && (
+        // Full content-width — drops the ``maxWidth: 1200`` of the
+        // synopsis/details grid so the cast row uses the entire
+        // horizontal canvas, mirroring how the genre carousels on
+        // the home/browse pages span the page.
         <Box
           sx={{
             position: "relative",
             zIndex: 1,
             px: { xs: 2, sm: 3, md: 6 },
             pb: { xs: 4, md: 6 },
-            maxWidth: 1200,
           }}
         >
           <Typography variant="h2" sx={{ mb: 1.5, fontSize: { xs: "1.25rem", md: "1.5rem" } }}>
