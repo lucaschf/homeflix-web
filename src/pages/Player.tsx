@@ -44,14 +44,6 @@ import {
 } from "../hooks/useScrubThumbnails";
 import { neutral, peach } from "../theme/colors";
 
-// The backend publishes the scrub-preview sprite + VTT under
-// ``<cache>/<path_hash>/thumbnails/sprite.vtt`` inside the HLS
-// cache bucket. hls.js gives us the rewritten level URL in
-// MANIFEST_PARSED; this regex pulls the ``path_hash`` segment out
-// so the Player can build the thumbnails URL without a separate
-// backend endpoint.
-const HLS_PATH_HASH_RE = /\/stream\/hls\/([a-f0-9]+)\//;
-
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
 /** Clean up track names: remove URLs, site names, normalize encoding. */
@@ -447,11 +439,19 @@ export function Player() {
   // initial render. State plus a callback ref makes the element observable
   // and triggers a re-render once the Box is attached.
   const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
-  // Thumbnails URL — built once hls.js reports its first level URL,
-  // because that's where the rewritten ``path_hash`` lands. Empty
-  // string while we don't yet know the hash; the hook treats that as
-  // "disabled" and keeps the frame array empty.
-  const [thumbnailsVttUrl, setThumbnailsVttUrl] = useState("");
+  // Scrub-preview VTT URL — id-based so it's deterministic from the
+  // route. The backend serves the WebVTT and its sibling sprite.jpg
+  // under the same path prefix, so the cue's relative ``sprite.jpg``
+  // reference resolves against this URL automatically. The endpoint
+  // 404s until ``ThumbnailBackfillJob`` produces the sprite; the hook
+  // retries silently and the seek bar simply renders without previews
+  // in the meantime.
+  const thumbnailsVttUrl = useMemo(() => {
+    if (isLoading) return "";
+    return isMovie
+      ? `/api/v1/stream/movie/${params.movieId}/scrub-preview/sprite.vtt`
+      : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/scrub-preview/sprite.vtt`;
+  }, [isLoading, isMovie, params.movieId, params.seriesId, params.season, params.episode]);
   // Seek-bar hover state drives the preview popover below the slider.
   // ``null`` means the cursor isn't over the bar so we skip the render
   // entirely instead of toggling opacity — avoids paying for a
@@ -699,10 +699,6 @@ export function Player() {
     // gates the loading overlay across episode transitions.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setHlsReady(false);
-    // Drop the previous bucket's thumbnails so hovering the seek bar
-    // during the transition doesn't flash preview tiles from the old
-    // media. The URL is refilled when the new manifest parses.
-    setThumbnailsVttUrl("");
 
     if (Hls.isSupported()) {
       const hls = new Hls({
@@ -716,21 +712,6 @@ export function Player() {
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         video.play().catch(() => {});
-        // Pull the rewritten path_hash out of the first level URL so
-        // we can fetch ``thumbnails/sprite.vtt`` from the same cache
-        // bucket without adding a backend endpoint. On the very first
-        // play of a movie the VTT may not exist yet (the ffmpeg thread
-        // is still running) and the fetch 404s silently — subsequent
-        // plays pick it up once ready.
-        const levelUrl = hls.levels[0]?.url?.[0];
-        if (levelUrl) {
-          const match = HLS_PATH_HASH_RE.exec(levelUrl);
-          if (match) {
-            setThumbnailsVttUrl(
-              `/api/v1/stream/hls/${match[1]}/thumbnails/sprite.vtt`,
-            );
-          }
-        }
       });
 
       // Track audio tracks from HLS manifest
