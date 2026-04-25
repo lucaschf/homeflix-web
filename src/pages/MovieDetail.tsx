@@ -198,11 +198,11 @@ export function MovieDetail() {
         </Box>
       </Box>
 
-      {/* Body */}
-      {/* Body — Crunchyroll-style two-column on md+: reading content
-        (synopsis, cast) on the left, key/value details on the right.
-        Stacks to single column on xs/sm so neither column ends up
-        cramped on phones. */}
+      {/* Body — Crunchyroll-style two-column on md+: synopsis on the
+        left, key / value details on the right. Stacks to single
+        column on xs/sm. The cast row sits below the grid so it can
+        breathe across the full content width regardless of the
+        column split above. */}
       <Box
         sx={{
           position: "relative",
@@ -235,13 +235,6 @@ export function MovieDetail() {
               )}
             </>
           )}
-
-          {movie.cast.length > 0 && (
-            <>
-              <Typography variant="h2" sx={{ mt: 3, mb: 1.5, fontSize: { xs: "1.25rem", md: "1.5rem" } }}>{t("detail.cast")}</Typography>
-              <CastRow members={movie.cast} />
-            </>
-          )}
         </Box>
 
         <Box>
@@ -266,6 +259,23 @@ export function MovieDetail() {
           </Box>
         </Box>
       </Box>
+
+      {movie.cast.length > 0 && (
+        <Box
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            px: { xs: 2, sm: 3, md: 6 },
+            pb: { xs: 4, md: 6 },
+            maxWidth: 1200,
+          }}
+        >
+          <Typography variant="h2" sx={{ mb: 1.5, fontSize: { xs: "1.25rem", md: "1.5rem" } }}>
+            {t("detail.cast")}
+          </Typography>
+          <CastRow members={movie.cast} />
+        </Box>
+      )}
 
       {movie.trailer_url && (
         <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} url={movie.trailer_url} />
