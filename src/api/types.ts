@@ -46,6 +46,15 @@ export interface MediaFileOutput {
   subtitle_tracks: SubtitleTrackOutput[];
 }
 
+export interface CastMemberOutput {
+  /** Actor's display name. */
+  name: string;
+  /** Full URL to the TMDB profile photo, or ``null`` for fallback initials. */
+  profile_path: string | null;
+  /** Character name played, or ``null`` when not provided. */
+  role: string | null;
+}
+
 export interface MovieDetail {
   id: string;
   title: string;
@@ -58,7 +67,7 @@ export interface MovieDetail {
   backdrop_path: string | null;
   logo_path: string | null;
   genres: string[];
-  cast: string[];
+  cast: CastMemberOutput[];
   directors: string[];
   writers: string[];
   content_rating: string | null;

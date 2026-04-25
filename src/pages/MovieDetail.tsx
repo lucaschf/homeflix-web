@@ -13,7 +13,9 @@ import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEnrichMovie, useIsInWatchlist, useMovie, useProgress, useToggleWatchlist } from "../api/hooks";
+import { CastCard } from "../components/CastCard";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { MediaCarousel } from "../components/MediaCarousel";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
@@ -197,11 +199,11 @@ export function MovieDetail() {
         </Box>
       </Box>
 
-      {/* Body */}
-      {/* Body — Crunchyroll-style two-column on md+: reading content
-        (synopsis, cast) on the left, key/value details on the right.
-        Stacks to single column on xs/sm so neither column ends up
-        cramped on phones. */}
+      {/* Body — Crunchyroll-style two-column on md+: synopsis on the
+        left, key / value details on the right. Stacks to single
+        column on xs/sm. The cast row sits below the grid so it can
+        breathe across the full content width regardless of the
+        column split above. */}
       <Box
         sx={{
           position: "relative",
@@ -234,15 +236,6 @@ export function MovieDetail() {
               )}
             </>
           )}
-
-          {movie.cast.length > 0 && (
-            <>
-              <Typography variant="h2" sx={{ mt: 3, mb: 1, fontSize: { xs: "1.25rem", md: "1.5rem" } }}>{t("detail.cast")}</Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.9rem", md: "1.0rem" } }}>
-                {movie.cast.join(", ")}
-              </Typography>
-            </>
-          )}
         </Box>
 
         <Box>
@@ -267,6 +260,21 @@ export function MovieDetail() {
           </Box>
         </Box>
       </Box>
+
+      {movie.cast.length > 0 && (
+        // Reuse ``MediaCarousel`` so the cast row gets the same
+        // hover-arrows + hidden-scrollbar UX as the genre carousels
+        // on the home/browse pages — one navigation pattern across
+        // every horizontal list. ``zIndex: 1`` keeps the cards above
+        // the page-level backdrop / gradient layers.
+        <Box sx={{ position: "relative", zIndex: 1 }}>
+          <MediaCarousel title={t("detail.cast")}>
+            {movie.cast.map((member, idx) => (
+              <CastCard key={`${member.name}-${idx}`} member={member} />
+            ))}
+          </MediaCarousel>
+        </Box>
+      )}
 
       {movie.trailer_url && (
         <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} url={movie.trailer_url} />
