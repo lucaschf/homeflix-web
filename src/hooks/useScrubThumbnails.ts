@@ -164,16 +164,15 @@ export function useScrubThumbnails(vttUrl: string): ScrubFrame[] {
   const [frames, setFrames] = useState<ScrubFrame[]>([]);
 
   useEffect(() => {
-    if (!vttUrl) {
-      // Clear stale frames when the caller hides the URL (e.g. the
-      // player is tearing down an episode). The updater form returns
-      // the same reference when the array is already empty so React
-      // skips the render, which keeps the effect idempotent even
-      // though we're calling setState from inside it.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFrames((prev) => (prev.length === 0 ? prev : []));
-      return;
-    }
+    // Always drop frames from the previous URL on change. Without
+    // this, switching between two non-empty URLs (e.g. auto-advance
+    // to the next episode) would briefly render the prior media's
+    // tiles while the new VTT fetch is in flight. The updater form
+    // returns the same reference when the array is already empty so
+    // React skips the render in the steady state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFrames((prev) => (prev.length === 0 ? prev : []));
+    if (!vttUrl) return;
     const controller = new AbortController();
 
     (async () => {
