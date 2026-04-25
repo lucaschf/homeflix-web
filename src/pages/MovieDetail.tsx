@@ -4,10 +4,12 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Collapse,
+  Grid,
   IconButton,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -31,23 +33,74 @@ export function MovieDetail() {
   const toggleWatchlist = useToggleWatchlist();
   const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
   const langs = useMemo(() => uniqueLanguages(movie?.files ?? []), [movie?.files]);
-  const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const theme = useTheme();
+  // Mobile mode hides ALL detail rows behind the toggle (Crunchyroll
+  // style — vertical space is too precious to spend on a fixed
+  // initial details list). Desktop keeps the first ``DETAILS_VISIBLE_COLLAPSED``
+  // rows visible at a glance and the toggle reveals the rest.
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  // Single ``expanded`` state controls BOTH the synopsis line-clamp
+  // and how many ``DetailRow``s are visible — Crunchyroll-style
+  // "Mais detalhes" toggle that opens both columns of the body grid
+  // together, so the user reads "the rest of the page" with one
+  // click instead of two separate toggles.
+  const [expanded, setExpanded] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
   const synopsisRef = useRef<HTMLDivElement>(null);
-  const SYNOPSIS_COLLAPSED = 80;
-  // Track whether the synopsis text overflows the collapsed height
-  // via state so the "Show more" link can render without reading
-  // ref.current during render (which React 19 flags as unsafe).
+  const SYNOPSIS_LINES = 3;
+  const DETAILS_VISIBLE_COLLAPSED = 2;
+  // Track whether the synopsis text overflows the clamped box so the
+  // toggle link can render without reading ref.current during render
+  // (React 19 flags ref reads in render). Only checks while
+  // collapsed — at that point ``scrollHeight`` is the full text and
+  // ``clientHeight`` is the line-clamped box, so a strict ``>``
+  // means there's hidden content waiting on the toggle.
   const [synopsisOverflows, setSynopsisOverflows] = useState(false);
   useEffect(() => {
+    if (expanded) return;
     const el = synopsisRef.current;
     if (!el) return;
-    const check = () => setSynopsisOverflows(el.scrollHeight > SYNOPSIS_COLLAPSED);
+    const check = () => setSynopsisOverflows(el.scrollHeight > el.clientHeight + 1);
     check();
     const observer = new ResizeObserver(check);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [SYNOPSIS_COLLAPSED]);
+  }, [movie?.synopsis, expanded]);
+
+  // Order matters: audio + subtitles first because they're the most
+  // useful "at a glance" facts for a media library — what languages
+  // am I getting? Matches how Crunchyroll orders the same panel.
+  // Computed once so both the right column and the "Mais detalhes"
+  // toggle below can consult ``rows.length`` consistently.
+  const detailRows = useMemo(() => {
+    if (!movie) return [];
+    const rows: { label: string; value: string }[] = [];
+    if (langs.audio.length > 0) {
+      rows.push({ label: t("detail.audio"), value: langs.audio.map(formatLanguage).join(", ") });
+    }
+    if (langs.subtitle.length > 0) {
+      rows.push({
+        label: t("detail.subtitles"),
+        value: langs.subtitle.map(formatLanguage).join(", "),
+      });
+    }
+    if (movie.directors.length > 0) {
+      rows.push({ label: t("detail.director"), value: movie.directors.join(", ") });
+    }
+    if (movie.writers.length > 0) {
+      rows.push({ label: t("detail.writers"), value: movie.writers.join(", ") });
+    }
+    if (movie.original_title && movie.original_title !== movie.title) {
+      rows.push({ label: t("detail.originalTitle"), value: movie.original_title });
+    }
+    if (movie.resolution) {
+      rows.push({ label: "Resolution", value: movie.resolution });
+    }
+    if (movie.imdb_id) {
+      rows.push({ label: "IMDb", value: movie.imdb_id });
+    }
+    return rows;
+  }, [movie, langs, t]);
 
   if (isLoading || !movie) {
     return (
@@ -59,10 +112,13 @@ export function MovieDetail() {
 
   return (
     <Box>
-      {/* Hero Header — mirrors the HeroBanner carousel: 75dvh tall,
-        backdrop + gradients bleed ~200-250px below the hero so they
-        cover the start of the body section without a hard cut. */}
-      <Box sx={{ position: "relative", width: "100%", height: "75dvh", minHeight: 500 }}>
+      {/* Hero Header — keeps the immersive backdrop + gradient
+        treatment from the HeroBanner carousel but a touch shorter
+        (56dvh vs 75dvh) so the body and cast carousel stay in the
+        first fold on a typical desktop viewport. The vertical
+        ``pb`` on the inner content matches HeroBanner's ``8/22`` so
+        the title + buttons don't crash into the body grid. */}
+      <Box sx={{ position: "relative", width: "100%", height: "56dvh", minHeight: 400 }}>
         {movie.backdrop_path && (
           <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 } }}>
             <Box
@@ -204,62 +260,88 @@ export function MovieDetail() {
         column on xs/sm. The cast row sits below the grid so it can
         breathe across the full content width regardless of the
         column split above. */}
-      <Box
+      <Grid
+        container
+        spacing={{ xs: 3, md: 6 }}
         sx={{
           position: "relative",
           zIndex: 1,
           px: { xs: 2, sm: 3, md: 6 },
-          pt: { xs: 2, md: 3 },
+          pt: { xs: 1, md: 1 },
           pb: { xs: 3, md: 4 },
-          maxWidth: 1200,
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "minmax(0, 2fr) minmax(0, 1fr)" },
-          gap: { xs: 3, md: 6 },
+          maxWidth: 1600,
         }}
       >
-        <Box>
+        <Grid size={{ xs: 12, md: 6 }}>
           {movie.synopsis && (
-            <>
-              <Collapse in={synopsisExpanded} collapsedSize={SYNOPSIS_COLLAPSED}>
-                <Typography ref={synopsisRef} variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.9rem", md: "1.0rem" } }}>
-                  {movie.synopsis}
-                </Typography>
-              </Collapse>
-              {synopsisOverflows && (
-                <Typography
-                  variant="body2"
-                  onClick={() => setSynopsisExpanded(!synopsisExpanded)}
-                  sx={{ color: "primary.main", cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}
-                >
-                  {synopsisExpanded ? t("detail.showLess") : t("detail.showMore")}
-                </Typography>
-              )}
-            </>
+            <Typography
+              ref={synopsisRef}
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                fontSize: { xs: "0.9rem", md: "1.0rem" },
+                // CSS line-clamp clamps at exactly ``SYNOPSIS_LINES``
+                // whole lines — no partial-letter sliver from a
+                // height that doesn't divide evenly into the line
+                // height. The "Mais detalhes" toggle below lifts
+                // this clamp AND reveals the hidden detail rows on
+                // the right at the same time, Crunchyroll-style.
+                ...(expanded
+                  ? {}
+                  : {
+                      display: "-webkit-box",
+                      WebkitLineClamp: SYNOPSIS_LINES,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }),
+              }}
+            >
+              {movie.synopsis}
+            </Typography>
           )}
-        </Box>
+          {(synopsisOverflows ||
+            (isMobile ? detailRows.length > 0 : detailRows.length > DETAILS_VISIBLE_COLLAPSED)) && (
+            <Typography
+              variant="body2"
+              onClick={() => setExpanded(!expanded)}
+              sx={{
+                color: "primary.main",
+                cursor: "pointer",
+                mt: 1.5,
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              {expanded ? t("detail.lessDetails") : t("detail.moreDetails")}
+            </Typography>
+          )}
+        </Grid>
 
-        <Box>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-            {movie.directors.length > 0 && (
-              <DetailRow label={t("detail.director")} value={movie.directors.join(", ")} />
-            )}
-            {movie.writers.length > 0 && (
-              <DetailRow label={t("detail.writers")} value={movie.writers.join(", ")} />
-            )}
-            {movie.original_title && movie.original_title !== movie.title && (
-              <DetailRow label={t("detail.originalTitle")} value={movie.original_title} />
-            )}
-            {movie.resolution && <DetailRow label="Resolution" value={movie.resolution} />}
-            {langs.audio.length > 0 && (
-              <DetailRow label={t("detail.audio")} value={langs.audio.map(formatLanguage).join(", ")} />
-            )}
-            {langs.subtitle.length > 0 && (
-              <DetailRow label={t("detail.subtitles")} value={langs.subtitle.map(formatLanguage).join(", ")} />
-            )}
-            {movie.imdb_id && <DetailRow label="IMDb" value={movie.imdb_id} />}
-          </Box>
-        </Box>
-      </Box>
+        {(() => {
+          // Visible row count depends on viewport AND expand state:
+          //   mobile + collapsed → 0 rows (column hidden entirely)
+          //   mobile + expanded  → all rows (stacks below synopsis)
+          //   desktop + collapsed → first ``DETAILS_VISIBLE_COLLAPSED``
+          //   desktop + expanded → all rows
+          const visible = expanded
+            ? detailRows
+            : isMobile
+              ? []
+              : detailRows.slice(0, DETAILS_VISIBLE_COLLAPSED);
+          if (visible.length === 0) return null;
+          return (
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+                {visible.map((row) => (
+                  <DetailRow key={row.label} label={row.label} value={row.value} />
+                ))}
+              </Box>
+            </Grid>
+          );
+        })()}
+      </Grid>
 
       {movie.cast.length > 0 && (
         // Reuse ``MediaCarousel`` so the cast row gets the same
@@ -284,12 +366,24 @@ export function MovieDetail() {
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
+  // Crunchyroll-style inline row: label and value share one
+  // ``<Typography>`` so long values wrap naturally to a second
+  // line at the right edge of the column instead of being clipped
+  // into a fixed-width label gutter. ``component="span"`` on the
+  // bold label keeps it inline with the surrounding text.
   return (
-    <Box sx={{ display: "flex", gap: 1 }}>
-      <Typography variant="body2" color="text.secondary" sx={{ minWidth: { xs: 80, md: 120 }, flexShrink: 0, fontSize: { xs: "0.85rem", md: "0.9rem" } }}>
+    <Typography
+      variant="body2"
+      color="text.secondary"
+      sx={{ fontSize: { xs: "0.85rem", md: "0.9rem" }, lineHeight: 1.4 }}
+    >
+      <Box
+        component="span"
+        sx={{ fontWeight: 600, color: "text.primary", mr: 0.5 }}
+      >
         {label}:
-      </Typography>
-      <Typography variant="body2" sx={{ fontSize: { xs: "0.85rem", md: "0.9rem" } }}>{value}</Typography>
-    </Box>
+      </Box>
+      {value}
+    </Typography>
   );
 }
