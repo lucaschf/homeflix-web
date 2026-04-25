@@ -51,6 +51,8 @@
     "synopsis": "Synopsis",
     "showMore": "Show more",
     "showLess": "Show less",
+    "moreDetails": "More details",
+    "lessDetails": "Less details",
     "fileVariants": "File Variants",
     "details": "Details",
     "originalTitle": "Original Title",
