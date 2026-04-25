@@ -90,7 +90,10 @@ export function SeriesDetail() {
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 }, background: { xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)", md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)" } }} />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
-          {series.poster_path && (
+          {series.poster_path && !series.logo_path && (
+            // See ``MovieDetail`` — poster is only shown when no
+            // title-logo is available, otherwise the two compete for
+            // visual identity at the top of the hero.
             <Box
               component="img"
               src={series.poster_path}
@@ -112,20 +115,19 @@ export function SeriesDetail() {
               maxHeight={{ xs: 50, sm: 70, md: 100 }}
               fallbackVariant="h1"
               fallbackFontSize={{ xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }}
-              sx={{ mb: 0.5 }}
             />
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
               {series.content_rating && <ContentRatingBadge rating={series.content_rating} size={24} />}
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>
                 {series.start_year}{series.end_year ? `–${series.end_year}` : "–"}
               </Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>
                 {t("common.seasons", { count: series.season_count })}
               </Typography>
               {series.genres.slice(0, 3).map((g) => (
-                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 20, fontSize: "0.65rem" }} />
+                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.75rem" }} />
               ))}
             </Box>
 
@@ -195,7 +197,7 @@ export function SeriesDetail() {
         {series.synopsis && (
           <>
             <Collapse in={synopsisExpanded} collapsedSize={SYNOPSIS_COLLAPSED}>
-              <Typography ref={synopsisRef} variant="body1" color="text.secondary" sx={{ maxWidth: 800, fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
+              <Typography ref={synopsisRef} variant="body1" color="text.secondary" sx={{ maxWidth: 800, fontSize: { xs: "0.9rem", md: "1.0rem" } }}>
                 {series.synopsis}
               </Typography>
             </Collapse>

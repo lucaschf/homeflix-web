@@ -32,7 +32,7 @@ export function MovieDetail() {
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
   const synopsisRef = useRef<HTMLDivElement>(null);
-  const SYNOPSIS_COLLAPSED = 60;
+  const SYNOPSIS_COLLAPSED = 80;
   // Track whether the synopsis text overflows the collapsed height
   // via state so the "Show more" link can render without reading
   // ref.current during render (which React 19 flags as unsafe).
@@ -57,8 +57,10 @@ export function MovieDetail() {
 
   return (
     <Box>
-      {/* Hero Header */}
-      <Box sx={{ position: "relative", width: "100%", height: "56dvh", minHeight: 400 }}>
+      {/* Hero Header — mirrors the HeroBanner carousel: 75dvh tall,
+        backdrop + gradients bleed ~200-250px below the hero so they
+        cover the start of the body section without a hard cut. */}
+      <Box sx={{ position: "relative", width: "100%", height: "75dvh", minHeight: 500 }}>
         {movie.backdrop_path && (
           <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 } }}>
             <Box
@@ -69,11 +71,40 @@ export function MovieDetail() {
             />
           </Box>
         )}
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 }, background: { xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)", md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)" } }} />
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 }, background: { xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)", md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)" } }} />
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: { xs: -200, md: -250 },
+            background: {
+              xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)",
+              md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
+            },
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: { xs: -200, md: -250 },
+            background: {
+              xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)",
+              md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)",
+            },
+          }}
+        />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
-          {movie.poster_path && (
+          {movie.poster_path && !movie.logo_path && (
+            // Poster is shown only when there's no localized title-logo
+            // — when the logo is present it carries the visual identity
+            // and the poster would compete for attention. Titles
+            // without a TMDB logo (less popular catalog items) keep
+            // the poster so the header still feels rich.
             <Box
               component="img"
               src={movie.poster_path}
@@ -95,18 +126,17 @@ export function MovieDetail() {
               maxHeight={{ xs: 50, sm: 70, md: 100 }}
               fallbackVariant="h1"
               fallbackFontSize={{ xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }}
-              sx={{ mb: 0.5 }}
             />
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
               {movie.content_rating && (
                 <ContentRatingBadge rating={movie.content_rating} size={24} />
               )}
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>{movie.year}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>{movie.year}</Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.7rem", md: "0.75rem" } }}>{movie.duration_formatted}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>{movie.duration_formatted}</Typography>
               {movie.genres.slice(0, 3).map((g) => (
-                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 20, fontSize: "0.65rem" }} />
+                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.75rem" }} />
               ))}
             </Box>
 
@@ -168,55 +198,73 @@ export function MovieDetail() {
       </Box>
 
       {/* Body */}
-      <Box sx={{ position: "relative", zIndex: 1, px: { xs: 2, sm: 3, md: 6 }, pt: { xs: 2, md: 3 }, pb: { xs: 3, md: 4 }, maxWidth: 1000 }}>
-        {movie.synopsis && (
-          <>
-            <Typography variant="h2" sx={{ mb: 1.5, fontSize: { xs: "1.1rem", md: "1.375rem" } }}>{t("detail.synopsis")}</Typography>
-            <Collapse in={synopsisExpanded} collapsedSize={SYNOPSIS_COLLAPSED}>
-              <Typography ref={synopsisRef} variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
-                {movie.synopsis}
+      {/* Body — Crunchyroll-style two-column on md+: reading content
+        (synopsis, cast) on the left, key/value details on the right.
+        Stacks to single column on xs/sm so neither column ends up
+        cramped on phones. */}
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          px: { xs: 2, sm: 3, md: 6 },
+          pt: { xs: 2, md: 3 },
+          pb: { xs: 3, md: 4 },
+          maxWidth: 1200,
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "minmax(0, 2fr) minmax(0, 1fr)" },
+          gap: { xs: 3, md: 6 },
+        }}
+      >
+        <Box>
+          {movie.synopsis && (
+            <>
+              <Collapse in={synopsisExpanded} collapsedSize={SYNOPSIS_COLLAPSED}>
+                <Typography ref={synopsisRef} variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.9rem", md: "1.0rem" } }}>
+                  {movie.synopsis}
+                </Typography>
+              </Collapse>
+              {synopsisOverflows && (
+                <Typography
+                  variant="body2"
+                  onClick={() => setSynopsisExpanded(!synopsisExpanded)}
+                  sx={{ color: "primary.main", cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}
+                >
+                  {synopsisExpanded ? t("detail.showLess") : t("detail.showMore")}
+                </Typography>
+              )}
+            </>
+          )}
+
+          {movie.cast.length > 0 && (
+            <>
+              <Typography variant="h2" sx={{ mt: 3, mb: 1, fontSize: { xs: "1.25rem", md: "1.5rem" } }}>{t("detail.cast")}</Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.9rem", md: "1.0rem" } }}>
+                {movie.cast.join(", ")}
               </Typography>
-            </Collapse>
-            {synopsisOverflows && (
-              <Typography
-                variant="body2"
-                onClick={() => setSynopsisExpanded(!synopsisExpanded)}
-                sx={{ color: "primary.main", cursor: "pointer", mt: 0.5, "&:hover": { textDecoration: "underline" } }}
-              >
-                {synopsisExpanded ? t("detail.showLess") : t("detail.showMore")}
-              </Typography>
+            </>
+          )}
+        </Box>
+
+        <Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+            {movie.directors.length > 0 && (
+              <DetailRow label={t("detail.director")} value={movie.directors.join(", ")} />
             )}
-          </>
-        )}
-
-        {movie.cast.length > 0 && (
-          <>
-            <Typography variant="h2" sx={{ mt: 3, mb: 1, fontSize: { xs: "1.1rem", md: "1.375rem" } }}>{t("detail.cast")}</Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
-              {movie.cast.join(", ")}
-            </Typography>
-          </>
-        )}
-
-        <Typography variant="h2" sx={{ mt: 3, mb: 1, fontSize: { xs: "1.1rem", md: "1.375rem" } }}>{t("detail.details")}</Typography>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-          {movie.directors.length > 0 && (
-            <DetailRow label={t("detail.director")} value={movie.directors.join(", ")} />
-          )}
-          {movie.writers.length > 0 && (
-            <DetailRow label={t("detail.writers")} value={movie.writers.join(", ")} />
-          )}
-          {movie.original_title && movie.original_title !== movie.title && (
-            <DetailRow label={t("detail.originalTitle")} value={movie.original_title} />
-          )}
-          {movie.resolution && <DetailRow label="Resolution" value={movie.resolution} />}
-          {langs.audio.length > 0 && (
-            <DetailRow label={t("detail.audio")} value={langs.audio.map(formatLanguage).join(", ")} />
-          )}
-          {langs.subtitle.length > 0 && (
-            <DetailRow label={t("detail.subtitles")} value={langs.subtitle.map(formatLanguage).join(", ")} />
-          )}
-          {movie.imdb_id && <DetailRow label="IMDb" value={movie.imdb_id} />}
+            {movie.writers.length > 0 && (
+              <DetailRow label={t("detail.writers")} value={movie.writers.join(", ")} />
+            )}
+            {movie.original_title && movie.original_title !== movie.title && (
+              <DetailRow label={t("detail.originalTitle")} value={movie.original_title} />
+            )}
+            {movie.resolution && <DetailRow label="Resolution" value={movie.resolution} />}
+            {langs.audio.length > 0 && (
+              <DetailRow label={t("detail.audio")} value={langs.audio.map(formatLanguage).join(", ")} />
+            )}
+            {langs.subtitle.length > 0 && (
+              <DetailRow label={t("detail.subtitles")} value={langs.subtitle.map(formatLanguage).join(", ")} />
+            )}
+            {movie.imdb_id && <DetailRow label="IMDb" value={movie.imdb_id} />}
+          </Box>
         </Box>
       </Box>
 
@@ -230,10 +278,10 @@ export function MovieDetail() {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <Box sx={{ display: "flex", gap: 1 }}>
-      <Typography variant="body2" color="text.secondary" sx={{ minWidth: { xs: 80, md: 120 }, flexShrink: 0, fontSize: { xs: "0.75rem", md: "0.8rem" } }}>
+      <Typography variant="body2" color="text.secondary" sx={{ minWidth: { xs: 80, md: 120 }, flexShrink: 0, fontSize: { xs: "0.85rem", md: "0.9rem" } }}>
         {label}:
       </Typography>
-      <Typography variant="body2" sx={{ fontSize: { xs: "0.75rem", md: "0.8rem" } }}>{value}</Typography>
+      <Typography variant="body2" sx={{ fontSize: { xs: "0.85rem", md: "0.9rem" } }}>{value}</Typography>
     </Box>
   );
 }

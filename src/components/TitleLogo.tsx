@@ -69,7 +69,7 @@ export function TitleLogo({
           maxWidth: "100%",
           objectFit: "contain",
           objectPosition: "left",
-          mb: 1,
+          mb: 3,
           cursor: onClick ? "pointer" : "default",
           ...sx,
         }}
