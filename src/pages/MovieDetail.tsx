@@ -13,8 +13,9 @@ import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEnrichMovie, useIsInWatchlist, useMovie, useProgress, useToggleWatchlist } from "../api/hooks";
-import { CastRow } from "../components/CastRow";
+import { CastCard } from "../components/CastCard";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { MediaCarousel } from "../components/MediaCarousel";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
@@ -261,22 +262,17 @@ export function MovieDetail() {
       </Box>
 
       {movie.cast.length > 0 && (
-        // Full content-width — drops the ``maxWidth: 1200`` of the
-        // synopsis/details grid so the cast row uses the entire
-        // horizontal canvas, mirroring how the genre carousels on
-        // the home/browse pages span the page.
-        <Box
-          sx={{
-            position: "relative",
-            zIndex: 1,
-            px: { xs: 2, sm: 3, md: 6 },
-            pb: { xs: 4, md: 6 },
-          }}
-        >
-          <Typography variant="h2" sx={{ mb: 1.5, fontSize: { xs: "1.25rem", md: "1.5rem" } }}>
-            {t("detail.cast")}
-          </Typography>
-          <CastRow members={movie.cast} />
+        // Reuse ``MediaCarousel`` so the cast row gets the same
+        // hover-arrows + hidden-scrollbar UX as the genre carousels
+        // on the home/browse pages — one navigation pattern across
+        // every horizontal list. ``zIndex: 1`` keeps the cards above
+        // the page-level backdrop / gradient layers.
+        <Box sx={{ position: "relative", zIndex: 1 }}>
+          <MediaCarousel title={t("detail.cast")}>
+            {movie.cast.map((member, idx) => (
+              <CastCard key={`${member.name}-${idx}`} member={member} />
+            ))}
+          </MediaCarousel>
         </Box>
       )}
 
