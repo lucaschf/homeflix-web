@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
+import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { TitleLogo } from "../components/TitleLogo";
@@ -361,7 +362,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 0.5, flexWrap: "wrap" }}>
           <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: "0.65rem", md: "0.7rem" } }}>
-            {episode.duration_formatted}
+            {formatDuration(episode.duration_seconds)}
             {episode.air_date && ` | ${episode.air_date}`}
           </Typography>
           {langs.audio.length > 0 && (

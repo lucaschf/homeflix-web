@@ -11,6 +11,7 @@ import { Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SeriesDetail } from "../api/types";
 import { peach } from "../theme/colors";
+import { formatDuration } from "../utils/duration";
 
 interface EpisodeDrawerProps {
   series: SeriesDetail;
@@ -186,7 +187,7 @@ export function EpisodeDrawer({
                     {`${ep.episode_number}. ${ep.title}`}
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
-                    {ep.duration_formatted}
+                    {formatDuration(ep.duration_seconds)}
                   </Typography>
                   {ep.synopsis && (
                     <Typography

@@ -6,6 +6,7 @@ import { useByGenre, useFeatured, useGenres, type CatalogTypeFilter } from "../a
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
+import { formatDuration } from "../utils/duration";
 
 /**
  * Narrow an unvalidated ``?type=`` URL param down to the
@@ -42,7 +43,7 @@ export function Browse() {
         title: f.title,
         synopsis: f.synopsis,
         year: f.year,
-        duration: f.duration_formatted ?? undefined,
+        duration: f.duration_formatted ? formatDuration(f.duration_formatted) : undefined,
         genres: f.genres,
         backdropUrl: f.backdrop_path,
         logoUrl: f.logo_path,

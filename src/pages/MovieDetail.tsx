@@ -20,6 +20,7 @@ import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 
 export function MovieDetail() {
@@ -192,7 +193,7 @@ export function MovieDetail() {
               )}
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>{movie.year}</Typography>
               <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>{movie.duration_formatted}</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>{formatDuration(movie.duration_seconds)}</Typography>
               {movie.genres.slice(0, 3).map((g) => (
                 <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.75rem" }} />
               ))}

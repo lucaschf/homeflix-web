@@ -9,6 +9,7 @@ import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { peach } from "../theme/colors";
+import { formatDuration } from "../utils/duration";
 
 function formatRemaining(positionSeconds: number, durationSeconds: number): string {
   const remaining = Math.max(0, durationSeconds - positionSeconds);
@@ -41,7 +42,7 @@ export function Home() {
         title: f.title,
         synopsis: f.synopsis,
         year: f.year,
-        duration: f.duration_formatted ?? undefined,
+        duration: f.duration_formatted ? formatDuration(f.duration_formatted) : undefined,
         genres: f.genres,
         backdropUrl: f.backdrop_path,
         logoUrl: f.logo_path,
