@@ -14,9 +14,17 @@ import {
 import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEnrichMovie, useIsInWatchlist, useMovie, useProgress, useToggleWatchlist } from "../api/hooks";
+import {
+  useEnrichMovie,
+  useIsInWatchlist,
+  useMovie,
+  useProgress,
+  useRelatedMovies,
+  useToggleWatchlist,
+} from "../api/hooks";
 import { CastCard } from "../components/CastCard";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
@@ -28,6 +36,7 @@ export function MovieDetail() {
   const { movieId } = useParams<{ movieId: string }>();
   const navigate = useNavigate();
   const { data: movie, isLoading } = useMovie(movieId!);
+  const { data: relatedMovies } = useRelatedMovies(movieId ?? "");
   const { data: progress } = useProgress(movieId!);
   const enrichMutation = useEnrichMovie();
   const { data: inWatchlist } = useIsInWatchlist(movieId!);
@@ -354,6 +363,33 @@ export function MovieDetail() {
           <MediaCarousel title={t("detail.cast")}>
             {movie.cast.map((member, idx) => (
               <CastCard key={`${member.name}-${idx}`} member={member} />
+            ))}
+          </MediaCarousel>
+        </Box>
+      )}
+
+      {relatedMovies && relatedMovies.length > 0 && (
+        // "You might also like" — TMDB recommendations filtered to
+        // titles that exist in the local catalog. The use case
+        // returns ``[]`` when the source movie has no ``tmdb_id``,
+        // when TMDB returns nothing, or when no recommendation
+        // overlaps with the catalog; the carousel simply doesn't
+        // render in those cases (no empty header).
+        <Box sx={{ position: "relative", zIndex: 1 }}>
+          <MediaCarousel title={t("detail.related")}>
+            {relatedMovies.map((m) => (
+              <MediaCard
+                key={m.id}
+                title={m.title}
+                year={m.year}
+                imageUrl={m.poster_path ?? undefined}
+                synopsis={m.synopsis ?? undefined}
+                variant="poster"
+                mediaId={m.id}
+                mediaType="movie"
+                onPlay={() => navigate(`/play/movie/${m.id}`)}
+                onClick={() => navigate(`/movie/${m.id}`)}
+              />
             ))}
           </MediaCarousel>
         </Box>

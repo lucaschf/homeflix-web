@@ -180,6 +180,7 @@ export type ListMoviesResponse = ApiListResponse<MovieSummary>;
 export type ListSeriesResponse = ApiListResponse<SeriesSummary>;
 export type MovieDetailResponse = ApiDetailResponse<MovieDetail>;
 export type SeriesDetailResponse = ApiDetailResponse<SeriesDetail>;
+export type RelatedMoviesResponse = ApiListResponse<MovieSummary>;
 
 // One row in the catalog genres listing returned by /api/v1/catalog/genres.
 // `id` is the canonical English genre name (used as the filter key for the
