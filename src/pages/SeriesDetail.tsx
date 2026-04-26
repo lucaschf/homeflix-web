@@ -74,11 +74,15 @@ export function SeriesDetail() {
       : t("detail.watch");
 
   return (
-    <Box>
-      {/* Hero Header */}
+    <Box sx={{ position: "relative" }}>
+      {/* Hero Header — same structure as the home ``HeroBanner``:
+        backdrop image and gradient overlays bleed below the hero
+        box so the cinematic backdrop reaches the bottom edge of
+        the viewport. ``56dvh`` hero + ``-44dvh`` bleed = ``100dvh``
+        total, matching ``HeroBanner``'s look on common viewports. */}
       <Box sx={{ position: "relative", width: "100%", height: "56dvh", minHeight: 400 }}>
         {series.backdrop_path && (
-          <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 } }}>
+          <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh" }}>
             <Box
               component="img"
               src={series.backdrop_path}
@@ -87,8 +91,8 @@ export function SeriesDetail() {
             />
           </Box>
         )}
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 }, background: { xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)", md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)" } }} />
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 }, background: { xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)", md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)" } }} />
+        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)", md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)" } }} />
+        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 35%, rgba(13,13,13,0.85) 45%, rgba(13,13,13,0.5) 58%, rgba(13,13,13,0.2) 72%, transparent 85%)", md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 30%, rgba(13,13,13,0.85) 40%, rgba(13,13,13,0.5) 55%, rgba(13,13,13,0.15) 70%, transparent 80%)" } }} />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
           {series.poster_path && !series.logo_path && (
@@ -193,7 +197,8 @@ export function SeriesDetail() {
         <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} url={series.trailer_url} />
       )}
 
-      {/* Body */}
+      {/* Body — ``zIndex: 1`` keeps content above the hero's bleed
+        layers (which extend to the viewport bottom). */}
       <Box sx={{ position: "relative", zIndex: 1, px: { xs: 2, sm: 3, md: 6 }, pt: { xs: 1, md: 1 }, pb: { xs: 3, md: 4 } }}>
         {series.synopsis && (
           <>

@@ -121,16 +121,18 @@ export function MovieDetail() {
   }
 
   return (
-    <Box>
-      {/* Hero Header — keeps the immersive backdrop + gradient
-        treatment from the HeroBanner carousel but a touch shorter
-        (56dvh vs 75dvh) so the body and cast carousel stay in the
-        first fold on a typical desktop viewport. The vertical
-        ``pb`` on the inner content matches HeroBanner's ``8/22`` so
-        the title + buttons don't crash into the body grid. */}
+    <Box sx={{ position: "relative" }}>
+      {/* Hero Header — same structure as the home ``HeroBanner``:
+        backdrop image and gradient overlays bleed below the hero
+        box so the cinematic backdrop reaches the bottom edge of
+        the viewport. ``56dvh`` hero + ``-44dvh`` bleed = ``100dvh``
+        total, matching ``HeroBanner``'s ``75dvh + ~250px`` look on
+        common viewports. The bleed values are the only difference
+        from ``HeroBanner`` — gradient stops are intentionally
+        identical so the two surfaces feel like one design. */}
       <Box sx={{ position: "relative", width: "100%", height: "56dvh", minHeight: 400 }}>
         {movie.backdrop_path && (
-          <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: { xs: -200, md: -250 } }}>
+          <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh" }}>
             <Box
               component="img"
               src={movie.backdrop_path}
@@ -145,7 +147,7 @@ export function MovieDetail() {
             top: 0,
             left: 0,
             right: 0,
-            bottom: { xs: -200, md: -250 },
+            bottom: "-44dvh",
             background: {
               xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)",
               md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
@@ -158,10 +160,17 @@ export function MovieDetail() {
             top: 0,
             left: 0,
             right: 0,
-            bottom: { xs: -200, md: -250 },
+            bottom: "-44dvh",
             background: {
-              xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)",
-              md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)",
+              // Fully-dark band extends to ~35% / ~30% of the layer
+              // (i.e. covers the entire bleed below the hero box) so
+              // cast and related carousels sit on a solid dark
+              // surface even though the layer reaches the viewport
+              // bottom. Above that, the gradient still fades to
+              // transparent in the upper hero region so the backdrop
+              // image stays visible there.
+              xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 35%, rgba(13,13,13,0.85) 45%, rgba(13,13,13,0.5) 58%, rgba(13,13,13,0.2) 72%, transparent 85%)",
+              md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 30%, rgba(13,13,13,0.85) 40%, rgba(13,13,13,0.5) 55%, rgba(13,13,13,0.15) 70%, transparent 80%)",
             },
           }}
         />
@@ -269,7 +278,9 @@ export function MovieDetail() {
         left, key / value details on the right. Stacks to single
         column on xs/sm. The cast row sits below the grid so it can
         breathe across the full content width regardless of the
-        column split above. */}
+        column split above. ``zIndex: 1`` keeps the content above
+        the hero's bleed (which extends to the viewport bottom
+        with the backdrop and gradient overlays). */}
       <Grid
         container
         spacing={{ xs: 3, md: 6 }}
@@ -358,7 +369,7 @@ export function MovieDetail() {
         // hover-arrows + hidden-scrollbar UX as the genre carousels
         // on the home/browse pages — one navigation pattern across
         // every horizontal list. ``zIndex: 1`` keeps the cards above
-        // the page-level backdrop / gradient layers.
+        // the hero's bleed layers.
         <Box sx={{ position: "relative", zIndex: 1 }}>
           <MediaCarousel title={t("detail.cast")}>
             {movie.cast.map((member, idx) => (
