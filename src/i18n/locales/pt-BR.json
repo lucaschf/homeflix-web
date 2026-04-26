@@ -102,7 +102,24 @@
     "movieCount": "{{count}} filme",
     "movieCount_other": "{{count}} filmes",
     "noMovies": "Nenhum filme com este ator no acervo",
-    "filmography": "Filmografia"
+    "filmography": "Filmografia",
+    "born": "Nascido em {{date}}",
+    "lifeSpan": "{{birth}} – {{death}}",
+    "bioMore": "Mais",
+    "bioLess": "Menos",
+    "department": {
+      "Acting": "Atuação",
+      "Directing": "Direção",
+      "Writing": "Roteiro",
+      "Production": "Produção",
+      "Sound": "Som",
+      "Editing": "Edição",
+      "Camera": "Câmera",
+      "Art": "Arte",
+      "Costume & Make-Up": "Figurino e Maquiagem",
+      "Visual Effects": "Efeitos Visuais",
+      "Crew": "Equipe"
+    }
   },
   "browse": {
     "all": "Todos",
@@ -228,6 +245,8 @@
     "testKey": "Testar",
     "enrichAll": "Enriquecer Todos",
     "enriching": "Enriquecendo...",
+    "forceEnrich": "Forçar atualização",
+    "forceEnrichHint": "Reescreve sinopse, capa, elenco e demais campos do TMDB nos filmes já enriquecidos.",
     "about": "Sobre",
     "version": "Versao",
     "apiStatus": "Status da API",

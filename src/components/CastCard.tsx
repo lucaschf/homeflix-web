@@ -45,7 +45,13 @@ export function CastCard({ member }: CastCardProps) {
   const navigate = useNavigate();
   const goToActor = () => {
     navigate(`/actor/${encodeURIComponent(member.name)}`, {
-      state: { profilePath: member.profile_path },
+      state: {
+        profilePath: member.profile_path,
+        // Forwarded so the actor page can fetch bio without an extra
+        // round-trip — the source movie's cast already carries the
+        // person id from TMDB enrichment.
+        tmdbId: member.tmdb_id,
+      },
     });
   };
   return (

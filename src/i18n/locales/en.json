@@ -102,7 +102,24 @@
     "movieCount": "{{count}} movie",
     "movieCount_other": "{{count}} movies",
     "noMovies": "No movies featuring this actor in the library",
-    "filmography": "Filmography"
+    "filmography": "Filmography",
+    "born": "Born {{date}}",
+    "lifeSpan": "{{birth}} – {{death}}",
+    "bioMore": "More",
+    "bioLess": "Less",
+    "department": {
+      "Acting": "Acting",
+      "Directing": "Directing",
+      "Writing": "Writing",
+      "Production": "Production",
+      "Sound": "Sound",
+      "Editing": "Editing",
+      "Camera": "Camera",
+      "Art": "Art",
+      "Costume & Make-Up": "Costume & Make-Up",
+      "Visual Effects": "Visual Effects",
+      "Crew": "Crew"
+    }
   },
   "browse": {
     "all": "All",
@@ -228,6 +245,8 @@
     "testKey": "Test",
     "enrichAll": "Enrich All",
     "enriching": "Enriching...",
+    "forceEnrich": "Force update",
+    "forceEnrichHint": "Overwrites synopsis, poster, cast, and other TMDB fields on movies that were already enriched.",
     "about": "About",
     "version": "Version",
     "apiStatus": "API Status",

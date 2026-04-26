@@ -53,6 +53,33 @@ export interface CastMemberOutput {
   profile_path: string | null;
   /** Character name played, or ``null`` when not provided. */
   role: string | null;
+  /**
+   * TMDB person id, or ``null`` for rows enriched before the id was
+   * captured. The actor page uses this to fetch biography from
+   * ``/api/v1/people/:id``; absence keeps a name-only header.
+   */
+  tmdb_id: number | null;
+}
+
+export interface PersonBio {
+  tmdb_id: number;
+  name: string;
+  /** Long-form biography. May be an empty string when TMDB has none. */
+  biography: string;
+  /** ISO date or ``null``. */
+  birthday: string | null;
+  /** ISO date or ``null``. */
+  deathday: string | null;
+  place_of_birth: string | null;
+  /** Primary department on TMDB (e.g. ``"Acting"``), or ``null``. */
+  known_for_department: string | null;
+  /** Full URL to the profile photo, or ``null``. */
+  profile_path: string | null;
+}
+
+export interface PersonBioResponse {
+  type: string;
+  data: PersonBio;
 }
 
 export interface MovieDetail {
