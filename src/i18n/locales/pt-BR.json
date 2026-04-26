@@ -98,6 +98,12 @@
     "NC-17": "Apenas adultos (proibido para menores de 17)",
     "NR": "Sem classificação"
   },
+  "actor": {
+    "movieCount": "{{count}} filme",
+    "movieCount_other": "{{count}} filmes",
+    "noMovies": "Nenhum filme com este ator no acervo",
+    "filmography": "Filmografia"
+  },
   "browse": {
     "all": "Todos",
     "genre": "Genero",

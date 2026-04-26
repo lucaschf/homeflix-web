@@ -98,6 +98,12 @@
     "NC-17": "Adults only (no one under 17)",
     "NR": "Not rated"
   },
+  "actor": {
+    "movieCount": "{{count}} movie",
+    "movieCount_other": "{{count}} movies",
+    "noMovies": "No movies featuring this actor in the library",
+    "filmography": "Filmography"
+  },
   "browse": {
     "all": "All",
     "genre": "Genre",
