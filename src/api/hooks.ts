@@ -34,6 +34,8 @@ import type {
   MovieDetailResponse,
   MovieSummary,
   MoviesByActorResponse,
+  PersonBio,
+  PersonBioResponse,
   RelatedMoviesResponse,
   ProgressOutput,
   ProgressResponse,
@@ -208,6 +210,47 @@ export function useMoviesByActor(actorName: string) {
     fetchNextPage: query.fetchNextPage,
     isError: query.isError,
   };
+}
+
+// ── People (cast bio) ───────────────────────────────────
+
+/**
+ * Fetch biographical metadata for a TMDB person.
+ *
+ * Used by the actor page to render bio + birth date + known
+ * department alongside the catalog filmography. The hook is
+ * disabled when ``tmdbId`` is ``null`` so the page doesn't fire a
+ * request for actors whose ``tmdb_id`` wasn't captured during
+ * enrichment — those degrade to a name-only header instead.
+ *
+ * 404 / network errors collapse to ``null`` at the API layer; the
+ * caller keeps rendering and just hides the bio block.
+ */
+export function usePerson(tmdbId: number | null) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    // ``lang`` is part of the cache key so switching the UI
+    // language doesn't serve a stale cached bio in the wrong
+    // language until the next stale-time tick.
+    queryKey: ["person", tmdbId, lang],
+    queryFn: async (): Promise<PersonBio | null> => {
+      if (tmdbId == null) return null;
+      try {
+        const resp = await api.get<PersonBioResponse>(`/people/${tmdbId}`, { lang });
+        return resp.data;
+      } catch {
+        // Treat 404 / network failure as "no bio available" so the
+        // actor page renders the catalog-only header instead of an
+        // error state. Bio is best-effort polish, never load-bearing.
+        return null;
+      }
+    },
+    enabled: tmdbId != null,
+    // Bios change rarely; keep the cache warm so navigating back to
+    // the same actor doesn't re-fetch.
+    staleTime: 1000 * 60 * 60,
+  });
 }
 
 // ── Search ──────────────────────────────────────────────

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
+  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
@@ -10,6 +11,7 @@ import {
   DialogTitle,
   Divider,
   FormControl,
+  FormControlLabel,
   FormHelperText,
   IconButton,
   InputLabel,
@@ -67,6 +69,13 @@ export function Settings() {
   const [editingLibrary, setEditingLibrary] = useState<Library | null>(null);
   const scanMutation = useScan();
   const enrichMutation = useBulkEnrich();
+  // ``forceEnrich`` toggles whether the bulk-enrich call rewrites
+  // already-populated fields (cast, synopsis, posters, etc.) on
+  // movies that were enriched before. The checkbox under the
+  // button surfaces the choice — default off mirrors the safe
+  // pre-existing behavior, opt-in is the only way to backfill new
+  // fields like the cast member ``tmdb_id``.
+  const [forceEnrich, setForceEnrich] = useState(false);
   const { data: health } = useHealth();
 
   // ── Libraries (backend-backed) ──────────────────────────
@@ -348,13 +357,33 @@ export function Settings() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
           <Button
             variant="outlined"
-            onClick={() => enrichMutation.mutate(false)}
+            onClick={() => enrichMutation.mutate(forceEnrich)}
             disabled={enrichMutation.isPending}
             fullWidth
             sx={{ borderColor: "rgba(255,255,255,0.15)" }}
           >
             {enrichMutation.isPending ? t("settings.enriching") : t("settings.enrichAll")}
           </Button>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={forceEnrich}
+                onChange={(e) => setForceEnrich(e.target.checked)}
+                size="small"
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {t("settings.forceEnrich")}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                  {t("settings.forceEnrichHint")}
+                </Typography>
+              </Box>
+            }
+            sx={{ alignItems: "flex-start", m: 0 }}
+          />
         </Box>
       </SettingsSection>
 
