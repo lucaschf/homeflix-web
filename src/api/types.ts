@@ -177,6 +177,7 @@ export interface ApiDetailResponse<T> {
 }
 
 export type ListMoviesResponse = ApiListResponse<MovieSummary>;
+export type MoviesByActorResponse = ApiListResponse<MovieSummary>;
 export type ListSeriesResponse = ApiListResponse<SeriesSummary>;
 export type MovieDetailResponse = ApiDetailResponse<MovieDetail>;
 export type SeriesDetailResponse = ApiDetailResponse<SeriesDetail>;

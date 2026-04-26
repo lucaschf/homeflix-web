@@ -33,6 +33,7 @@ import type {
   MovieDetail,
   MovieDetailResponse,
   MovieSummary,
+  MoviesByActorResponse,
   RelatedMoviesResponse,
   ProgressOutput,
   ProgressResponse,
@@ -151,6 +152,56 @@ export function useByGenre(genreId: string, options: CatalogQueryOptions = {}) {
 
   return {
     items,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    hasNextPage: !!query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    isError: query.isError,
+  };
+}
+
+// ── Catalog (per-actor) ─────────────────────────────────
+
+// Page size for the per-actor infinite query. Same heuristic as
+// ``BY_GENRE_PAGE_SIZE`` — fills a couple viewport widths of a
+// vertical grid so the user rarely sees a loading spinner mid-scroll.
+const BY_ACTOR_PAGE_SIZE = 24;
+
+/**
+ * Cursor-paginated infinite query for movies whose cast contains
+ * the given actor. The Actor page mounts this hook with the name
+ * URL-decoded from the route param and renders a vertical grid of
+ * the resulting movies.
+ *
+ * The hook is disabled when ``actorName`` is empty so it doesn't
+ * fire while the route resolver is still loading the param.
+ */
+export function useMoviesByActor(actorName: string) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  const query = useInfiniteQuery({
+    queryKey: ["catalog", "by-actor", actorName, lang],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const params: Record<string, string> = {
+        name: actorName,
+        lang,
+        limit: String(BY_ACTOR_PAGE_SIZE),
+      };
+      if (pageParam) params.cursor = pageParam;
+      return api.get<MoviesByActorResponse>("/catalog/by-actor", params);
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
+    enabled: !!actorName,
+  });
+
+  const movies = useMemo<MovieSummary[]>(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
+
+  return {
+    movies,
     isLoading: query.isLoading,
     isFetchingNextPage: query.isFetchingNextPage,
     hasNextPage: !!query.hasNextPage,
