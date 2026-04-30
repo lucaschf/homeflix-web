@@ -82,7 +82,8 @@
     "back": "Voltar",
     "preparing": "Preparando vídeo…",
     "episodes": "Episódios",
-    "notAvailable": "indisponível"
+    "notAvailable": "indisponível",
+    "skipIntro": "Pular abertura"
   },
   "rating": {
     "L": "Livre para todos os públicos",
