@@ -1589,10 +1589,11 @@ export function Player() {
       </Box>
 
       {/* Skip Intro Overlay — shown only while playback is inside the
-          intro window. Sticks to the same bottom-right anchor as the
-          next-episode prompt; in practice the two never overlap
-          (intro is at the start of an episode, next-episode prompt
-          fires near the end). */}
+          intro window. Anchored to the right edge of the
+          remaining-time label above the seek bar so the button shares
+          a vertical line with it. The next-episode prompt fires near
+          the end of an episode, so the two overlays never share the
+          screen in practice. */}
       {currentIntro &&
         currentTime >= currentIntro.start_seconds &&
         currentTime < currentIntro.end_seconds && (
@@ -1600,7 +1601,7 @@ export function Player() {
             sx={{
               position: "absolute",
               bottom: { xs: 80, md: 120 },
-              right: { xs: 16, md: 48 },
+              right: { xs: 12, md: 40 },
               zIndex: 10,
             }}
           >
@@ -1609,7 +1610,7 @@ export function Player() {
               size="small"
               onClick={skipIntro}
               startIcon={<SkipForward size={14} />}
-              sx={{ minWidth: 0, px: 1.5 }}
+              sx={{ minWidth: 140, px: 2.5 }}
             >
               {t("player.skipIntro")}
             </Button>
