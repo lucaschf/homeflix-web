@@ -354,13 +354,17 @@ export function Player() {
   const seasonNum = isMovie ? 0 : Number(params.season);
   const episodeNum = isMovie ? 0 : Number(params.episode);
 
-  // Find episode duration from series data
-  const episodeDuration = (() => {
-    if (isMovie || !seriesData) return 0;
+  // Find the current episode entity (used for duration + intro marker
+  // lookup). Memoised so the derived overlays do not re-run on every
+  // render of the player when seriesData / params are stable.
+  const currentEpisode = useMemo(() => {
+    if (isMovie || !seriesData) return null;
     const season = seriesData.seasons.find((s) => s.season_number === seasonNum);
-    const episode = season?.episodes.find((e) => e.episode_number === episodeNum);
-    return episode?.duration_seconds ?? 0;
-  })();
+    return season?.episodes.find((e) => e.episode_number === episodeNum) ?? null;
+  }, [isMovie, seriesData, seasonNum, episodeNum]);
+
+  const episodeDuration = currentEpisode?.duration_seconds ?? 0;
+  const currentIntro = currentEpisode?.intro ?? null;
 
   // Compute next episode for auto-advance
   const nextEpisode = useMemo(() => {
@@ -1016,6 +1020,12 @@ export function Player() {
     }
   }, [nextEpisode, navigate, params.seriesId, seriesDetailPath]);
 
+  const skipIntro = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !currentIntro) return;
+    video.currentTime = currentIntro.end_seconds;
+  }, [currentIntro]);
+
   const cancelNextEpisode = useCallback(() => {
     if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     setNextEpCountdown(null);
@@ -1577,6 +1587,34 @@ export function Player() {
           </Box>
         </Box>
       </Box>
+
+      {/* Skip Intro Overlay — shown only while playback is inside the
+          intro window. Sticks to the same bottom-right anchor as the
+          next-episode prompt; in practice the two never overlap
+          (intro is at the start of an episode, next-episode prompt
+          fires near the end). */}
+      {currentIntro &&
+        currentTime >= currentIntro.start_seconds &&
+        currentTime < currentIntro.end_seconds && (
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: { xs: 80, md: 120 },
+              right: { xs: 16, md: 48 },
+              zIndex: 10,
+            }}
+          >
+            <Button
+              variant="contained"
+              size="small"
+              onClick={skipIntro}
+              startIcon={<SkipForward size={14} />}
+              sx={{ minWidth: 0, px: 1.5 }}
+            >
+              {t("player.skipIntro")}
+            </Button>
+          </Box>
+        )}
 
       {/* Next Episode Overlay */}
       {nextEpCountdown !== null && nextEpisode && (

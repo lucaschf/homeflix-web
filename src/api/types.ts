@@ -109,6 +109,14 @@ export interface MovieDetail {
   updated_at: string;
 }
 
+export interface IntroMarkerOutput {
+  start_seconds: number;
+  end_seconds: number;
+  source: "AUTO_DETECTED" | "MANUAL";
+  confidence: number | null;
+  detected_at: string;
+}
+
 export interface EpisodeOutput {
   id: string | null;
   episode_number: number;
@@ -122,6 +130,7 @@ export interface EpisodeOutput {
   files: MediaFileOutput[];
   thumbnail_path: string | null;
   air_date: string | null;
+  intro: IntroMarkerOutput | null;
   progress_percentage: number | null;
   position_seconds: number | null;
   watch_status: string | null;

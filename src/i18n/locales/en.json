@@ -82,7 +82,8 @@
     "back": "Back",
     "preparing": "Preparing video…",
     "episodes": "Episodes",
-    "notAvailable": "not available"
+    "notAvailable": "not available",
+    "skipIntro": "Skip Intro"
   },
   "rating": {
     "L": "General audiences",
