@@ -40,6 +40,7 @@ import type {
   PersonBio,
   PersonBioResponse,
   RelatedMoviesResponse,
+  RelatedSeriesResponse,
   ProgressOutput,
   ProgressResponse,
   ScanResponse,
@@ -339,6 +340,32 @@ export function useRelatedMovies(movieId: string, limit = 12) {
       return resp.data;
     },
     enabled: !!movieId,
+  });
+}
+
+/**
+ * Fetch the "you might also like" list for a series — TMDB
+ * recommendations filtered to titles that exist in the local
+ * catalog, ordered by TMDB's relevance score.
+ *
+ * Same best-effort contract as ``useRelatedMovies``: empty list
+ * when the series has no ``tmdb_id``, the provider returns nothing,
+ * or no recommendation overlaps with the catalog. The carousel
+ * just doesn't render.
+ */
+export function useRelatedSeries(seriesId: string, limit = 12) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["related-series", seriesId, lang, limit],
+    queryFn: async (): Promise<SeriesSummary[]> => {
+      const resp = await api.get<RelatedSeriesResponse>(`/series/${seriesId}/related`, {
+        lang,
+        limit: String(limit),
+      });
+      return resp.data;
+    },
+    enabled: !!seriesId,
   });
 }
 
