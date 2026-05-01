@@ -182,7 +182,9 @@ export interface SeriesDetail {
   season_count: number;
   total_episodes: number;
   seasons: SeasonOutput[];
-  cast: CastMemberOutput[];
+  // Optional because older backend builds don't return the field;
+  // consumers normalize via ``cast ?? []`` until those are gone.
+  cast?: CastMemberOutput[];
   created_at: string;
   updated_at: string;
 }

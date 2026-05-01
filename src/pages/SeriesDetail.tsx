@@ -368,20 +368,31 @@ export function SeriesDetail() {
       {/* ``cast`` only landed on the API after this UI shipped, so
           coerce the missing field to an empty list at the boundary
           to keep older backend builds from crashing the page. */}
-      {(series.cast ?? []).length > 0 && (
-        // Sits OUTSIDE the body's padded box so MediaCarousel's
-        // own ``px`` lines up with the genre rows on Home/Browse —
-        // wrapping it inside the body would double the horizontal
-        // padding and push the first card inwards. ``zIndex: 1``
-        // keeps the cards above the hero's bleed layers.
-        <Box sx={{ position: "relative", zIndex: 1, pb: { xs: 3, md: 4 } }}>
-          <MediaCarousel title={t("detail.cast")}>
-            {(series.cast ?? []).map((member, idx) => (
-              <CastCard key={`${member.name}-${idx}`} member={member} />
-            ))}
-          </MediaCarousel>
-        </Box>
-      )}
+      {(() => {
+        const cast = series.cast ?? [];
+        if (cast.length === 0) return null;
+        return (
+          // Sits OUTSIDE the body's padded box so MediaCarousel's
+          // own ``px`` lines up with the genre rows on Home/Browse —
+          // wrapping it inside the body would double the horizontal
+          // padding and push the first card inwards. ``zIndex: 1``
+          // keeps the cards above the hero's bleed layers.
+          <Box sx={{ position: "relative", zIndex: 1, pb: { xs: 3, md: 4 } }}>
+            <MediaCarousel title={t("detail.cast")}>
+              {cast.map((member, idx) => (
+                <CastCard
+                  // Prefer the TMDB person id when present — stable
+                  // across re-fetches, no collision risk on homonyms.
+                  // Fall back to ``name-idx`` for legacy rows
+                  // enriched before the id was captured.
+                  key={member.tmdb_id ?? `${member.name}-${idx}`}
+                  member={member}
+                />
+              ))}
+            </MediaCarousel>
+          </Box>
+        );
+      })()}
     </Box>
   );
 }
