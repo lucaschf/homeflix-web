@@ -12,7 +12,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Bookmark, Film, Home, Monitor, Search, Settings, Tv } from "lucide-react";
+import { Bookmark, Film, Home, Monitor, Search, Settings, Tv, Wrench } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { LanguageSwitch } from "./language-switch/LanguageSwitch";
@@ -22,12 +22,13 @@ const navItems = [
   { to: "/", labelKey: "nav.home", icon: Home },
   { to: "/browse?type=movie", labelKey: "nav.movies", icon: Film },
   { to: "/browse?type=series", labelKey: "nav.series", icon: Tv },
+  { to: "/admin/intros", labelKey: "nav.admin", icon: Wrench, desktopOnly: true },
   { to: "/lists", labelKey: "nav.myListsShort", icon: Bookmark, mobileOnly: true },
   { to: "/settings", labelKey: "nav.settings", icon: Settings, mobileOnly: true },
 ];
 
 const desktopNavItems = navItems.filter((item) => !item.mobileOnly);
-const bottomNavItems = navItems;
+const bottomNavItems = navItems.filter((item) => !item.desktopOnly);
 
 function getActiveBottomNav(pathname: string, search: string): number {
   return bottomNavItems.findIndex((item) => {
