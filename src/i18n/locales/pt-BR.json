@@ -49,6 +49,7 @@
     "watchNow": "Assistir Agora",
     "watch": "Assistir",
     "resume": "Continuar",
+    "remaining": "{{time}} restantes",
     "addToList": "Adicionar a Lista",
     "favorite": "Favoritar",
     "synopsis": "Sinopse",

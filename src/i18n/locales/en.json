@@ -49,6 +49,7 @@
     "watchNow": "Watch Now",
     "watch": "Watch",
     "resume": "Resume",
+    "remaining": "{{time}} left",
     "addToList": "Add to List",
     "favorite": "Favorite",
     "synopsis": "Synopsis",

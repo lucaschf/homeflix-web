@@ -26,6 +26,7 @@ import { CastCard } from "../components/CastCard";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { QualityRail } from "../components/QualityRail";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { formatDuration } from "../utils/duration";
@@ -217,15 +218,48 @@ export function MovieDetail() {
               ))}
             </Box>
 
+            <QualityRail
+              files={movie.files}
+              resolution={movie.resolution}
+              languages={langs.audio.map(formatLanguage)}
+            />
+
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               <Button
                 variant="contained"
                 startIcon={<Play size={16} />}
                 size="medium"
                 onClick={() => navigate(`/play/movie/${movie.id}`)}
-                sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}
+                sx={{
+                  fontSize: { xs: "0.8rem", md: "0.875rem" },
+                  position: "relative",
+                  overflow: "hidden",
+                  pb: hasProgress ? "0.625rem" : undefined,
+                }}
               >
-                {hasProgress ? t("detail.resume") : t("detail.watch")}
+                {hasProgress
+                  ? `${t("detail.resume")} · ${t("detail.remaining", { time: formatDuration(movie.duration_seconds - progress.position_seconds) })}`
+                  : t("detail.watch")}
+                {hasProgress && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: 3,
+                      bgcolor: "rgba(0,0,0,0.2)",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${(progress.position_seconds / movie.duration_seconds) * 100}%`,
+                        height: "100%",
+                        bgcolor: "rgba(0,0,0,0.55)",
+                      }}
+                    />
+                  </Box>
+                )}
               </Button>
               <Tooltip title={inWatchlist ? t("lists.removeFromList") : t("lists.addToList")} arrow>
                 <IconButton
