@@ -286,6 +286,18 @@ function ScrubPreview({
 const VOLUME_STORAGE_KEY = "homeflix.player.volume";
 const MUTED_STORAGE_KEY = "homeflix.player.muted";
 
+// Skip distances for the seek shortcuts (keyboard ←/→ and the
+// double-tap edge zones). Forward is longer than backward because
+// the dominant use case for forward is skipping past commercials /
+// recaps; backward tends to be "I missed a line, jump a beat".
+const BACKWARD_SEEK_SECONDS = 10;
+const FORWARD_SEEK_SECONDS = 30;
+// Window inside which a second tap on the same edge zone counts as
+// a double-tap (and triggers the seek instead of play/pause). Mirrors
+// the existing center-zone single-vs-double timing so all three zones
+// feel the same.
+const DOUBLE_TAP_WINDOW_MS = 250;
+
 function readPersistedVolume(): number {
   try {
     const raw = localStorage.getItem(VOLUME_STORAGE_KEY);
@@ -473,6 +485,11 @@ export function Player() {
   const progressRestoredForMediaIdRef = useRef<string | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Distinct refs per edge zone so a tap on the left followed by a
+  // tap on the right within the double-tap window doesn't get
+  // misread as a same-zone double-tap.
+  const leftTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rightTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Transient action indicator — shows a brief icon + label in the
   // center of the viewport when a keyboard shortcut fires (e.g.
@@ -1074,6 +1091,8 @@ export function Player() {
   useEffect(() => {
     return () => {
       if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      if (leftTapTimerRef.current) clearTimeout(leftTapTimerRef.current);
+      if (rightTapTimerRef.current) clearTimeout(rightTapTimerRef.current);
       if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
       if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
@@ -1113,6 +1132,29 @@ export function Player() {
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
+  // Seek helpers shared by keyboard arrows and the new mobile-style
+  // double-tap edge zones below. Wrapped in ``useCallback`` so the
+  // keyboard effect can list them as deps without re-binding the
+  // listener on every render.
+  const seekBackward = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = Math.max(0, video.currentTime - BACKWARD_SEEK_SECONDS);
+    showAction(<SkipBack size={32} />, `-${BACKWARD_SEEK_SECONDS}s`);
+    resetHideTimer();
+  }, [showAction, resetHideTimer]);
+
+  const seekForward = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = Math.min(
+      video.duration || Infinity,
+      video.currentTime + FORWARD_SEEK_SECONDS,
+    );
+    showAction(<SkipForward size={32} />, `+${FORWARD_SEEK_SECONDS}s`);
+    resetHideTimer();
+  }, [showAction, resetHideTimer]);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
@@ -1131,14 +1173,10 @@ export function Player() {
           }
           break;
         case "arrowleft":
-          video.currentTime = Math.max(0, video.currentTime - 10);
-          showAction(<SkipBack size={32} />, "-10s");
-          resetHideTimer();
+          seekBackward();
           break;
         case "arrowright":
-          video.currentTime = Math.min(video.duration || Infinity, video.currentTime + 30);
-          showAction(<SkipForward size={32} />, "+30s");
-          resetHideTimer();
+          seekForward();
           break;
         case "arrowup":
           e.preventDefault();
@@ -1183,7 +1221,17 @@ export function Player() {
 
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [containerEl, displayDuration, isFullscreen, navigate, resetHideTimer, showAction, toggleFullscreen]);
+  }, [
+    containerEl,
+    displayDuration,
+    isFullscreen,
+    navigate,
+    resetHideTimer,
+    showAction,
+    toggleFullscreen,
+    seekBackward,
+    seekForward,
+  ]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -1403,38 +1451,74 @@ export function Player() {
           )}
         </Box>
 
-        {/* Center click zone — handles single click (play/pause) and double click (fullscreen) */}
-        <Box
-          sx={{ flex: 1, cursor: "default" }}
-          onClick={() => {
-            if (clickTimerRef.current) {
-              clearTimeout(clickTimerRef.current);
-              clickTimerRef.current = null;
-              toggleFullscreen();
-            } else {
-              clickTimerRef.current = setTimeout(() => {
+        {/* Click row split into three zones. Single tap in any zone
+            toggles play/pause; double tap on the left seeks back, on
+            the right seeks forward, and in the center toggles
+            fullscreen. The edge double-tap matches the YouTube /
+            Netflix mobile gesture so users find it without docs. */}
+        <Box sx={{ flex: 1, display: "flex", cursor: "default" }}>
+          <Box
+            sx={{ flex: 3, touchAction: "manipulation" }}
+            onClick={() => {
+              if (leftTapTimerRef.current) {
+                clearTimeout(leftTapTimerRef.current);
+                leftTapTimerRef.current = null;
+                seekBackward();
+              } else {
+                leftTapTimerRef.current = setTimeout(() => {
+                  leftTapTimerRef.current = null;
+                  togglePlay();
+                }, DOUBLE_TAP_WINDOW_MS);
+              }
+            }}
+          />
+          <Box
+            sx={{ flex: 4, touchAction: "manipulation", position: "relative" }}
+            onClick={() => {
+              if (clickTimerRef.current) {
+                clearTimeout(clickTimerRef.current);
                 clickTimerRef.current = null;
-                togglePlay();
-              }, 250);
-            }
-          }}
-        >
-          {/* Center Play Button (when paused and ready) */}
-          {!playing && hlsReady && (
-            <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none" }}>
-              <IconButton
-                sx={{
-                  width: 72,
-                  height: 72,
-                  bgcolor: "rgba(232,146,111,0.9)",
-                  color: "background.default",
-                  pointerEvents: "none",
-                }}
-              >
-                <Play size={36} fill={neutral[950]} />
-              </IconButton>
-            </Box>
-          )}
+                toggleFullscreen();
+              } else {
+                clickTimerRef.current = setTimeout(() => {
+                  clickTimerRef.current = null;
+                  togglePlay();
+                }, DOUBLE_TAP_WINDOW_MS);
+              }
+            }}
+          >
+            {/* Center Play Button (when paused and ready) */}
+            {!playing && hlsReady && (
+              <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none" }}>
+                <IconButton
+                  sx={{
+                    width: 72,
+                    height: 72,
+                    bgcolor: "rgba(232,146,111,0.9)",
+                    color: "background.default",
+                    pointerEvents: "none",
+                  }}
+                >
+                  <Play size={36} fill={neutral[950]} />
+                </IconButton>
+              </Box>
+            )}
+          </Box>
+          <Box
+            sx={{ flex: 3, touchAction: "manipulation" }}
+            onClick={() => {
+              if (rightTapTimerRef.current) {
+                clearTimeout(rightTapTimerRef.current);
+                rightTapTimerRef.current = null;
+                seekForward();
+              } else {
+                rightTapTimerRef.current = setTimeout(() => {
+                  rightTapTimerRef.current = null;
+                  togglePlay();
+                }, DOUBLE_TAP_WINDOW_MS);
+              }
+            }}
+          />
         </Box>
 
         {/* Bottom Controls */}
