@@ -129,6 +129,7 @@ export interface EpisodeOutput {
   resolution: string | null;
   files: MediaFileOutput[];
   thumbnail_path: string | null;
+  scrub_preview_path: string | null;
   air_date: string | null;
   intro: IntroMarkerOutput | null;
   progress_percentage: number | null;

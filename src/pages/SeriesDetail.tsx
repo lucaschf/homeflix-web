@@ -6,12 +6,16 @@ import {
   CircularProgress,
   IconButton,
   LinearProgress,
+  MenuItem,
+  Select,
   Tab,
   Tabs,
+  ToggleButton,
+  ToggleButtonGroup,
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
+import { Bookmark, LayoutGrid, List, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
@@ -19,9 +23,24 @@ import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailT
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { EpisodeCard } from "../components/EpisodeCard";
+import { HorizontalScroller } from "../components/HorizontalScroller";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { neutral } from "../theme/colors";
+
+type EpisodeView = "list" | "cards";
+
+const EPISODE_VIEW_STORAGE_KEY = "homeflix:episode-view";
+
+function readStoredView(): EpisodeView {
+  // Default to the legacy compact list to preserve the existing UX
+  // for anyone who hasn't explicitly opted into cards. Reading from
+  // localStorage in the initializer keeps the first paint stable —
+  // no flash from cards back to list (or vice versa) on hydration.
+  if (typeof window === "undefined") return "list";
+  return window.localStorage.getItem(EPISODE_VIEW_STORAGE_KEY) === "cards" ? "cards" : "list";
+}
 
 export function SeriesDetail() {
   const { t } = useTranslation();
@@ -35,6 +54,10 @@ export function SeriesDetail() {
   const [selectedSeason, setSelectedSeason] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const [episodeView, setEpisodeView] = useState<EpisodeView>(readStoredView);
+  useEffect(() => {
+    window.localStorage.setItem(EPISODE_VIEW_STORAGE_KEY, episodeView);
+  }, [episodeView]);
   const synopsisRef = useRef<HTMLDivElement>(null);
   const SYNOPSIS_LINES = 3;
   const [synopsisOverflows, setSynopsisOverflows] = useState(false);
@@ -244,36 +267,98 @@ export function SeriesDetail() {
         {/* Season Tabs */}
         {series.seasons.length > 0 && (
           <>
-            <Tabs
-              value={selectedSeason}
-              onChange={(_, v) => setSelectedSeason(v)}
-              sx={{
-                mt: 4,
-                mb: 3,
-                "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontWeight: 500 },
-                "& .Mui-selected": { color: "primary.main" },
-                "& .MuiTabs-indicator": { bgcolor: "primary.main" },
-              }}
-            >
-              {series.seasons.map((s, idx) => (
-                <Tab
-                  key={s.season_number}
-                  value={idx}
-                  label={s.season_number === 0 ? t("detail.specials") : t("detail.season", { number: s.season_number })}
-                />
-              ))}
-            </Tabs>
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {currentSeason?.episodes.map((ep) => (
-                <EpisodeRow key={ep.episode_number} episode={ep} seriesPoster={series.poster_path} onPlay={() => navigate(`/play/episode/${series.id}/${currentSeason.season_number}/${ep.episode_number}`)} />
-              ))}
-              {(!currentSeason || currentSeason.episodes.length === 0) && (
-                <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
-                  {t("detail.noEpisodes")}
-                </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mt: 4, mb: 3 }}>
+              {episodeView === "cards" ? (
+                // Apple-TV-style cards keep the season picker compact
+                // so the row of cards has the full width to breathe.
+                // Tabs would either wrap or fight the cards for
+                // horizontal space at narrow widths.
+                <Select
+                  value={selectedSeason}
+                  onChange={(e) => setSelectedSeason(Number(e.target.value))}
+                  size="small"
+                  sx={{
+                    minWidth: 200,
+                    color: "text.primary",
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.3)" },
+                  }}
+                >
+                  {series.seasons.map((s, idx) => (
+                    <MenuItem key={s.season_number} value={idx}>
+                      {s.season_number === 0 ? t("detail.specials") : t("detail.season", { number: s.season_number })}
+                    </MenuItem>
+                  ))}
+                </Select>
+              ) : (
+                <Tabs
+                  value={selectedSeason}
+                  onChange={(_, v) => setSelectedSeason(v)}
+                  sx={{
+                    flex: 1,
+                    minWidth: 0,
+                    "& .MuiTab-root": { color: "text.secondary", textTransform: "none", fontWeight: 500 },
+                    "& .Mui-selected": { color: "primary.main" },
+                    "& .MuiTabs-indicator": { bgcolor: "primary.main" },
+                  }}
+                >
+                  {series.seasons.map((s, idx) => (
+                    <Tab
+                      key={s.season_number}
+                      value={idx}
+                      label={s.season_number === 0 ? t("detail.specials") : t("detail.season", { number: s.season_number })}
+                    />
+                  ))}
+                </Tabs>
               )}
+              <ToggleButtonGroup
+                value={episodeView}
+                exclusive
+                size="small"
+                onChange={(_, next) => {
+                  if (next) setEpisodeView(next as EpisodeView);
+                }}
+                aria-label={t("detail.viewList")}
+                sx={{ flexShrink: 0 }}
+              >
+                <ToggleButton value="list" aria-label={t("detail.viewList")}>
+                  <List size={16} />
+                </ToggleButton>
+                <ToggleButton value="cards" aria-label={t("detail.viewCards")}>
+                  <LayoutGrid size={16} />
+                </ToggleButton>
+              </ToggleButtonGroup>
             </Box>
+
+            {(!currentSeason || currentSeason.episodes.length === 0) ? (
+              <Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
+                {t("detail.noEpisodes")}
+              </Typography>
+            ) : episodeView === "list" ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {currentSeason.episodes.map((ep) => (
+                  <EpisodeRow
+                    key={ep.episode_number}
+                    episode={ep}
+                    seriesPoster={series.poster_path}
+                    onPlay={() => navigate(`/play/episode/${series.id}/${currentSeason.season_number}/${ep.episode_number}`)}
+                  />
+                ))}
+              </Box>
+            ) : (
+              <HorizontalScroller>
+                {currentSeason.episodes.map((ep) => (
+                  <EpisodeCard
+                    key={ep.episode_number}
+                    episode={ep}
+                    seriesId={series.id}
+                    seasonNumber={currentSeason.season_number}
+                    seriesPoster={series.poster_path}
+                    onPlay={() => navigate(`/play/episode/${series.id}/${currentSeason.season_number}/${ep.episode_number}`)}
+                  />
+                ))}
+              </HorizontalScroller>
+            )}
           </>
         )}
       </Box>

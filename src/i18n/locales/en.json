@@ -67,7 +67,9 @@
     "season": "Season {{number}}",
     "specials": "Specials",
     "episode": "E{{number}}",
-    "noEpisodes": "No episodes available for this season."
+    "noEpisodes": "No episodes available for this season.",
+    "viewList": "List view",
+    "viewCards": "Card view"
   },
   "player": {
     "quality": "Quality",
