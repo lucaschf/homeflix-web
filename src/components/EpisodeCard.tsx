@@ -47,13 +47,31 @@ export function EpisodeCard({
 
   return (
     <Box
+      role="button"
+      tabIndex={0}
       onClick={onPlay}
+      onKeyDown={(e) => {
+        // Activate on Enter / Space — the same affordance native
+        // <button> elements give for keyboard and screen-reader
+        // users. preventDefault on Space stops the page from
+        // scrolling when the card is focused.
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPlay();
+        }
+      }}
       sx={{
         flex: "0 0 auto",
         width: { xs: 220, sm: 260, md: 300 },
         cursor: "pointer",
         "&:hover .ep-card-thumb": { transform: "scale(1.03)" },
         "&:hover .ep-play-overlay": { opacity: 1 },
+        "&:focus-visible": {
+          outline: "2px solid",
+          outlineColor: "primary.main",
+          outlineOffset: 2,
+          borderRadius: 8,
+        },
       }}
     >
       <Box

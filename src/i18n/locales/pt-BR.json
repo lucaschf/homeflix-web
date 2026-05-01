@@ -40,7 +40,9 @@
     "seasons_other": "{{count}} Temporadas",
     "episodes": "{{count}} Episodio",
     "episodes_other": "{{count}} Episodios",
-    "errorLoadingSection": "Não foi possível carregar esta seção. Tente novamente mais tarde."
+    "errorLoadingSection": "Não foi possível carregar esta seção. Tente novamente mais tarde.",
+    "scrollLeft": "Rolar para a esquerda",
+    "scrollRight": "Rolar para a direita"
   },
   "detail": {
     "trailer": "Trailer",

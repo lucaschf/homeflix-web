@@ -1,6 +1,7 @@
 import { Box, IconButton } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface HorizontalScrollerProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ interface HorizontalScrollerProps {
  * a passive user sees a clean strip of cards.
  */
 export function HorizontalScroller({ children }: HorizontalScrollerProps) {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(false);
@@ -59,7 +61,7 @@ export function HorizontalScroller({ children }: HorizontalScrollerProps) {
         <IconButton
           className="h-scroll-btn"
           onClick={() => scrollBy("left")}
-          aria-label="Scroll left"
+          aria-label={t("common.scrollLeft")}
           sx={{
             position: "absolute",
             left: 0,
@@ -79,7 +81,7 @@ export function HorizontalScroller({ children }: HorizontalScrollerProps) {
         <IconButton
           className="h-scroll-btn"
           onClick={() => scrollBy("right")}
-          aria-label="Scroll right"
+          aria-label={t("common.scrollRight")}
           sx={{
             position: "absolute",
             right: 0,
