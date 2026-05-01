@@ -41,11 +41,13 @@ declare module "@mui/material/styles" {
     overlayTitle: React.CSSProperties;
     overlaySubtitle: React.CSSProperties;
     overlayTimestamp: React.CSSProperties;
+    eyebrow: React.CSSProperties;
   }
   interface TypographyVariantsOptions {
     overlayTitle?: React.CSSProperties;
     overlaySubtitle?: React.CSSProperties;
     overlayTimestamp?: React.CSSProperties;
+    eyebrow?: React.CSSProperties;
   }
 }
 
@@ -54,6 +56,7 @@ declare module "@mui/material/Typography" {
     overlayTitle: true;
     overlaySubtitle: true;
     overlayTimestamp: true;
+    eyebrow: true;
   }
 }
 
@@ -103,13 +106,39 @@ const themeOptions: ThemeOptions = {
   defaultColorScheme: "dark",
   typography: {
     fontFamily: "'Inter', system-ui, sans-serif",
-    h1: { fontSize: "1.75rem", fontWeight: 700, lineHeight: 1.3 },
-    h2: { fontSize: "1.375rem", fontWeight: 600, lineHeight: 1.3 },
-    h3: { fontSize: "1.125rem", fontWeight: 600, lineHeight: 1.4 },
+    h1: {
+      fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
+      fontSize: "1.75rem",
+      fontWeight: 700,
+      lineHeight: 1.3,
+      letterSpacing: "-0.025em",
+    },
+    h2: {
+      fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
+      fontSize: "1.375rem",
+      fontWeight: 600,
+      lineHeight: 1.3,
+      letterSpacing: "-0.02em",
+    },
+    h3: {
+      fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
+      fontSize: "1.125rem",
+      fontWeight: 600,
+      lineHeight: 1.4,
+      letterSpacing: "-0.015em",
+    },
     body1: { fontSize: "0.875rem", lineHeight: 1.5 },
     body2: { fontSize: "0.75rem", lineHeight: 1.5 },
     caption: { fontSize: "0.6875rem", fontWeight: 500, lineHeight: 1.4 },
     button: { textTransform: "none", fontWeight: 600 },
+    eyebrow: {
+      fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
+      fontSize: "0.6875rem",
+      fontWeight: 500,
+      lineHeight: 1.4,
+      letterSpacing: "0.18em",
+      textTransform: "uppercase",
+    },
     overlayTitle: {
       fontSize: "0.95rem",
       fontWeight: 600,
@@ -151,6 +180,7 @@ const themeOptions: ThemeOptions = {
           overlayTitle: "div",
           overlaySubtitle: "div",
           overlayTimestamp: "div",
+          eyebrow: "div",
         },
       },
     },
