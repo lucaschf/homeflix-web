@@ -40,7 +40,9 @@
     "seasons_other": "{{count}} Seasons",
     "episodes": "{{count}} Episode",
     "episodes_other": "{{count}} Episodes",
-    "errorLoadingSection": "Couldn't load this section. Try again later."
+    "errorLoadingSection": "Couldn't load this section. Try again later.",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right"
   },
   "detail": {
     "trailer": "Trailer",
@@ -67,7 +69,9 @@
     "season": "Season {{number}}",
     "specials": "Specials",
     "episode": "E{{number}}",
-    "noEpisodes": "No episodes available for this season."
+    "noEpisodes": "No episodes available for this season.",
+    "viewList": "List view",
+    "viewCards": "Card view"
   },
   "player": {
     "quality": "Quality",
