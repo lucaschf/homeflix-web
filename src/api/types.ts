@@ -182,6 +182,7 @@ export interface SeriesDetail {
   season_count: number;
   total_episodes: number;
   seasons: SeasonOutput[];
+  cast: CastMemberOutput[];
   created_at: string;
   updated_at: string;
 }

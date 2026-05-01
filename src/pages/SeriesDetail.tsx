@@ -22,9 +22,11 @@ import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
+import { CastCard } from "../components/CastCard";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeCard } from "../components/EpisodeCard";
 import { HorizontalScroller } from "../components/HorizontalScroller";
+import { MediaCarousel } from "../components/MediaCarousel";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { neutral } from "../theme/colors";
@@ -362,6 +364,24 @@ export function SeriesDetail() {
           </>
         )}
       </Box>
+
+      {/* ``cast`` only landed on the API after this UI shipped, so
+          coerce the missing field to an empty list at the boundary
+          to keep older backend builds from crashing the page. */}
+      {(series.cast ?? []).length > 0 && (
+        // Sits OUTSIDE the body's padded box so MediaCarousel's
+        // own ``px`` lines up with the genre rows on Home/Browse —
+        // wrapping it inside the body would double the horizontal
+        // padding and push the first card inwards. ``zIndex: 1``
+        // keeps the cards above the hero's bleed layers.
+        <Box sx={{ position: "relative", zIndex: 1, pb: { xs: 3, md: 4 } }}>
+          <MediaCarousel title={t("detail.cast")}>
+            {(series.cast ?? []).map((member, idx) => (
+              <CastCard key={`${member.name}-${idx}`} member={member} />
+            ))}
+          </MediaCarousel>
+        </Box>
+      )}
     </Box>
   );
 }
