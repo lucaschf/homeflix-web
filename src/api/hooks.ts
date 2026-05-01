@@ -566,7 +566,7 @@ export function useEnrichSeries() {
 export function useBulkEnrich() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (force = false) => api.post<BulkEnrichResponse>("/enrich", { force }),
+    mutationFn: (force: boolean) => api.post<BulkEnrichResponse>("/enrich", { force }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       queryClient.invalidateQueries({ queryKey: ["series"] });

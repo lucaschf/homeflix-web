@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Avatar, Box, CircularProgress, Typography } from "@mui/material";
-import { useTranslation, type TFunction } from "react-i18next";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMoviesByActor, usePerson } from "../api/hooks";
 import type { PersonBio } from "../api/types";

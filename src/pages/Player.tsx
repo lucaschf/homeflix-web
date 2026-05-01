@@ -118,7 +118,7 @@ function normalizeLang(tag: string | null | undefined): string {
  * has tracks without `lang` tags, the preference silently becomes
  * a no-op and the player falls back to its legacy behavior.
  */
-function findTrackByLang<T extends { id: number; lang: string }>(
+function findTrackByLang<T extends { id: number; lang?: string }>(
   tracks: readonly T[],
   preferredLang: string,
 ): T | null {
