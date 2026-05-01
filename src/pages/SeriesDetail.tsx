@@ -54,7 +54,7 @@ export function SeriesDetail() {
   const { data: inWatchlist } = useIsInWatchlist(seriesId!);
   const toggleWatchlist = useToggleWatchlist();
   const { data: continueWatching } = useContinueWatching();
-  const { data: relatedSeries } = useRelatedSeries(seriesId ?? "");
+  const { data: relatedSeries } = useRelatedSeries(seriesId);
   const [selectedSeason, setSelectedSeason] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);

@@ -36,7 +36,7 @@ export function MovieDetail() {
   const { movieId } = useParams<{ movieId: string }>();
   const navigate = useNavigate();
   const { data: movie, isLoading } = useMovie(movieId!);
-  const { data: relatedMovies } = useRelatedMovies(movieId ?? "");
+  const { data: relatedMovies } = useRelatedMovies(movieId);
   const { data: progress } = useProgress(movieId!);
   const enrichMutation = useEnrichMovie();
   const { data: inWatchlist } = useIsInWatchlist(movieId!);

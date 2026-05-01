@@ -327,13 +327,16 @@ export function useMovie(movieId: string) {
  * the provider returns nothing, or no recommendation overlaps
  * with the catalog. The carousel just doesn't render.
  */
-export function useRelatedMovies(movieId: string, limit = 12) {
+export function useRelatedMovies(movieId: string | undefined, limit = 12) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
   return useQuery({
     queryKey: ["related-movies", movieId, lang, limit],
     queryFn: async (): Promise<MovieSummary[]> => {
-      const resp = await api.get<RelatedMoviesResponse>(`/movies/${movieId}/related`, {
+      // ``enabled`` below guarantees ``movieId`` is set when the
+      // fetcher runs — the non-null assertion lets us drop the
+      // empty-string sentinel from call sites.
+      const resp = await api.get<RelatedMoviesResponse>(`/movies/${movieId!}/related`, {
         lang,
         limit: String(limit),
       });
@@ -353,13 +356,16 @@ export function useRelatedMovies(movieId: string, limit = 12) {
  * or no recommendation overlaps with the catalog. The carousel
  * just doesn't render.
  */
-export function useRelatedSeries(seriesId: string, limit = 12) {
+export function useRelatedSeries(seriesId: string | undefined, limit = 12) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
   return useQuery({
     queryKey: ["related-series", seriesId, lang, limit],
     queryFn: async (): Promise<SeriesSummary[]> => {
-      const resp = await api.get<RelatedSeriesResponse>(`/series/${seriesId}/related`, {
+      // ``enabled`` below guarantees ``seriesId`` is set when the
+      // fetcher runs — the non-null assertion lets us drop the
+      // empty-string sentinel from call sites.
+      const resp = await api.get<RelatedSeriesResponse>(`/series/${seriesId!}/related`, {
         lang,
         limit: String(limit),
       });
