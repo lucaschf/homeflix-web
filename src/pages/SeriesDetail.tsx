@@ -18,7 +18,7 @@ import {
 import { Bookmark, LayoutGrid, List, Play, RefreshCw, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
+import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useRelatedSeries, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
@@ -26,6 +26,7 @@ import { CastCard } from "../components/CastCard";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeCard } from "../components/EpisodeCard";
 import { HorizontalScroller } from "../components/HorizontalScroller";
+import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
@@ -53,6 +54,7 @@ export function SeriesDetail() {
   const { data: inWatchlist } = useIsInWatchlist(seriesId!);
   const toggleWatchlist = useToggleWatchlist();
   const { data: continueWatching } = useContinueWatching();
+  const { data: relatedSeries } = useRelatedSeries(seriesId);
   const [selectedSeason, setSelectedSeason] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
@@ -393,6 +395,33 @@ export function SeriesDetail() {
           </Box>
         );
       })()}
+
+      {relatedSeries && relatedSeries.length > 0 && (
+        // "You might also like" — TMDB recommendations filtered to
+        // series that exist in the local catalog. Backend returns
+        // ``[]`` when the source series has no ``tmdb_id``, when
+        // TMDB returns nothing, or when no recommendation overlaps
+        // with the catalog; the carousel simply doesn't render in
+        // those cases (no empty header). Sits OUTSIDE the body's
+        // padded box for the same alignment reason as the cast row.
+        <Box sx={{ position: "relative", zIndex: 1 }}>
+          <MediaCarousel title={t("detail.related")}>
+            {relatedSeries.map((s) => (
+              <MediaCard
+                key={s.id}
+                title={s.title}
+                year={s.start_year}
+                imageUrl={s.poster_path ?? undefined}
+                synopsis={s.synopsis ?? undefined}
+                variant="poster"
+                mediaId={s.id}
+                mediaType="series"
+                onClick={() => navigate(`/series/${s.id}`)}
+              />
+            ))}
+          </MediaCarousel>
+        </Box>
+      )}
     </Box>
   );
 }

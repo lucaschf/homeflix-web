@@ -40,6 +40,7 @@ import type {
   PersonBio,
   PersonBioResponse,
   RelatedMoviesResponse,
+  RelatedSeriesResponse,
   ProgressOutput,
   ProgressResponse,
   ScanResponse,
@@ -326,19 +327,51 @@ export function useMovie(movieId: string) {
  * the provider returns nothing, or no recommendation overlaps
  * with the catalog. The carousel just doesn't render.
  */
-export function useRelatedMovies(movieId: string, limit = 12) {
+export function useRelatedMovies(movieId: string | undefined, limit = 12) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
   return useQuery({
     queryKey: ["related-movies", movieId, lang, limit],
     queryFn: async (): Promise<MovieSummary[]> => {
-      const resp = await api.get<RelatedMoviesResponse>(`/movies/${movieId}/related`, {
+      // ``enabled`` below guarantees ``movieId`` is set when the
+      // fetcher runs — the non-null assertion lets us drop the
+      // empty-string sentinel from call sites.
+      const resp = await api.get<RelatedMoviesResponse>(`/movies/${movieId!}/related`, {
         lang,
         limit: String(limit),
       });
       return resp.data;
     },
     enabled: !!movieId,
+  });
+}
+
+/**
+ * Fetch the "you might also like" list for a series — TMDB
+ * recommendations filtered to titles that exist in the local
+ * catalog, ordered by TMDB's relevance score.
+ *
+ * Same best-effort contract as ``useRelatedMovies``: empty list
+ * when the series has no ``tmdb_id``, the provider returns nothing,
+ * or no recommendation overlaps with the catalog. The carousel
+ * just doesn't render.
+ */
+export function useRelatedSeries(seriesId: string | undefined, limit = 12) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["related-series", seriesId, lang, limit],
+    queryFn: async (): Promise<SeriesSummary[]> => {
+      // ``enabled`` below guarantees ``seriesId`` is set when the
+      // fetcher runs — the non-null assertion lets us drop the
+      // empty-string sentinel from call sites.
+      const resp = await api.get<RelatedSeriesResponse>(`/series/${seriesId!}/related`, {
+        lang,
+        limit: String(limit),
+      });
+      return resp.data;
+    },
+    enabled: !!seriesId,
   });
 }
 
