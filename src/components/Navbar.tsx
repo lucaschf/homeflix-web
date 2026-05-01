@@ -12,10 +12,11 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Bookmark, Film, Home, Monitor, Search, Settings, Tv, Wrench } from "lucide-react";
+import { Bookmark, Film, Home, Search, Settings, Tv, Wrench } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { LanguageSwitch } from "./language-switch/LanguageSwitch";
+import { Logo } from "./Logo";
 import { SearchOverlay } from "./SearchOverlay";
 
 const navItems = [
@@ -65,7 +66,7 @@ export function Navbar() {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: "rgba(13, 13, 13, 0.85)",
+          bgcolor: "rgba(38, 38, 38, 0.85)",
           backdropFilter: "blur(12px)",
           borderBottom: 1,
           borderColor: "divider",
@@ -85,10 +86,10 @@ export function Navbar() {
               mr: { xs: 1, md: 4 },
             }}
           >
-            <Monitor size={isMobile ? 24 : 30} color={theme.palette.primary.main} />
+            <Logo size={isMobile ? 24 : 30} />
             {!isMobile && (
               <Typography variant="h3" noWrap>
-                HomeFlix
+                Home<Box component="span" sx={{ color: "primary.main" }}>Flix</Box>
               </Typography>
             )}
           </Box>
@@ -199,7 +200,7 @@ export function Navbar() {
               navigate(bottomNavItems[newValue].to);
             }}
             sx={{
-              bgcolor: "rgba(13, 13, 13, 0.95)",
+              bgcolor: "rgba(38, 38, 38, 0.95)",
               backdropFilter: "blur(12px)",
               "& .MuiBottomNavigationAction-root": {
                 color: "text.secondary",

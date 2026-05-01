@@ -2,4 +2,7 @@
   <rect x="36" y="98" width="128" height="78" rx="10" fill="#F5F1EB"/>
   <path d="M 28 106 L 100 50 L 172 106 Z" fill="#F5F1EB"/>
   <path d="M 130 86 L 130 36 L 168 60 Z" fill="#D97757"/>
+  <rect x="84" y="124" width="32" height="32" rx="3" fill="#1A1A1A"/>
+  <line x1="100" y1="124" x2="100" y2="156" stroke="#F5F1EB" stroke-width="2"/>
+  <line x1="84" y1="140" x2="116" y2="140" stroke="#F5F1EB" stroke-width="2"/>
 </svg>

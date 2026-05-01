@@ -149,8 +149,8 @@ export function MovieDetail() {
             right: 0,
             bottom: "-44dvh",
             background: {
-              xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)",
-              md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
+              xs: "linear-gradient(to right, rgba(26,26,26,0.97) 0%, rgba(26,26,26,0.75) 50%, rgba(26,26,26,0.3) 100%)",
+              md: "linear-gradient(to right, rgba(26,26,26,0.95) 0%, rgba(26,26,26,0.6) 40%, transparent 70%)",
             },
           }}
         />
@@ -169,8 +169,8 @@ export function MovieDetail() {
               // bottom. Above that, the gradient still fades to
               // transparent in the upper hero region so the backdrop
               // image stays visible there.
-              xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 35%, rgba(13,13,13,0.85) 45%, rgba(13,13,13,0.5) 58%, rgba(13,13,13,0.2) 72%, transparent 85%)",
-              md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 30%, rgba(13,13,13,0.85) 40%, rgba(13,13,13,0.5) 55%, rgba(13,13,13,0.15) 70%, transparent 80%)",
+              xs: "linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,1) 35%, rgba(26,26,26,0.85) 45%, rgba(26,26,26,0.5) 58%, rgba(26,26,26,0.2) 72%, transparent 85%)",
+              md: "linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,1) 30%, rgba(26,26,26,0.85) 40%, rgba(26,26,26,0.5) 55%, rgba(26,26,26,0.15) 70%, transparent 80%)",
             },
           }}
         />
