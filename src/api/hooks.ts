@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   AddItemToCustomListResponse,
+  ApiDetailResponse,
   BulkEnrichResponse,
   CatalogByGenreResponse,
   CatalogItem,
@@ -25,9 +26,11 @@ import type {
   Genre,
   GenresResponse,
   HealthResponse,
+  IntroMarkerOutput,
   LibrariesResponse,
   Library,
   LibraryResponse,
+  ListSeriesResponse,
   PlaybackPreferencesData,
   PreferencesResponse,
   MovieDetail,
@@ -43,6 +46,7 @@ import type {
   SearchResponse,
   SeriesDetail,
   SeriesDetailResponse,
+  SeriesSummary,
   ToggleWatchlistResponse,
   WatchlistItemOutput,
   WatchlistResponse,
@@ -338,6 +342,42 @@ export function useRelatedMovies(movieId: string, limit = 12) {
   });
 }
 
+/**
+ * Cursor-paginated infinite query over the full series catalog.
+ *
+ * Powers the admin intro-editor picker, which needs a flat list of
+ * every series in the library so the user can search and pick one
+ * without going through the genre-organized browse pages.
+ */
+export function useListAllSeries() {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  const query = useInfiniteQuery({
+    queryKey: ["series", "all", lang],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const params: Record<string, string> = { lang, limit: "100" };
+      if (pageParam) params.cursor = pageParam;
+      return api.get<ListSeriesResponse>("/series", params);
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
+  });
+
+  const items = useMemo<SeriesSummary[]>(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
+
+  return {
+    items,
+    isLoading: query.isLoading,
+    isFetchingNextPage: query.isFetchingNextPage,
+    hasNextPage: !!query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    isError: query.isError,
+  };
+}
+
 export function useSeriesDetail(seriesId: string) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
@@ -348,6 +388,109 @@ export function useSeriesDetail(seriesId: string) {
       return resp.data;
     },
     enabled: !!seriesId,
+  });
+}
+
+// ── Intro markers (admin) ───────────────────────────────
+
+interface SetEpisodeIntroVars {
+  /** External episode id (epi_xxx) — target of the PUT. */
+  episodeId: string;
+  /** Series id used to invalidate the cached series detail on success. */
+  seriesId: string;
+  start_seconds: number;
+  end_seconds: number;
+}
+
+/**
+ * Persist a manual intro marker on an episode. Backend always
+ * stamps ``source = MANUAL`` regardless of any prior auto-detected
+ * value, so editing an auto marker effectively converts it.
+ */
+export function useSetEpisodeIntro() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ episodeId, start_seconds, end_seconds }: SetEpisodeIntroVars) =>
+      api.put<ApiDetailResponse<IntroMarkerOutput>>(`/series/episodes/${episodeId}/intro`, {
+        start_seconds,
+        end_seconds,
+      }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
+  });
+}
+
+interface ClearEpisodeIntroVars {
+  episodeId: string;
+  seriesId: string;
+}
+
+/**
+ * Remove the intro marker from an episode. Idempotent — clearing an
+ * unmarked episode still resolves successfully and the episode
+ * rejoins the auto-detection queue on the next job tick.
+ */
+export function useClearEpisodeIntro() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ episodeId }: ClearEpisodeIntroVars) =>
+      api.del(`/series/episodes/${episodeId}/intro`),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
+  });
+}
+
+interface BulkSetIntroVars {
+  /** Episode ids that should receive the same marker. */
+  episodeIds: string[];
+  seriesId: string;
+  start_seconds: number;
+  end_seconds: number;
+}
+
+interface BulkSetIntroResult {
+  succeeded: number;
+  failed: number;
+}
+
+/**
+ * Apply the same intro marker to every episode in ``episodeIds`` by
+ * firing one ``PUT /series/episodes/:id/intro`` per target in
+ * parallel. There is no backend bulk endpoint — the use case
+ * validates each marker against its own episode's duration, so
+ * fanning out lets a partial set succeed even when one episode
+ * rejects (e.g. its duration is shorter than ``end_seconds``).
+ *
+ * The cache is invalidated once after all calls settle so the
+ * picker re-renders with the new badges in a single pass instead of
+ * thrashing through N intermediate states.
+ */
+export function useBulkSetEpisodeIntros() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      episodeIds,
+      start_seconds,
+      end_seconds,
+    }: BulkSetIntroVars): Promise<BulkSetIntroResult> => {
+      const settled = await Promise.allSettled(
+        episodeIds.map((id) =>
+          api.put<ApiDetailResponse<IntroMarkerOutput>>(`/series/episodes/${id}/intro`, {
+            start_seconds,
+            end_seconds,
+          }),
+        ),
+      );
+      return {
+        succeeded: settled.filter((r) => r.status === "fulfilled").length,
+        failed: settled.filter((r) => r.status === "rejected").length,
+      };
+    },
+    onSettled: (_data, _err, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
   });
 }
 

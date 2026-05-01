@@ -10,6 +10,8 @@ import { Player } from "./pages/Player";
 import { SeriesDetail } from "./pages/SeriesDetail";
 import { MyLists } from "./pages/MyLists";
 import { Settings } from "./pages/Settings";
+import { IntroPicker } from "./pages/admin/IntroPicker";
+import { IntroEditor } from "./pages/admin/IntroEditor";
 import { theme } from "./theme";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
@@ -36,6 +38,11 @@ function App() {
               <Route path="/actor/:name" element={<Actor />} />
               <Route path="/lists" element={<MyLists />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/admin/intros" element={<IntroPicker />} />
+              <Route
+                path="/admin/intros/:seriesId/:season/:episode"
+                element={<IntroEditor />}
+              />
             </Route>
           </Routes>
         </BrowserRouter>
