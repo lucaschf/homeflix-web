@@ -6,6 +6,7 @@ import { Layout } from "./components/Layout";
 import { SplashScreen } from "./components/SplashScreen";
 import { Actor } from "./pages/Actor";
 import { Browse } from "./pages/Browse";
+import { Collection } from "./pages/Collection";
 import { Home } from "./pages/Home";
 import { MovieDetail } from "./pages/MovieDetail";
 import { Player } from "./pages/Player";
@@ -64,6 +65,7 @@ function App() {
               <Route path="/browse" element={<Browse />} />
               <Route path="/movie/:movieId" element={<MovieDetail />} />
               <Route path="/series/:seriesId" element={<SeriesDetail />} />
+              <Route path="/collection/:tmdbId" element={<Collection />} />
               <Route path="/actor/:name" element={<Actor />} />
               <Route path="/lists" element={<MyLists />} />
               <Route path="/settings" element={<Settings />} />

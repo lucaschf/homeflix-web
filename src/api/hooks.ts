@@ -13,6 +13,10 @@ import type {
   BulkEnrichResponse,
   CatalogByGenreResponse,
   CatalogItem,
+  CatalogRequest,
+  CatalogRequestResponse,
+  CollectionDetail,
+  CollectionDetailResponse,
   ContinueWatchingItem,
   ContinueWatchingResponse,
   CustomListDetailResponse,
@@ -930,6 +934,108 @@ export function useUpdatePreferences() {
       // Optimistic in-cache update so every subscriber sees the
       // new value immediately without waiting for a refetch.
       queryClient.setQueryData(["preferences"], resp.data);
+    },
+  });
+}
+
+// ── Collections (TMDB franchises) ────────────────────────
+
+/**
+ * Fetch the Collection Detail payload for a TMDB collection id.
+ *
+ * The backend stitches TMDB franchise metadata, the local catalog,
+ * and any catalog-request state into a single response — see
+ * ``GetCollectionByTmdbIdUseCase``. The page renders one ``FilmRow``
+ * per part, with available titles linking to Movie Detail and
+ * missing ones surfacing the "Solicitar inclusão" / "Avisar quando
+ * chegar" CTAs.
+ */
+export function useCollection(tmdbId: number | undefined) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["collection", tmdbId, lang],
+    queryFn: async (): Promise<CollectionDetail> => {
+      const resp = await api.get<CollectionDetailResponse>(`/collections/${tmdbId!}`, {
+        lang,
+      });
+      return resp.data;
+    },
+    enabled: !!tmdbId,
+  });
+}
+
+interface RequestCatalogVars {
+  /** TMDB id of the title to register. */
+  tmdb_id: number;
+  /** Whether the target is a movie or series. */
+  media_type: "movie" | "series";
+  /** TMDB collection id this request originated from, when applicable. */
+  collection_tmdb_id?: number | null;
+  /** Subscribe to the arrival notification at the same time. */
+  notify_on_arrival?: boolean;
+}
+
+/**
+ * Register a catalog inclusion request for a TMDB title.
+ *
+ * Idempotent on ``(tmdb_id, media_type)``: a repeat call returns
+ * the existing request unchanged. The Collection Detail page calls
+ * this on the "Solicitar inclusão" click and updates its local
+ * cache from the response — the next render shows "Pedido
+ * registrado" immediately, without a round-trip back through
+ * ``useCollection``.
+ */
+export function useRequestCatalogInclusion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: RequestCatalogVars): Promise<CatalogRequest> => {
+      const resp = await api.post<CatalogRequestResponse>("/catalog-requests", vars);
+      return resp.data;
+    },
+    onSuccess: (req) => {
+      // Refresh the Collection Detail card if the user is currently
+      // looking at the franchise that surfaced the request.
+      if (req.collection_tmdb_id != null) {
+        queryClient.invalidateQueries({
+          queryKey: ["collection", req.collection_tmdb_id],
+        });
+      }
+    },
+  });
+}
+
+interface SubscribeNotifyVars {
+  tmdb_id: number;
+  media_type: "movie" | "series";
+  collection_tmdb_id?: number | null;
+}
+
+/**
+ * Subscribe to the "title now available" notification for a TMDB id.
+ *
+ * Creates the catalog request if it doesn't exist yet, or just
+ * flips ``notify_on_arrival`` to ``true`` when one is already
+ * registered. Used by the "Avisar quando chegar" CTA on the
+ * Collection Detail missing-state FilmRow.
+ */
+export function useSubscribeCatalogNotification() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: SubscribeNotifyVars): Promise<CatalogRequest> => {
+      const { tmdb_id, ...body } = vars;
+      const resp = await api.post<CatalogRequestResponse>(
+        `/catalog-requests/${tmdb_id}/notify`,
+        body,
+      );
+      return resp.data;
+    },
+    onSuccess: (req) => {
+      if (req.collection_tmdb_id != null) {
+        queryClient.invalidateQueries({
+          queryKey: ["collection", req.collection_tmdb_id],
+        });
+      }
     },
   });
 }

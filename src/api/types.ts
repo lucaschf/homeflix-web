@@ -88,6 +88,54 @@ export interface CollectionOutput {
   parts_count: number;
 }
 
+/** Single member title of a TMDB collection, merged with local + request state. */
+export interface CollectionPart {
+  tmdb_id: number;
+  title: string;
+  year: number | null;
+  synopsis: string | null;
+  poster_url: string | null;
+  backdrop_url: string | null;
+  rating: number | null;
+  runtime_seconds: number | null;
+  runtime_formatted: string | null;
+  in_catalog: boolean;
+  movie_id: string | null;
+  local_poster_path: string | null;
+  local_backdrop_path: string | null;
+  is_requested: boolean;
+  notify_on_arrival: boolean;
+}
+
+/** Full Collection Detail payload. */
+export interface CollectionDetail {
+  tmdb_id: number;
+  name: string;
+  overview: string | null;
+  poster_url: string | null;
+  backdrop_url: string | null;
+  total_parts: number;
+  available_parts: number;
+  missing_parts: number;
+  parts: CollectionPart[];
+}
+
+export type CollectionDetailResponse = ApiDetailResponse<CollectionDetail>;
+
+/** Catalog request shape returned by /catalog-requests endpoints. */
+export interface CatalogRequest {
+  id: string;
+  tmdb_id: number;
+  media_type: "movie" | "series";
+  collection_tmdb_id: number | null;
+  notify_on_arrival: boolean;
+  is_fulfilled: boolean;
+  requested_at: string;
+  fulfilled_at: string | null;
+}
+
+export type CatalogRequestResponse = ApiDetailResponse<CatalogRequest>;
+
 export interface MovieDetail {
   id: string;
   title: string;
