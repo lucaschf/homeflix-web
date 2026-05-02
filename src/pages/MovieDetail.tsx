@@ -2,9 +2,7 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
-  Chip,
   CircularProgress,
-  Grid,
   IconButton,
   Tooltip,
   Typography,
@@ -23,9 +21,9 @@ import {
   useToggleWatchlist,
 } from "../api/hooks";
 import { CastCard } from "../components/CastCard";
-import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { MetaLine } from "../components/MetaLine";
 import { QualityRail } from "../components/QualityRail";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
@@ -59,7 +57,7 @@ export function MovieDetail() {
   const [trailerOpen, setTrailerOpen] = useState(false);
   const synopsisRef = useRef<HTMLDivElement>(null);
   const SYNOPSIS_LINES = 3;
-  const DETAILS_VISIBLE_COLLAPSED = 2;
+  const DETAILS_VISIBLE_COLLAPSED = 4;
   // Track whether the synopsis text overflows the clamped box so the
   // toggle link can render without reading ref.current during render
   // (React 19 flags ref reads in render). Only checks while
@@ -103,9 +101,6 @@ export function MovieDetail() {
     }
     if (movie.original_title && movie.original_title !== movie.title) {
       rows.push({ label: t("detail.originalTitle"), value: movie.original_title });
-    }
-    if (movie.resolution) {
-      rows.push({ label: "Resolution", value: movie.resolution });
     }
     if (movie.imdb_id) {
       rows.push({ label: "IMDb", value: movie.imdb_id });
@@ -206,17 +201,13 @@ export function MovieDetail() {
               fallbackFontSize={{ xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }}
             />
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
-              {movie.content_rating && (
-                <ContentRatingBadge rating={movie.content_rating} size={24} />
-              )}
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>{movie.year}</Typography>
-              <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>{formatDuration(movie.duration_seconds)}</Typography>
-              {movie.genres.slice(0, 3).map((g) => (
-                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.75rem" }} />
-              ))}
-            </Box>
+            <MetaLine
+              contentRating={movie.content_rating}
+              year={movie.year}
+              duration={formatDuration(movie.duration_seconds)}
+              genres={movie.genres}
+            />
+
 
             <QualityRail
               files={movie.files}
@@ -228,13 +219,16 @@ export function MovieDetail() {
               <Button
                 variant="contained"
                 startIcon={<Play size={16} />}
-                size="medium"
                 onClick={() => navigate(`/play/movie/${movie.id}`)}
                 sx={{
-                  fontSize: { xs: "0.8rem", md: "0.875rem" },
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
                   position: "relative",
                   overflow: "hidden",
-                  pb: hasProgress ? "0.625rem" : undefined,
+                  height: 46,
+                  px: 3.25,
+                  pb: hasProgress ? "16px" : undefined,
+                  boxShadow: "0 2px 6px rgba(217,119,87,0.2)",
                 }}
               >
                 {hasProgress
@@ -265,13 +259,17 @@ export function MovieDetail() {
                 <IconButton
                   onClick={() => toggleWatchlist.mutate({ media_id: movie.id, media_type: "movie" })}
                   sx={{
-                    color: inWatchlist ? "primary.main" : "text.secondary",
-                    border: inWatchlist ? "1px solid" : "1px solid rgba(255,255,255,0.2)",
-                    borderColor: inWatchlist ? "primary.main" : undefined,
-                    borderRadius: 1.5,
-                    width: 38,
-                    height: 38,
-                    "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.4)" },
+                    color: inWatchlist ? "primary.main" : "text.primary",
+                    bgcolor: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.12)",
+                    borderRadius: 1,
+                    width: 46,
+                    height: 46,
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.2)",
+                    },
                   }}
                 >
                   <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
@@ -279,15 +277,21 @@ export function MovieDetail() {
               </Tooltip>
               {movie.trailer_url && (
                 <Button
-                  variant="outlined"
                   startIcon={<Clapperboard size={16} />}
                   onClick={() => setTrailerOpen(true)}
                   sx={{
-                    color: "text.secondary",
-                    borderColor: "rgba(255,255,255,0.2)",
-                    "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
-                    height: 38,
-                    fontSize: { xs: "0.8rem", md: "0.875rem" },
+                    color: "text.primary",
+                    bgcolor: "rgba(255,255,255,0.08)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: 1,
+                    height: 46,
+                    px: 2,
+                    fontSize: "0.8125rem",
+                    fontWeight: 500,
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.12)",
+                      borderColor: "rgba(255,255,255,0.2)",
+                    },
                   }}
                 >
                   {t("detail.trailer")}
@@ -308,39 +312,35 @@ export function MovieDetail() {
         </Box>
       </Box>
 
-      {/* Body — Crunchyroll-style two-column on md+: synopsis on the
-        left, key / value details on the right. Stacks to single
-        column on xs/sm. The cast row sits below the grid so it can
-        breathe across the full content width regardless of the
-        column split above. ``zIndex: 1`` keeps the content above
-        the hero's bleed (which extends to the viewport bottom
-        with the backdrop and gradient overlays). */}
-      <Grid
-        container
-        spacing={{ xs: 3, md: 6 }}
+      {/* Body — two-column 1.4fr / 1fr on md+, stacked on mobile.
+        Left: synopsis + "Mais detalhes" toggle. Right: eyebrow-
+        labeled technical metadata with the same toggle expanding
+        the row count. ``zIndex: 1`` keeps the content above the
+        hero's bleed. */}
+      <Box
         sx={{
           position: "relative",
           zIndex: 1,
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1.4fr 1fr" },
+          columnGap: { md: 8 },
+          rowGap: { xs: 3, md: 0 },
           px: { xs: 2, sm: 3, md: 6 },
-          pt: { xs: 1, md: 1 },
-          pb: { xs: 3, md: 4 },
+          pt: { xs: 2, md: 3 },
+          pb: { xs: 3, md: 0 },
           maxWidth: 1600,
         }}
       >
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
           {movie.synopsis && (
             <Typography
               ref={synopsisRef}
               variant="body1"
-              color="text.secondary"
               sx={{
-                fontSize: { xs: "0.9rem", md: "1.0rem" },
-                // CSS line-clamp clamps at exactly ``SYNOPSIS_LINES``
-                // whole lines — no partial-letter sliver from a
-                // height that doesn't divide evenly into the line
-                // height. The "Mais detalhes" toggle below lifts
-                // this clamp AND reveals the hidden detail rows on
-                // the right at the same time, Crunchyroll-style.
+                fontSize: { xs: "0.875rem", md: "0.9375rem" },
+                lineHeight: 1.65,
+                color: "rgba(245,241,235,0.78)",
+                m: 0,
                 ...(expanded
                   ? {}
                   : {
@@ -357,29 +357,20 @@ export function MovieDetail() {
           {(synopsisOverflows ||
             (isMobile ? detailRows.length > 0 : detailRows.length > DETAILS_VISIBLE_COLLAPSED)) && (
             <Typography
-              variant="body2"
+              variant="eyebrow"
               onClick={() => setExpanded(!expanded)}
               sx={{
                 color: "primary.main",
                 cursor: "pointer",
-                mt: 1.5,
-                fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: 0.5,
-                "&:hover": { textDecoration: "underline" },
+                "&:hover": { opacity: 0.8 },
               }}
             >
-              {expanded ? t("detail.lessDetails") : t("detail.moreDetails")}
+              {expanded ? `← ${t("detail.lessDetails")}` : `${t("detail.moreDetails")} →`}
             </Typography>
           )}
-        </Grid>
+        </Box>
 
         {(() => {
-          // Visible row count depends on viewport AND expand state:
-          //   mobile + collapsed → 0 rows (column hidden entirely)
-          //   mobile + expanded  → all rows (stacks below synopsis)
-          //   desktop + collapsed → first ``DETAILS_VISIBLE_COLLAPSED``
-          //   desktop + expanded → all rows
           const visible = expanded
             ? detailRows
             : isMobile
@@ -387,16 +378,22 @@ export function MovieDetail() {
               : detailRows.slice(0, DETAILS_VISIBLE_COLLAPSED);
           if (visible.length === 0) return null;
           return (
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
+            <Box sx={{ pt: { md: "6px" } }}>
+              <Typography
+                variant="eyebrow"
+                sx={{ color: "text.secondary", mb: 1.75 }}
+              >
+                {t("detail.technicalDetails")}
+              </Typography>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
                 {visible.map((row) => (
-                  <DetailRow key={row.label} label={row.label} value={row.value} />
+                  <MetaRow key={row.label} label={row.label} value={row.value} />
                 ))}
               </Box>
-            </Grid>
+            </Box>
           );
         })()}
-      </Grid>
+      </Box>
 
       {movie.cast.length > 0 && (
         // Reuse ``MediaCarousel`` so the cast row gets the same
@@ -447,25 +444,21 @@ export function MovieDetail() {
   );
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
-  // Crunchyroll-style inline row: label and value share one
-  // ``<Typography>`` so long values wrap naturally to a second
-  // line at the right edge of the column instead of being clipped
-  // into a fixed-width label gutter. ``component="span"`` on the
-  // bold label keeps it inline with the surrounding text.
+function MetaRow({ label, value }: { label: string; value: string }) {
+  // Spec layout: muted label in a fixed gutter (110px) + cream value
+  // wrapping to its right. Baseline-aligned so a multi-line value
+  // anchors its first line to the label.
   return (
-    <Typography
-      variant="body2"
-      color="text.secondary"
-      sx={{ fontSize: { xs: "0.85rem", md: "0.9rem" }, lineHeight: 1.4 }}
-    >
+    <Box sx={{ display: "flex", gap: 1.25, alignItems: "baseline", fontSize: "0.8125rem" }}>
       <Box
         component="span"
-        sx={{ fontWeight: 600, color: "text.primary", mr: 0.5 }}
+        sx={{ flexShrink: 0, minWidth: 110, color: "text.secondary", fontSize: "0.75rem" }}
       >
-        {label}:
+        {label}
       </Box>
-      {value}
-    </Typography>
+      <Box component="span" sx={{ color: "rgba(245,241,235,0.85)" }}>
+        {value}
+      </Box>
+    </Box>
   );
 }
