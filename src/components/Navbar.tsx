@@ -66,7 +66,7 @@ export function Navbar() {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: "rgba(38, 38, 38, 0.85)",
+          bgcolor: "rgba(13, 13, 13, 0.85)",
           backdropFilter: "blur(12px)",
           borderBottom: 1,
           borderColor: "divider",
@@ -200,7 +200,7 @@ export function Navbar() {
               navigate(bottomNavItems[newValue].to);
             }}
             sx={{
-              bgcolor: "rgba(38, 38, 38, 0.95)",
+              bgcolor: "rgba(13, 13, 13, 0.95)",
               backdropFilter: "blur(12px)",
               "& .MuiBottomNavigationAction-root": {
                 color: "text.secondary",

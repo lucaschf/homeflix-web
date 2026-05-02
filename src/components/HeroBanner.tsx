@@ -153,8 +153,8 @@ export function HeroBanner({
           right: 0,
           bottom: { xs: -200, md: -250 },
           background: {
-            xs: "linear-gradient(to right, rgba(26,26,26,0.97) 0%, rgba(26,26,26,0.75) 50%, rgba(26,26,26,0.3) 100%)",
-            md: "linear-gradient(to right, rgba(26,26,26,0.95) 0%, rgba(26,26,26,0.6) 40%, transparent 70%)",
+            xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)",
+            md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
           },
         }}
       />
@@ -166,8 +166,8 @@ export function HeroBanner({
           right: 0,
           bottom: { xs: -200, md: -250 },
           background: {
-            xs: "linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,0.95) 8%, rgba(26,26,26,0.78) 20%, rgba(26,26,26,0.5) 35%, rgba(26,26,26,0.2) 55%, transparent 75%)",
-            md: "linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,0.92) 8%, rgba(26,26,26,0.7) 18%, rgba(26,26,26,0.4) 32%, rgba(26,26,26,0.15) 50%, transparent 70%)",
+            xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)",
+            md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)",
           },
         }}
       />

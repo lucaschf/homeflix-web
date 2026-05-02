@@ -147,7 +147,7 @@ export function MovieDetail() {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(180deg, transparent 0%, transparent 65%, rgba(26,26,26,0.7) 88%, #1A1A1A 100%)",
+              "linear-gradient(180deg, transparent 0%, transparent 65%, rgba(13,13,13,0.7) 88%, #0D0D0D 100%)",
           }}
         />
 
