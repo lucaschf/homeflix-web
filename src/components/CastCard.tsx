@@ -91,11 +91,11 @@ export function CastCard({ member }: CastCardProps) {
         src={member.profile_path ?? undefined}
         alt={member.name}
         sx={{
-          width: { xs: 80, md: 116 },
-          height: { xs: 80, md: 116 },
-          mb: 1,
+          width: { xs: 80, md: 96 },
+          height: { xs: 80, md: 96 },
+          mb: 1.25,
           bgcolor: "rgba(255,255,255,0.08)",
-          fontSize: { xs: "1.25rem", md: "1.6rem" },
+          fontSize: { xs: "1.25rem", md: "1.4rem" },
           fontWeight: 600,
           transition: "box-shadow 150ms ease",
         }}
@@ -105,9 +105,9 @@ export function CastCard({ member }: CastCardProps) {
       <Typography
         className="cast-name"
         variant="body2"
-        fontWeight={600}
+        fontWeight={500}
         sx={{
-          fontSize: { xs: "0.8rem", md: "0.85rem" },
+          fontSize: { xs: "0.8rem", md: "0.8125rem" },
           lineHeight: 1.2,
           width: "100%",
           overflow: "hidden",
@@ -125,9 +125,9 @@ export function CastCard({ member }: CastCardProps) {
           variant="caption"
           color="text.secondary"
           sx={{
-            fontSize: { xs: "0.7rem", md: "0.75rem" },
+            fontSize: { xs: "0.7rem", md: "0.6875rem" },
             lineHeight: 1.2,
-            mt: 0.25,
+            mt: 0.375,
             width: "100%",
             overflow: "hidden",
             textOverflow: "ellipsis",

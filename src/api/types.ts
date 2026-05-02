@@ -82,6 +82,12 @@ export interface PersonBioResponse {
   data: PersonBio;
 }
 
+export interface CollectionOutput {
+  tmdb_id: number;
+  name: string;
+  parts_count: number;
+}
+
 export interface MovieDetail {
   id: string;
   title: string;
@@ -90,6 +96,7 @@ export interface MovieDetail {
   duration_seconds: number;
   duration_formatted: string;
   synopsis: string | null;
+  tagline: string | null;
   poster_path: string | null;
   backdrop_path: string | null;
   logo_path: string | null;
@@ -99,6 +106,7 @@ export interface MovieDetail {
   writers: string[];
   content_rating: string | null;
   trailer_url: string | null;
+  collection: CollectionOutput | null;
   file_path: string | null;
   file_size: number | null;
   resolution: string | null;

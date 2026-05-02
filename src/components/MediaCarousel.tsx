@@ -8,6 +8,10 @@ interface MediaCarouselProps {
   subtitle?: string;
   onSeeAll?: () => void;
   children: React.ReactNode;
+  // Heading typography variant — defaults to ``h2`` (the home/browse
+  // section style). Detail pages opt into ``h3`` so the cast and
+  // related sections sit at 18px / 600 to match the refined spec.
+  headingVariant?: "h2" | "h3";
   // Infinite-scroll plumbing — opt-in. When `onLoadMore` is provided
   // the carousel mounts an internal sentinel at the right edge of the
   // scroll row and fires the callback whenever the user scrolls close
@@ -23,6 +27,7 @@ export function MediaCarousel({
   subtitle,
   onSeeAll,
   children,
+  headingVariant = "h2",
   onLoadMore,
   hasMore = false,
   loadingMore = false,
@@ -109,7 +114,7 @@ export function MediaCarousel({
         }}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h2" noWrap>
+          <Typography variant={headingVariant} noWrap>
             {title}
           </Typography>
           {subtitle && (
