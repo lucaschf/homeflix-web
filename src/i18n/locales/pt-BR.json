@@ -175,6 +175,21 @@
     "lifeSpan": "{{birth}} – {{death}}",
     "bioMore": "Mais",
     "bioLess": "Menos",
+    "fullBio": "Biografia completa",
+    "ageYears": "{{count}} ano",
+    "ageYears_other": "{{count}} anos",
+    "stat": {
+      "born": "Nascimento",
+      "age": "Idade",
+      "lifespan": "Vida",
+      "catalog": "No catálogo"
+    },
+    "sort": {
+      "label": "Ordenar",
+      "recent": "Mais recentes",
+      "oldest": "Mais antigos",
+      "title": "Título A–Z"
+    },
     "department": {
       "Acting": "Atuação",
       "Directing": "Direção",
