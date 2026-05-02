@@ -23,6 +23,7 @@ import {
 import { CastCard } from "../components/CastCard";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { CollectionChip } from "../components/CollectionChip";
 import { MetaLine } from "../components/MetaLine";
 import { QualityRail } from "../components/QualityRail";
 import { TitleLogo } from "../components/TitleLogo";
@@ -118,60 +119,39 @@ export function MovieDetail() {
 
   return (
     <Box sx={{ position: "relative" }}>
-      {/* Hero Header — same structure as the home ``HeroBanner``:
-        backdrop image and gradient overlays bleed below the hero
-        box so the cinematic backdrop reaches the bottom edge of
-        the viewport. ``56dvh`` hero + ``-44dvh`` bleed = ``100dvh``
-        total, matching ``HeroBanner``'s ``75dvh + ~250px`` look on
-        common viewports. The bleed values are the only difference
-        from ``HeroBanner`` — gradient stops are intentionally
-        identical so the two surfaces feel like one design. */}
-      <Box sx={{ position: "relative", width: "100%", height: "56dvh", minHeight: 400 }}>
+      {/* Hero — matches the refined spec: a self-contained backdrop
+        block (no bleed below). The hero is 85dvh tall with
+        ``overflow: hidden`` so the image stops cleanly at the hero
+        bottom. A single 180deg gradient over the image keeps the
+        top fully visible, fades to ~70% dark at 88%, and lands on
+        solid page bg at the bottom edge — so body content below
+        starts on the page bg with no visible seam. */}
+      <Box sx={{ position: "relative", width: "100%", height: "75dvh", minHeight: 460, overflow: "hidden" }}>
         {movie.backdrop_path && (
-          <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh" }}>
-            <Box
-              component="img"
-              src={movie.backdrop_path}
-              alt=""
-              sx={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
-            />
-          </Box>
+          <Box
+            component="img"
+            src={movie.backdrop_path}
+            alt=""
+            sx={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center top",
+            }}
+          />
         )}
         <Box
           sx={{
             position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: "-44dvh",
-            background: {
-              xs: "linear-gradient(to right, rgba(26,26,26,0.97) 0%, rgba(26,26,26,0.75) 50%, rgba(26,26,26,0.3) 100%)",
-              md: "linear-gradient(to right, rgba(26,26,26,0.95) 0%, rgba(26,26,26,0.6) 40%, transparent 70%)",
-            },
-          }}
-        />
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: "-44dvh",
-            background: {
-              // Fully-dark band extends to ~35% / ~30% of the layer
-              // (i.e. covers the entire bleed below the hero box) so
-              // cast and related carousels sit on a solid dark
-              // surface even though the layer reaches the viewport
-              // bottom. Above that, the gradient still fades to
-              // transparent in the upper hero region so the backdrop
-              // image stays visible there.
-              xs: "linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,1) 35%, rgba(26,26,26,0.85) 45%, rgba(26,26,26,0.5) 58%, rgba(26,26,26,0.2) 72%, transparent 85%)",
-              md: "linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,1) 30%, rgba(26,26,26,0.85) 40%, rgba(26,26,26,0.5) 55%, rgba(26,26,26,0.15) 70%, transparent 80%)",
-            },
+            inset: 0,
+            background:
+              "linear-gradient(180deg, transparent 0%, transparent 65%, rgba(26,26,26,0.7) 88%, #1A1A1A 100%)",
           }}
         />
 
-        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
+        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: "20dvh" }, gap: { xs: 2, md: 4 } }}>
           {movie.poster_path && !movie.logo_path && (
             // Poster is shown only when there's no localized title-logo
             // — when the logo is present it carries the visual identity
@@ -322,16 +302,36 @@ export function MovieDetail() {
           position: "relative",
           zIndex: 1,
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1.4fr 1fr" },
-          columnGap: { md: 8 },
+          gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
+          columnGap: { md: 10 },
           rowGap: { xs: 3, md: 0 },
           px: { xs: 2, sm: 3, md: 6 },
           pt: { xs: 2, md: 3 },
-          pb: { xs: 3, md: 0 },
+          pb: { xs: 4, md: 5 },
+          // Pull the body up so it starts right below the hero title
+          // (which we anchor at 55dvh from the page top). Without this
+          // the body waits for the 75dvh hero to end and a ~20dvh
+          // empty band sits between the title and the synopsis.
+          mt: { md: "-19dvh" },
           maxWidth: 1600,
         }}
       >
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2.25 }}>
+          {movie.tagline && (
+            <Typography
+              variant="body1"
+              sx={{
+                fontStyle: "italic",
+                fontSize: { xs: "0.9375rem", md: "1rem" },
+                lineHeight: 1.4,
+                letterSpacing: "0.01em",
+                color: "rgba(245,241,235,0.55)",
+                m: 0,
+              }}
+            >
+              {movie.tagline}
+            </Typography>
+          )}
           {movie.synopsis && (
             <Typography
               ref={synopsisRef}
@@ -368,6 +368,7 @@ export function MovieDetail() {
               {expanded ? `← ${t("detail.lessDetails")}` : `${t("detail.moreDetails")} →`}
             </Typography>
           )}
+          {movie.collection && <CollectionChip collection={movie.collection} />}
         </Box>
 
         {(() => {
@@ -402,7 +403,7 @@ export function MovieDetail() {
         // every horizontal list. ``zIndex: 1`` keeps the cards above
         // the hero's bleed layers.
         <Box sx={{ position: "relative", zIndex: 1 }}>
-          <MediaCarousel title={t("detail.cast")}>
+          <MediaCarousel title={t("detail.cast")} headingVariant="h3">
             {movie.cast.map((member, idx) => (
               <CastCard key={`${member.name}-${idx}`} member={member} />
             ))}
@@ -418,7 +419,7 @@ export function MovieDetail() {
         // overlaps with the catalog; the carousel simply doesn't
         // render in those cases (no empty header).
         <Box sx={{ position: "relative", zIndex: 1 }}>
-          <MediaCarousel title={t("detail.related")}>
+          <MediaCarousel title={t("detail.related")} headingVariant="h3">
             {relatedMovies.map((m) => (
               <MediaCard
                 key={m.id}
