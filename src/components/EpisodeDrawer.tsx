@@ -78,7 +78,7 @@ export function EpisodeDrawer({
           right: 0,
           bottom: 0,
           width: { xs: "85%", sm: 380, md: 400 },
-          bgcolor: "rgba(26,26,26,0.95)",
+          bgcolor: "rgba(13,13,13,0.95)",
           backdropFilter: "blur(12px)",
           zIndex: 20,
           display: "flex",

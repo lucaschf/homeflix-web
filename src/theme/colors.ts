@@ -24,17 +24,17 @@ const withAlphas = (color: Omit<ColorScale, `alpha${string}`>): ColorScale => ({
 });
 
 export const neutral = {
-  50: "#F5F1EB",
+  50: "#FAFAFA",
   100: "#F5F5F5",
   200: "#E8E8E8",
   300: "#D4D4D4",
-  400: "#8A857E",
+  400: "#A0A0A0",
   500: "#737373",
   600: "#525252",
-  700: "#2F2F2F",
-  800: "#222222",
-  900: "#262626",
-  950: "#1A1A1A",
+  700: "#2A2A2A",
+  800: "#1A1A1A",
+  900: "#141414",
+  950: "#0D0D0D",
 };
 
 export const peach = withAlphas({
@@ -43,7 +43,7 @@ export const peach = withAlphas({
   main: "#D97757",
   dark: "#B85A3D",
   darkest: "#8E3F26",
-  contrastText: "#1A1A1A",
+  contrastText: "#0D0D0D",
 });
 
 export const success = withAlphas({

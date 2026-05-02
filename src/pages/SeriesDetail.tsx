@@ -118,8 +118,8 @@ export function SeriesDetail() {
             />
           </Box>
         )}
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: "linear-gradient(to right, rgba(26,26,26,0.97) 0%, rgba(26,26,26,0.75) 50%, rgba(26,26,26,0.3) 100%)", md: "linear-gradient(to right, rgba(26,26,26,0.95) 0%, rgba(26,26,26,0.6) 40%, transparent 70%)" } }} />
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: "linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,1) 35%, rgba(26,26,26,0.85) 45%, rgba(26,26,26,0.5) 58%, rgba(26,26,26,0.2) 72%, transparent 85%)", md: "linear-gradient(to top, rgba(26,26,26,1) 0%, rgba(26,26,26,1) 30%, rgba(26,26,26,0.85) 40%, rgba(26,26,26,0.5) 55%, rgba(26,26,26,0.15) 70%, transparent 80%)" } }} />
+        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)", md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)" } }} />
+        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 35%, rgba(13,13,13,0.85) 45%, rgba(13,13,13,0.5) 58%, rgba(13,13,13,0.2) 72%, transparent 85%)", md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 30%, rgba(13,13,13,0.85) 40%, rgba(13,13,13,0.5) 55%, rgba(13,13,13,0.15) 70%, transparent 80%)" } }} />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
           {series.poster_path && !series.logo_path && (
