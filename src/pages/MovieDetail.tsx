@@ -120,12 +120,13 @@ export function MovieDetail() {
   return (
     <Box sx={{ position: "relative" }}>
       {/* Hero — matches the refined spec: a self-contained backdrop
-        block (no bleed below). The hero is 85dvh tall with
+        block (no bleed below). The hero is 75dvh tall with
         ``overflow: hidden`` so the image stops cleanly at the hero
-        bottom. A single 180deg gradient over the image keeps the
-        top fully visible, fades to ~70% dark at 88%, and lands on
-        solid page bg at the bottom edge — so body content below
-        starts on the page bg with no visible seam. */}
+        bottom. Two overlays guarantee text readability regardless of
+        backdrop brightness: a 180deg gradient anchors the bottom on
+        page bg (where title + pulled-up body live), and a 90deg
+        gradient gives the left column (title/buttons) a darker
+        backing so a blown-out backdrop center can't wash it out. */}
       <Box sx={{ position: "relative", width: "100%", height: "75dvh", minHeight: 460, overflow: "hidden" }}>
         {movie.backdrop_path && (
           <Box
@@ -147,7 +148,17 @@ export function MovieDetail() {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(180deg, transparent 0%, transparent 65%, rgba(13,13,13,0.7) 88%, #0D0D0D 100%)",
+              "linear-gradient(180deg, rgba(13,13,13,0) 0%, rgba(13,13,13,0) 30%, rgba(13,13,13,0.5) 55%, rgba(13,13,13,0.85) 80%, #0D0D0D 100%)",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: {
+              xs: "linear-gradient(90deg, rgba(13,13,13,0.85) 0%, rgba(13,13,13,0.55) 35%, rgba(13,13,13,0.2) 65%, rgba(13,13,13,0) 100%)",
+              md: "linear-gradient(90deg, rgba(13,13,13,0.7) 0%, rgba(13,13,13,0.35) 30%, rgba(13,13,13,0) 55%)",
+            },
           }}
         />
 
