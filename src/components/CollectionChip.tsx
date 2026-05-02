@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { Link as RouterLink } from "react-router-dom";
 import type { CollectionOutput } from "../api/types";
 
 interface CollectionChipProps {
@@ -11,6 +12,9 @@ export function CollectionChip({ collection }: CollectionChipProps) {
 
   return (
     <Box
+      component={RouterLink}
+      to={`/collection/${collection.tmdb_id}`}
+      aria-label={`${t("detail.partOf")} ${collection.name}`}
       sx={{
         display: "inline-flex",
         alignItems: "center",
@@ -24,6 +28,19 @@ export function CollectionChip({ collection }: CollectionChipProps) {
         color: "rgba(245,241,235,0.85)",
         lineHeight: 1.4,
         whiteSpace: "nowrap",
+        textDecoration: "none",
+        cursor: "pointer",
+        transition: "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
+        "&:hover": {
+          bgcolor: "rgba(217,119,87,0.06)",
+          borderColor: "rgba(217,119,87,0.35)",
+          color: "text.primary",
+        },
+        "&:focus-visible": {
+          outline: "2px solid",
+          outlineColor: "primary.main",
+          outlineOffset: 2,
+        },
       }}
     >
       <Box component="span" sx={{ fontSize: "0.8125rem", lineHeight: 1 }} aria-hidden>
@@ -45,7 +62,7 @@ export function CollectionChip({ collection }: CollectionChipProps) {
       >
         · {t("detail.moviesCount", { count: collection.parts_count })}
       </Box>
-      <Box component="span" sx={{ color: "primary.main", ml: 0.25 }}>
+      <Box component="span" sx={{ color: "primary.main", ml: 0.25 }} aria-hidden>
         →
       </Box>
     </Box>
