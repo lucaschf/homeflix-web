@@ -43,6 +43,9 @@ import type {
   MoviesByActorResponse,
   PersonBio,
   PersonBioResponse,
+  RecentlyAddedCatalogResponse,
+  RecentlyAddedMoviesResponse,
+  RecentlyAddedSeriesResponse,
   RelatedMoviesResponse,
   RelatedSeriesResponse,
   ProgressOutput,
@@ -376,6 +379,76 @@ export function useRelatedSeries(seriesId: string | undefined, limit = 12) {
       return resp.data;
     },
     enabled: !!seriesId,
+  });
+}
+
+/**
+ * Mixed top-N most recently added titles (movies + series) for the
+ * Home page carousel.
+ *
+ * Backed by ``GET /api/v1/catalog/recently-added``. The backend
+ * fetches the top ``limit`` newest from each repo, merges them by
+ * ``created_at`` desc, and returns the top ``limit`` of the merged
+ * list. The frontend renders a single carousel — type-specific
+ * variants live on the Browse page (``useRecentlyAddedMovies`` /
+ * ``useRecentlyAddedSeries``).
+ */
+export function useRecentlyAddedCatalog(limit = 20) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["catalog", "recently-added", lang, limit],
+    queryFn: async (): Promise<CatalogItem[]> => {
+      const resp = await api.get<RecentlyAddedCatalogResponse>("/catalog/recently-added", {
+        lang,
+        limit: String(limit),
+      });
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Top-N most recently added movies for the home-page carousel.
+ *
+ * Backed by ``GET /api/v1/movies/recently-added`` — a bounded
+ * projection ordered by ``id DESC`` (insertion order). No cursor or
+ * pagination metadata; the carousel renders the full slice and the
+ * Movies tab is the path to keep browsing.
+ */
+export function useRecentlyAddedMovies(limit = 20) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["movies", "recently-added", lang, limit],
+    queryFn: async (): Promise<MovieSummary[]> => {
+      const resp = await api.get<RecentlyAddedMoviesResponse>("/movies/recently-added", {
+        lang,
+        limit: String(limit),
+      });
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Top-N most recently added series for the home-page carousel.
+ *
+ * Mirror of ``useRecentlyAddedMovies`` for the series side. Backed
+ * by ``GET /api/v1/series/recently-added``.
+ */
+export function useRecentlyAddedSeries(limit = 20) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["series", "recently-added", lang, limit],
+    queryFn: async (): Promise<SeriesSummary[]> => {
+      const resp = await api.get<RecentlyAddedSeriesResponse>("/series/recently-added", {
+        lang,
+        limit: String(limit),
+      });
+      return resp.data;
+    },
   });
 }
 

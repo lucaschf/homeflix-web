@@ -3,7 +3,14 @@ import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useClearProgress, useClearSeriesProgress, useContinueWatching, useFeatured, useGenres } from "../api/hooks";
+import {
+  useClearProgress,
+  useClearSeriesProgress,
+  useContinueWatching,
+  useFeatured,
+  useGenres,
+  useRecentlyAddedCatalog,
+} from "../api/hooks";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
@@ -30,6 +37,7 @@ export function Home() {
   const clearProgress = useClearProgress();
   const clearSeriesProgress = useClearSeriesProgress();
   const { data: featured } = useFeatured("all");
+  const { data: recentlyAdded } = useRecentlyAddedCatalog();
 
   const isLoading = genresLoading;
   const hasContent = (genres?.length ?? 0) > 0;
@@ -117,6 +125,30 @@ export function Home() {
                     navigate(`/play/episode/${item.series_id}/${item.season_number}/${item.episode_number}`);
                   }
                 }}
+              />
+            ))}
+          </MediaCarousel>
+        )}
+
+        {recentlyAdded && recentlyAdded.length > 0 && (
+          <MediaCarousel title={t("home.recentlyAdded")}>
+            {recentlyAdded.map((item) => (
+              <MediaCard
+                key={`${item.type}:${item.id}`}
+                title={item.title}
+                imageUrl={item.poster_path ?? undefined}
+                year={item.year}
+                synopsis={item.synopsis ?? undefined}
+                mediaId={item.id}
+                mediaType={item.type}
+                onPlay={
+                  item.type === "movie"
+                    ? () => navigate(`/play/movie/${item.id}`)
+                    : undefined
+                }
+                onClick={() =>
+                  navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)
+                }
               />
             ))}
           </MediaCarousel>

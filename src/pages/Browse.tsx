@@ -2,10 +2,18 @@ import { useEffect, useMemo, useRef } from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useByGenre, useFeatured, useGenres, type CatalogTypeFilter } from "../api/hooks";
+import {
+  useByGenre,
+  useFeatured,
+  useGenres,
+  useRecentlyAddedMovies,
+  useRecentlyAddedSeries,
+  type CatalogTypeFilter,
+} from "../api/hooks";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
+import { MediaCarousel } from "../components/MediaCarousel";
 import { formatDuration } from "../utils/duration";
 
 /**
@@ -103,9 +111,12 @@ export function Browse() {
             }}
           />
         ) : (genres?.length ?? 0) > 0 ? (
-          (genres ?? []).map((genre) => (
-            <LazyGenreCarousel key={genre.id} genre={genre} type={typeFilter} />
-          ))
+          <>
+            {typeFilter && <RecentlyAddedSection type={typeFilter} />}
+            {(genres ?? []).map((genre) => (
+              <LazyGenreCarousel key={genre.id} genre={genre} type={typeFilter} />
+            ))}
+          </>
         ) : (
           <Box sx={{ textAlign: "center", py: 10 }}>
             <Typography variant="body1" color="text.secondary">
@@ -115,6 +126,66 @@ export function Browse() {
         )}
       </Box>
     </Box>
+  );
+}
+
+/**
+ * "Recently added" carousel scoped to the active type tab.
+ *
+ * Only mounted when ``?type=movie`` or ``?type=series`` is set —
+ * the unfiltered Browse view delegates the mixed version to the Home
+ * page, so showing it here too would just duplicate the row.
+ *
+ * Uses the per-type hooks (``useRecentlyAddedMovies`` /
+ * ``useRecentlyAddedSeries``) instead of the mixed catalog hook so
+ * the response stays scoped to one media type without an extra
+ * round-trip to filter client-side.
+ */
+function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const moviesQuery = useRecentlyAddedMovies();
+  const seriesQuery = useRecentlyAddedSeries();
+
+  if (type === "movie") {
+    const movies = moviesQuery.data ?? [];
+    if (movies.length === 0) return null;
+    return (
+      <MediaCarousel title={t("home.recentlyAdded")}>
+        {movies.map((movie) => (
+          <MediaCard
+            key={movie.id}
+            title={movie.title}
+            imageUrl={movie.poster_path ?? undefined}
+            year={movie.year}
+            synopsis={movie.synopsis ?? undefined}
+            mediaId={movie.id}
+            mediaType="movie"
+            onPlay={() => navigate(`/play/movie/${movie.id}`)}
+            onClick={() => navigate(`/movie/${movie.id}`)}
+          />
+        ))}
+      </MediaCarousel>
+    );
+  }
+
+  const seriesList = seriesQuery.data ?? [];
+  if (seriesList.length === 0) return null;
+  return (
+    <MediaCarousel title={t("home.recentlyAdded")}>
+      {seriesList.map((series) => (
+        <MediaCard
+          key={series.id}
+          title={series.title}
+          imageUrl={series.poster_path ?? undefined}
+          year={series.start_year}
+          synopsis={series.synopsis ?? undefined}
+          mediaId={series.id}
+          mediaType="series"
+          onClick={() => navigate(`/series/${series.id}`)}
+        />
+      ))}
+    </MediaCarousel>
   );
 }
 
