@@ -528,3 +528,50 @@ export interface PlaybackPreferencesData {
 export interface PreferencesResponse {
   data: PlaybackPreferencesData;
 }
+
+// ── Identity (auth + profiles) ──────────────────────────
+//
+// IDs are prefixed external strings (e.g. ``usr_xxx``, ``prf_xxx``,
+// ``lib_xxx``) per ADR-002. The frontend never sees database UUIDs.
+
+export interface User {
+  id: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  is_verified: boolean;
+}
+
+export interface Profile {
+  id: string;
+  user_id: string;
+  name: string;
+  avatar_url: string | null;
+  is_kids: boolean;
+  // Default-deny: empty list means the profile may not see any
+  // library. Backfilled to a snapshot of every active library at
+  // PR #176 migration time, so legacy households keep their
+  // pre-ACL "see everything" behavior. Future grants/revokes go
+  // through ``PUT /api/v1/profiles/{id}``.
+  allowed_library_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export type UserResponse = ApiDetailResponse<User>;
+export type ProfileResponse = ApiDetailResponse<Profile>;
+export type ProfilesResponse = ApiListResponse<Profile>;
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface UpdateProfileInput {
+  name?: string;
+  is_kids?: boolean;
+  avatar_url?: string | null;
+  // ``null`` means "leave the ACL alone" (PATCH-style); an explicit
+  // ``[]`` revokes every library; a list replaces.
+  allowed_library_ids?: string[] | null;
+}
