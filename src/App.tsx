@@ -3,6 +3,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { RedirectIfAuthenticated, RequireAuth } from "./components/auth";
 import { SplashScreen } from "./components/SplashScreen";
 import { Actor } from "./pages/Actor";
 import { Browse } from "./pages/Browse";
@@ -60,28 +61,39 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
-            {/* Auth routes deliberately sit OUTSIDE the Layout
-                wrapper — no header / sidebar during sign-in.
-                Pages are placeholders today; the Variation B UI
-                lands in the next PR. */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/profiles" element={<Profiles />} />
-            <Route path="/play/movie/:movieId" element={<Player />} />
-            <Route path="/play/episode/:seriesId/:season/:episode" element={<Player />} />
-            <Route element={<Layout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/browse" element={<Browse />} />
-              <Route path="/movie/:movieId" element={<MovieDetail />} />
-              <Route path="/series/:seriesId" element={<SeriesDetail />} />
-              <Route path="/collection/:tmdbId" element={<Collection />} />
-              <Route path="/actor/:name" element={<Actor />} />
-              <Route path="/lists" element={<MyLists />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/admin/intros" element={<IntroPicker />} />
-              <Route
-                path="/admin/intros/:seriesId/:season/:episode"
-                element={<IntroEditor />}
-              />
+            {/* Login bounces to /profiles when the visitor is
+                already authenticated — keeps the back button
+                from looping users through a form they don't
+                need. */}
+            <Route element={<RedirectIfAuthenticated />}>
+              <Route path="/login" element={<Login />} />
+            </Route>
+
+            {/* Everything else requires a logged-in user. The
+                guard sits above ``<Layout />`` so anonymous
+                visitors never see app chrome flash before the
+                redirect. The two ``/play/*`` routes are wrapped
+                separately because they bypass the Layout
+                wrapper for fullscreen playback. */}
+            <Route element={<RequireAuth />}>
+              <Route path="/profiles" element={<Profiles />} />
+              <Route path="/play/movie/:movieId" element={<Player />} />
+              <Route path="/play/episode/:seriesId/:season/:episode" element={<Player />} />
+              <Route element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/browse" element={<Browse />} />
+                <Route path="/movie/:movieId" element={<MovieDetail />} />
+                <Route path="/series/:seriesId" element={<SeriesDetail />} />
+                <Route path="/collection/:tmdbId" element={<Collection />} />
+                <Route path="/actor/:name" element={<Actor />} />
+                <Route path="/lists" element={<MyLists />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/admin/intros" element={<IntroPicker />} />
+                <Route
+                  path="/admin/intros/:seriesId/:season/:episode"
+                  element={<IntroEditor />}
+                />
+              </Route>
             </Route>
           </Routes>
         </BrowserRouter>

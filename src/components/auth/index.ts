@@ -5,3 +5,5 @@ export { Checkbox } from "./Checkbox";
 export { Field } from "./Field";
 export { MarkBadge } from "./MarkBadge";
 export { PrimaryButton } from "./PrimaryButton";
+export { RedirectIfAuthenticated } from "./RedirectIfAuthenticated";
+export { RequireAuth } from "./RequireAuth";
