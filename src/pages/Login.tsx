@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Alert, Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../api/client";
-import { useCurrentUser, useLogin } from "../api/auth";
+import { useLogin } from "../api/auth";
 import {
   AuthShell,
   Checkbox,
@@ -34,7 +34,6 @@ const REMEMBER_EMAIL_KEY = "homeflix:auth:remember-email";
  */
 export function Login() {
   const navigate = useNavigate();
-  const { data: currentUser } = useCurrentUser();
   const login = useLogin();
 
   const [email, setEmail] = useState(() => {
@@ -46,12 +45,9 @@ export function Login() {
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Already authenticated? Skip straight to the picker — visiting
-  // ``/login`` while logged in is a no-op rather than a way to
-  // create a second session.
-  useEffect(() => {
-    if (currentUser) navigate("/profiles", { replace: true });
-  }, [currentUser, navigate]);
+  // Already-authenticated visitors are bounced to ``/profiles`` by
+  // the route-level ``RedirectIfAuthenticated`` guard before this
+  // component ever mounts, so no in-page useEffect is needed.
 
   const submitting = login.isPending;
   const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting;

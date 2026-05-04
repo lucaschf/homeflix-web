@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, CircularProgress, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useCurrentUser, useLogout, useProfiles, useSwitchProfile } from "../api/auth";
+import { useLogout, useProfiles, useSwitchProfile } from "../api/auth";
 import {
   AuthShell,
   Avatar,
@@ -29,7 +29,6 @@ import type { Profile } from "../api/types";
  */
 export function Profiles() {
   const navigate = useNavigate();
-  const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const profilesQuery = useProfiles();
   const switchProfile = useSwitchProfile();
   const logout = useLogout();
@@ -37,11 +36,9 @@ export function Profiles() {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Block the page if no session — bounce to login. Keeps the URL
-  // clean (no flash of empty picker for anonymous visitors).
-  useEffect(() => {
-    if (!userLoading && !currentUser) navigate("/login", { replace: true });
-  }, [userLoading, currentUser, navigate]);
+  // Anonymous visitors are bounced to ``/login`` by the route-level
+  // ``RequireAuth`` guard before this component ever mounts, so no
+  // in-page redirect effect is needed.
 
   // Auto-skip when the household has exactly one profile. The
   // effect runs once profiles resolve; ``switchProfile`` carries
@@ -78,7 +75,7 @@ export function Profiles() {
     }
   }
 
-  const loading = userLoading || profilesQuery.isLoading;
+  const loading = profilesQuery.isLoading;
   const profiles = profilesQuery.data ?? [];
 
   return (
