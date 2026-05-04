@@ -8,8 +8,10 @@ import { Actor } from "./pages/Actor";
 import { Browse } from "./pages/Browse";
 import { Collection } from "./pages/Collection";
 import { Home } from "./pages/Home";
+import { Login } from "./pages/Login";
 import { MovieDetail } from "./pages/MovieDetail";
 import { Player } from "./pages/Player";
+import { Profiles } from "./pages/Profiles";
 import { SeriesDetail } from "./pages/SeriesDetail";
 import { MyLists } from "./pages/MyLists";
 import { Settings } from "./pages/Settings";
@@ -58,6 +60,12 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <Routes>
+            {/* Auth routes deliberately sit OUTSIDE the Layout
+                wrapper — no header / sidebar during sign-in.
+                Pages are placeholders today; the Variation B UI
+                lands in the next PR. */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/profiles" element={<Profiles />} />
             <Route path="/play/movie/:movieId" element={<Player />} />
             <Route path="/play/episode/:seriesId/:season/:episode" element={<Player />} />
             <Route element={<Layout />}>
