@@ -6,6 +6,7 @@ import { Layout } from "./components/Layout";
 import {
   AuthExpirationGuard,
   RedirectIfAuthenticated,
+  RequireAdmin,
   RequireAuth,
 } from "./components/auth";
 import { SplashScreen } from "./components/SplashScreen";
@@ -99,11 +100,18 @@ function App() {
                 <Route path="/actor/:name" element={<Actor />} />
                 <Route path="/lists" element={<MyLists />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/admin/intros" element={<IntroPicker />} />
-                <Route
-                  path="/admin/intros/:seriesId/:season/:episode"
-                  element={<IntroEditor />}
-                />
+                {/* /admin/* requires admin role on top of auth.
+                    RequireAdmin redirects non-admin members back to
+                    "/" so the catalog stays usable; the backend
+                    enforces the gate independently via 403 on the
+                    underlying API calls. */}
+                <Route element={<RequireAdmin />}>
+                  <Route path="/admin/intros" element={<IntroPicker />} />
+                  <Route
+                    path="/admin/intros/:seriesId/:season/:episode"
+                    element={<IntroEditor />}
+                  />
+                </Route>
               </Route>
             </Route>
           </Routes>
