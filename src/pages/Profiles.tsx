@@ -241,7 +241,9 @@ export function Profiles() {
             <Box
               component="button"
               type="button"
-              onClick={() => navigate("/settings#profiles")}
+              onClick={() =>
+                navigate("/profiles/manage", { state: { from: "/profiles" } })
+              }
               sx={{
                 mt: 5,
                 background: "transparent",

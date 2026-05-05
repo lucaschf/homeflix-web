@@ -30,7 +30,6 @@ import {
   Plus,
   RefreshCw,
   Trash2,
-  Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -44,7 +43,6 @@ import {
 } from "../api/hooks";
 import type { Library } from "../api/types";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
-import { ProfilesSection } from "../components/profile-management/ProfilesSection";
 import { neutral } from "../theme/colors";
 import {
   usePlaybackPreferences,
@@ -297,13 +295,6 @@ export function Settings() {
           )}
         </Box>
       </SettingsSection>
-
-      {/* ── Profiles ─────────────────────────────────────── */}
-      <Box id="profiles">
-        <SettingsSection icon={Users} title={t("settings.profiles")}>
-          <ProfilesSection />
-        </SettingsSection>
-      </Box>
 
       {/* ── Playback ─────────────────────────────────────── */}
       <SettingsSection icon={MonitorPlay} title={t("settings.playback")}>

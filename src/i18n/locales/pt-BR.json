@@ -16,17 +16,13 @@
     "logout": "Sair"
   },
   "profileManagement": {
+    "manageTitle": "Gerenciar perfis",
+    "done": "Concluir",
     "createTitle": "Novo perfil",
     "editTitle": "Editar perfil",
-    "addProfile": "Adicionar perfil",
+    "addProfile": "Novo perfil",
     "deleteTitle": "Apagar perfil",
     "deleteConfirm": "Tem certeza que deseja apagar o perfil \"{{name}}\"? Histórico, listas e preferências dele serão arquivados.",
-    "empty": "Nenhum perfil cadastrado.",
-    "row": {
-      "kids": "Kids",
-      "librariesCount_one": "{{count}} biblioteca",
-      "librariesCount_other": "{{count}} bibliotecas"
-    },
     "fields": {
       "name": "Nome",
       "isKids": "Modo infantil",
@@ -41,7 +37,8 @@
       "save": "Salvar",
       "create": "Criar",
       "edit": "Editar",
-      "delete": "Apagar"
+      "delete": "Apagar",
+      "deleteProfile": "Apagar perfil"
     },
     "errors": {
       "saveFailed": "Não foi possível salvar o perfil. Tente novamente.",
@@ -347,7 +344,6 @@
   },
   "settings": {
     "title": "Configuracoes",
-    "profiles": "Perfis",
     "libraries": "Bibliotecas",
     "addLibrary": "Adicionar Biblioteca",
     "scan": "Escanear",

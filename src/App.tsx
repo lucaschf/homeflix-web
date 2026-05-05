@@ -10,6 +10,7 @@ import { Browse } from "./pages/Browse";
 import { Collection } from "./pages/Collection";
 import { Home } from "./pages/Home";
 import { Login } from "./pages/Login";
+import { ManageProfiles } from "./pages/ManageProfiles";
 import { MovieDetail } from "./pages/MovieDetail";
 import { Player } from "./pages/Player";
 import { Profiles } from "./pages/Profiles";
@@ -77,6 +78,7 @@ function App() {
                 wrapper for fullscreen playback. */}
             <Route element={<RequireAuth />}>
               <Route path="/profiles" element={<Profiles />} />
+              <Route path="/profiles/manage" element={<ManageProfiles />} />
               <Route path="/play/movie/:movieId" element={<Player />} />
               <Route path="/play/episode/:seriesId/:season/:episode" element={<Player />} />
               <Route element={<Layout />}>

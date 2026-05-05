@@ -16,17 +16,13 @@
     "logout": "Sign out"
   },
   "profileManagement": {
+    "manageTitle": "Manage profiles",
+    "done": "Done",
     "createTitle": "New profile",
     "editTitle": "Edit profile",
-    "addProfile": "Add profile",
+    "addProfile": "New profile",
     "deleteTitle": "Delete profile",
     "deleteConfirm": "Are you sure you want to delete the profile \"{{name}}\"? Their history, lists and preferences will be archived.",
-    "empty": "No profiles yet.",
-    "row": {
-      "kids": "Kids",
-      "librariesCount_one": "{{count}} library",
-      "librariesCount_other": "{{count}} libraries"
-    },
     "fields": {
       "name": "Name",
       "isKids": "Kids mode",
@@ -41,7 +37,8 @@
       "save": "Save",
       "create": "Create",
       "edit": "Edit",
-      "delete": "Delete"
+      "delete": "Delete",
+      "deleteProfile": "Delete profile"
     },
     "errors": {
       "saveFailed": "Couldn't save the profile. Try again.",
@@ -347,7 +344,6 @@
   },
   "settings": {
     "title": "Settings",
-    "profiles": "Profiles",
     "libraries": "Libraries",
     "addLibrary": "Add Library",
     "scan": "Scan",

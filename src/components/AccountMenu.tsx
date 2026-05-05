@@ -50,7 +50,7 @@ export function AccountMenu() {
 
   const handleManageProfiles = () => {
     handleClose();
-    navigate("/settings#profiles");
+    navigate("/profiles/manage");
   };
 
   const handleLogout = async () => {

@@ -36,6 +36,12 @@ interface ProfileFormDialogProps {
   error?: string | null;
   onClose: () => void;
   onSubmit: (body: ProfileFormSubmit) => void;
+  /**
+   * Optional delete entry-point. Only rendered in edit mode (when
+   * ``profile`` is set) — the parent owns the confirmation dialog
+   * so this component just signals "user wants to delete".
+   */
+  onDelete?: () => void;
 }
 
 /**
@@ -63,6 +69,7 @@ export function ProfileFormDialog({
   error,
   onClose,
   onSubmit,
+  onDelete,
 }: ProfileFormDialogProps) {
   const { t } = useTranslation();
   const isEdit = profile !== null;
@@ -224,17 +231,31 @@ export function ProfileFormDialog({
           </>
         )}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={submitting} color="inherit">
-          {t("profileManagement.actions.cancel")}
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={!canSubmit}
-          variant="contained"
-        >
-          {isEdit ? t("profileManagement.actions.save") : t("profileManagement.actions.create")}
-        </Button>
+      <DialogActions sx={{ justifyContent: "space-between", px: 3, py: 2 }}>
+        {isEdit && onDelete ? (
+          <Button
+            onClick={onDelete}
+            disabled={submitting}
+            color="error"
+            sx={{ textTransform: "none", fontWeight: 500 }}
+          >
+            {t("profileManagement.actions.deleteProfile")}
+          </Button>
+        ) : (
+          <Box />
+        )}
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Button onClick={onClose} disabled={submitting} color="inherit">
+            {t("profileManagement.actions.cancel")}
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!canSubmit}
+            variant="contained"
+          >
+            {isEdit ? t("profileManagement.actions.save") : t("profileManagement.actions.create")}
+          </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   );
