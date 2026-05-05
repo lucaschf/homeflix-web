@@ -8,7 +8,7 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
-import { LogOut, Settings as SettingsIcon, Users } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, UserCog, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useLogout, useProfiles } from "../api/auth";
@@ -68,6 +68,11 @@ export function AccountMenu() {
   const handleManageProfiles = () => {
     handleClose();
     navigate("/profiles/manage");
+  };
+
+  const handleOpenSettings = () => {
+    handleClose();
+    navigate("/settings");
   };
 
   const handleLogout = async () => {
@@ -179,10 +184,19 @@ export function AccountMenu() {
 
         <MenuItem onClick={handleManageProfiles}>
           <ListItemIcon sx={{ color: "text.secondary", minWidth: 32 }}>
-            <SettingsIcon size={16} />
+            <UserCog size={16} />
           </ListItemIcon>
           {t("nav.manageProfiles")}
         </MenuItem>
+
+        <MenuItem onClick={handleOpenSettings}>
+          <ListItemIcon sx={{ color: "text.secondary", minWidth: 32 }}>
+            <SettingsIcon size={16} />
+          </ListItemIcon>
+          {t("nav.settings")}
+        </MenuItem>
+
+        <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
 
         <MenuItem
           onClick={handleLogout}

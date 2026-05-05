@@ -12,7 +12,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Bookmark, Film, Home, Search, Settings, Tv, Wrench } from "lucide-react";
+import { Bookmark, Film, Home, Search, Tv, Wrench } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../api/auth";
@@ -49,7 +49,6 @@ const navItems: NavItem[] = [
     requiresRole: "admin",
   },
   { to: "/lists", labelKey: "nav.myListsShort", icon: Bookmark, mobileOnly: true },
-  { to: "/settings", labelKey: "nav.settings", icon: Settings, mobileOnly: true },
 ];
 
 export function Navbar() {
@@ -196,16 +195,6 @@ export function Navbar() {
             </IconButton>
           )}
           <LanguageSwitch />
-          {!isMobile && (
-            <IconButton
-              component={NavLink}
-              to="/settings"
-              size="small"
-              sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
-            >
-              <Settings size={20} />
-            </IconButton>
-          )}
           <AccountMenu />
         </Toolbar>
       </AppBar>
