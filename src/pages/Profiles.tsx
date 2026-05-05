@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, CircularProgress, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useLogout, useProfiles, useSwitchProfile } from "../api/auth";
 import {
@@ -28,6 +29,7 @@ import type { Profile } from "../api/types";
  * management screen lands in a follow-up PR.
  */
 export function Profiles() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const profilesQuery = useProfiles();
   const switchProfile = useSwitchProfile();
@@ -63,7 +65,7 @@ export function Profiles() {
       await switchProfile.mutateAsync(profile.id);
       navigate("/", { replace: true });
     } catch {
-      setError("Não foi possível selecionar este perfil. Tente novamente.");
+      setError(t("auth.picker.switchError"));
     }
   }
 
@@ -112,7 +114,7 @@ export function Profiles() {
             "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
           }}
         >
-          ← Sair
+          {t("auth.picker.logoutShort")}
         </Box>
       </Box>
 
@@ -137,25 +139,16 @@ export function Profiles() {
             <Typography
               variant="h1"
               sx={{
-                mb: 1,
-                fontSize: { xs: 28, sm: 36 },
-                fontWeight: 500,
-                letterSpacing: "-0.025em",
+                mb: { xs: 4, sm: 6 },
+                fontSize: { xs: 32, sm: 48 },
+                fontWeight: 400,
+                letterSpacing: "-0.02em",
                 lineHeight: 1.1,
                 textAlign: "center",
+                color: "rgba(255, 255, 255, 0.95)",
               }}
             >
-              Quem está assistindo?
-            </Typography>
-            <Typography
-              sx={{
-                mb: 6,
-                fontSize: 14,
-                color: "rgba(245, 241, 235, 0.5)",
-                textAlign: "center",
-              }}
-            >
-              Toque no perfil para entrar.
+              {t("auth.picker.headline")}
             </Typography>
 
             {error && (
@@ -176,11 +169,14 @@ export function Profiles() {
 
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)" },
-                gap: { xs: 1.75, sm: 3 },
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                alignItems: "flex-start",
+                gap: { xs: 3, sm: 5 },
                 width: "100%",
-                maxWidth: 640,
+                maxWidth: 880,
+                mb: { xs: 5, sm: 7 },
               }}
             >
               {profiles.map((profile) => {
@@ -197,38 +193,39 @@ export function Profiles() {
                     onBlur={() => setHoveredId(null)}
                     onClick={() => pickProfile(profile)}
                     disabled={disabled}
-                    aria-label={`Entrar como ${profile.name}`}
+                    aria-label={t("auth.picker.enterAs", { name: profile.name })}
                     sx={{
-                      bgcolor: isActive ? "rgba(255, 255, 255, 0.04)" : "transparent",
-                      border: `1px solid ${
-                        isActive ? "rgba(217, 119, 87, 0.4)" : "rgba(255, 255, 255, 0.08)"
-                      }`,
-                      borderRadius: 2,
-                      px: 2,
-                      py: 3,
+                      background: "transparent",
+                      border: "none",
                       cursor: disabled ? "not-allowed" : "pointer",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
                       gap: 1.5,
-                      transition: "all 200ms ease",
-                      transform: isActive && !disabled ? "translateY(-2px)" : "none",
+                      transition: "transform 200ms ease",
+                      transform: isActive && !disabled ? "translateY(-3px)" : "none",
                       opacity: disabled ? 0.6 : 1,
                       color: "text.primary",
                       fontFamily: "inherit",
+                      p: 0,
                     }}
                   >
                     <Avatar
                       initials={initialsForName(profile.name)}
                       tone={toneForProfile(profile.id)}
-                      size={72}
+                      size={120}
+                      shape="rounded"
                       ring={isActive}
                     />
                     <Typography
                       sx={{
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: 500,
                         letterSpacing: "-0.005em",
+                        color: isActive
+                          ? "rgba(255, 255, 255, 0.95)"
+                          : "rgba(255, 255, 255, 0.6)",
+                        transition: "color 200ms ease",
                       }}
                     >
                       {profile.name}
@@ -238,28 +235,32 @@ export function Profiles() {
               })}
             </Box>
 
-            <Box
-              component="button"
-              type="button"
-              disabled
-              aria-disabled
+            {/* Outlined button using the host MUI theme so the
+                button reads as part of the same system as Settings
+                / dialog actions — the Netflix-style sharp-cornered
+                border was clashing with the rest of the app. */}
+            <Button
+              onClick={() =>
+                navigate("/profiles/manage", { state: { from: "/profiles" } })
+              }
+              variant="outlined"
               sx={{
-                mt: 5,
-                background: "transparent",
-                border: "none",
-                color: "primary.main",
-                fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                cursor: "not-allowed",
-                opacity: 0.55,
+                px: 4,
+                py: 1.25,
+                borderColor: "rgba(255, 255, 255, 0.15)",
+                color: "text.primary",
+                textTransform: "none",
+                fontSize: 14,
+                fontWeight: 500,
+                letterSpacing: "0.02em",
+                "&:hover": {
+                  borderColor: "rgba(255, 255, 255, 0.3)",
+                  bgcolor: "rgba(255, 255, 255, 0.04)",
+                },
               }}
-              title="Em breve"
             >
-              + Gerenciar perfis
-            </Box>
+              {t("auth.picker.manageProfiles")}
+            </Button>
           </>
         )}
       </Box>
@@ -268,6 +269,7 @@ export function Profiles() {
 }
 
 function EmptyProfileState() {
+  const { t } = useTranslation();
   return (
     <Box sx={{ maxWidth: 480, textAlign: "center" }}>
       <Typography
@@ -280,11 +282,10 @@ function EmptyProfileState() {
           lineHeight: 1.1,
         }}
       >
-        Nenhum perfil ainda
+        {t("auth.picker.emptyTitle")}
       </Typography>
       <Typography sx={{ fontSize: 14, lineHeight: 1.55, color: "rgba(245, 241, 235, 0.55)" }}>
-        Esta conta ainda não tem perfis. Peça ao administrador para criar
-        o primeiro perfil — o gerenciamento pelo app chega em breve.
+        {t("auth.picker.emptyBody")}
       </Typography>
     </Box>
   );

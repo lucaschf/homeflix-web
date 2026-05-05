@@ -6,8 +6,10 @@
 // - ``POST   /api/v1/auth/cookie/logout``   — clears the session.
 // - ``GET    /api/v1/users/me``             — current authenticated user.
 // - ``GET    /api/v1/profiles``             — household profiles.
+// - ``POST   /api/v1/profiles``             — create a new profile.
 // - ``POST   /api/v1/profiles/{id}/switch`` — set the active profile.
 // - ``PUT    /api/v1/profiles/{id}``        — partial profile update.
+// - ``DELETE /api/v1/profiles/{id}``        — soft-delete (409 on last).
 //
 // The ``credentials: 'include'`` setting in ``client.ts`` is what
 // makes the ``homeflix_session`` cookie roundtrip — these hooks
@@ -16,6 +18,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, api } from "./client";
 import type {
+  CreateProfileInput,
   LoginInput,
   Profile,
   ProfileResponse,
@@ -163,6 +166,42 @@ export function useUpdateProfile() {
     mutationFn: async ({ profileId, input }) => {
       const res = await api.put<ProfileResponse>(`/profiles/${profileId}`, input);
       return res.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
+    },
+  });
+}
+
+/**
+ * Create a new profile owned by the current user. ``is_kids`` and
+ * ``allowed_library_ids`` default to the backend's defaults when
+ * omitted (``false`` and ``[]`` respectively — default-deny ACL).
+ */
+export function useCreateProfile() {
+  const queryClient = useQueryClient();
+  return useMutation<Profile, Error, CreateProfileInput>({
+    mutationFn: async (input) => {
+      const res = await api.post<ProfileResponse>("/profiles", input);
+      return res.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
+    },
+  });
+}
+
+/**
+ * Soft-delete a profile. The backend returns 409 if this would
+ * leave the user without any active profile — callers should
+ * surface that as a friendly "you can't delete the last profile"
+ * message rather than letting the generic ``ApiError`` bubble.
+ */
+export function useDeleteProfile() {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, string>({
+    mutationFn: async (profileId) => {
+      await api.del(`/profiles/${profileId}`);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: authKeys.profiles });

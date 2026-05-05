@@ -12,7 +12,66 @@
     "admin": "Admin",
     "account": "Account",
     "switchProfile": "Switch profile",
+    "manageProfiles": "Manage profiles",
     "logout": "Sign out"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to HomeFlix",
+      "subtitle": "Use the admin credentials to access your private library.",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "rememberMe": "Remember me",
+      "showPassword": "Show",
+      "hidePassword": "Hide",
+      "showPasswordAria": "Show password",
+      "hidePasswordAria": "Hide password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "errorBadCredentials": "Invalid email or password.",
+      "errorGeneric": "Couldn't sign you in. Try again in a moment.",
+      "footer": "HomeFlix · Local server"
+    },
+    "picker": {
+      "headline": "Who's watching?",
+      "manageProfiles": "Manage profiles",
+      "logoutShort": "← Sign out",
+      "switchError": "Couldn't select this profile. Try again.",
+      "enterAs": "Sign in as {{name}}",
+      "emptyTitle": "No profiles yet",
+      "emptyBody": "This account has no profiles yet. Ask the admin to create the first one — in-app management is coming soon."
+    }
+  },
+  "profileManagement": {
+    "manageTitle": "Manage profiles",
+    "done": "Done",
+    "createTitle": "New profile",
+    "editTitle": "Edit profile",
+    "addProfile": "New profile",
+    "deleteTitle": "Delete profile",
+    "deleteConfirm": "Are you sure you want to delete the profile \"{{name}}\"? Their history, lists and preferences will be archived.",
+    "fields": {
+      "name": "Name",
+      "isKids": "Kids mode",
+      "isKidsHelp": "Marks the profile as kids — used as a UI hint; the actual access control lives in the allowed libraries below.",
+      "libraries": "Allowed libraries",
+      "librariesHelp": "Pick which libraries this profile can see in the catalog. With none checked, the profile sees an empty catalog.",
+      "noLibraries": "No libraries registered yet. Add a library above before configuring this profile.",
+      "orphanLibraries": "Library IDs that no longer exist (uncheck to revoke):"
+    },
+    "actions": {
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteProfile": "Delete profile"
+    },
+    "errors": {
+      "saveFailed": "Couldn't save the profile. Try again.",
+      "deleteFailed": "Couldn't delete the profile. Try again.",
+      "cannotDeleteLast": "You must have at least one active profile. Create another one before deleting this."
+    }
   },
   "home": {
     "continueWatching": "Continue Watching",

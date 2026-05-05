@@ -12,7 +12,66 @@
     "admin": "Admin",
     "account": "Conta",
     "switchProfile": "Trocar perfil",
+    "manageProfiles": "Gerenciar perfis",
     "logout": "Sair"
+  },
+  "auth": {
+    "login": {
+      "title": "Entrar no HomeFlix",
+      "subtitle": "Use as credenciais do administrador para acessar sua biblioteca privada.",
+      "emailLabel": "Email",
+      "passwordLabel": "Senha",
+      "rememberMe": "Lembrar-me",
+      "showPassword": "Mostrar",
+      "hidePassword": "Ocultar",
+      "showPasswordAria": "Mostrar senha",
+      "hidePasswordAria": "Ocultar senha",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "errorBadCredentials": "Email ou senha inválidos.",
+      "errorGeneric": "Não foi possível entrar. Tente novamente em instantes.",
+      "footer": "HomeFlix · Servidor local"
+    },
+    "picker": {
+      "headline": "Quem está assistindo?",
+      "manageProfiles": "Gerenciar perfis",
+      "logoutShort": "← Sair",
+      "switchError": "Não foi possível selecionar este perfil. Tente novamente.",
+      "enterAs": "Entrar como {{name}}",
+      "emptyTitle": "Nenhum perfil ainda",
+      "emptyBody": "Esta conta ainda não tem perfis. Peça ao administrador para criar o primeiro perfil — o gerenciamento pelo app chega em breve."
+    }
+  },
+  "profileManagement": {
+    "manageTitle": "Gerenciar perfis",
+    "done": "Concluir",
+    "createTitle": "Novo perfil",
+    "editTitle": "Editar perfil",
+    "addProfile": "Novo perfil",
+    "deleteTitle": "Apagar perfil",
+    "deleteConfirm": "Tem certeza que deseja apagar o perfil \"{{name}}\"? Histórico, listas e preferências dele serão arquivados.",
+    "fields": {
+      "name": "Nome",
+      "isKids": "Modo infantil",
+      "isKidsHelp": "Marca o perfil como kids — usado pela UI como dica visual; o controle de acesso real está nas bibliotecas permitidas abaixo.",
+      "libraries": "Bibliotecas permitidas",
+      "librariesHelp": "Selecione quais bibliotecas este perfil pode ver no catálogo. Sem nenhuma marcada, o perfil verá um catálogo vazio.",
+      "noLibraries": "Nenhuma biblioteca cadastrada ainda. Cadastre uma biblioteca acima antes de configurar este perfil.",
+      "orphanLibraries": "IDs de bibliotecas que não existem mais (desmarque para revogar):"
+    },
+    "actions": {
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "create": "Criar",
+      "edit": "Editar",
+      "delete": "Apagar",
+      "deleteProfile": "Apagar perfil"
+    },
+    "errors": {
+      "saveFailed": "Não foi possível salvar o perfil. Tente novamente.",
+      "deleteFailed": "Não foi possível apagar o perfil. Tente novamente.",
+      "cannotDeleteLast": "Você precisa ter ao menos um perfil ativo. Crie outro antes de apagar este."
+    }
   },
   "home": {
     "continueWatching": "Continue Assistindo",

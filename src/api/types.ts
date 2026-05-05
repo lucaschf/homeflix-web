@@ -575,3 +575,12 @@ export interface UpdateProfileInput {
   // ``[]`` revokes every library; a list replaces.
   allowed_library_ids?: string[] | null;
 }
+
+export interface CreateProfileInput {
+  name: string;
+  is_kids?: boolean;
+  avatar_url?: string | null;
+  // Default-deny on the backend when omitted. Pass an explicit list
+  // to grant access at creation time.
+  allowed_library_ids?: string[] | null;
+}
