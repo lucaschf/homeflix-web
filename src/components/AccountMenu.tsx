@@ -57,6 +57,15 @@ export function AccountMenu() {
     ? initialsForName(activeProfile.name)
     : initialsForName(currentUser.email.split("@")[0] ?? currentUser.email);
 
+  // "Switch profile" only makes sense when there's somewhere to
+  // switch to. With a single profile the picker page auto-skips
+  // (selects it + navigates to "/"), which from the navbar reads
+  // as "the page just reloaded itself" — exposing the menu item is
+  // a footgun. Hide it; the user can still add a second profile
+  // via "Manage profiles" and the item appears as soon as there
+  // is one.
+  const canSwitchProfile = (profiles?.length ?? 0) > 1;
+
   const handleOpen = (event: MouseEvent<HTMLElement>) => setAnchor(event.currentTarget);
   const handleClose = () => setAnchor(null);
 
@@ -175,12 +184,14 @@ export function AccountMenu() {
         </Box>
         <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
 
-        <MenuItem onClick={handleSwitchProfile}>
-          <ListItemIcon sx={{ color: "text.secondary", minWidth: 32 }}>
-            <Users size={16} />
-          </ListItemIcon>
-          {t("nav.switchProfile")}
-        </MenuItem>
+        {canSwitchProfile && (
+          <MenuItem onClick={handleSwitchProfile}>
+            <ListItemIcon sx={{ color: "text.secondary", minWidth: 32 }}>
+              <Users size={16} />
+            </ListItemIcon>
+            {t("nav.switchProfile")}
+          </MenuItem>
+        )}
 
         <MenuItem onClick={handleManageProfiles}>
           <ListItemIcon sx={{ color: "text.secondary", minWidth: 32 }}>
