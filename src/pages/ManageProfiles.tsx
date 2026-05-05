@@ -30,6 +30,7 @@ import {
   type ProfileFormSubmit,
 } from "../components/profile-management/ProfileFormDialog";
 import { Logo } from "../components/Logo";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 /**
  * Dedicated profile-management screen — same backdrop as the
@@ -44,6 +45,7 @@ import { Logo } from "../components/Logo";
  */
 export function ManageProfiles() {
   const { t } = useTranslation();
+  useDocumentTitle(t("profileManagement.manageTitle"));
   const navigate = useNavigate();
   const location = useLocation();
   const profilesQuery = useProfiles();

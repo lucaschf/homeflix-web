@@ -15,6 +15,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMoviesByActor, usePerson } from "../api/hooks";
 import type { MovieSummary, PersonBio } from "../api/types";
 import { MediaCard } from "../components/MediaCard";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 type SortKey = "recent" | "oldest" | "title";
 
@@ -49,6 +50,7 @@ export function Actor() {
   const { name: rawName } = useParams<{ name: string }>();
 
   const actorName = rawName ?? "";
+  useDocumentTitle(actorName || undefined);
 
   const navState = location.state as
     | { profilePath?: string | null; tmdbId?: number | null }

@@ -28,6 +28,7 @@ import { MetaLine } from "../components/MetaLine";
 import { QualityRail } from "../components/QualityRail";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 
@@ -38,6 +39,10 @@ export function MovieDetail() {
   const { data: movie, isLoading } = useMovie(movieId!);
   const { data: relatedMovies } = useRelatedMovies(movieId);
   const { data: progress } = useProgress(movieId!);
+  // Tab title flips from the bare app name to the movie name once
+  // the query resolves; ``undefined`` while loading keeps the user
+  // from seeing a flash of "loading · HomeFlix".
+  useDocumentTitle(movie ? `${movie.title} (${movie.year})` : undefined);
   const enrichMutation = useEnrichMovie();
   const { data: inWatchlist } = useIsInWatchlist(movieId!);
   const toggleWatchlist = useToggleWatchlist();

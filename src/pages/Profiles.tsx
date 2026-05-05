@@ -10,6 +10,7 @@ import {
   toneForProfile,
 } from "../components/auth";
 import { Logo } from "../components/Logo";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import type { Profile } from "../api/types";
 
 /**
@@ -30,6 +31,7 @@ import type { Profile } from "../api/types";
  */
 export function Profiles() {
   const { t } = useTranslation();
+  useDocumentTitle(t("auth.picker.headline"));
   const navigate = useNavigate();
   const profilesQuery = useProfiles();
   const switchProfile = useSwitchProfile();

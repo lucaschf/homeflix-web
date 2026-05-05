@@ -45,6 +45,7 @@ import {
 import type { Library } from "../api/types";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
 import { neutral } from "../theme/colors";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   usePlaybackPreferences,
   type SubtitleMode,
@@ -66,6 +67,7 @@ const LEGACY_LIBRARIES_KEY = "homeflix-libraries";
 
 export function Settings() {
   const { t, i18n } = useTranslation();
+  useDocumentTitle(t("settings.title"));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLibrary, setEditingLibrary] = useState<Library | null>(null);
   // Only admins see the Libraries + Metadata sections — those drive

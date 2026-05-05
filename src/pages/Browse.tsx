@@ -14,6 +14,7 @@ import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
 
 /**
@@ -32,6 +33,16 @@ export function Browse() {
 
   const genreFilter = searchParams.get("genre");
   const typeFilter = parseTypeFilter(searchParams.get("type"));
+
+  // Tab title reflects the active type filter; the Browse landing
+  // (no filter) reads as "Browse".
+  useDocumentTitle(
+    typeFilter === "movie"
+      ? t("nav.movies")
+      : typeFilter === "series"
+        ? t("nav.series")
+        : t("nav.browse"),
+  );
 
   // Carousel-mode data: list every genre and let each carousel pull
   // its own first page lazily as it scrolls into view. The `type`

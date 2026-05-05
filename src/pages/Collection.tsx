@@ -20,6 +20,7 @@ import {
   useWatchlist,
 } from "../api/hooks";
 import type { CollectionPart } from "../api/types";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 /**
  * Collection Detail page — opens when the user clicks the "Parte
@@ -33,6 +34,7 @@ export function Collection() {
   const { tmdbId: tmdbIdParam } = useParams<{ tmdbId: string }>();
   const tmdbId = tmdbIdParam ? Number(tmdbIdParam) : undefined;
   const { data: collection, isLoading, isError } = useCollection(tmdbId);
+  useDocumentTitle(collection?.name);
   const { data: continueWatching } = useContinueWatching();
   const { data: watchlist } = useWatchlist();
   const toggleWatchlist = useToggleWatchlist();

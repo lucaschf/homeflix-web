@@ -15,6 +15,7 @@ import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { peach } from "../theme/colors";
 import { formatDuration } from "../utils/duration";
 
@@ -32,6 +33,8 @@ function formatRemaining(positionSeconds: number, durationSeconds: number): stri
 export function Home() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  // Home is the bare app name on the tab — no prefix.
+  useDocumentTitle(undefined);
   const { data: genres, isLoading: genresLoading } = useGenres();
   const { data: continueWatching } = useContinueWatching();
   const clearProgress = useClearProgress();

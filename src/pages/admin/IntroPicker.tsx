@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
 import { useListAllSeries, useSeriesDetail } from "../../api/hooks";
 import type { EpisodeOutput, SeasonOutput, SeriesDetail } from "../../api/types";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 type IntroFilter = "all" | "unmarked" | "low_confidence" | "manual";
 
@@ -49,6 +50,7 @@ function matchesFilter(intro: EpisodeOutput["intro"], filter: IntroFilter): bool
 
 export function IntroPicker() {
   const { t } = useTranslation();
+  useDocumentTitle(t("admin.intros.title"));
   const [search, setSearch] = useState("");
   const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
   const [filter, setFilter] = useState<IntroFilter>("all");
