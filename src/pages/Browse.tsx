@@ -10,6 +10,7 @@ import {
   useRecentlyAddedSeries,
   type CatalogTypeFilter,
 } from "../api/hooks";
+import { CarouselSkeleton } from "../components/CarouselSkeleton";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
@@ -72,27 +73,14 @@ export function Browse() {
     [featured],
   );
 
-  // Loading gate: only the carousel mode waits on the genres list.
-  // The flat-grid mode below has its own loading state via the
-  // useByGenre hook.
-  if (!genreFilter && genresLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "60vh",
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Box>
-    );
-  }
-
   return (
     <Box>
-      {!genreFilter && heroSlides.length > 0 && (
+      {/* HeroBanner only on the carousel-mode landing — the genre
+          grid (``?genre=X``) skips the hero. The component itself
+          renders an internal placeholder when ``slides`` is empty,
+          so the carousels below stay anchored while the featured
+          query is in flight. */}
+      {!genreFilter && (
         <HeroBanner
           slides={heroSlides}
           onPlay={(slide) => {
@@ -104,7 +92,12 @@ export function Browse() {
 
       <Box
         sx={{
-          mt: Boolean(genreFilter) || heroSlides.length === 0 ? 4 : -10,
+          // Carousel-mode bleed under the hero (-10) is the same
+          // regardless of whether ``slides`` actually resolved —
+          // the placeholder reserves the same vertical space, so
+          // the negative margin still lines up with the bottom of
+          // the (possibly placeholder) hero.
+          mt: genreFilter ? 4 : -10,
           position: "relative",
           zIndex: 1,
         }}
@@ -121,6 +114,16 @@ export function Browse() {
               setSearchParams(searchParams);
             }}
           />
+        ) : genresLoading ? (
+          // Structural skeleton while the genres list is in flight —
+          // matches the post-load layout (Recently Added on type
+          // tabs + a couple of genre rows) so the page doesn't
+          // shift when the data lands.
+          <>
+            {typeFilter && <CarouselSkeleton title={t("home.recentlyAdded")} />}
+            <CarouselSkeleton />
+            <CarouselSkeleton />
+          </>
         ) : (genres?.length ?? 0) > 0 ? (
           <>
             {typeFilter && <RecentlyAddedSection type={typeFilter} />}
@@ -159,7 +162,10 @@ function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
   const seriesQuery = useRecentlyAddedSeries();
 
   if (type === "movie") {
-    const movies = moviesQuery.data ?? [];
+    if (moviesQuery.data === undefined) {
+      return <CarouselSkeleton title={t("home.recentlyAdded")} />;
+    }
+    const movies = moviesQuery.data;
     if (movies.length === 0) return null;
     return (
       <MediaCarousel title={t("home.recentlyAdded")}>
@@ -180,7 +186,10 @@ function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
     );
   }
 
-  const seriesList = seriesQuery.data ?? [];
+  if (seriesQuery.data === undefined) {
+    return <CarouselSkeleton title={t("home.recentlyAdded")} />;
+  }
+  const seriesList = seriesQuery.data;
   if (seriesList.length === 0) return null;
   return (
     <MediaCarousel title={t("home.recentlyAdded")}>
