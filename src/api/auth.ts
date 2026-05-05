@@ -57,7 +57,12 @@ export function useCurrentUser() {
     queryKey: authKeys.currentUser,
     queryFn: async () => {
       try {
-        const res = await api.get<UserResponse>("/users/me");
+        // ``expects401`` opts out of the global auth-expired event
+        // — the anonymous case is a normal answer for this hook,
+        // not a session-expiration signal.
+        const res = await api.get<UserResponse>("/users/me", undefined, {
+          expects401: true,
+        });
         return res.data;
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) return null;
@@ -80,7 +85,12 @@ export function useProfiles() {
     queryKey: authKeys.profiles,
     queryFn: async () => {
       try {
-        const res = await api.get<ProfilesResponse>("/profiles");
+        // ``expects401`` for the same reason as ``useCurrentUser``
+        // — anonymous → empty list is a normal answer here, not a
+        // session-expired signal.
+        const res = await api.get<ProfilesResponse>("/profiles", undefined, {
+          expects401: true,
+        });
         return res.data;
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) return [];
@@ -106,10 +116,17 @@ export function useLogin() {
     mutationFn: async ({ email, password }) => {
       // FastAPI Users speaks the OAuth2 password-flow shape here:
       // ``username`` (which we send the email as) + ``password``.
-      await api.postForm("/auth/cookie/login", {
-        username: email,
-        password,
-      });
+      // ``expects401`` because the login endpoint legitimately
+      // returns 4xx for bad credentials — the auth-expired event
+      // would be misleading on this entry point.
+      await api.postForm(
+        "/auth/cookie/login",
+        {
+          username: email,
+          password,
+        },
+        { expects401: true },
+      );
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: authKeys.all });

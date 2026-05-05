@@ -3,7 +3,11 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
-import { RedirectIfAuthenticated, RequireAuth } from "./components/auth";
+import {
+  AuthExpirationGuard,
+  RedirectIfAuthenticated,
+  RequireAuth,
+} from "./components/auth";
 import { SplashScreen } from "./components/SplashScreen";
 import { Actor } from "./pages/Actor";
 import { Browse } from "./pages/Browse";
@@ -61,6 +65,11 @@ function App() {
       {splashOpen && <SplashScreen onDone={handleSplashDone} />}
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          {/* Listens for the global auth-expired event from
+              ``api/client.ts`` and redirects to /login. Sits
+              above ``<Routes>`` so it's always alive regardless
+              of which page the expiration lands on. */}
+          <AuthExpirationGuard />
           <Routes>
             {/* Login bounces to /profiles when the visitor is
                 already authenticated — keeps the back button

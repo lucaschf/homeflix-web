@@ -1,3 +1,4 @@
+export { AuthExpirationGuard } from "./AuthExpirationGuard";
 export { AuthShell } from "./AuthShell";
 export { Avatar } from "./Avatar";
 export { initialsForName, toneForProfile } from "./avatarUtils";
