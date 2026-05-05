@@ -30,6 +30,7 @@ import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
 
 type EpisodeView = "list" | "cards";
@@ -50,6 +51,7 @@ export function SeriesDetail() {
   const { seriesId } = useParams<{ seriesId: string }>();
   const navigate = useNavigate();
   const { data: series, isLoading } = useSeriesDetail(seriesId!);
+  useDocumentTitle(series?.title);
   const enrichMutation = useEnrichSeries();
   const { data: inWatchlist } = useIsInWatchlist(seriesId!);
   const toggleWatchlist = useToggleWatchlist();

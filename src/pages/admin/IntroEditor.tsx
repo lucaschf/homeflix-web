@@ -27,6 +27,7 @@ import {
   useSetEpisodeIntro,
 } from "../../api/hooks";
 import type { EpisodeOutput, SeriesDetail } from "../../api/types";
+import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 function formatHms(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "00:00:00";
@@ -47,6 +48,15 @@ export function IntroEditor() {
   const episodeNumber = Number(params.episode);
 
   const { data: seriesDetail, isLoading } = useSeriesDetail(seriesId);
+
+  // Tab title shows the target episode coordinates so the operator
+  // can keep multiple admin tabs open without losing track of which
+  // episode each one is editing.
+  useDocumentTitle(
+    seriesDetail
+      ? `${seriesDetail.title} · S${seasonNumber}E${episodeNumber} · ${t("admin.intros.editorTitle")}`
+      : t("admin.intros.editorTitle"),
+  );
 
   const episode = useMemo(() => {
     if (!seriesDetail) return null;

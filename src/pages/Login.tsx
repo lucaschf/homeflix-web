@@ -12,6 +12,7 @@ import {
   PrimaryButton,
 } from "../components/auth";
 import { Logo } from "../components/Logo";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 const REMEMBER_EMAIL_KEY = "homeflix:auth:remember-email";
 
@@ -35,6 +36,7 @@ const REMEMBER_EMAIL_KEY = "homeflix:auth:remember-email";
  */
 export function Login() {
   const { t } = useTranslation();
+  useDocumentTitle(t("auth.login.submit"));
   const navigate = useNavigate();
   const login = useLogin();
 

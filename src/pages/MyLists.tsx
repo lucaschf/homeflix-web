@@ -31,6 +31,7 @@ import {
 } from "../api/hooks";
 import type { CustomListOutput } from "../api/types";
 import { MediaCard } from "../components/MediaCard";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
 
 const MAX_LISTS = 10;
@@ -630,6 +631,7 @@ function DeleteListDialog({
 
 export function MyLists() {
   const { t } = useTranslation();
+  useDocumentTitle(t("lists.title"));
   const [tab, setTab] = useState(0);
 
   return (
