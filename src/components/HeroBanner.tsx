@@ -106,7 +106,28 @@ export function HeroBanner({
   // undefined, so the hook receives "" and returns a no-op result.
   const { data: inWatchlist } = useIsInWatchlist(slide?.id ?? "");
 
-  if (count === 0) return null;
+  // When ``slides`` is still empty (the parent's featured query is
+  // pending) we render a placeholder at the final dimensions
+  // instead of returning null. Matches the live banner's
+  // ``75dvh`` / ``minHeight: 500`` so the rows below don't shift
+  // up by ~600px when the data arrives — the swap is a content
+  // change, not a layout change. Subtle vertical gradient avoids
+  // a flat black slab while staying out of the way visually.
+  if (count === 0) {
+    return (
+      <Box
+        aria-hidden
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: "75dvh",
+          minHeight: 500,
+          background:
+            "linear-gradient(180deg, rgba(20,20,20,1) 0%, rgba(13,13,13,1) 70%, rgba(13,13,13,1) 100%)",
+        }}
+      />
+    );
+  }
 
   return (
     <Box

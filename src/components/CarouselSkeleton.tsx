@@ -1,5 +1,23 @@
 import { Box, Skeleton, Typography } from "@mui/material";
 
+/**
+ * Card geometry for the two card variants ``MediaCard`` exposes.
+ * Mirrored verbatim from ``MediaCard``'s sx so the skeleton has
+ * pixel-identical breakpoints — any future tweak to the real card
+ * sizes needs to land here too. Kept module-local so the values
+ * don't leak into the `Skeleton` API surface.
+ */
+const CARD_DIMS = {
+  poster: {
+    width: { xs: 140, sm: 200, md: 240, lg: 280 },
+    aspectRatio: "2/3",
+  },
+  landscape: {
+    width: { xs: 240, sm: 320, md: 360, lg: 400 },
+    aspectRatio: "16/9",
+  },
+} as const;
+
 interface CarouselSkeletonProps {
   /**
    * Optional real title shown above the skeleton row. When the
@@ -17,6 +35,13 @@ interface CarouselSkeletonProps {
    * looking believable on a phone.
    */
   cardCount?: number;
+  /**
+   * Aspect ratio + width breakpoints of each fake card. Defaults
+   * to ``poster`` (2/3) which matches ``MediaCard variant="poster"``
+   * for genre and recently-added rows. Use ``landscape`` (16/9) for
+   * Continue Watching, where the real cards are backdrop-shaped.
+   */
+  variant?: keyof typeof CARD_DIMS;
 }
 
 /**
@@ -35,7 +60,12 @@ interface CarouselSkeletonProps {
  * - `GenreCarousel` itself as the loading state of `useByGenre`'s
  *   first page.
  */
-export function CarouselSkeleton({ title, cardCount = 6 }: CarouselSkeletonProps) {
+export function CarouselSkeleton({
+  title,
+  cardCount = 6,
+  variant = "poster",
+}: CarouselSkeletonProps) {
+  const dims = CARD_DIMS[variant];
   return (
     <Box sx={{ mb: 4 }}>
       {/* Header — either a real title (when known) or a skeleton
@@ -81,8 +111,8 @@ export function CarouselSkeleton({ title, cardCount = 6 }: CarouselSkeletonProps
             key={index}
             sx={{
               flexShrink: 0,
-              width: { xs: 140, sm: 200, md: 240, lg: 280 },
-              aspectRatio: "2/3",
+              width: dims.width,
+              aspectRatio: dims.aspectRatio,
             }}
           >
             <Skeleton

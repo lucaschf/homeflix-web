@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ import {
   useGenres,
   useRecentlyAddedCatalog,
 } from "../api/hooks";
+import { CarouselSkeleton } from "../components/CarouselSkeleton";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
@@ -42,7 +43,11 @@ export function Home() {
   const { data: featured } = useFeatured("all");
   const { data: recentlyAdded } = useRecentlyAddedCatalog();
 
-  const isLoading = genresLoading;
+  // ``hasContent`` only flips to false once the genres query has
+  // resolved with an empty list — while it's still loading we want
+  // to keep the structural skeleton on screen, not the empty-state
+  // CTA. Mixing those two would briefly flash "Welcome to HomeFlix"
+  // every time the user reloads.
   const hasContent = (genres?.length ?? 0) > 0;
 
   const heroSlides: HeroSlide[] = useMemo(
@@ -63,36 +68,41 @@ export function Home() {
     [featured],
   );
 
-  if (isLoading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress color="primary" />
-      </Box>
-    );
-  }
-
-  if (!hasContent) {
+  // Empty-state CTA only renders once the genres query has resolved
+  // with zero rows — otherwise we'd flash it on every reload while
+  // the request is in flight. The structural skeletons below cover
+  // the loading window.
+  if (!genresLoading && !hasContent) {
     return <EmptyState />;
   }
 
   return (
     <Box>
-      {heroSlides.length > 0 && (
-        <HeroBanner
-          slides={heroSlides}
-          onPlay={(slide) => {
-            if (slide.type === "movie") navigate(`/play/movie/${slide.id}`);
-            else navigate(`/series/${slide.id}`);
-          }}
-          onDetails={(slide) => {
-            if (slide.type === "movie") navigate(`/movie/${slide.id}`);
-            else navigate(`/series/${slide.id}`);
-          }}
-        />
-      )}
+      {/* HeroBanner renders an internal placeholder at the same
+          dimensions when ``slides`` is empty (featured query
+          pending), so the carousels below don't shift up by ~600px
+          when the data arrives. */}
+      <HeroBanner
+        slides={heroSlides}
+        onPlay={(slide) => {
+          if (slide.type === "movie") navigate(`/play/movie/${slide.id}`);
+          else navigate(`/series/${slide.id}`);
+        }}
+        onDetails={(slide) => {
+          if (slide.type === "movie") navigate(`/movie/${slide.id}`);
+          else navigate(`/series/${slide.id}`);
+        }}
+      />
 
       <Box sx={{ mt: -10, position: "relative", zIndex: 1 }}>
-        {continueWatching && continueWatching.length > 0 && (
+        {/* Continue Watching: skeleton while pending so the row
+            below it (Recently Added / first genre) doesn't shift
+            up by ~250px when the data lands. Empty resolved
+            response stays hidden — no point reserving a row for
+            zero items. */}
+        {continueWatching === undefined ? (
+          <CarouselSkeleton title={t("home.continueWatching")} variant="landscape" />
+        ) : continueWatching.length > 0 ? (
           <MediaCarousel title={t("home.continueWatching")}>
             {continueWatching.map((item) => (
               <MediaCard
@@ -131,9 +141,12 @@ export function Home() {
               />
             ))}
           </MediaCarousel>
-        )}
+        ) : null}
 
-        {recentlyAdded && recentlyAdded.length > 0 && (
+        {/* Recently Added — same loading-state treatment. */}
+        {recentlyAdded === undefined ? (
+          <CarouselSkeleton title={t("home.recentlyAdded")} />
+        ) : recentlyAdded.length > 0 ? (
           <MediaCarousel title={t("home.recentlyAdded")}>
             {recentlyAdded.map((item) => (
               <MediaCard
@@ -155,8 +168,21 @@ export function Home() {
               />
             ))}
           </MediaCarousel>
-        )}
+        ) : null}
 
+        {/* Genres skeleton anchors the page while the
+            ``useGenres`` request is pending — without it the row
+            of LazyGenreCarousels appears suddenly once the genres
+            list resolves, pushing nothing because hero/CW are
+            already on screen, but causing perceived "page jumped
+            in" on slow connections. Two placeholder rows is enough
+            to fill the viewport without overcommitting. */}
+        {genresLoading ? (
+          <>
+            <CarouselSkeleton />
+            <CarouselSkeleton />
+          </>
+        ) : null}
         {(genres ?? []).map((genre) => (
           <LazyGenreCarousel key={genre.id} genre={genre} />
         ))}
