@@ -132,17 +132,21 @@ function delay(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-// Number of fetch attempts before giving up. The backend generates
-// the sprite in the background and a full-movie sprite typically
-// takes 1-3 minutes, so ten tries at ``RETRY_INTERVAL_MS`` covers
-// the realistic worst case without hammering the server.
+// Number of fetch attempts before giving up. The backend kicks
+// off sprite generation when the player fetches the HLS playlist
+// (``stream_routes._fire_eager_movie``), and a full-movie sprite
+// typically takes 1-3 minutes, so ten tries at ``RETRY_INTERVAL_MS``
+// give a 5-minute budget — comfortably past the realistic worst
+// case without hammering the server.
 const MAX_ATTEMPTS = 10;
 
-// Gap between retry attempts when the VTT is still 404. Short
-// enough that a user who keeps the player open catches the sprite
-// soon after it's ready; long enough that the polling cost is
-// negligible compared to segment requests.
-const RETRY_INTERVAL_MS = 15000;
+// Gap between retry attempts when the VTT is still 404. Was 15s,
+// which produced ~4-12 wasted requests in DevTools before the
+// sprite landed for a typical movie. Bumped to 30s to halve the
+// network noise without meaningfully delaying the moment thumbnails
+// light up — the user is rarely watching the seek bar in the first
+// minute of playback anyway.
+const RETRY_INTERVAL_MS = 30000;
 
 /**
  * Fetch and parse the thumbnail VTT for the cache bucket at ``vttUrl``.
