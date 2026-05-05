@@ -11,12 +11,7 @@ import {
 import { LogOut, Settings as SettingsIcon, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import {
-  getActiveProfileId,
-  useCurrentUser,
-  useLogout,
-  useProfiles,
-} from "../api/auth";
+import { useCurrentUser, useLogout, useProfiles } from "../api/auth";
 import { Avatar } from "./auth/Avatar";
 import { initialsForName, toneForProfile } from "./auth/avatarUtils";
 
@@ -45,13 +40,13 @@ export function AccountMenu() {
 
   if (!currentUser) return null;
 
-  // Resolve the active profile via the localStorage mirror written
-  // by ``useSwitchProfile``. If the cache hasn't loaded yet (or the
-  // user reached the navbar without going through the picker —
-  // e.g. a single-profile auto-switch on page load) we fall back to
-  // the user's first profile, which matches what the catalog APIs
-  // would return.
-  const activeProfileId = getActiveProfileId();
+  // Resolve the active profile from ``/users/me`` so the chip
+  // mirrors whatever the backend has bound to the session cookie.
+  // If the user signed in but never picked a profile (or a fresh
+  // session is still settling), ``active_profile_id`` is ``null`` —
+  // fall back to ``profiles[0]`` so the chip still renders an
+  // identity hint instead of dropping back to the email-only stub.
+  const activeProfileId = currentUser.active_profile_id;
   const activeProfile =
     profiles?.find((p) => p.id === activeProfileId) ?? profiles?.[0] ?? null;
 
