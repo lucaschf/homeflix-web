@@ -223,7 +223,12 @@ export function MovieDetail() {
                   overflow: "hidden",
                   height: 46,
                   px: 3.25,
-                  pb: hasProgress ? "16px" : undefined,
+                  // No padding-bottom adjustment for the progress
+                  // strip — the bar is absolutely positioned at the
+                  // bottom edge (3px tall) and doesn't reflow the
+                  // content. The previous 16px reservation pushed
+                  // the label noticeably above center, which read as
+                  // a vertical-alignment bug.
                   boxShadow: "0 2px 6px rgba(217,119,87,0.2)",
                 }}
               >
