@@ -177,12 +177,18 @@ export function Settings() {
   );
 
   const handleScan = (lib: Library) => {
-    scanMutation.mutate(lib.paths);
+    scanMutation.mutate(lib.id);
   };
 
-  const handleScanAll = () => {
-    const paths = (libraries ?? []).flatMap((l) => l.paths);
-    if (paths.length > 0) scanMutation.mutate(paths);
+  const handleScanAll = async () => {
+    // Backend's ``POST /scan`` is now per-library — iterate
+    // sequentially so the scanner doesn't run multiple library scans
+    // in parallel against the same DB. ``mutateAsync`` keeps the
+    // mutation's ``isPending`` state accurate across the loop so
+    // the disabled-during-scan UI works without extra wiring.
+    for (const lib of libraries ?? []) {
+      await scanMutation.mutateAsync(lib.id);
+    }
   };
 
   const apiHealthy = health?.status === "healthy";
