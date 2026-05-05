@@ -32,6 +32,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useCurrentUser } from "../api/auth";
 import {
   useBulkEnrich,
   useCreateLibrary,
@@ -67,6 +68,14 @@ export function Settings() {
   const { t, i18n } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingLibrary, setEditingLibrary] = useState<Library | null>(null);
+  // Only admins see the Libraries + Metadata sections — those drive
+  // backend endpoints gated by ``current_admin_user`` (POST/PUT/DELETE
+  // /libraries, POST /scan, POST /enrich), so showing them to a
+  // member would just produce 403s on click. The Playback and About
+  // sections stay visible because they're per-profile state and a
+  // health probe respectively.
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === "admin";
   const scanMutation = useScan();
   const enrichMutation = useBulkEnrich();
   // ``forceEnrich`` toggles whether the bulk-enrich call rewrites
@@ -199,7 +208,8 @@ export function Settings() {
         {t("settings.title")}
       </Typography>
 
-      {/* ── Libraries ────────────────────────────────────── */}
+      {/* ── Libraries (admin-only) ───────────────────────── */}
+      {isAdmin && (
       <SettingsSection icon={HardDrive} title={t("settings.libraries")}>
         {librariesLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
@@ -295,6 +305,7 @@ export function Settings() {
           )}
         </Box>
       </SettingsSection>
+      )}
 
       {/* ── Playback ─────────────────────────────────────── */}
       <SettingsSection icon={MonitorPlay} title={t("settings.playback")}>
@@ -353,12 +364,13 @@ export function Settings() {
         </Box>
       </SettingsSection>
 
-      {/* ── Metadata ─────────────────────────────────────── */}
+      {/* ── Metadata (admin-only) ───────────────────────── */}
       {/* The old "auto-enrich on scan" toggle was removed — every
           scan now enriches automatically so exposing a switch that
           defaulted to on and only affected an unused state hook
           was pure friction. Manual re-enrich stays available for
           one-shot refreshes of the whole catalog. */}
+      {isAdmin && (
       <SettingsSection icon={Database} title={t("settings.metadata")}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
           <Button
@@ -392,6 +404,7 @@ export function Settings() {
           />
         </Box>
       </SettingsSection>
+      )}
 
       {/* ── About ────────────────────────────────────────── */}
       <SettingsSection icon={Info} title={t("settings.about")} last>

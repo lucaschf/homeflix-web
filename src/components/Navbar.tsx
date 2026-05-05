@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AppBar,
   BottomNavigation,
@@ -15,29 +15,42 @@ import {
 import { Bookmark, Film, Home, Search, Settings, Tv, Wrench } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { useCurrentUser } from "../api/auth";
 import { AccountMenu } from "./AccountMenu";
 import { LanguageSwitch } from "./language-switch/LanguageSwitch";
 import { Logo } from "./Logo";
 import { SearchOverlay } from "./SearchOverlay";
 
-const navItems = [
+interface NavItem {
+  to: string;
+  labelKey: string;
+  icon: typeof Home;
+  desktopOnly?: boolean;
+  mobileOnly?: boolean;
+  /**
+   * When set, the item is only rendered for users carrying the
+   * matching role. Used to keep the wrench / admin entry out of a
+   * household member's navbar — the underlying ``/admin/*`` routes
+   * are gated by ``<RequireAdmin />`` independently, so a member
+   * who reaches them by URL still gets bounced back to "/".
+   */
+  requiresRole?: "admin";
+}
+
+const navItems: NavItem[] = [
   { to: "/", labelKey: "nav.home", icon: Home },
   { to: "/browse?type=movie", labelKey: "nav.movies", icon: Film },
   { to: "/browse?type=series", labelKey: "nav.series", icon: Tv },
-  { to: "/admin/intros", labelKey: "nav.admin", icon: Wrench, desktopOnly: true },
+  {
+    to: "/admin/intros",
+    labelKey: "nav.admin",
+    icon: Wrench,
+    desktopOnly: true,
+    requiresRole: "admin",
+  },
   { to: "/lists", labelKey: "nav.myListsShort", icon: Bookmark, mobileOnly: true },
   { to: "/settings", labelKey: "nav.settings", icon: Settings, mobileOnly: true },
 ];
-
-const desktopNavItems = navItems.filter((item) => !item.mobileOnly);
-const bottomNavItems = navItems.filter((item) => !item.desktopOnly);
-
-function getActiveBottomNav(pathname: string, search: string): number {
-  return bottomNavItems.findIndex((item) => {
-    if (!item.to.includes("?")) return item.to === pathname;
-    return item.to === `${pathname}?${search.replace(/^\?/, "")}`;
-  });
-}
 
 export function Navbar() {
   const { t } = useTranslation();
@@ -46,6 +59,18 @@ export function Navbar() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [searchOpen, setSearchOpen] = useState(false);
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === "admin";
+
+  // Drop role-gated items the current user does not qualify for.
+  // Computed every render off ``isAdmin`` so a logout / switch
+  // immediately re-evaluates without a page reload.
+  const visibleItems = useMemo(
+    () => navItems.filter((item) => !item.requiresRole || isAdmin),
+    [isAdmin],
+  );
+  const desktopNavItems = visibleItems.filter((item) => !item.mobileOnly);
+  const bottomNavItems = visibleItems.filter((item) => !item.desktopOnly);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "k") {
@@ -59,7 +84,12 @@ export function Navbar() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  const activeBottomNav = getActiveBottomNav(location.pathname, location.search);
+  // Inline so it picks up the role-filtered ``bottomNavItems`` —
+  // module-scope wouldn't see the admin-gated items dropping out.
+  const activeBottomNav = bottomNavItems.findIndex((item) => {
+    if (!item.to.includes("?")) return item.to === location.pathname;
+    return item.to === `${location.pathname}?${location.search.replace(/^\?/, "")}`;
+  });
 
   return (
     <>
