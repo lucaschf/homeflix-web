@@ -637,11 +637,20 @@ export function useFeatured(mediaType: "all" | "movie" | "series" = "all", limit
 
 // ── Mutations ────────────────────────────────────────────
 
+/**
+ * Trigger a scan of one library. Backend ``POST /api/v1/scan`` (since
+ * #175) requires a ``library_id`` in the body and resolves the
+ * configured paths server-side, so the catalog row's owning library
+ * lands on every Movie / Series the scanner registers. The "scan
+ * all" flow now loops per-library on the call site rather than
+ * flattening paths across libraries — the scanner is no longer a
+ * pure path operation.
+ */
 export function useScan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (directories?: string[]) =>
-      api.post<ScanResponse>("/scan", directories?.length ? { directories } : undefined),
+    mutationFn: (libraryId: string) =>
+      api.post<ScanResponse>("/scan", { library_id: libraryId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["movies"] });
       queryClient.invalidateQueries({ queryKey: ["series"] });
