@@ -41,6 +41,21 @@ export const authKeys = {
   profiles: ["auth", "profiles"] as const,
 };
 
+// Mirror of the backend's ``access_tokens.current_profile_id`` for
+// the current cookie session — kept in localStorage because ``/me``
+// does not expose it and the navbar's chip needs to know which
+// profile is "active" to render its avatar. Updated on switch,
+// cleared on logout. Single-tab single-device assumption is fine
+// for now; a multi-tab refresh stays consistent because every tab
+// reads the same key, and a /switch in another tab updates it via
+// the same mutation hook.
+const ACTIVE_PROFILE_KEY = "homeflix:active_profile_id";
+
+export function getActiveProfileId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACTIVE_PROFILE_KEY);
+}
+
 // ── Queries ─────────────────────────────────────────────
 
 /**
@@ -146,6 +161,9 @@ export function useLogout() {
       await api.post<void>("/auth/cookie/logout");
     },
     onSuccess: async () => {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(ACTIVE_PROFILE_KEY);
+      }
       queryClient.clear();
     },
   });
@@ -162,7 +180,14 @@ export function useSwitchProfile() {
     mutationFn: async (profileId) => {
       await api.post<void>(`/profiles/${profileId}/switch`);
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, profileId) => {
+      // Mirror the new active profile in localStorage so the navbar
+      // chip can render the correct avatar without ``/me`` having
+      // to expose ``active_profile_id``. Persisted before the cache
+      // wipe so a downstream re-fetch already sees the new id.
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(ACTIVE_PROFILE_KEY, profileId);
+      }
       // Auth slice plus the entire catalog — every list/detail
       // query is now scoped to a different profile_id.
       queryClient.clear();
