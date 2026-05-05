@@ -9,7 +9,10 @@
     "history": "History",
     "settings": "Settings",
     "search": "Search",
-    "admin": "Admin"
+    "admin": "Admin",
+    "account": "Account",
+    "switchProfile": "Switch profile",
+    "logout": "Sign out"
   },
   "home": {
     "continueWatching": "Continue Watching",
