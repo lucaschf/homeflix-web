@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Alert, Box, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { useLogin } from "../api/auth";
@@ -33,6 +34,7 @@ const REMEMBER_EMAIL_KEY = "homeflix:auth:remember-email";
  *   doesn't change that.
  */
 export function Login() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const login = useLogin();
 
@@ -69,9 +71,9 @@ export function Login() {
       navigate("/profiles", { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
-        setError("Email ou senha inválidos.");
+        setError(t("auth.login.errorBadCredentials"));
       } else {
-        setError("Não foi possível entrar. Tente novamente em instantes.");
+        setError(t("auth.login.errorGeneric"));
       }
     }
   }
@@ -119,7 +121,7 @@ export function Login() {
               textAlign: "center",
             }}
           >
-            Entrar no HomeFlix
+            {t("auth.login.title")}
           </Typography>
 
           <Typography
@@ -133,7 +135,7 @@ export function Login() {
               maxWidth: 320,
             }}
           >
-            Use as credenciais do administrador para acessar sua biblioteca privada.
+            {t("auth.login.subtitle")}
           </Typography>
 
           {error && (
@@ -157,7 +159,7 @@ export function Login() {
             sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 1.75 }}
           >
             <Field
-              label="Email"
+              label={t("auth.login.emailLabel")}
               type="email"
               name="email"
               autoComplete="email"
@@ -167,7 +169,7 @@ export function Login() {
               disabled={submitting}
             />
             <Field
-              label="Senha"
+              label={t("auth.login.passwordLabel")}
               type={showPassword ? "text" : "password"}
               name="password"
               autoComplete="current-password"
@@ -181,7 +183,11 @@ export function Login() {
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
                   aria-pressed={showPassword}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  aria-label={
+                    showPassword
+                      ? t("auth.login.hidePasswordAria")
+                      : t("auth.login.showPasswordAria")
+                  }
                   sx={{
                     background: "transparent",
                     border: "none",
@@ -195,7 +201,9 @@ export function Login() {
                     "&:hover": { color: "text.primary" },
                   }}
                 >
-                  {showPassword ? "Ocultar" : "Mostrar"}
+                  {showPassword
+                    ? t("auth.login.hidePassword")
+                    : t("auth.login.showPassword")}
                 </Box>
               }
             />
@@ -210,13 +218,13 @@ export function Login() {
               <Checkbox
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                label="Lembrar-me"
+                label={t("auth.login.rememberMe")}
                 disabled={submitting}
               />
             </Box>
 
             <PrimaryButton type="submit" disabled={!canSubmit}>
-              {submitting ? "Entrando…" : "Entrar"}
+              {submitting ? t("auth.login.submitting") : t("auth.login.submit")}
             </PrimaryButton>
           </Box>
         </Box>
@@ -236,7 +244,7 @@ export function Login() {
           color: "text.secondary",
         }}
       >
-        <span>HomeFlix · Servidor local</span>
+        <span>{t("auth.login.footer")}</span>
       </Box>
     </AuthShell>
   );

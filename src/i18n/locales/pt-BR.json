@@ -15,6 +15,33 @@
     "manageProfiles": "Gerenciar perfis",
     "logout": "Sair"
   },
+  "auth": {
+    "login": {
+      "title": "Entrar no HomeFlix",
+      "subtitle": "Use as credenciais do administrador para acessar sua biblioteca privada.",
+      "emailLabel": "Email",
+      "passwordLabel": "Senha",
+      "rememberMe": "Lembrar-me",
+      "showPassword": "Mostrar",
+      "hidePassword": "Ocultar",
+      "showPasswordAria": "Mostrar senha",
+      "hidePasswordAria": "Ocultar senha",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "errorBadCredentials": "Email ou senha inválidos.",
+      "errorGeneric": "Não foi possível entrar. Tente novamente em instantes.",
+      "footer": "HomeFlix · Servidor local"
+    },
+    "picker": {
+      "headline": "Quem está assistindo?",
+      "manageProfiles": "Gerenciar perfis",
+      "logoutShort": "← Sair",
+      "switchError": "Não foi possível selecionar este perfil. Tente novamente.",
+      "enterAs": "Entrar como {{name}}",
+      "emptyTitle": "Nenhum perfil ainda",
+      "emptyBody": "Esta conta ainda não tem perfis. Peça ao administrador para criar o primeiro perfil — o gerenciamento pelo app chega em breve."
+    }
+  },
   "profileManagement": {
     "manageTitle": "Gerenciar perfis",
     "done": "Concluir",

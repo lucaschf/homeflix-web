@@ -177,11 +177,12 @@ export function ManageProfiles() {
         <Typography
           variant="h1"
           sx={{
-            fontSize: { xs: 28, sm: 36 },
-            fontWeight: 500,
-            letterSpacing: "-0.025em",
+            fontSize: { xs: 32, sm: 48 },
+            fontWeight: 400,
+            letterSpacing: "-0.02em",
             lineHeight: 1.1,
             textAlign: "center",
+            color: "rgba(255, 255, 255, 0.95)",
           }}
         >
           {t("profileManagement.manageTitle")}
@@ -196,9 +197,9 @@ export function ManageProfiles() {
               flexWrap: "wrap",
               justifyContent: "center",
               alignItems: "flex-start",
-              gap: { xs: 4, sm: 6 },
+              gap: { xs: 3, sm: 5 },
               width: "100%",
-              maxWidth: 720,
+              maxWidth: 880,
             }}
           >
             {profiles.map((profile) => (
@@ -344,17 +345,18 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
         <Avatar
           initials={initialsForName(profile.name)}
           tone={toneForProfile(profile.id)}
-          size={96}
+          size={120}
+          shape="rounded"
           ring={hover && !disabled}
         />
         <Box
           aria-hidden
           sx={{
             position: "absolute",
-            right: -4,
-            bottom: -4,
-            width: 30,
-            height: 30,
+            right: -6,
+            bottom: -6,
+            width: 32,
+            height: 32,
             borderRadius: "50%",
             bgcolor: "background.default",
             border: "1px solid rgba(255, 255, 255, 0.15)",
@@ -370,10 +372,13 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
       </Box>
       <Typography
         sx={{
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: 500,
           letterSpacing: "-0.005em",
-          color: hover && !disabled ? "primary.light" : "text.primary",
+          color: hover && !disabled
+            ? "rgba(255, 255, 255, 0.95)"
+            : "rgba(255, 255, 255, 0.6)",
+          transition: "color 200ms ease",
         }}
       >
         {profile.name}
@@ -388,8 +393,8 @@ interface NewProfileTileProps {
 }
 
 /**
- * The "+ New Profile" tile that mirrors the avatar geometry so
- * the row reads as a single rhythm of circles.
+ * The "+ New Profile" tile mirrors the avatar geometry so the
+ * row reads as a single rhythm of rounded-square tiles.
  */
 function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
   const { t } = useTranslation();
@@ -415,34 +420,38 @@ function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
         color: "text.primary",
         fontFamily: "inherit",
         opacity: disabled ? 0.6 : 1,
-        transform: hover && !disabled ? "translateY(-2px)" : "none",
+        transform: hover && !disabled ? "translateY(-3px)" : "none",
         transition: "transform 200ms ease",
+        p: 0,
       }}
       aria-label={t("profileManagement.addProfile")}
     >
       <Box
         sx={{
-          width: 96,
-          height: 96,
-          borderRadius: "50%",
+          width: 120,
+          height: 120,
+          borderRadius: `${Math.round(120 * 0.16)}px`,
           border: `1.5px solid ${
             hover && !disabled ? "rgba(217, 119, 87, 0.6)" : "rgba(255, 255, 255, 0.2)"
           }`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: hover && !disabled ? "primary.main" : "text.secondary",
+          color: hover && !disabled ? "primary.main" : "rgba(255, 255, 255, 0.5)",
           transition: "all 200ms ease",
         }}
       >
-        <Plus size={36} />
+        <Plus size={42} />
       </Box>
       <Typography
         sx={{
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: 500,
           letterSpacing: "-0.005em",
-          color: hover && !disabled ? "primary.light" : "text.primary",
+          color: hover && !disabled
+            ? "rgba(255, 255, 255, 0.95)"
+            : "rgba(255, 255, 255, 0.6)",
+          transition: "color 200ms ease",
         }}
       >
         {t("profileManagement.addProfile")}

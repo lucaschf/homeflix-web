@@ -5,8 +5,16 @@ interface AvatarProps {
   initials: string;
   /** CSS background — typically a radial-gradient picked deterministically from the profile id. */
   tone: string;
-  /** Diameter in pixels. */
+  /** Diameter in pixels (or side length when ``shape="rounded"``). */
   size?: number;
+  /**
+   * ``"circle"`` — full-round (used by the AccountMenu chip and
+   *   anywhere the small inline identity hint reads as a "head".
+   * ``"rounded"`` — Netflix-style rounded square; the tile shape
+   *   used by the picker and the manage screen so a row of
+   *   profiles reads as content tiles rather than head shots.
+   */
+  shape?: "circle" | "rounded";
   /** Renders a peach 2px ring + soft halo on hover/active states. */
   ring?: boolean;
   /** Dims sibling avatars when one is hovered (Variação A behaviour kept here for reuse). */
@@ -14,9 +22,9 @@ interface AvatarProps {
 }
 
 /**
- * Circular profile tile with display-typography initials. Until
- * users upload actual avatars, the radial-gradient ``tone`` plus
- * the initials give each profile a recognisable colour identity
+ * Profile tile with display-typography initials. Until users
+ * upload actual avatars, the radial-gradient ``tone`` plus the
+ * initials give each profile a recognisable colour identity
  * across the picker, the manage screen and the AccountMenu chip.
  *
  * Initials use Space Grotesk — the same display family the
@@ -25,13 +33,21 @@ interface AvatarProps {
  * generic serif (which fell back to Times-Roman-ish on most
  * systems and clashed with the rest of the UI).
  */
-export function Avatar({ initials, tone, size = 96, ring = false, dim = false }: AvatarProps) {
+export function Avatar({
+  initials,
+  tone,
+  size = 96,
+  shape = "circle",
+  ring = false,
+  dim = false,
+}: AvatarProps) {
+  const isRounded = shape === "rounded";
   return (
     <Box
       sx={{
         width: size,
         height: size,
-        borderRadius: "50%",
+        borderRadius: isRounded ? `${Math.round(size * 0.16)}px` : "50%",
         background: tone,
         display: "flex",
         alignItems: "center",

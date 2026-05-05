@@ -15,6 +15,33 @@
     "manageProfiles": "Manage profiles",
     "logout": "Sign out"
   },
+  "auth": {
+    "login": {
+      "title": "Sign in to HomeFlix",
+      "subtitle": "Use the admin credentials to access your private library.",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "rememberMe": "Remember me",
+      "showPassword": "Show",
+      "hidePassword": "Hide",
+      "showPasswordAria": "Show password",
+      "hidePasswordAria": "Hide password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "errorBadCredentials": "Invalid email or password.",
+      "errorGeneric": "Couldn't sign you in. Try again in a moment.",
+      "footer": "HomeFlix · Local server"
+    },
+    "picker": {
+      "headline": "Who's watching?",
+      "manageProfiles": "Manage profiles",
+      "logoutShort": "← Sign out",
+      "switchError": "Couldn't select this profile. Try again.",
+      "enterAs": "Sign in as {{name}}",
+      "emptyTitle": "No profiles yet",
+      "emptyBody": "This account has no profiles yet. Ask the admin to create the first one — in-app management is coming soon."
+    }
+  },
   "profileManagement": {
     "manageTitle": "Manage profiles",
     "done": "Done",
