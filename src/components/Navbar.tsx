@@ -15,6 +15,7 @@ import {
 import { Bookmark, Film, Home, Search, Settings, Tv, Wrench } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { AccountMenu } from "./AccountMenu";
 import { LanguageSwitch } from "./language-switch/LanguageSwitch";
 import { Logo } from "./Logo";
 import { SearchOverlay } from "./SearchOverlay";
@@ -175,6 +176,7 @@ export function Navbar() {
               <Settings size={20} />
             </IconButton>
           )}
+          <AccountMenu />
         </Toolbar>
       </AppBar>
 

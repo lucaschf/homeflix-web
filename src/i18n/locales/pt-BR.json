@@ -9,7 +9,10 @@
     "history": "Histórico",
     "settings": "Configuracoes",
     "search": "Buscar",
-    "admin": "Admin"
+    "admin": "Admin",
+    "account": "Conta",
+    "switchProfile": "Trocar perfil",
+    "logout": "Sair"
   },
   "home": {
     "continueWatching": "Continue Assistindo",
