@@ -86,13 +86,17 @@ export function SplashScreen({ onDone, holdMs = 2200, exitMs = 360 }: SplashScre
         },
       }}
     >
-      <svg
-        width="160"
-        height="160"
+      <Box
+        component="svg"
         viewBox="0 0 200 200"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label="HomeFlix"
+        // Bumped from a fixed 160px to a responsive scale: small
+        // phones get a 160px mark (room for the wordmark below it
+        // in a tall viewport), desktops get 220px so the logo
+        // doesn't read as a tiny floating glyph on a 1080p+ screen.
+        sx={{ width: { xs: 160, sm: 200, md: 220 }, height: { xs: 160, sm: 200, md: 220 } }}
       >
         {/* House body — slides up from the floor */}
         <rect
@@ -156,14 +160,18 @@ export function SplashScreen({ onDone, holdMs = 2200, exitMs = 360 }: SplashScre
             animation: "splashWallsUp 360ms cubic-bezier(0.22, 1, 0.36, 1) 0ms both",
           }}
         />
-      </svg>
+      </Box>
 
       <Box
         sx={{
           fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
-          fontSize: "1.75rem",
-          fontWeight: 600,
-          letterSpacing: "-0.025em",
+          // Bumped from a flat 1.75rem (28px) — at the new logo
+          // sizes the old wordmark read as a footnote. The
+          // responsive scale keeps the logo:wordmark ratio stable
+          // around ~3:1 across breakpoints.
+          fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+          fontWeight: 700,
+          letterSpacing: "-0.03em",
           color: fg,
           animation: "splashWordmarkIn 420ms cubic-bezier(0.22, 1, 0.36, 1) 900ms both",
         }}
