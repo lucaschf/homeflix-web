@@ -192,13 +192,13 @@ export function ManageProfiles() {
         ) : (
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "repeat(2, 1fr)",
-                sm: "repeat(auto-fit, minmax(120px, max-content))",
-              },
-              gap: { xs: 4, sm: 6 },
+              display: "flex",
+              flexWrap: "wrap",
               justifyContent: "center",
+              alignItems: "flex-start",
+              gap: { xs: 4, sm: 6 },
+              width: "100%",
+              maxWidth: 720,
             }}
           >
             {profiles.map((profile) => (

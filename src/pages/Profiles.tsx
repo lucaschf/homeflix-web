@@ -176,11 +176,12 @@ export function Profiles() {
 
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(4, 1fr)" },
-                gap: { xs: 1.75, sm: 3 },
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "center",
+                gap: { xs: 2, sm: 4 },
                 width: "100%",
-                maxWidth: 640,
+                maxWidth: 720,
               }}
             >
               {profiles.map((profile) => {
@@ -199,6 +200,10 @@ export function Profiles() {
                     disabled={disabled}
                     aria-label={`Entrar como ${profile.name}`}
                     sx={{
+                      // Fixed-width tile so the centered row keeps
+                      // consistent geometry whether the household has
+                      // 1, 4 or 7 profiles. Wraps cleanly on mobile.
+                      width: { xs: 130, sm: 144 },
                       bgcolor: isActive ? "rgba(255, 255, 255, 0.04)" : "transparent",
                       border: `1px solid ${
                         isActive ? "rgba(217, 119, 87, 0.4)" : "rgba(255, 255, 255, 0.08)"
