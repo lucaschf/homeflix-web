@@ -241,8 +241,7 @@ export function Profiles() {
             <Box
               component="button"
               type="button"
-              disabled
-              aria-disabled
+              onClick={() => navigate("/settings#profiles")}
               sx={{
                 mt: 5,
                 background: "transparent",
@@ -253,10 +252,9 @@ export function Profiles() {
                 fontWeight: 600,
                 letterSpacing: "0.14em",
                 textTransform: "uppercase",
-                cursor: "not-allowed",
-                opacity: 0.55,
+                cursor: "pointer",
+                "&:hover": { color: "primary.light" },
               }}
-              title="Em breve"
             >
               + Gerenciar perfis
             </Box>

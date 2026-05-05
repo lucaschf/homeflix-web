@@ -8,7 +8,7 @@ import {
   MenuItem,
   Typography,
 } from "@mui/material";
-import { LogOut, Users } from "lucide-react";
+import { LogOut, Settings as SettingsIcon, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useLogout } from "../api/auth";
@@ -46,6 +46,11 @@ export function AccountMenu() {
   const handleSwitchProfile = () => {
     handleClose();
     navigate("/profiles");
+  };
+
+  const handleManageProfiles = () => {
+    handleClose();
+    navigate("/settings#profiles");
   };
 
   const handleLogout = async () => {
@@ -142,6 +147,13 @@ export function AccountMenu() {
             <Users size={16} />
           </ListItemIcon>
           {t("nav.switchProfile")}
+        </MenuItem>
+
+        <MenuItem onClick={handleManageProfiles}>
+          <ListItemIcon sx={{ color: "text.secondary", minWidth: 32 }}>
+            <SettingsIcon size={16} />
+          </ListItemIcon>
+          {t("nav.manageProfiles")}
         </MenuItem>
 
         <MenuItem
