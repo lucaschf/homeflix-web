@@ -345,6 +345,7 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
         <Avatar
           initials={initialsForName(profile.name)}
           tone={toneForProfile(profile.id)}
+          avatarUrl={profile.avatar_url}
           size={120}
           shape="rounded"
           ring={hover && !disabled}

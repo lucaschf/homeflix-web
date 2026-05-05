@@ -71,6 +71,17 @@
       "saveFailed": "Couldn't save the profile. Try again.",
       "deleteFailed": "Couldn't delete the profile. Try again.",
       "cannotDeleteLast": "You must have at least one active profile. Create another one before deleting this."
+    },
+    "avatar": {
+      "change": "Change photo",
+      "remove": "Remove",
+      "hint": "PNG, JPEG or WebP up to 2MB.",
+      "errors": {
+        "tooLarge": "The image is too large. Pick a file under 2MB.",
+        "unsupported": "Unsupported format. Use PNG, JPEG or WebP.",
+        "uploadFailed": "Couldn't upload the photo. Try again.",
+        "removeFailed": "Couldn't remove the photo. Try again."
+      }
     }
   },
   "home": {

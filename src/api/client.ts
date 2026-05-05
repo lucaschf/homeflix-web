@@ -46,14 +46,23 @@ interface RequestOptions extends RequestInit {
 
 async function request<T>(path: string, options?: RequestOptions): Promise<T> {
   const { expects401, ...fetchOptions } = options ?? {};
+  // Skip the JSON ``Content-Type`` default when the body is
+  // ``FormData`` — multipart uploads need the browser to set the
+  // header itself so the boundary token gets injected. Hand-setting
+  // ``application/json`` would clobber it and the server would 422.
+  const isFormData =
+    typeof FormData !== "undefined" && fetchOptions.body instanceof FormData;
+  const baseHeaders: Record<string, string> = isFormData
+    ? {}
+    : { "Content-Type": "application/json" };
   const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...fetchOptions.headers },
+    ...fetchOptions,
+    headers: { ...baseHeaders, ...(fetchOptions.headers ?? {}) },
     // Send and accept the ``homeflix_session`` cookie on every
     // request. Required for any endpoint that reads ``current_user``
     // or ``profile_id`` from the session (auth, profiles, and —
     // once strict mode lands — the entire catalog).
     credentials: "include",
-    ...fetchOptions,
   });
 
   if (!response.ok) {
@@ -102,8 +111,12 @@ export const api = {
       body: body ? JSON.stringify(body) : undefined,
       ...options,
     }),
-  del: (path: string, options?: ApiOptions) =>
-    request<void>(path, { method: "DELETE", ...options }),
+  // ``T`` defaults to ``void`` so the typical "DELETE → 204" call
+  // site reads as before. Endpoints that respond with a body
+  // (e.g. ``DELETE /profiles/{id}/avatar`` returns the updated
+  // ``Profile``) parameterise it explicitly: ``api.del<ProfileResponse>(...)``.
+  del: <T = void>(path: string, options?: ApiOptions) =>
+    request<T>(path, { method: "DELETE", ...options }),
   // FastAPI Users' cookie-login endpoint takes
   // ``application/x-www-form-urlencoded`` (OAuth2-password-flow
   // shape: ``username`` + ``password``). Carving this out as its
@@ -114,6 +127,16 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams(fields).toString(),
+      ...options,
+    }),
+  // ``multipart/form-data`` for file uploads (e.g. profile avatar).
+  // ``request()`` detects the ``FormData`` body and skips the JSON
+  // ``Content-Type`` default so the browser can inject the boundary
+  // token — the only way the server parses the multipart body.
+  postMultipart: <T>(path: string, formData: FormData, options?: ApiOptions) =>
+    request<T>(path, {
+      method: "POST",
+      body: formData,
       ...options,
     }),
 };

@@ -225,3 +225,53 @@ export function useDeleteProfile() {
     },
   });
 }
+
+/**
+ * Upload a new avatar for a profile. Pairs the profile id with the
+ * chosen ``File``; we pack a ``FormData`` and let
+ * ``api.postMultipart`` send it. Backend returns the updated
+ * ``Profile`` with the cache-busted ``avatar_url`` (a fresh ``?v=``
+ * each upload) and we invalidate ``authKeys.profiles`` so the
+ * picker / manage screen / AccountMenu chip pick it up on the
+ * next render.
+ *
+ * Server-side validation (size cap, MIME allow-list, real-image
+ * check) surfaces as ``ApiError`` with status 413 / 415; consumers
+ * branch on that to render friendly inline messages.
+ */
+export function useUploadProfileAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation<Profile, Error, { profileId: string; file: File }>({
+    mutationFn: async ({ profileId, file }) => {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await api.postMultipart<ProfileResponse>(
+        `/profiles/${profileId}/avatar`,
+        form,
+      );
+      return res.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
+    },
+  });
+}
+
+/**
+ * Clear a profile's avatar — sets ``avatar_url`` back to ``null``
+ * on the backend and removes the persisted file. Idempotent
+ * server-side, so calling on a profile that has no avatar still
+ * resolves successfully and confirms the (still-empty) state.
+ */
+export function useDeleteProfileAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation<Profile, Error, string>({
+    mutationFn: async (profileId) => {
+      const res = await api.del<ProfileResponse>(`/profiles/${profileId}/avatar`);
+      return res.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
+    },
+  });
+}

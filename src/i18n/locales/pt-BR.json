@@ -71,6 +71,17 @@
       "saveFailed": "Não foi possível salvar o perfil. Tente novamente.",
       "deleteFailed": "Não foi possível apagar o perfil. Tente novamente.",
       "cannotDeleteLast": "Você precisa ter ao menos um perfil ativo. Crie outro antes de apagar este."
+    },
+    "avatar": {
+      "change": "Trocar foto",
+      "remove": "Remover",
+      "hint": "PNG, JPEG ou WebP até 2MB.",
+      "errors": {
+        "tooLarge": "A imagem é muito grande. Escolha um arquivo com menos de 2MB.",
+        "unsupported": "Formato não suportado. Use PNG, JPEG ou WebP.",
+        "uploadFailed": "Não foi possível enviar a foto. Tente novamente.",
+        "removeFailed": "Não foi possível remover a foto. Tente novamente."
+      }
     }
   },
   "home": {
