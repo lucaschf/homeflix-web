@@ -540,6 +540,13 @@ export interface User {
   role: string;
   is_active: boolean;
   is_verified: boolean;
+  // Prefixed external id (``prf_xxx``) of the profile currently bound
+  // to this session, sourced from the backend's
+  // ``access_tokens.current_profile_id``. ``null`` between login and
+  // the first ``POST /profiles/{id}/switch`` — every consumer that
+  // renders profile-scoped UI (navbar avatar chip, "active profile"
+  // marker, etc.) reads this and skips its branch when null.
+  active_profile_id: string | null;
 }
 
 export interface Profile {
