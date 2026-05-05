@@ -8,7 +8,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { ArrowLeft, Check, ListPlus, Play, Plus } from "lucide-react";
+import { ArrowLeft, Check, Layers, ListPlus, Play, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -409,8 +409,12 @@ function CollectionHero({
                 gap: { xs: 0.875, md: 1 },
               }}
             >
-              <Box component="span" aria-hidden>
-                ◆
+              <Box
+                component="span"
+                aria-hidden
+                sx={{ display: "inline-flex", alignItems: "center" }}
+              >
+                <Layers size={14} strokeWidth={2} />
               </Box>
               {t("collection.eyebrow")}
             </Box>
