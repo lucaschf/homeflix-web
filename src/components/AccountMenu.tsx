@@ -11,8 +11,14 @@ import {
 import { LogOut, Settings as SettingsIcon, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useCurrentUser, useLogout } from "../api/auth";
-import { initialsForName } from "./auth/avatarUtils";
+import {
+  getActiveProfileId,
+  useCurrentUser,
+  useLogout,
+  useProfiles,
+} from "../api/auth";
+import { Avatar } from "./auth/Avatar";
+import { initialsForName, toneForProfile } from "./auth/avatarUtils";
 
 /**
  * Account dropdown surfaced in the right edge of the Navbar.
@@ -33,12 +39,28 @@ export function AccountMenu() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser();
+  const { data: profiles } = useProfiles();
   const logout = useLogout();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
   if (!currentUser) return null;
 
-  const initials = initialsForName(currentUser.email.split("@")[0] ?? currentUser.email);
+  // Resolve the active profile via the localStorage mirror written
+  // by ``useSwitchProfile``. If the cache hasn't loaded yet (or the
+  // user reached the navbar without going through the picker —
+  // e.g. a single-profile auto-switch on page load) we fall back to
+  // the user's first profile, which matches what the catalog APIs
+  // would return.
+  const activeProfileId = getActiveProfileId();
+  const activeProfile =
+    profiles?.find((p) => p.id === activeProfileId) ?? profiles?.[0] ?? null;
+
+  // The chip prefers the profile's identity (its name → initials,
+  // its id → tone, its avatar URL → image). Falls back to the
+  // user's email-derived initials when no profile has loaded yet.
+  const chipInitials = activeProfile
+    ? initialsForName(activeProfile.name)
+    : initialsForName(currentUser.email.split("@")[0] ?? currentUser.email);
 
   const handleOpen = (event: MouseEvent<HTMLElement>) => setAnchor(event.currentTarget);
   const handleClose = () => setAnchor(null);
@@ -77,26 +99,37 @@ export function AccountMenu() {
         sx={{
           color: "text.primary",
           "&:hover": { bgcolor: "rgba(255, 255, 255, 0.04)" },
+          p: 0.25,
         }}
       >
-        <Box
-          sx={{
-            width: 28,
-            height: 28,
-            borderRadius: "50%",
-            bgcolor: "rgba(217, 119, 87, 0.12)",
-            border: "1px solid rgba(217, 119, 87, 0.4)",
-            color: "primary.light",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: "0.02em",
-          }}
-        >
-          {initials}
-        </Box>
+        {activeProfile ? (
+          <Avatar
+            initials={chipInitials}
+            tone={toneForProfile(activeProfile.id)}
+            avatarUrl={activeProfile.avatar_url}
+            size={28}
+            shape="circle"
+          />
+        ) : (
+          <Box
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              bgcolor: "rgba(217, 119, 87, 0.12)",
+              border: "1px solid rgba(217, 119, 87, 0.4)",
+              color: "primary.light",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.02em",
+            }}
+          >
+            {chipInitials}
+          </Box>
+        )}
       </IconButton>
       <Menu
         anchorEl={anchor}

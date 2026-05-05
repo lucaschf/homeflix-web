@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type ChangeEvent } from "react";
 import {
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -17,7 +18,11 @@ import {
   Typography,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { useDeleteProfileAvatar, useUploadProfileAvatar } from "../../api/auth";
+import { ApiError } from "../../api/client";
 import type { CreateProfileInput, Library, Profile } from "../../api/types";
+import { Avatar } from "../auth/Avatar";
+import { initialsForName, toneForProfile } from "../auth/avatarUtils";
 
 export interface ProfileFormSubmit {
   name: string;
@@ -85,6 +90,59 @@ export function ProfileFormDialog({
     () => new Set(profile?.allowed_library_ids ?? []),
   );
 
+  // Avatar state. ``avatarUrl`` shadows ``profile.avatar_url`` so
+  // the preview flips immediately after a successful upload /
+  // delete, without waiting for the parent to re-fetch and
+  // re-mount the dialog. ``avatarError`` surfaces 413 / 415 from
+  // the server inline in the avatar section, separate from the
+  // form-level ``error`` prop (which the parent owns).
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile?.avatar_url ?? null);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadAvatar = useUploadProfileAvatar();
+  const deleteAvatar = useDeleteProfileAvatar();
+  const avatarBusy = uploadAvatar.isPending || deleteAvatar.isPending;
+
+  const openFilePicker = () => {
+    if (avatarBusy || !profile) return;
+    setAvatarError(null);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    // Reset the input value so picking the SAME file again still
+    // fires ``onChange`` (browsers de-dupe identical paths).
+    event.target.value = "";
+    if (!file || !profile) return;
+    try {
+      const updated = await uploadAvatar.mutateAsync({
+        profileId: profile.id,
+        file,
+      });
+      setAvatarUrl(updated.avatar_url);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 413) {
+        setAvatarError(t("profileManagement.avatar.errors.tooLarge"));
+      } else if (err instanceof ApiError && err.status === 415) {
+        setAvatarError(t("profileManagement.avatar.errors.unsupported"));
+      } else {
+        setAvatarError(t("profileManagement.avatar.errors.uploadFailed"));
+      }
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!profile) return;
+    setAvatarError(null);
+    try {
+      const updated = await deleteAvatar.mutateAsync(profile.id);
+      setAvatarUrl(updated.avatar_url);
+    } catch {
+      setAvatarError(t("profileManagement.avatar.errors.removeFailed"));
+    }
+  };
+
   const trimmedName = name.trim();
   const canSubmit = trimmedName.length > 0 && !submitting;
 
@@ -134,6 +192,98 @@ export function ProfileFormDialog({
           >
             {error}
           </Typography>
+        )}
+
+        {isEdit && profile && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2.5,
+              mb: 2,
+              pb: 2,
+              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            <Box sx={{ position: "relative" }}>
+              <Avatar
+                initials={initialsForName(profile.name)}
+                tone={toneForProfile(profile.id)}
+                avatarUrl={avatarUrl}
+                size={80}
+                shape="circle"
+              />
+              {avatarBusy && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "50%",
+                    bgcolor: "rgba(0, 0, 0, 0.55)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <CircularProgress size={22} sx={{ color: "primary.main" }} />
+                </Box>
+              )}
+            </Box>
+            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  onClick={openFilePicker}
+                  disabled={avatarBusy || submitting}
+                  variant="outlined"
+                  size="small"
+                  sx={{
+                    textTransform: "none",
+                    borderColor: "rgba(255, 255, 255, 0.15)",
+                    color: "text.primary",
+                    "&:hover": {
+                      borderColor: "rgba(255, 255, 255, 0.3)",
+                      bgcolor: "rgba(255, 255, 255, 0.04)",
+                    },
+                  }}
+                >
+                  {t("profileManagement.avatar.change")}
+                </Button>
+                {avatarUrl && (
+                  <Button
+                    onClick={handleRemoveAvatar}
+                    disabled={avatarBusy || submitting}
+                    size="small"
+                    color="inherit"
+                    sx={{
+                      textTransform: "none",
+                      color: "rgba(255, 255, 255, 0.6)",
+                      "&:hover": { color: "text.primary", bgcolor: "rgba(255, 255, 255, 0.04)" },
+                    }}
+                  >
+                    {t("profileManagement.avatar.remove")}
+                  </Button>
+                )}
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                {t("profileManagement.avatar.hint")}
+              </Typography>
+              {avatarError && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "rgba(252, 165, 165, 0.95)", mt: 0.25 }}
+                >
+                  {avatarError}
+                </Typography>
+              )}
+            </Box>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              hidden
+              onChange={handleFileChange}
+            />
+          </Box>
         )}
 
         <TextField

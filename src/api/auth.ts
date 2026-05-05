@@ -41,6 +41,21 @@ export const authKeys = {
   profiles: ["auth", "profiles"] as const,
 };
 
+// Mirror of the backend's ``access_tokens.current_profile_id`` for
+// the current cookie session — kept in localStorage because ``/me``
+// does not expose it and the navbar's chip needs to know which
+// profile is "active" to render its avatar. Updated on switch,
+// cleared on logout. Single-tab single-device assumption is fine
+// for now; a multi-tab refresh stays consistent because every tab
+// reads the same key, and a /switch in another tab updates it via
+// the same mutation hook.
+const ACTIVE_PROFILE_KEY = "homeflix:active_profile_id";
+
+export function getActiveProfileId(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ACTIVE_PROFILE_KEY);
+}
+
 // ── Queries ─────────────────────────────────────────────
 
 /**
@@ -146,6 +161,9 @@ export function useLogout() {
       await api.post<void>("/auth/cookie/logout");
     },
     onSuccess: async () => {
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(ACTIVE_PROFILE_KEY);
+      }
       queryClient.clear();
     },
   });
@@ -162,7 +180,14 @@ export function useSwitchProfile() {
     mutationFn: async (profileId) => {
       await api.post<void>(`/profiles/${profileId}/switch`);
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, profileId) => {
+      // Mirror the new active profile in localStorage so the navbar
+      // chip can render the correct avatar without ``/me`` having
+      // to expose ``active_profile_id``. Persisted before the cache
+      // wipe so a downstream re-fetch already sees the new id.
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(ACTIVE_PROFILE_KEY, profileId);
+      }
       // Auth slice plus the entire catalog — every list/detail
       // query is now scoped to a different profile_id.
       queryClient.clear();
@@ -219,6 +244,56 @@ export function useDeleteProfile() {
   return useMutation<void, Error, string>({
     mutationFn: async (profileId) => {
       await api.del(`/profiles/${profileId}`);
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
+    },
+  });
+}
+
+/**
+ * Upload a new avatar for a profile. Pairs the profile id with the
+ * chosen ``File``; we pack a ``FormData`` and let
+ * ``api.postMultipart`` send it. Backend returns the updated
+ * ``Profile`` with the cache-busted ``avatar_url`` (a fresh ``?v=``
+ * each upload) and we invalidate ``authKeys.profiles`` so the
+ * picker / manage screen / AccountMenu chip pick it up on the
+ * next render.
+ *
+ * Server-side validation (size cap, MIME allow-list, real-image
+ * check) surfaces as ``ApiError`` with status 413 / 415; consumers
+ * branch on that to render friendly inline messages.
+ */
+export function useUploadProfileAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation<Profile, Error, { profileId: string; file: File }>({
+    mutationFn: async ({ profileId, file }) => {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await api.postMultipart<ProfileResponse>(
+        `/profiles/${profileId}/avatar`,
+        form,
+      );
+      return res.data;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
+    },
+  });
+}
+
+/**
+ * Clear a profile's avatar — sets ``avatar_url`` back to ``null``
+ * on the backend and removes the persisted file. Idempotent
+ * server-side, so calling on a profile that has no avatar still
+ * resolves successfully and confirms the (still-empty) state.
+ */
+export function useDeleteProfileAvatar() {
+  const queryClient = useQueryClient();
+  return useMutation<Profile, Error, string>({
+    mutationFn: async (profileId) => {
+      const res = await api.del<ProfileResponse>(`/profiles/${profileId}/avatar`);
+      return res.data;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
