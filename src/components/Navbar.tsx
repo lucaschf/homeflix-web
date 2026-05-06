@@ -17,7 +17,6 @@ import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../api/auth";
 import { AccountMenu } from "./AccountMenu";
-import { LanguageSwitch } from "./language-switch/LanguageSwitch";
 import { Logo } from "./Logo";
 import { SearchOverlay } from "./SearchOverlay";
 
@@ -194,7 +193,6 @@ export function Navbar() {
               <Bookmark size={22} />
             </IconButton>
           )}
-          <LanguageSwitch />
           <AccountMenu />
         </Toolbar>
       </AppBar>
