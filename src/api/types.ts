@@ -591,3 +591,53 @@ export interface CreateProfileInput {
   // to grant access at creation time.
   allowed_library_ids?: string[] | null;
 }
+
+// =============================================================================
+// Admin — Movie Relink (TMDB review queue)
+// =============================================================================
+
+// One row on the admin "needs review" listing. Backend sets the
+// underlying flag when an enrichment attempt couldn't resolve a
+// TMDB match (off-year title, cross-type miss). Slim by design —
+// these movies have no poster/synopsis to render in the card view.
+export interface NeedsReviewMovie {
+  id: string;
+  title: string;
+  year: number;
+  file_path: string | null;
+}
+
+// One candidate card shown in the suggestion picker. Both movie
+// and TV candidates share this shape; `media_type` selects which
+// section it lives in and which `media_type` value to send back
+// on relink.
+export interface TmdbSuggestion {
+  tmdb_id: number;
+  media_type: "movie" | "tv";
+  title: string;
+  year: number | null;
+  overview: string | null;
+  poster_url: string | null;
+}
+
+export interface TmdbSuggestionsPayload {
+  movie_id: string;
+  movies: TmdbSuggestion[];
+  series: TmdbSuggestion[];
+}
+
+export interface RelinkMovieInput {
+  tmdb_id: number;
+  media_type: "movie" | "tv";
+}
+
+export interface RelinkMoviePayload {
+  movie_id: string;
+  enriched: boolean;
+  provider: string | null;
+  error: string | null;
+}
+
+export type NeedsReviewMoviesResponse = ApiListResponse<NeedsReviewMovie>;
+export type TmdbSuggestionsResponse = ApiDetailResponse<TmdbSuggestionsPayload>;
+export type RelinkMovieResponse = ApiDetailResponse<RelinkMoviePayload>;

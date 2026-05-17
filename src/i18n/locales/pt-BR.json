@@ -266,6 +266,39 @@
       "confirm": "Aplicar",
       "cancel": "Cancelar",
       "noNextUnmarked": "Não há mais episódios sem marcador."
+    },
+    "reviews": {
+      "title": "Fila de revisão de filmes",
+      "subtitle": "Filmes que o enriquecimento não conseguiu casar com o TMDB. Escolha a entrada certa abaixo e o catálogo atualiza automaticamente.",
+      "empty": "Nada para revisar.",
+      "emptyHint": "Novas entradas aparecem aqui sempre que uma tentativa de enriquecimento não acha match no TMDB.",
+      "loadError": "Não foi possível carregar a fila de revisão.",
+      "retry": "Tentar novamente",
+      "findOnTmdb": "Buscar no TMDB",
+      "table": {
+        "title": "Título",
+        "year": "Ano",
+        "filePath": "Caminho do arquivo",
+        "actions": "Ações"
+      },
+      "dialog": {
+        "title": "Escolher correspondência no TMDB",
+        "moviesHeading": "Filmes",
+        "seriesHeading": "Séries",
+        "seriesHint": "Escolher uma série ainda não é suportado — converter um filme em série está no roadmap.",
+        "noResults": "O TMDB não retornou candidatos para esse título.",
+        "fetchError": "Não foi possível buscar candidatos no TMDB.",
+        "noPoster": "Sem pôster",
+        "type": {
+          "movie": "Filme",
+          "tv": "Série"
+        }
+      },
+      "snack": {
+        "success": "“{{title}}” foi religado com sucesso.",
+        "enrichmentFailed": "TMDB ID aceito, mas o enriquecimento falhou. Tente outro candidato.",
+        "relinkFailed": "Não foi possível religar esse filme."
+      }
     }
   },
   "rating": {

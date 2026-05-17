@@ -10,22 +10,43 @@ const BASE_URL = "/api/v1";
  */
 export const AUTH_EXPIRED_EVENT = "homeflix:auth-expired";
 
+/**
+ * Shape of the standard error envelope returned by the backend per
+ * ``docs/standards/api-response-standard-rest-v3.md`` — ``message``
+ * is the human-readable text, ``code`` and ``type`` are stable IDs
+ * suitable for switch logic on the caller. All fields optional so
+ * non-conforming error responses (proxy HTML, network failures
+ * decoded as plain text) still type-check.
+ */
+export interface ApiErrorBody {
+  message?: string;
+  code?: string;
+  type?: string;
+  details?: unknown;
+}
+
 // Custom error so callers can branch on the HTTP status (e.g. 401 →
 // "not logged in", 400 → "bad credentials") without re-parsing the
-// generic Error message string. Kept tiny on purpose — full body
-// parsing for structured backend errors lands when the route layer
-// actually needs it.
+// generic Error message string. ``body`` carries the parsed backend
+// envelope so toasts / inline alerts can render the operator-facing
+// message directly via ``err.message`` instead of the generic
+// "API Error: 422 ..." fallback.
 export class ApiError extends Error {
   // ``erasableSyntaxOnly`` (tsconfig) bans parameter properties, so
   // the fields are declared up front and assigned in the body.
   readonly status: number;
   readonly statusText: string;
+  readonly body: ApiErrorBody | null;
 
-  constructor(status: number, statusText: string) {
-    super(`API Error: ${status} ${statusText}`);
+  constructor(status: number, statusText: string, body: ApiErrorBody | null = null) {
+    // Backend-provided message wins when present so callers that
+    // only display ``err.message`` get the operator-facing text by
+    // default. Falls back to the generic shape for non-JSON errors.
+    super(body?.message ?? `API Error: ${status} ${statusText}`);
     this.name = "ApiError";
     this.status = status;
     this.statusText = statusText;
+    this.body = body;
   }
 }
 
@@ -72,7 +93,17 @@ async function request<T>(path: string, options?: RequestOptions): Promise<T> {
       // router/query-cache deps.
       window.dispatchEvent(new CustomEvent(AUTH_EXPIRED_EVENT));
     }
-    throw new ApiError(response.status, response.statusText);
+    // Best-effort parse of the structured error envelope. The body
+    // is consumed once — proxies / connection drops that ship a
+    // non-JSON payload land in the catch and the error still throws
+    // with the generic message + status pair as before.
+    let body: ApiErrorBody | null = null;
+    try {
+      body = (await response.json()) as ApiErrorBody;
+    } catch {
+      body = null;
+    }
+    throw new ApiError(response.status, response.statusText, body);
   }
 
   if (response.status === 204) return undefined as T;
