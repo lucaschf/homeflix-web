@@ -48,6 +48,7 @@ import type {
   PromoteMovieToSeriesInput,
   PromoteMovieToSeriesPayload,
   PromoteMovieToSeriesResponse,
+  ReadinessResponse,
   RecentlyAddedCatalogResponse,
   RecentlyAddedMoviesResponse,
   RecentlyAddedSeriesResponse,
@@ -621,6 +622,27 @@ export function useHealth() {
       try {
         const res = await fetch("/health");
         return res.ok ? ((await res.json()) as HealthResponse) : null;
+      } catch {
+        return null;
+      }
+    },
+    refetchInterval: 30000,
+  });
+}
+
+/**
+ * Polls ``/health/ready`` every 30 s to drive the System health
+ * card on the admin Overview (and the future ``/admin/system/health``
+ * page). Mirrors ``useHealth`` — direct ``fetch`` because the
+ * endpoint is mounted at root, no ``/api/v1`` prefix.
+ */
+export function useReadiness() {
+  return useQuery({
+    queryKey: ["readiness"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/health/ready");
+        return res.ok ? ((await res.json()) as ReadinessResponse) : null;
       } catch {
         return null;
       }

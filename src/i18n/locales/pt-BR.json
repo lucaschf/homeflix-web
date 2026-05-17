@@ -217,6 +217,74 @@
   },
   "admin": {
     "title": "Admin",
+    "nav": {
+      "overview": "Visão geral",
+      "libraries": "Bibliotecas",
+      "movies": "Filmes",
+      "series": "Séries",
+      "review": "Fila de revisão",
+      "scan": "Scan",
+      "enrich": "Enriquecer",
+      "intros": "Aberturas",
+      "requests": "Solicitações",
+      "users": "Usuários",
+      "hls": "HLS cache",
+      "health": "Saúde",
+      "backToApp": "Voltar ao app",
+      "group": {
+        "catalog": "Catálogo",
+        "identity": "Identidade",
+        "system": "Sistema"
+      }
+    },
+    "topbar": {
+      "expand": "Expandir sidebar",
+      "collapse": "Recolher sidebar"
+    },
+    "table": {
+      "emptyTitle": "Sem resultados",
+      "emptyBody": "Nada para mostrar agora.",
+      "retry": "Tentar novamente"
+    },
+    "confirm": {
+      "confirm": "Confirmar",
+      "confirming": "Processando…",
+      "cancel": "Cancelar",
+      "consequencesTitle": "O que vai acontecer",
+      "irreversibleWarning": "Essa ação é irreversível pela UI."
+    },
+    "overview": {
+      "title": "Visão geral",
+      "subtitle": "Saúde do catálogo, filas operacionais e status do sistema em um olhar.",
+      "placeholder": "—",
+      "placeholderSub": "Backend pendente",
+      "reviewSub": "Ver fila",
+      "stats": {
+        "movies": "Filmes",
+        "series": "Séries",
+        "review": "Para revisar",
+        "lastScan": "Último scan",
+        "users": "Usuários",
+        "hlsCache": "HLS cache"
+      },
+      "recentlyFlagged": {
+        "title": "Marcados recentemente",
+        "subtitle": "Filmes que o enriquecimento não conseguiu casar no TMDB. Abra a fila para religar ou promover.",
+        "seeAll": "Ver todos ({{count}}) →",
+        "empty": "Nada marcado — a fila está limpa.",
+        "reason": "Sem match no TMDB",
+        "noFilePath": "sem arquivo no disco",
+        "moreCount": "+{{count}} a mais na fila"
+      },
+      "systemHealth": {
+        "title": "Saúde do sistema",
+        "subtitle": "Probes de readiness ao vivo — atualiza a cada 30 s.",
+        "hypothesis": "probes hardcoded · checks reais no P6",
+        "lastChecked": "Última checagem às {{at}}",
+        "overall": "Geral",
+        "error": "Não foi possível alcançar o endpoint de readiness."
+      }
+    },
     "intros": {
       "title": "Marcadores de abertura",
       "subtitle": "Ajuste manualmente o início e o fim da abertura enquanto a detecção automática não está confiável.",
