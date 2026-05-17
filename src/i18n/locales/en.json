@@ -266,6 +266,15 @@
         "lastScan": "Last scan",
         "users": "Users",
         "hlsCache": "HLS cache"
+      },
+      "recentlyFlagged": {
+        "title": "Recently flagged",
+        "subtitle": "Movies the enricher couldn't match against TMDB. Open the queue to relink or promote them.",
+        "seeAll": "See all ({{count}}) →",
+        "empty": "Nothing flagged — the queue is clear.",
+        "reason": "No TMDB match",
+        "noFilePath": "no file on disk",
+        "moreCount": "+{{count}} more in the queue"
       }
     },
     "intros": {

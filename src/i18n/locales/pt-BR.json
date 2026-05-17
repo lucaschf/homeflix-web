@@ -266,6 +266,15 @@
         "lastScan": "Último scan",
         "users": "Usuários",
         "hlsCache": "HLS cache"
+      },
+      "recentlyFlagged": {
+        "title": "Marcados recentemente",
+        "subtitle": "Filmes que o enriquecimento não conseguiu casar no TMDB. Abra a fila para religar ou promover.",
+        "seeAll": "Ver todos ({{count}}) →",
+        "empty": "Nada marcado — a fila está limpa.",
+        "reason": "Sem match no TMDB",
+        "noFilePath": "sem arquivo no disco",
+        "moreCount": "+{{count}} a mais na fila"
       }
     },
     "intros": {
