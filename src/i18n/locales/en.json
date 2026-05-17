@@ -275,6 +275,14 @@
         "reason": "No TMDB match",
         "noFilePath": "no file on disk",
         "moreCount": "+{{count}} more in the queue"
+      },
+      "systemHealth": {
+        "title": "System health",
+        "subtitle": "Live readiness probes — refreshes every 30 s.",
+        "hypothesis": "probes hardcoded · real checks land in P6",
+        "lastChecked": "Last checked at {{at}}",
+        "overall": "Overall",
+        "error": "Couldn't reach the readiness endpoint."
       }
     },
     "intros": {

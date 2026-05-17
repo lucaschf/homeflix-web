@@ -2,13 +2,15 @@ import { Box, ButtonBase, CircularProgress, Typography } from "@mui/material";
 import { AlertTriangle, ChevronRight, Film, HardDrive, ScanLine, Tv, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useMoviesNeedingReview } from "../../api/hooks";
+import { useMoviesNeedingReview, useReadiness } from "../../api/hooks";
 import type { NeedsReviewMovie } from "../../api/types";
 import {
   AdminBadge,
   AdminCard,
   AdminCardHeader,
   AdminPageHeader,
+  type BadgeTone,
+  HypothesisChip,
   StatCard,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -91,11 +93,14 @@ export function AdminOverview() {
         />
       </Box>
 
-      <RecentlyFlaggedPanel
-        movies={reviewQueue.data}
-        loading={reviewLoading}
-        onSeeAll={() => navigate("/admin/catalog/review")}
-      />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <RecentlyFlaggedPanel
+          movies={reviewQueue.data}
+          loading={reviewLoading}
+          onSeeAll={() => navigate("/admin/catalog/review")}
+        />
+        <SystemHealthPanel />
+      </Box>
     </>
   );
 }
@@ -281,6 +286,169 @@ function FlaggedRow({
         <ChevronRight size={16} aria-hidden />
       </Box>
     </ButtonBase>
+  );
+}
+
+/**
+ * Tones the standard backend health vocabulary into the badge
+ * palette. Anything unknown defaults to ``warn`` so a future
+ * status the UI hasn't been taught yet shows up as something to
+ * eyeball rather than being silently treated as healthy.
+ */
+const HEALTH_TONE_BY_STATUS: Record<string, BadgeTone> = {
+  healthy: "ok",
+  ready: "ok",
+  ok: "ok",
+  up: "ok",
+  degraded: "warn",
+  warning: "warn",
+  unknown: "warn",
+  not_ready: "err",
+  unhealthy: "err",
+  down: "err",
+  failed: "err",
+  error: "err",
+};
+
+function toneFor(status: string): BadgeTone {
+  return HEALTH_TONE_BY_STATUS[status.toLowerCase()] ?? "warn";
+}
+
+/**
+ * Compact per-component health view at the bottom of the
+ * Overview. Polls ``/health/ready`` every 30 s (handled by the
+ * hook) and renders one row per backing dependency the backend
+ * reports.
+ *
+ * Marked with a ``HypothesisChip`` because the upstream endpoint
+ * currently hardcodes ``healthy`` for both ``database`` and
+ * ``filesystem`` — the real probes land in P6 alongside the
+ * dedicated ``/admin/system/health`` page. When that ships, this
+ * card stays as-is (the data path is already correct) and just
+ * starts reflecting genuine state.
+ */
+function SystemHealthPanel() {
+  const { t } = useTranslation();
+  const { data, isLoading, isError, dataUpdatedAt } = useReadiness();
+  // Absolute clock time of the last successful poll. Using the
+  // browser's locale-aware time formatter keeps the affordance
+  // pure-render — "X seconds ago" would force a tick interval
+  // that conflicts with react-hooks/purity and adds re-renders
+  // for an admin row that doesn't need them.
+  const lastCheckedAt =
+    dataUpdatedAt && data
+      ? new Date(dataUpdatedAt).toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        })
+      : null;
+
+  return (
+    <AdminCard>
+      <AdminCardHeader
+        title={
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap" }}>
+            <Box component="span">{t("admin.overview.systemHealth.title")}</Box>
+            <HypothesisChip>{t("admin.overview.systemHealth.hypothesis")}</HypothesisChip>
+          </Box>
+        }
+        subtitle={
+          lastCheckedAt
+            ? t("admin.overview.systemHealth.lastChecked", { at: lastCheckedAt })
+            : t("admin.overview.systemHealth.subtitle")
+        }
+      />
+
+      {isLoading && !data ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress size={20} color="primary" />
+        </Box>
+      ) : isError || !data ? (
+        <Box sx={{ py: 4, textAlign: "center" }}>
+          <Typography variant="body2" color="error">
+            {t("admin.overview.systemHealth.error")}
+          </Typography>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+            gap: 1.5,
+          }}
+        >
+          <HealthRow
+            label={t("admin.overview.systemHealth.overall")}
+            status={data.status}
+          />
+          {Object.entries(data.checks ?? {}).map(([name, status]) => (
+            <HealthRow key={name} label={name} status={status} />
+          ))}
+        </Box>
+      )}
+    </AdminCard>
+  );
+}
+
+function HealthRow({ label, status }: { label: string; status: string }) {
+  const tone = toneFor(status);
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 1.5,
+        py: 1.25,
+        px: 1.5,
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 1,
+        bgcolor: "rgba(255,255,255,0.015)",
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
+        <Box
+          aria-hidden
+          sx={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            flexShrink: 0,
+            bgcolor:
+              tone === "ok"
+                ? "#7adf9a"
+                : tone === "warn"
+                  ? "#f5c46a"
+                  : tone === "err"
+                    ? "#ff8a7a"
+                    : "rgba(245,241,235,0.5)",
+            boxShadow:
+              tone === "ok"
+                ? "0 0 0 3px rgba(80,180,120,0.18)"
+                : tone === "warn"
+                  ? "0 0 0 3px rgba(240,180,80,0.18)"
+                  : tone === "err"
+                    ? "0 0 0 3px rgba(220,80,70,0.18)"
+                    : "none",
+          }}
+        />
+        <Typography
+          variant="body2"
+          sx={{
+            fontSize: "0.8125rem",
+            fontWeight: 500,
+            textTransform: "capitalize",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {label}
+        </Typography>
+      </Box>
+      <AdminBadge tone={tone}>{status}</AdminBadge>
+    </Box>
   );
 }
 

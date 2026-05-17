@@ -349,6 +349,21 @@ export interface HealthResponse {
   version: string;
 }
 
+/**
+ * ``GET /health/ready`` payload. Distinct from the bare ``/health``
+ * endpoint: the ready check enumerates each backing dependency
+ * (currently database + filesystem; future TMDB / scheduler / disk
+ * pressure live here once the backend grows real probes) so the
+ * admin Overview can render per-component status pills instead of
+ * a single overall light.
+ */
+export interface ReadinessResponse {
+  /** ``"ready"`` when every check is healthy, else ``"not_ready"``. */
+  status: string;
+  timestamp: string;
+  checks: Record<string, string>;
+}
+
 // Watch Progress
 export type MediaType = "movie" | "episode";
 export type WatchStatus = "in_progress" | "completed";

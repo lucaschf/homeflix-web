@@ -275,6 +275,14 @@
         "reason": "Sem match no TMDB",
         "noFilePath": "sem arquivo no disco",
         "moreCount": "+{{count}} a mais na fila"
+      },
+      "systemHealth": {
+        "title": "Saúde do sistema",
+        "subtitle": "Probes de readiness ao vivo — atualiza a cada 30 s.",
+        "hypothesis": "probes hardcoded · checks reais no P6",
+        "lastChecked": "Última checagem às {{at}}",
+        "overall": "Geral",
+        "error": "Não foi possível alcançar o endpoint de readiness."
       }
     },
     "intros": {
