@@ -12,6 +12,12 @@ export interface MovieSummary {
   variant_count: number;
   available_resolutions: string[];
   genres: string[];
+  // Operator-facing metadata surfaced on the admin Catalog table.
+  // User-facing cards ignore them.
+  library_id: string;
+  tmdb_id: number | null;
+  imdb_id: string | null;
+  needs_enrichment_review: boolean;
 }
 
 export interface AudioTrackOutput {
@@ -217,6 +223,10 @@ export interface SeriesSummary {
   season_count: number;
   total_episodes: number;
   genres: string[];
+  // Operator-facing metadata surfaced on the admin Catalog table.
+  library_id: string;
+  tmdb_id: number | null;
+  imdb_id: string | null;
 }
 
 export interface SeriesDetail {

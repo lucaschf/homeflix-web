@@ -34,6 +34,7 @@ import type {
   LibrariesResponse,
   Library,
   LibraryResponse,
+  ListMoviesResponse,
   ListSeriesResponse,
   PlaybackPreferencesData,
   PreferencesResponse,
@@ -1279,6 +1280,163 @@ export function usePromoteMovieToSeries() {
       queryClient.invalidateQueries({ queryKey: ["watchlist"] });
       queryClient.invalidateQueries({ queryKey: ["continue-watching"] });
       queryClient.invalidateQueries({ queryKey: ["custom-lists"] });
+    },
+  });
+}
+
+// ─── Admin — Catalog list pages ─────────────────────────────
+
+export interface AdminMoviesFilters {
+  /** Restrict to a single library (``lib_xxx``). */
+  libraryId?: string;
+  /** ``true`` keeps only enriched rows, ``false`` only un-enriched. */
+  hasTmdbId?: boolean;
+  /** ``true`` keeps only rows the enricher flagged for review. */
+  needsReview?: boolean;
+}
+
+export interface AdminSeriesFilters {
+  libraryId?: string;
+  hasTmdbId?: boolean;
+}
+
+const ADMIN_PAGE_LIMIT = 30;
+
+function appendCommonAdminParams(
+  params: Record<string, string>,
+  pageParam: string | null,
+  filters: { libraryId?: string; hasTmdbId?: boolean },
+): void {
+  if (pageParam) params.cursor = pageParam;
+  if (filters.libraryId) params.library_id = filters.libraryId;
+  if (filters.hasTmdbId !== undefined) params.has_tmdb_id = String(filters.hasTmdbId);
+}
+
+/**
+ * Cursor-paginated infinite query for the admin Movies catalog page.
+ *
+ * Distinct from a user-facing list because the page exposes filters
+ * (library, TMDB-id presence, review queue) and renders the slim
+ * ``MovieSummary`` shape that now carries operator-only metadata
+ * (``library_id``, ``tmdb_id``, ``imdb_id``, ``needs_enrichment_review``).
+ *
+ * The filter object is part of the query key so changing a filter
+ * starts a fresh paginated walk instead of trying to splice new
+ * pages into the previous filter's cursor.
+ */
+export function useAdminMovies(filters: AdminMoviesFilters = {}) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  const query = useInfiniteQuery({
+    queryKey: [
+      "admin",
+      "catalog",
+      "movies",
+      lang,
+      filters.libraryId ?? "",
+      filters.hasTmdbId ?? "",
+      filters.needsReview ?? "",
+    ],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const params: Record<string, string> = { lang, limit: String(ADMIN_PAGE_LIMIT) };
+      appendCommonAdminParams(params, pageParam, filters);
+      if (filters.needsReview !== undefined) params.needs_review = String(filters.needsReview);
+      return api.get<ListMoviesResponse>("/movies", params);
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
+  });
+
+  const items = useMemo<MovieSummary[]>(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
+
+  return {
+    items,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isFetchingNextPage: query.isFetchingNextPage,
+    hasNextPage: !!query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
+}
+
+/**
+ * Cursor-paginated infinite query for the admin Series catalog page.
+ *
+ * Same shape as ``useAdminMovies`` but the filter set is smaller —
+ * series don't carry a ``needs_enrichment_review`` flag yet.
+ */
+export function useAdminSeries(filters: AdminSeriesFilters = {}) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  const query = useInfiniteQuery({
+    queryKey: [
+      "admin",
+      "catalog",
+      "series",
+      lang,
+      filters.libraryId ?? "",
+      filters.hasTmdbId ?? "",
+    ],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const params: Record<string, string> = { lang, limit: String(ADMIN_PAGE_LIMIT) };
+      appendCommonAdminParams(params, pageParam, filters);
+      return api.get<ListSeriesResponse>("/series", params);
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
+  });
+
+  const items = useMemo<SeriesSummary[]>(
+    () => query.data?.pages.flatMap((p) => p.data) ?? [],
+    [query.data],
+  );
+
+  return {
+    items,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching,
+    isFetchingNextPage: query.isFetchingNextPage,
+    hasNextPage: !!query.hasNextPage,
+    fetchNextPage: query.fetchNextPage,
+    isError: query.isError,
+    refetch: query.refetch,
+  };
+}
+
+/**
+ * Admin soft-delete a movie. Invalidates the catalog + needs-review
+ * queues so the row disappears from the visible tables without a
+ * full page refresh.
+ */
+export function useDeleteMovie() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (movieId: string) => api.del(`/movies/${movieId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "catalog", "movies"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "movies", "needs-review"] });
+      queryClient.invalidateQueries({ queryKey: ["movies"] });
+    },
+  });
+}
+
+/**
+ * Admin soft-delete a series. Mirrors ``useDeleteMovie`` — the
+ * children (seasons / episodes / media_files) stay on disk because
+ * the API only exposes soft-delete.
+ */
+export function useDeleteSeries() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (seriesId: string) => api.del(`/series/${seriesId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "catalog", "series"] });
+      queryClient.invalidateQueries({ queryKey: ["series"] });
     },
   });
 }

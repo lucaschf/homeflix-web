@@ -285,6 +285,68 @@
         "error": "Não foi possível alcançar o endpoint de readiness."
       }
     },
+    "catalog": {
+      "movies": {
+        "title": "Filmes",
+        "subtitle": "Todos os filmes que seu perfil pode ver. Filtre, re-enriqueça ou remova daqui.",
+        "emptyTitle": "Nenhum filme bate com seus filtros",
+        "emptyBody": "Afrouxe os filtros ou faça um scan da biblioteca para adicionar títulos."
+      },
+      "series": {
+        "title": "Séries",
+        "subtitle": "Todas as séries que seu perfil pode ver. Filtre, re-enriqueça ou remova daqui.",
+        "emptyTitle": "Nenhuma série bate com seus filtros",
+        "emptyBody": "Afrouxe os filtros ou faça um scan da biblioteca para adicionar títulos."
+      },
+      "col": {
+        "title": "Título",
+        "year": "Ano",
+        "library": "Biblioteca",
+        "tmdb": "TMDB",
+        "resolution": "Resolução",
+        "episodes": "Episódios"
+      },
+      "episodesCount": "{{count}} ep",
+      "episodesCount_other": "{{count}} eps",
+      "badge": {
+        "review": "Revisar"
+      },
+      "filter": {
+        "all": "Todas",
+        "library": "Biblioteca",
+        "tmdb": "TMDB",
+        "review": "Revisão",
+        "tmdbOption": {
+          "all": "Todos",
+          "yes": "Enriquecido",
+          "no": "Não enriquecido"
+        },
+        "reviewOption": {
+          "all": "Todos",
+          "flagged": "Só marcados"
+        }
+      },
+      "action": {
+        "open": "Abrir detalhe",
+        "reenrich": "Forçar re-enriquecimento",
+        "delete": "Excluir"
+      },
+      "delete": {
+        "title": "Excluir “{{title}}”?",
+        "body": "O registro será marcado como excluído no catálogo. Arquivos no disco continuam intactos, mas a linha some de todas as listagens até você restaurar pelo banco.",
+        "consequenceCatalog": "A entrada do catálogo sofre soft-delete.",
+        "consequenceFile": "Arquivos no disco continuam — só a linha do banco é ocultada.",
+        "consequenceRefs": "Itens em watchlist / listas que apontam para este item ficam órfãos nessas listas.",
+        "confirm": "Excluir"
+      },
+      "errorLoading": "Não foi possível carregar o catálogo.",
+      "snack": {
+        "enrichSuccess": "Re-enriquecimento iniciado para “{{title}}”.",
+        "enrichFailed": "Não foi possível iniciar o re-enriquecimento.",
+        "deleteSuccess": "“{{title}}” foi removido do catálogo.",
+        "deleteFailed": "Não foi possível excluir este item."
+      }
+    },
     "intros": {
       "title": "Marcadores de abertura",
       "subtitle": "Ajuste manualmente o início e o fim da abertura enquanto a detecção automática não está confiável.",
