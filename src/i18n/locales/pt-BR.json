@@ -285,6 +285,97 @@
         "error": "Não foi possível alcançar o endpoint de readiness."
       }
     },
+    "libraries": {
+      "title": "Bibliotecas",
+      "subtitle": "Raízes do catálogo — cada biblioteca escaneia uma ou mais pastas, escolhe um provedor de metadata e define defaults de reprodução.",
+      "newCta": "Nova biblioteca",
+      "errorLoading": "Não foi possível carregar as bibliotecas.",
+      "errorRetry": "Tentar novamente",
+      "emptyTitle": "Nenhuma biblioteca ainda",
+      "emptyBody": "Crie uma para começar a indexar conteúdo. Você precisa de pelo menos um caminho no disco.",
+      "morePaths": "+{{count}} a mais",
+      "col": {
+        "name": "Nome",
+        "paths": "Caminhos",
+        "provider": "Provedor",
+        "items": "Itens",
+        "lastScan": "Último scan"
+      },
+      "action": {
+        "edit": "Editar",
+        "delete": "Excluir"
+      },
+      "snack": {
+        "deleteSuccess": "“{{name}}” foi removida do catálogo.",
+        "deleteFailed": "Não foi possível excluir esta biblioteca.",
+        "created": "“{{name}}” foi criada.",
+        "updated": "“{{name}}” foi atualizada.",
+        "saveFailed": "Não foi possível salvar a biblioteca."
+      },
+      "delete": {
+        "title": "Excluir biblioteca “{{name}}”?",
+        "body": "A biblioteca é removida do catálogo. Arquivos no disco continuam intactos, mas todo filme / série indexado dessa biblioteca some da API.",
+        "consequenceUnindex": "Itens dessa biblioteca ficam desindexados.",
+        "consequenceFiles": "Arquivos no disco NÃO são tocados — apenas as linhas do catálogo.",
+        "consequenceRefs": "Watchlist + custom lists que apontavam pra esses itens viram órfãs nessas listas.",
+        "confirm": "Excluir biblioteca"
+      },
+      "detail": {
+        "createTitle": "Nova biblioteca",
+        "createSubtitle": "Preencha o básico, salve, e depois ajuste provedores de metadata se precisar.",
+        "createBreadcrumb": "Nova",
+        "createCta": "Criar biblioteca",
+        "saveCta": "Salvar alterações",
+        "cancel": "Cancelar",
+        "saving": "Salvando…",
+        "lastScan": "último scan {{date}}",
+        "neverScanned": "nunca escaneada",
+        "identity": {
+          "title": "Identidade",
+          "helper": "Nome de exibição + caminhos que o scanner vai percorrer.",
+          "name": "Nome",
+          "namePlaceholder": "Meus filmes (HD)",
+          "type": "Tipo",
+          "typeOption": {
+            "movies": "Filmes",
+            "series": "Séries"
+          },
+          "paths": "Caminhos",
+          "pathPlaceholder": "/mnt/media/filmes",
+          "addPath": "Adicionar caminho",
+          "removePath": "Remover caminho"
+        },
+        "playback": {
+          "title": "Defaults de reprodução",
+          "helper": "Idioma preferido de áudio + legenda escolhido no primeiro play, e quando mostrar legendas.",
+          "audioLang": "Idioma do áudio (ISO)",
+          "subtitleLang": "Idioma da legenda (ISO)",
+          "subtitleMode": "Modo de legenda",
+          "subtitleModeOption": {
+            "none": "Desligado",
+            "always": "Sempre ligado",
+            "foreign": "Só com áudio estrangeiro",
+            "forced": "Só legendas forçadas"
+          }
+        },
+        "scan": {
+          "title": "Scan & automação",
+          "helper": "Quando o scheduler roda o scan e quais jobs pós-scan disparam.",
+          "schedule": "Cron schedule (vazio = só manual)",
+          "schedulePlaceholder": "0 6 * * * (todo dia às 06:00)",
+          "toggle": {
+            "thumbnails": "Gerar miniaturas (scrub) após scan",
+            "detectIntros": "Detectar aberturas automaticamente em séries",
+            "autoRefresh": "Atualizar metadata TMDB periodicamente"
+          }
+        },
+        "danger": {
+          "title": "Zona perigosa",
+          "helper": "Ação irreversível pela UI. Intervenção no banco pode desfazer.",
+          "cta": "Excluir biblioteca"
+        }
+      }
+    },
     "catalog": {
       "movies": {
         "title": "Filmes",

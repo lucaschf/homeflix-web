@@ -25,6 +25,8 @@ import { MyLists } from "./pages/MyLists";
 import { Settings } from "./pages/Settings";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
+import { LibrariesAdmin } from "./pages/admin/LibrariesAdmin";
+import { LibraryDetailAdmin } from "./pages/admin/LibraryDetailAdmin";
 import { MovieReview } from "./pages/admin/MovieReview";
 import { MoviesAdmin } from "./pages/admin/MoviesAdmin";
 import { AdminOverview } from "./pages/admin/Overview";
@@ -115,6 +117,9 @@ function App() {
               <Route element={<RequireAdmin />}>
                 <Route element={<AdminLayout />}>
                   <Route path="/admin" element={<AdminOverview />} />
+                  <Route path="/admin/libraries" element={<LibrariesAdmin />} />
+                  <Route path="/admin/libraries/new" element={<LibraryDetailAdmin />} />
+                  <Route path="/admin/libraries/:id" element={<LibraryDetailAdmin />} />
                   <Route path="/admin/catalog/movies" element={<MoviesAdmin />} />
                   <Route path="/admin/catalog/series" element={<SeriesAdmin />} />
                   <Route path="/admin/intros" element={<IntroPicker />} />
