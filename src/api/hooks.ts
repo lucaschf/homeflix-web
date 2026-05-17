@@ -41,6 +41,8 @@ import type {
   MovieDetailResponse,
   MovieSummary,
   MoviesByActorResponse,
+  NeedsReviewMovie,
+  NeedsReviewMoviesResponse,
   PersonBio,
   PersonBioResponse,
   RecentlyAddedCatalogResponse,
@@ -48,6 +50,9 @@ import type {
   RecentlyAddedSeriesResponse,
   RelatedMoviesResponse,
   RelatedSeriesResponse,
+  RelinkMovieInput,
+  RelinkMoviePayload,
+  RelinkMovieResponse,
   ProgressOutput,
   ProgressResponse,
   ScanResponse,
@@ -55,6 +60,8 @@ import type {
   SeriesDetail,
   SeriesDetailResponse,
   SeriesSummary,
+  TmdbSuggestionsPayload,
+  TmdbSuggestionsResponse,
   ToggleWatchlistResponse,
   WatchlistItemOutput,
   WatchlistResponse,
@@ -1118,6 +1125,91 @@ export function useSubscribeCatalogNotification() {
           queryKey: ["collection", req.collection_tmdb_id],
         });
       }
+    },
+  });
+}
+
+// ─── Admin — Movie Relink ─────────────────────────────────
+
+/**
+ * List movies the backend flagged for admin relink.
+ *
+ * Surfaced by the backend whenever ``EnrichMovieMetadataUseCase``
+ * can't resolve a TMDB match (off-year title, cross-type miss,
+ * ambiguous folder). Expected to be small — newest-flagged first.
+ */
+export function useMoviesNeedingReview() {
+  return useQuery({
+    queryKey: ["admin", "movies", "needs-review"],
+    queryFn: async (): Promise<NeedsReviewMovie[]> => {
+      const resp = await api.get<NeedsReviewMoviesResponse>(
+        "/admin/movies/needs-review",
+      );
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Fetch the live TMDB suggestion payload for a flagged movie.
+ *
+ * On-demand: only fires when ``movieId`` is non-null (the picker
+ * opens for one row at a time). The backend issues
+ * ``/search/movie`` + ``/search/tv`` in parallel, with a no-year
+ * retry when the year-hinted query is empty.
+ */
+export function useMovieTmdbSuggestions(movieId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "movies", movieId, "tmdb-suggestions"],
+    queryFn: async (): Promise<TmdbSuggestionsPayload> => {
+      const resp = await api.get<TmdbSuggestionsResponse>(
+        `/admin/movies/${movieId}/tmdb-suggestions`,
+      );
+      return resp.data;
+    },
+    enabled: !!movieId,
+    // Suggestions are tied to the movie's title/year which don't
+    // change between opens of the same picker — staleTime keeps the
+    // request from re-firing when the user closes and re-opens the
+    // dialog within the same session.
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+interface RelinkMovieVars extends RelinkMovieInput {
+  movieId: string;
+}
+
+/**
+ * Commit an admin's TMDB pick on a flagged movie.
+ *
+ * Movie picks (`media_type: "movie"`) stamp the chosen TMDB id and
+ * force-enrich. TV picks (`media_type: "tv"`) return a 422 from
+ * the backend pointing at the future promote-to-series flow —
+ * callers should surface that error to the operator.
+ *
+ * Invalidates both the review listing (the row falls off after a
+ * successful enrichment) and the specific movie's detail cache.
+ */
+export function useRelinkMovie() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      movieId,
+      tmdb_id,
+      media_type,
+    }: RelinkMovieVars): Promise<RelinkMoviePayload> => {
+      const resp = await api.post<RelinkMovieResponse>(
+        `/admin/movies/${movieId}/relink`,
+        { tmdb_id, media_type },
+      );
+      return resp.data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "movies", "needs-review"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["movie", vars.movieId] });
     },
   });
 }

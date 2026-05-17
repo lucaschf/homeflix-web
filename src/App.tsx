@@ -24,6 +24,7 @@ import { MyLists } from "./pages/MyLists";
 import { Settings } from "./pages/Settings";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
+import { MovieReview } from "./pages/admin/MovieReview";
 import { theme } from "./theme";
 import "@fontsource/inter/200.css";
 import "@fontsource/inter/300.css";
@@ -111,6 +112,7 @@ function App() {
                     path="/admin/intros/:seriesId/:season/:episode"
                     element={<IntroEditor />}
                   />
+                  <Route path="/admin/movies/review" element={<MovieReview />} />
                 </Route>
               </Route>
             </Route>

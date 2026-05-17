@@ -266,6 +266,39 @@
       "confirm": "Apply",
       "cancel": "Cancel",
       "noNextUnmarked": "No more unmarked episodes."
+    },
+    "reviews": {
+      "title": "Movie review queue",
+      "subtitle": "Movies the enricher couldn't match against TMDB. Pick the right entry below and the catalog refreshes automatically.",
+      "empty": "Nothing to review.",
+      "emptyHint": "New entries land here whenever an enrichment attempt can't find a TMDB match.",
+      "loadError": "Could not load the review queue.",
+      "retry": "Retry",
+      "findOnTmdb": "Find on TMDB",
+      "table": {
+        "title": "Title",
+        "year": "Year",
+        "filePath": "File path",
+        "actions": "Actions"
+      },
+      "dialog": {
+        "title": "Pick a TMDB match",
+        "moviesHeading": "Movies",
+        "seriesHeading": "Series",
+        "seriesHint": "Series picks aren't supported yet — converting a movie into a series is in the roadmap.",
+        "noResults": "TMDB returned no candidates for this title.",
+        "fetchError": "Could not fetch candidates from TMDB.",
+        "noPoster": "No poster",
+        "type": {
+          "movie": "Movie",
+          "tv": "TV"
+        }
+      },
+      "snack": {
+        "success": "Relinked “{{title}}” successfully.",
+        "enrichmentFailed": "TMDB id accepted but enrichment failed. Try another candidate.",
+        "relinkFailed": "Could not relink this movie."
+      }
     }
   },
   "rating": {
