@@ -285,6 +285,97 @@
         "error": "Couldn't reach the readiness endpoint."
       }
     },
+    "libraries": {
+      "title": "Libraries",
+      "subtitle": "Catalog roots — each library scans one or more folders, picks a metadata provider and applies playback defaults.",
+      "newCta": "New library",
+      "errorLoading": "Couldn't load libraries.",
+      "errorRetry": "Try again",
+      "emptyTitle": "No libraries yet",
+      "emptyBody": "Create one to start indexing content. You'll need at least one path on disk.",
+      "morePaths": "+{{count}} more",
+      "col": {
+        "name": "Name",
+        "paths": "Paths",
+        "provider": "Provider",
+        "items": "Items",
+        "lastScan": "Last scan"
+      },
+      "action": {
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "snack": {
+        "deleteSuccess": "“{{name}}” was removed from the catalog.",
+        "deleteFailed": "Could not delete this library.",
+        "created": "“{{name}}” was created.",
+        "updated": "“{{name}}” was updated.",
+        "saveFailed": "Could not save the library."
+      },
+      "delete": {
+        "title": "Delete library “{{name}}”?",
+        "body": "The library is removed from the catalog. Files on disk stay intact, but every indexed movie / series tied to this library disappears from the API.",
+        "consequenceUnindex": "Items under this library become unindexed.",
+        "consequenceFiles": "Files on disk are NOT touched — only the catalog rows.",
+        "consequenceRefs": "Watchlist + custom-list entries that pointed at these items become orphan in those lists.",
+        "confirm": "Delete library"
+      },
+      "detail": {
+        "createTitle": "New library",
+        "createSubtitle": "Fill in the basics, save, then add metadata providers afterwards if needed.",
+        "createBreadcrumb": "New",
+        "createCta": "Create library",
+        "saveCta": "Save changes",
+        "cancel": "Cancel",
+        "saving": "Saving…",
+        "lastScan": "last scan {{date}}",
+        "neverScanned": "never scanned",
+        "identity": {
+          "title": "Identity",
+          "helper": "Display name + filesystem paths the scanner walks.",
+          "name": "Name",
+          "namePlaceholder": "My movies (HD)",
+          "type": "Type",
+          "typeOption": {
+            "movies": "Movies",
+            "series": "Series"
+          },
+          "paths": "Paths",
+          "pathPlaceholder": "/mnt/media/movies",
+          "addPath": "Add another path",
+          "removePath": "Remove path"
+        },
+        "playback": {
+          "title": "Playback defaults",
+          "helper": "Preferred audio + subtitle language picked on first play, plus when to show subtitles.",
+          "audioLang": "Audio language (ISO)",
+          "subtitleLang": "Subtitle language (ISO)",
+          "subtitleMode": "Subtitle mode",
+          "subtitleModeOption": {
+            "none": "Off",
+            "always": "Always on",
+            "foreign": "Foreign audio only",
+            "forced": "Forced subtitles only"
+          }
+        },
+        "scan": {
+          "title": "Scan & automation",
+          "helper": "When the scheduler runs the scan and which post-scan jobs to fire.",
+          "schedule": "Cron schedule (empty = manual only)",
+          "schedulePlaceholder": "0 6 * * * (every day at 06:00)",
+          "toggle": {
+            "thumbnails": "Generate scrub thumbnails after scan",
+            "detectIntros": "Auto-detect intro markers for series",
+            "autoRefresh": "Refresh TMDB metadata periodically"
+          }
+        },
+        "danger": {
+          "title": "Danger zone",
+          "helper": "Irreversible action from the UI. Database intervention can undo it.",
+          "cta": "Delete library"
+        }
+      }
+    },
     "catalog": {
       "movies": {
         "title": "Movies",

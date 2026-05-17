@@ -34,6 +34,7 @@ import type {
   LibrariesResponse,
   Library,
   LibraryResponse,
+  LibrarySettings,
   ListMoviesResponse,
   ListSeriesResponse,
   PlaybackPreferencesData,
@@ -975,37 +976,56 @@ export function useLibraries() {
   });
 }
 
+interface LibraryWriteBody {
+  name?: string;
+  library_type?: string;
+  paths?: string[];
+  language?: string;
+  scan_schedule?: string | null;
+  /** Per-library provider config passed through as-is. Backend
+   *  validates the shape — the frontend only needs to round-trip it. */
+  metadata_providers?: Array<{ provider: string; priority: number; enabled: boolean }>;
+  /** ``LibrarySettings`` partial; mirrors the read-side type. */
+  settings?: Partial<LibrarySettings>;
+}
+
 export function useCreateLibrary() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: {
-      name: string;
-      library_type: string;
-      paths: string[];
-      language?: string;
-      scan_schedule?: string | null;
-    }) => api.post<LibraryResponse>("/libraries", body),
+    mutationFn: (
+      body: LibraryWriteBody & { name: string; library_type: string; paths: string[] },
+    ) => api.post<LibraryResponse>("/libraries", body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
     },
   });
 }
 
+/**
+ * Single-library read used by the admin detail page. The list-side
+ * ``useLibraries`` returns the full set with no per-id caching, so
+ * the detail page wants its own key for cache invalidation after
+ * ``useUpdateLibrary`` writes.
+ */
+export function useLibrary(libraryId: string | undefined) {
+  return useQuery({
+    queryKey: ["library", libraryId],
+    queryFn: async (): Promise<Library> => {
+      const resp = await api.get<LibraryResponse>(`/libraries/${libraryId}`);
+      return resp.data;
+    },
+    enabled: !!libraryId,
+  });
+}
+
 export function useUpdateLibrary() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (vars: {
-      id: string;
-      body: {
-        name?: string;
-        library_type?: string;
-        paths?: string[];
-        language?: string;
-        scan_schedule?: string | null;
-      };
-    }) => api.put<LibraryResponse>(`/libraries/${vars.id}`, vars.body),
-    onSuccess: () => {
+    mutationFn: (vars: { id: string; body: LibraryWriteBody }) =>
+      api.put<LibraryResponse>(`/libraries/${vars.id}`, vars.body),
+    onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["libraries"] });
+      queryClient.invalidateQueries({ queryKey: ["library", vars.id] });
     },
   });
 }
