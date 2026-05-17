@@ -292,6 +292,21 @@ const MUTED_STORAGE_KEY = "homeflix.player.muted";
 // recaps; backward tends to be "I missed a line, jump a beat".
 const BACKWARD_SEEK_SECONDS = 10;
 const FORWARD_SEEK_SECONDS = 30;
+
+// Granularity (in source-time seconds) of the resume-offset bucket.
+// Must mirror ``_RESUME_BUCKET_SECONDS`` on the backend so a saved
+// position lands in the same on-disk cache the next session.
+const RESUME_BUCKET_SECONDS = 300;
+// How many source-time seconds the requested seek target may sit
+// ahead of the currently buffered tail before we remount the HLS
+// session at a fresh bucket. ``hls.js`` can chase a few segments
+// forward inside the current bucket without help; beyond this we
+// just spawn a new ffmpeg at the right offset.
+const FAR_SEEK_REMOUNT_THRESHOLD = 30;
+// Source-time floor below which we never bother with a non-zero
+// bucket. Resumes inside the first minute are indistinguishable
+// from a fresh play and avoid burning a separate cache bucket.
+const RESUME_BUCKET_FLOOR_SECONDS = 60;
 // Window inside which a second tap on the same edge zone counts as
 // a double-tap (and triggers the seek instead of play/pause). Mirrors
 // the existing center-zone single-vs-double timing so all three zones
@@ -348,20 +363,30 @@ export function Player() {
   // and navigation.
   const [playbackPrefs, setPlaybackPrefs] = usePlaybackPreferences();
 
-  // Wait for media metadata before mounting HLS. The backend now
-  // serves a single playlist per file (see refactor to per-file HLS
-  // cache) so the player no longer has to pin a resume offset into
-  // the URL — ``video.currentTime`` is set once the manifest loads
-  // and covers every subsequent seek natively.
+  // Wait for media metadata AND the saved-progress query before
+  // mounting HLS. ``progressPending`` matters because the URL pins
+  // a resume-offset bucket: starting HLS with bucket=0 and then
+  // rebuilding once savedProgress resolves would spawn two ffmpeg
+  // sessions back-to-back for every resume.
   const isLoading = mediaLoading;
 
-  // Determine HLS playlist URL — always the same bucket for a given
-  // file regardless of resume position.
-  const hlsUrl = isLoading
+  // Bucket-start (source-time seconds) for the active HLS session.
+  // Initialised from ``savedProgress.position_seconds`` rounded down
+  // to ``RESUME_BUCKET_SECONDS`` so adjacent resume positions share
+  // an encode. User-initiated far seeks update this through
+  // ``seekTo`` which triggers a fresh HLS mount.
+  const [bucketStart, setBucketStart] = useState(0);
+  const initialBucketComputedForMediaIdRef = useRef<string | null>(null);
+
+  // Determine HLS playlist URL. ``start`` query is dropped when the
+  // bucket is zero so existing single-bucket caches (and the
+  // backend's legacy hash) keep being addressable byte-for-byte.
+  const startQuery = bucketStart > 0 ? `?start=${bucketStart}` : "";
+  const hlsUrl = isLoading || progressPending
     ? ""
     : isMovie
-      ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8`
-      : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8`;
+      ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8${startQuery}`
+      : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8${startQuery}`;
 
   const seasonNum = isMovie ? 0 : Number(params.season);
   const episodeNum = isMovie ? 0 : Number(params.episode);
@@ -483,6 +508,16 @@ export function Player() {
   // simple boolean would lock after the first episode and silently skip
   // restoring tracks for every episode after that.
   const progressRestoredForMediaIdRef = useRef<string | null>(null);
+  // Source-time seconds the next HLS mount should land on after the
+  // bucket-start changes (user-initiated far seek). Read from the
+  // ``hlsReady`` effect, which translates it into the bucket-local
+  // ``video.currentTime`` once the new manifest is live. Distinct
+  // from the savedProgress restore path so audio/subtitle selections
+  // the user made mid-session don't get clobbered by the remount.
+  const pendingBucketSeekRef = useRef<number | null>(null);
+  // Mirrors ``bucketStart`` for use inside event listeners that close
+  // over a stale render's value. Updated via a layout effect below.
+  const bucketStartRef = useRef(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Distinct refs per edge zone so a tap on the left followed by a
@@ -527,6 +562,38 @@ export function Player() {
   // the `progress` event so the seek bar can show a secondary fill
   // representing the already-downloaded portion of the stream.
   const [bufferedEnd, setBufferedEnd] = useState(0);
+
+  // Keep ``bucketStartRef`` aligned with the latest ``bucketStart`` so
+  // long-lived event listeners (timeupdate / progress / save) read the
+  // value that's actually in effect for the running HLS session.
+  useEffect(() => {
+    bucketStartRef.current = bucketStart;
+  }, [bucketStart]);
+
+  // Pick the initial bucket for the active mediaId from savedProgress.
+  // Guarded by a mediaId-keyed ref so it runs once per session and
+  // re-fires on auto-advance. Resumes under the bucket floor stay at
+  // zero so a quick "user paused 30s in" doesn't burn a separate
+  // cache bucket for a trivial offset. The setState in this effect is
+  // a legitimate "sync React state to an external query" pattern (the
+  // resume position arrives via React Query, not via rendering), so
+  // the set-state-in-effect lint is silenced for this one site.
+  useEffect(() => {
+    if (progressPending) return;
+    if (initialBucketComputedForMediaIdRef.current === mediaId) return;
+    initialBucketComputedForMediaIdRef.current = mediaId;
+    const saved = savedProgress?.position_seconds ?? 0;
+    if (
+      !savedProgress ||
+      savedProgress.status === "completed" ||
+      saved < RESUME_BUCKET_FLOOR_SECONDS
+    ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBucketStart(0);
+      return;
+    }
+    setBucketStart(Math.floor(saved / RESUME_BUCKET_SECONDS) * RESUME_BUCKET_SECONDS);
+  }, [progressPending, savedProgress, mediaId]);
   // Persisted via localStorage so the volume and mute state survive across
   // navigations and reloads. Without this the <video> element resets to its
   // browser default of volume=1 every time the player mounts. The state is
@@ -654,12 +721,16 @@ export function Player() {
     const video = videoRef.current;
     if (!video) return;
 
-    // ``video.currentTime`` is source-time seconds now that the backend
-    // serves a single untrimmed HLS per file. No more startOffset math —
-    // the scrubber and timestamp read the element directly.
-    const onTimeUpdate = () => setCurrentTime(video.currentTime);
+    // ``video.currentTime`` is bucket-local seconds (the active HLS
+    // manifest starts at the bucket offset, not source t=0), so the
+    // displayed source-time is ``bucketStart + video.currentTime``.
+    // ``bucketStartRef`` is read via ref because the listeners are
+    // attached once and must observe the latest bucket without
+    // re-binding the listener on every bucket change.
+    const onTimeUpdate = () =>
+      setCurrentTime(bucketStartRef.current + video.currentTime);
     const onLoadedMetadata = () => {
-      if (!knownDuration) setDuration(video.duration);
+      if (!knownDuration) setDuration(bucketStartRef.current + video.duration);
     };
     const onPlay = () => {
       setPlaying(true);
@@ -672,11 +743,14 @@ export function Player() {
     const onPlaying = () => { setHlsReady(true); setBuffering(false); };
     const onWaiting = () => setBuffering(true);
     // `progress` fires as the browser downloads segments. We read
-    // the furthest buffered end so the seek bar can paint the already-
-    // downloaded zone in source time.
+    // the furthest buffered end and translate it from bucket-local
+    // time to source-time so the seek bar paints the downloaded
+    // portion on the same scale as the seek handle.
     const onProgress = () => {
       if (video.buffered.length > 0) {
-        setBufferedEnd(video.buffered.end(video.buffered.length - 1));
+        setBufferedEnd(
+          bucketStartRef.current + video.buffered.end(video.buffered.length - 1),
+        );
       }
     };
 
@@ -871,21 +945,21 @@ export function Player() {
     progressRestoredForMediaIdRef.current = mediaId;
 
     // ── Position ────────────────────────────────────────────
-    // Seek to the saved position before touching audio/subtitle
-    // tracks so the buffer flush those assignments may trigger
-    // happens once the playhead is at its final spot.
-    //
-    // Clamp the target to ``video.duration - 1`` so a save that
-    // landed a few tenths of a second past the real end (DB metadata
-    // and HLS duration can disagree on the last partial segment)
-    // doesn't seek into the "ended" state and immediately fire the
-    // end-of-media countdown.
+    // Translate the source-time save into bucket-local time before
+    // seeking, since ``video.currentTime`` runs on the active
+    // manifest's clock (which starts at the bucket offset, not at
+    // the source's t=0). With the bucket aligned to or below the
+    // saved position, ``saved - bucketStart`` is always >= 0 and
+    // typically under one bucket length, so the clamp against
+    // ``video.duration`` exists only to protect against a save that
+    // landed a few tenths of a second past the manifest's tail.
     if (savedProgress && savedProgress.status !== "completed") {
       const saved = Math.max(0, Math.floor(savedProgress.position_seconds));
+      const bucketLocal = Math.max(0, saved - bucketStart);
       const upperBound = Number.isFinite(video.duration)
         ? Math.max(0, video.duration - 1)
-        : saved;
-      const target = Math.min(saved, upperBound);
+        : bucketLocal;
+      const target = Math.min(bucketLocal, upperBound);
       if (target > 0 && Math.abs(video.currentTime - target) > 0.5) {
         video.currentTime = target;
       }
@@ -935,10 +1009,25 @@ export function Player() {
     progressPending,
     hlsReady,
     mediaId,
+    bucketStart,
     playbackPrefs.audioLang,
     playbackPrefs.subtitleLang,
     playbackPrefs.subtitleMode,
   ]);
+
+  // Apply ``pendingBucketSeekRef`` once the user-initiated remount
+  // finishes parsing its new manifest. Kept separate from the
+  // savedProgress restore above so audio/subtitle choices the user
+  // made mid-session don't get reset whenever they jump across a
+  // bucket boundary — only the position is overridden here.
+  useEffect(() => {
+    if (!hlsReady) return;
+    if (pendingBucketSeekRef.current === null) return;
+    const video = videoRef.current;
+    if (!video) return;
+    video.currentTime = pendingBucketSeekRef.current;
+    pendingBucketSeekRef.current = null;
+  }, [hlsReady]);
 
   // Auto-save progress every 10 seconds during playback. ``playing``
   // is already gated on the video element having fired ``playing``,
@@ -953,7 +1042,7 @@ export function Player() {
       saveProgressRef.current({
         media_id: mediaId,
         media_type: mediaType,
-        position_seconds: Math.floor(video.currentTime),
+        position_seconds: Math.floor(bucketStartRef.current + video.currentTime),
         duration_seconds: Math.floor(displayDuration),
         audio_track: hlsRef.current?.audioTrack,
         subtitle_track: hlsRef.current?.subtitleTrack,
@@ -970,11 +1059,11 @@ export function Player() {
     const video = videoRef.current;
     if (!video || !mediaId) return;
     if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
-    if (!displayDuration || video.currentTime === 0) return;
+    if (!displayDuration || bucketStartRef.current + video.currentTime === 0) return;
     saveProgressRef.current({
       media_id: mediaId,
       media_type: mediaType,
-      position_seconds: Math.floor(video.currentTime),
+      position_seconds: Math.floor(bucketStartRef.current + video.currentTime),
       duration_seconds: Math.floor(displayDuration),
       audio_track: hlsRef.current?.audioTrack,
       subtitle_track: hlsRef.current?.subtitleTrack,
@@ -1006,11 +1095,11 @@ export function Player() {
       // ``HAVE_NOTHING``/``HAVE_METADATA`` shouldn't overwrite
       // a real saved position with 0.
       if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
-      if (!displayDuration || video.currentTime === 0) return;
+      if (!displayDuration || bucketStartRef.current + video.currentTime === 0) return;
       const body = JSON.stringify({
         media_id: mediaId,
         media_type: mediaType,
-        position_seconds: Math.floor(video.currentTime),
+        position_seconds: Math.floor(bucketStartRef.current + video.currentTime),
         duration_seconds: Math.floor(displayDuration),
         audio_track: hlsRef.current?.audioTrack,
         subtitle_track: hlsRef.current?.subtitleTrack,
@@ -1037,11 +1126,45 @@ export function Player() {
     }
   }, [nextEpisode, navigate, params.seriesId, seriesDetailPath]);
 
+  // Source-time seek with bucket-aware fallback. When the requested
+  // ``displaySourceTime`` sits before the current bucket or further
+  // ahead than the encoded tail can reasonably catch, we remount the
+  // HLS session at a fresh bucket; otherwise we just nudge
+  // ``video.currentTime`` natively. The ``pendingBucketSeekRef`` is
+  // picked up by the dedicated effect on the next ``hlsReady`` so the
+  // playhead lands at the right spot once the new manifest is live.
+  const seekTo = useCallback(
+    (displaySourceTime: number) => {
+      const video = videoRef.current;
+      if (!video) return;
+      const upper = displayDuration > 0 ? displayDuration - 1 : Infinity;
+      const target = Math.max(0, Math.min(upper, displaySourceTime));
+      const bucketLocalTarget = target - bucketStart;
+      const bufferedEndLocal =
+        video.buffered.length > 0 ? video.buffered.end(video.buffered.length - 1) : 0;
+      const needsRemount =
+        bucketLocalTarget < 0
+        || bucketLocalTarget > bufferedEndLocal + FAR_SEEK_REMOUNT_THRESHOLD;
+      if (needsRemount) {
+        const newBucket =
+          target < RESUME_BUCKET_FLOOR_SECONDS
+            ? 0
+            : Math.floor(target / RESUME_BUCKET_SECONDS) * RESUME_BUCKET_SECONDS;
+        pendingBucketSeekRef.current = Math.max(0, target - newBucket);
+        setBucketStart(newBucket);
+        setCurrentTime(target);
+        return;
+      }
+      video.currentTime = bucketLocalTarget;
+      setCurrentTime(target);
+    },
+    [bucketStart, displayDuration],
+  );
+
   const skipIntro = useCallback(() => {
-    const video = videoRef.current;
-    if (!video || !currentIntro) return;
-    video.currentTime = currentIntro.end_seconds;
-  }, [currentIntro]);
+    if (!currentIntro) return;
+    seekTo(currentIntro.end_seconds);
+  }, [currentIntro, seekTo]);
 
   const cancelNextEpisode = useCallback(() => {
     if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
@@ -1137,23 +1260,16 @@ export function Player() {
   // keyboard effect can list them as deps without re-binding the
   // listener on every render.
   const seekBackward = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = Math.max(0, video.currentTime - BACKWARD_SEEK_SECONDS);
+    seekTo(currentTime - BACKWARD_SEEK_SECONDS);
     showAction(<SkipBack size={32} />, `-${BACKWARD_SEEK_SECONDS}s`);
     resetHideTimer();
-  }, [showAction, resetHideTimer]);
+  }, [seekTo, currentTime, showAction, resetHideTimer]);
 
   const seekForward = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    video.currentTime = Math.min(
-      video.duration || Infinity,
-      video.currentTime + FORWARD_SEEK_SECONDS,
-    );
+    seekTo(currentTime + FORWARD_SEEK_SECONDS);
     showAction(<SkipForward size={32} />, `+${FORWARD_SEEK_SECONDS}s`);
     resetHideTimer();
-  }, [showAction, resetHideTimer]);
+  }, [seekTo, currentTime, showAction, resetHideTimer]);
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -1245,23 +1361,10 @@ export function Player() {
     }
   };
 
-  const seek = (displayValue: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    // The HLS bucket now covers the full source, so the seek bar's
-    // value and ``video.currentTime`` live in the same source-time
-    // scale. Clamp to [0, duration] so the slider's max never pushes
-    // past the last buffered second.
-    const target = Math.max(0, Math.min(video.duration || Infinity, displayValue));
-    video.currentTime = target;
-    setCurrentTime(target);
-  };
+  const seek = (displayValue: number) => seekTo(displayValue);
 
   const skip = (seconds: number) => {
-    const video = videoRef.current;
-    if (!video) return;
-    const maxInternal = video.duration || Infinity;
-    video.currentTime = Math.max(0, Math.min(maxInternal, video.currentTime + seconds));
+    seekTo(currentTime + seconds);
     resetHideTimer();
   };
 
