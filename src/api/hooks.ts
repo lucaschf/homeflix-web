@@ -45,6 +45,9 @@ import type {
   NeedsReviewMoviesResponse,
   PersonBio,
   PersonBioResponse,
+  PromoteMovieToSeriesInput,
+  PromoteMovieToSeriesPayload,
+  PromoteMovieToSeriesResponse,
   RecentlyAddedCatalogResponse,
   RecentlyAddedMoviesResponse,
   RecentlyAddedSeriesResponse,
@@ -1210,6 +1213,50 @@ export function useRelinkMovie() {
         queryKey: ["admin", "movies", "needs-review"],
       });
       queryClient.invalidateQueries({ queryKey: ["movie", vars.movieId] });
+    },
+  });
+}
+
+interface PromoteMovieToSeriesVars extends PromoteMovieToSeriesInput {
+  movieId: string;
+}
+
+/**
+ * Convert a misclassified movie into a series using a TMDB tv id.
+ *
+ * Distinct from `useRelinkMovie` because the backend changes the
+ * aggregate identity: the old `mov_xxx` row is soft-deleted and a
+ * new `ser_xxx` row replaces it. Cross-BC handlers wipe stale
+ * watch progress rows and rewrite watchlist / custom-list entries
+ * to the new series id so the user's collections survive.
+ *
+ * Invalidates the review queue (the row falls off), the old movie
+ * detail cache (it's now soft-deleted), every series-list cache
+ * (the new series should appear), and watchlist / continue-watching
+ * caches since they were rewritten by the backend handlers.
+ */
+export function usePromoteMovieToSeries() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      movieId,
+      tmdb_id,
+    }: PromoteMovieToSeriesVars): Promise<PromoteMovieToSeriesPayload> => {
+      const resp = await api.post<PromoteMovieToSeriesResponse>(
+        `/admin/movies/${movieId}/promote-to-series`,
+        { tmdb_id },
+      );
+      return resp.data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "movies", "needs-review"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["movie", vars.movieId] });
+      queryClient.invalidateQueries({ queryKey: ["series"] });
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+      queryClient.invalidateQueries({ queryKey: ["continue-watching"] });
+      queryClient.invalidateQueries({ queryKey: ["custom-lists"] });
     },
   });
 }

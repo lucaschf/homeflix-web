@@ -151,6 +151,10 @@
     "viewList": "Modo lista",
     "viewCards": "Modo cards"
   },
+  "episode": {
+    "unavailableShort": "Indisponível",
+    "unavailableTooltip": "Esse episódio não tem arquivo no disco. Coloque o vídeo correspondente na pasta da série e re-escaneie para torná-lo reproduzível."
+  },
   "collection": {
     "eyebrow": "Coleção",
     "filmsCount": "{{count}} filme",
@@ -285,7 +289,7 @@
         "title": "Escolher correspondência no TMDB",
         "moviesHeading": "Filmes",
         "seriesHeading": "Séries",
-        "seriesHint": "Escolher uma série ainda não é suportado — converter um filme em série está no roadmap.",
+        "seriesHint": "Escolher uma série converte o filme em uma — você verá uma confirmação antes.",
         "noResults": "O TMDB não retornou candidatos para esse título.",
         "fetchError": "Não foi possível buscar candidatos no TMDB.",
         "noPoster": "Sem pôster",
@@ -297,7 +301,23 @@
       "snack": {
         "success": "“{{title}}” foi religado com sucesso.",
         "enrichmentFailed": "TMDB ID aceito, mas o enriquecimento falhou. Tente outro candidato.",
-        "relinkFailed": "Não foi possível religar esse filme."
+        "relinkFailed": "Não foi possível religar esse filme.",
+        "promoteSuccess": "“{{title}}” foi promovido a uma série.",
+        "promoteFailed": "Não foi possível promover esse filme a uma série."
+      },
+      "promote": {
+        "title": "Promover filme a série",
+        "lead": "“{{movie}}” será convertido em uma série no catálogo. É o caminho certo quando o TMDB classifica o título como minissérie em vez de filme.",
+        "willCreate": "Será criada a série",
+        "consequencesTitle": "O que vai acontecer",
+        "consequenceMovieDeleted": "O registro de filme atual sofre soft-delete.",
+        "consequenceProgressCleared": "O progresso de reprodução desse filme será apagado — uma posição de pausa não sobrevive ao corte em episódios com segurança.",
+        "consequenceListsMigrated": "Itens da watchlist e das custom lists são repontados para o ID da nova série, então o título permanece nessas listas.",
+        "consequenceFilesOnFirstEpisode": "Todos os arquivos vão para o primeiro episódio. Os demais nascem como “missing” até você adicionar os arquivos correspondentes.",
+        "irreversibleWarning": "Essa ação é irreversível pela UI.",
+        "cancel": "Cancelar",
+        "confirm": "Sim, promover a série",
+        "confirming": "Promovendo…"
       }
     }
   },

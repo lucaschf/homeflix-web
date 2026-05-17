@@ -18,8 +18,13 @@ import {
 } from "@mui/material";
 import { AlertCircle, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useMoviesNeedingReview, useRelinkMovie } from "../../api/hooks";
+import {
+  useMoviesNeedingReview,
+  usePromoteMovieToSeries,
+  useRelinkMovie,
+} from "../../api/hooks";
 import type { NeedsReviewMovie, TmdbSuggestion } from "../../api/types";
+import { PromoteToSeriesConfirmDialog } from "../../components/admin/PromoteToSeriesConfirmDialog";
 import { TmdbSuggestionsDialog } from "../../components/admin/TmdbSuggestionsDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { neutral } from "../../theme/colors";
@@ -32,12 +37,18 @@ export function MovieReview() {
 
   const { data: movies, isLoading, isError, refetch } = useMoviesNeedingReview();
   const relink = useRelinkMovie();
+  const promote = usePromoteMovieToSeries();
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeMovie, setActiveMovie] = useState<NeedsReviewMovie | null>(null);
   // Inline dialog warning — used to surface backend errors (like the
   // TV-pick 422) without forcing the admin to close + reopen.
   const [dialogWarning, setDialogWarning] = useState<string | null>(null);
+  // TV-card picks first land here so the user sees the consequence
+  // list ("movie deleted, progress wiped, lists migrated") and has
+  // to confirm before the irreversible mutation fires.
+  const [pendingPromotion, setPendingPromotion] = useState<TmdbSuggestion | null>(null);
+  const [promoteError, setPromoteError] = useState<string | null>(null);
   const [snack, setSnack] = useState<Snack>(null);
 
   const openPicker = (movie: NeedsReviewMovie) => {
@@ -53,14 +64,28 @@ export function MovieReview() {
     setDialogWarning(null);
   };
 
+  const closePromote = () => {
+    setPendingPromotion(null);
+    setPromoteError(null);
+  };
+
   const onSuggestionSelected = async (suggestion: TmdbSuggestion) => {
     if (!activeMovie) return;
     setDialogWarning(null);
+
+    // Series pick → confirmation gate. The promote is irreversible
+    // and touches three BCs; the admin gets a chance to read the
+    // impact list before committing.
+    if (suggestion.media_type === "tv") {
+      setPendingPromotion(suggestion);
+      return;
+    }
+
     try {
       const result = await relink.mutateAsync({
         movieId: activeMovie.id,
         tmdb_id: suggestion.tmdb_id,
-        media_type: suggestion.media_type,
+        media_type: "movie",
       });
       if (result.enriched) {
         setSnack({
@@ -72,15 +97,32 @@ export function MovieReview() {
         // Backend completed the call but enrichment failed (e.g. TMDB
         // id was unreachable). Keep the dialog open so the admin can
         // try another candidate.
-        setDialogWarning(
-          result.error ?? t("admin.reviews.snack.enrichmentFailed"),
-        );
+        setDialogWarning(result.error ?? t("admin.reviews.snack.enrichmentFailed"));
       }
     } catch (err) {
-      // 422 for TV picks lands here. Surface inline so the admin
-      // can pick a different candidate without reopening.
       const message = err instanceof Error ? err.message : t("admin.reviews.snack.relinkFailed");
       setDialogWarning(message);
+    }
+  };
+
+  const confirmPromote = async () => {
+    if (!activeMovie || !pendingPromotion) return;
+    setPromoteError(null);
+    try {
+      await promote.mutateAsync({
+        movieId: activeMovie.id,
+        tmdb_id: pendingPromotion.tmdb_id,
+      });
+      setSnack({
+        message: t("admin.reviews.snack.promoteSuccess", { title: activeMovie.title }),
+        severity: "success",
+      });
+      closePromote();
+      closePicker();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : t("admin.reviews.snack.promoteFailed");
+      setPromoteError(message);
     }
   };
 
@@ -180,7 +222,17 @@ export function MovieReview() {
         onClose={closePicker}
         onSelect={onSuggestionSelected}
         errorMessage={dialogWarning}
-        busy={relink.isPending}
+        busy={relink.isPending || promote.isPending}
+      />
+
+      <PromoteToSeriesConfirmDialog
+        open={!!pendingPromotion}
+        movieLabel={activeMovie ? `${activeMovie.title} (${activeMovie.year})` : ""}
+        pick={pendingPromotion}
+        busy={promote.isPending}
+        errorMessage={promoteError}
+        onCancel={closePromote}
+        onConfirm={confirmPromote}
       />
 
       <Snackbar

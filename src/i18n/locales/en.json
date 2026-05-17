@@ -151,6 +151,10 @@
     "viewList": "List view",
     "viewCards": "Card view"
   },
+  "episode": {
+    "unavailableShort": "Unavailable",
+    "unavailableTooltip": "This episode has no file on disk. Drop the matching video into the series folder and rescan to make it playable."
+  },
   "collection": {
     "eyebrow": "Collection",
     "filmsCount": "{{count}} film",
@@ -285,7 +289,7 @@
         "title": "Pick a TMDB match",
         "moviesHeading": "Movies",
         "seriesHeading": "Series",
-        "seriesHint": "Series picks aren't supported yet — converting a movie into a series is in the roadmap.",
+        "seriesHint": "Picking a series will convert the movie into one — you'll get a confirmation step first.",
         "noResults": "TMDB returned no candidates for this title.",
         "fetchError": "Could not fetch candidates from TMDB.",
         "noPoster": "No poster",
@@ -297,7 +301,23 @@
       "snack": {
         "success": "Relinked “{{title}}” successfully.",
         "enrichmentFailed": "TMDB id accepted but enrichment failed. Try another candidate.",
-        "relinkFailed": "Could not relink this movie."
+        "relinkFailed": "Could not relink this movie.",
+        "promoteSuccess": "“{{title}}” was promoted to a series.",
+        "promoteFailed": "Could not promote this movie to a series."
+      },
+      "promote": {
+        "title": "Promote movie to series",
+        "lead": "“{{movie}}” will be converted into a TV series in the catalog. This is the right call when TMDB classifies the title as a miniseries rather than a film.",
+        "willCreate": "Will create the series",
+        "consequencesTitle": "What will happen",
+        "consequenceMovieDeleted": "The current movie row is soft-deleted.",
+        "consequenceProgressCleared": "Any play progress on this movie is wiped — half-watched positions can't survive the re-cut episode boundary safely.",
+        "consequenceListsMigrated": "Watchlist and custom-list entries are repointed to the new series id, so the title stays in those lists.",
+        "consequenceFilesOnFirstEpisode": "All file variants move to the first episode. Other episodes start as “missing” until you add the corresponding files.",
+        "irreversibleWarning": "This action is irreversible from the UI.",
+        "cancel": "Cancel",
+        "confirm": "Yes, promote to series",
+        "confirming": "Promoting…"
       }
     }
   },
