@@ -217,6 +217,57 @@
   },
   "admin": {
     "title": "Admin",
+    "nav": {
+      "overview": "Overview",
+      "libraries": "Libraries",
+      "movies": "Movies",
+      "series": "Series",
+      "review": "Review queue",
+      "scan": "Scan",
+      "enrich": "Enrich",
+      "intros": "Intros",
+      "requests": "Catalog requests",
+      "users": "Users",
+      "hls": "HLS cache",
+      "health": "Health",
+      "backToApp": "Back to app",
+      "group": {
+        "catalog": "Catalog",
+        "identity": "Identity",
+        "system": "System"
+      }
+    },
+    "topbar": {
+      "expand": "Expand sidebar",
+      "collapse": "Collapse sidebar"
+    },
+    "table": {
+      "emptyTitle": "No results",
+      "emptyBody": "Nothing to show right now.",
+      "retry": "Retry"
+    },
+    "confirm": {
+      "confirm": "Confirm",
+      "confirming": "Working…",
+      "cancel": "Cancel",
+      "consequencesTitle": "What will happen",
+      "irreversibleWarning": "This action is irreversible from the UI."
+    },
+    "overview": {
+      "title": "Overview",
+      "subtitle": "Catalog health, operational queues and system status at a glance.",
+      "placeholder": "—",
+      "placeholderSub": "Backend pending",
+      "reviewSub": "View queue",
+      "stats": {
+        "movies": "Movies",
+        "series": "Series",
+        "review": "Needs review",
+        "lastScan": "Last scan",
+        "users": "Users",
+        "hlsCache": "HLS cache"
+      }
+    },
     "intros": {
       "title": "Intro Markers",
       "subtitle": "Manually adjust intro start/end while auto-detection is unreliable.",

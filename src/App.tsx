@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AdminLayout } from "./components/admin";
 import { Layout } from "./components/Layout";
 import {
   AuthExpirationGuard,
@@ -25,6 +26,7 @@ import { Settings } from "./pages/Settings";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
 import { MovieReview } from "./pages/admin/MovieReview";
+import { AdminOverview } from "./pages/admin/Overview";
 import { theme } from "./theme";
 import "@fontsource/inter/200.css";
 import "@fontsource/inter/300.css";
@@ -101,18 +103,29 @@ function App() {
                 <Route path="/actor/:name" element={<Actor />} />
                 <Route path="/lists" element={<MyLists />} />
                 <Route path="/settings" element={<Settings />} />
-                {/* /admin/* requires admin role on top of auth.
-                    RequireAdmin redirects non-admin members back to
-                    "/" so the catalog stays usable; the backend
-                    enforces the gate independently via 403 on the
-                    underlying API calls. */}
-                <Route element={<RequireAdmin />}>
+              </Route>
+              {/* /admin/* requires admin role on top of auth and lives
+                  in its own ``AdminLayout`` shell (sidebar + topbar +
+                  main grid). RequireAdmin redirects non-admin members
+                  back to "/" so the catalog stays usable; the backend
+                  enforces the gate independently via 403 on the
+                  underlying API calls. */}
+              <Route element={<RequireAdmin />}>
+                <Route element={<AdminLayout />}>
+                  <Route path="/admin" element={<AdminOverview />} />
                   <Route path="/admin/intros" element={<IntroPicker />} />
                   <Route
                     path="/admin/intros/:seriesId/:season/:episode"
                     element={<IntroEditor />}
                   />
-                  <Route path="/admin/movies/review" element={<MovieReview />} />
+                  <Route path="/admin/catalog/review" element={<MovieReview />} />
+                  {/* Legacy redirect — bookmarks / open tabs landing
+                      on the old movie-review path get folded into the
+                      new catalog/review namespace. */}
+                  <Route
+                    path="/admin/movies/review"
+                    element={<Navigate to="/admin/catalog/review" replace />}
+                  />
                 </Route>
               </Route>
             </Route>
