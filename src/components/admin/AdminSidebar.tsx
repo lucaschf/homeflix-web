@@ -18,6 +18,7 @@ import {
 import { Link as RouterLink, useLocation, useMatch } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMoviesNeedingReview } from "../../api/hooks";
+import { Logo } from "../Logo";
 
 interface SidebarItem {
   /** i18n key for the label. */
@@ -132,9 +133,9 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
                 sx={{
                   display: "block",
                   color: "text.secondary",
-                  fontSize: "0.5625rem",
-                  pt: 1.25,
-                  pb: 0.75,
+                  fontSize: "0.6875rem",
+                  pt: 1.5,
+                  pb: 1,
                   pl: 2.75,
                   letterSpacing: "0.18em",
                 }}
@@ -166,42 +167,34 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
 
 function BrandRow({ collapsed }: { collapsed: boolean }) {
   return (
-    <RouterLink
+    <Box
+      component={RouterLink}
       to="/admin"
-      style={{
+      sx={{
         display: "flex",
         alignItems: "center",
-        gap: 10,
-        padding: "20px 18px",
+        gap: 1.25,
+        px: 2.25,
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         textDecoration: "none",
+        color: "text.primary",
         height: 64,
         flexShrink: 0,
       }}
     >
-      <Box
-        component="svg"
-        viewBox="0 0 22 22"
-        sx={{ width: 22, height: 22, flexShrink: 0 }}
-      >
-        <rect x="2" y="3" width="18" height="5" rx="1" fill="#D97757" />
-        <rect
-          x="2"
-          y="8"
-          width="18"
-          height="11"
-          rx="1"
-          fill="#1F1F1F"
-          stroke="#D97757"
-          strokeWidth="1"
-        />
-        <path d="M9 11 L15 13.5 L9 16 Z" fill="#D97757" />
+      <Box sx={{ display: "flex", flexShrink: 0, color: "primary.main" }}>
+        <Logo size={28} />
       </Box>
       {!collapsed && (
-        <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.1 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
           <Box
             component="span"
-            sx={{ fontWeight: 600, fontSize: "0.875rem", color: "text.primary", letterSpacing: "-0.01em" }}
+            sx={{
+              fontWeight: 600,
+              fontSize: "0.9375rem",
+              color: "text.primary",
+              letterSpacing: "-0.01em",
+            }}
           >
             HomeFlix
           </Box>
@@ -209,7 +202,7 @@ function BrandRow({ collapsed }: { collapsed: boolean }) {
             component="span"
             sx={{
               fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-              fontSize: "0.5625rem",
+              fontSize: "0.625rem",
               letterSpacing: "0.18em",
               textTransform: "uppercase",
               color: "text.secondary",
@@ -219,7 +212,7 @@ function BrandRow({ collapsed }: { collapsed: boolean }) {
           </Box>
         </Box>
       )}
-    </RouterLink>
+    </Box>
   );
 }
 
@@ -243,12 +236,13 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
         width: "100%",
         display: "flex",
         alignItems: "center",
-        gap: 1.5,
-        py: 1.125,
-        px: 2.75,
+        gap: 1.75,
+        py: 1.5,
+        px: collapsed ? 0 : 2.75,
+        justifyContent: collapsed ? "center" : "flex-start",
         bgcolor: isActive ? "rgba(217,119,87,0.07)" : "transparent",
-        color: isActive ? "text.primary" : "rgba(245,241,235,0.65)",
-        fontSize: "0.84375rem",
+        color: isActive ? "text.primary" : "rgba(245,241,235,0.7)",
+        fontSize: "0.9375rem",
         fontWeight: isActive ? 500 : 400,
         textDecoration: "none",
         cursor: "pointer",
@@ -264,8 +258,8 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
           sx={{
             position: "absolute",
             left: 0,
-            top: 6,
-            bottom: 6,
+            top: 8,
+            bottom: 8,
             width: 3,
             bgcolor: "primary.main",
             borderRadius: "0 2px 2px 0",
@@ -273,9 +267,8 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
         />
       )}
       <Icon
-        size={17}
-        color={isActive ? "var(--peach)" : "currentColor"}
-        style={isActive ? { color: "#D97757" } : undefined}
+        size={20}
+        color={isActive ? "#D97757" : "currentColor"}
         aria-hidden
       />
       {!collapsed && <Box sx={{ flex: 1 }}>{label}</Box>}
@@ -284,10 +277,10 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
           component="span"
           sx={{
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            fontSize: "0.625rem",
+            fontSize: "0.6875rem",
             fontWeight: 600,
-            py: 0.25,
-            px: 0.875,
+            py: 0.375,
+            px: 1,
             borderRadius: 0.5,
             bgcolor: "rgba(217,119,87,0.15)",
             color: "primary.main",
@@ -318,18 +311,19 @@ function BackToAppRow({ collapsed }: { collapsed: boolean }) {
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 1.25,
-        py: 1.75,
-        px: 2.75,
+        justifyContent: collapsed ? "center" : "flex-start",
+        gap: 1.5,
+        py: 2,
+        px: collapsed ? 0 : 2.75,
         borderTop: "1px solid rgba(255,255,255,0.08)",
         color: "text.secondary",
         textDecoration: "none",
-        fontSize: "0.78125rem",
+        fontSize: "0.875rem",
         flexShrink: 0,
         "&:hover": { color: "text.primary", bgcolor: "rgba(255,255,255,0.03)" },
       }}
     >
-      <ArrowLeft size={15} aria-hidden />
+      <ArrowLeft size={18} aria-hidden />
       {!collapsed && <Box>{t("admin.nav.backToApp")}</Box>}
     </Box>
   );
