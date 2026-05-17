@@ -285,6 +285,68 @@
         "error": "Couldn't reach the readiness endpoint."
       }
     },
+    "catalog": {
+      "movies": {
+        "title": "Movies",
+        "subtitle": "Every movie your profile can see. Filter, re-enrich or remove items here.",
+        "emptyTitle": "No movies match your filters",
+        "emptyBody": "Loosen the filters or scan a library to add titles."
+      },
+      "series": {
+        "title": "Series",
+        "subtitle": "Every series your profile can see. Filter, re-enrich or remove items here.",
+        "emptyTitle": "No series match your filters",
+        "emptyBody": "Loosen the filters or scan a library to add titles."
+      },
+      "col": {
+        "title": "Title",
+        "year": "Year",
+        "library": "Library",
+        "tmdb": "TMDB",
+        "resolution": "Resolution",
+        "episodes": "Episodes"
+      },
+      "episodesCount": "{{count}} ep",
+      "episodesCount_other": "{{count}} eps",
+      "badge": {
+        "review": "Review"
+      },
+      "filter": {
+        "all": "All",
+        "library": "Library",
+        "tmdb": "TMDB",
+        "review": "Review",
+        "tmdbOption": {
+          "all": "All",
+          "yes": "Enriched",
+          "no": "Not enriched"
+        },
+        "reviewOption": {
+          "all": "All",
+          "flagged": "Flagged only"
+        }
+      },
+      "action": {
+        "open": "Open detail",
+        "reenrich": "Force re-enrich",
+        "delete": "Delete"
+      },
+      "delete": {
+        "title": "Delete “{{title}}”?",
+        "body": "The record will be marked as deleted in the catalog. Files on disk are untouched, but the row disappears from every listing until you restore it via the database.",
+        "consequenceCatalog": "The catalog entry is soft-deleted.",
+        "consequenceFile": "Files on disk stay — only the database row is hidden.",
+        "consequenceRefs": "Watchlist / list entries pointing at this item start to look orphaned in those lists.",
+        "confirm": "Delete"
+      },
+      "errorLoading": "Couldn't load the catalog list.",
+      "snack": {
+        "enrichSuccess": "Re-enrichment started for “{{title}}”.",
+        "enrichFailed": "Could not start re-enrichment.",
+        "deleteSuccess": "“{{title}}” was removed from the catalog.",
+        "deleteFailed": "Could not delete this item."
+      }
+    },
     "intros": {
       "title": "Intro Markers",
       "subtitle": "Manually adjust intro start/end while auto-detection is unreliable.",

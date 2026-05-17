@@ -26,7 +26,9 @@ import { Settings } from "./pages/Settings";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
 import { MovieReview } from "./pages/admin/MovieReview";
+import { MoviesAdmin } from "./pages/admin/MoviesAdmin";
 import { AdminOverview } from "./pages/admin/Overview";
+import { SeriesAdmin } from "./pages/admin/SeriesAdmin";
 import { theme } from "./theme";
 import "@fontsource/inter/200.css";
 import "@fontsource/inter/300.css";
@@ -113,6 +115,8 @@ function App() {
               <Route element={<RequireAdmin />}>
                 <Route element={<AdminLayout />}>
                   <Route path="/admin" element={<AdminOverview />} />
+                  <Route path="/admin/catalog/movies" element={<MoviesAdmin />} />
+                  <Route path="/admin/catalog/series" element={<SeriesAdmin />} />
                   <Route path="/admin/intros" element={<IntroPicker />} />
                   <Route
                     path="/admin/intros/:seriesId/:season/:episode"
