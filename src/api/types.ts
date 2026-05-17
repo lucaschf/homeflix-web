@@ -628,7 +628,11 @@ export interface TmdbSuggestionsPayload {
 
 export interface RelinkMovieInput {
   tmdb_id: number;
-  media_type: "movie" | "tv";
+  // Backend enforces this at the schema layer — TV picks route
+  // through ``promoteMovieToSeries`` instead. Keeping the literal
+  // here so misuse is caught at the call site (TypeScript) rather
+  // than as a 422 response surprise.
+  media_type: "movie";
 }
 
 export interface RelinkMoviePayload {
@@ -641,3 +645,21 @@ export interface RelinkMoviePayload {
 export type NeedsReviewMoviesResponse = ApiListResponse<NeedsReviewMovie>;
 export type TmdbSuggestionsResponse = ApiDetailResponse<TmdbSuggestionsPayload>;
 export type RelinkMovieResponse = ApiDetailResponse<RelinkMoviePayload>;
+
+// Cross-type conversion: an admin picked a TV card in the suggestion
+// picker, confirming that the misclassified movie row should be
+// replaced by a Series. Backend builds Series + Season + Episodes,
+// migrates the file variants onto E01, soft-deletes the movie, and
+// fans the change out to watch_progress + collections.
+export interface PromoteMovieToSeriesInput {
+  tmdb_id: number;
+}
+
+export interface PromoteMovieToSeriesPayload {
+  movie_id: string;
+  series_id: string;
+  first_episode_id: string;
+  episodes_created: number;
+}
+
+export type PromoteMovieToSeriesResponse = ApiDetailResponse<PromoteMovieToSeriesPayload>;
