@@ -469,44 +469,98 @@ function findInProgressEpisode(
 function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput; seriesPoster: string | null; onPlay: () => void }) {
   const { t } = useTranslation();
   const langs = uniqueLanguages(episode.files ?? []);
+  // Same availability rule as EpisodeCard — keeps the card and the
+  // list view in sync so an episode that's "missing" looks missing
+  // regardless of which view the user picked.
+  const isAvailable = (episode.files?.length ?? 0) > 0;
 
   return (
     <Box
-      onClick={onPlay}
+      onClick={isAvailable ? onPlay : undefined}
+      aria-disabled={isAvailable ? undefined : true}
+      title={isAvailable ? undefined : t("episode.unavailableTooltip")}
       sx={{
         display: "flex",
         gap: 2,
         p: 1.5,
         borderRadius: 2,
-        cursor: "pointer",
-        "&:hover": { bgcolor: "rgba(255,255,255,0.04)" },
-        "&:hover .ep-play": { opacity: 1 },
+        cursor: isAvailable ? "pointer" : "default",
+        "&:hover": isAvailable ? { bgcolor: "rgba(255,255,255,0.04)" } : {},
+        "&:hover .ep-play": isAvailable ? { opacity: 1 } : {},
       }}
     >
       <Box sx={{ position: "relative", width: { xs: 110, sm: 140, md: 200 }, flexShrink: 0, aspectRatio: "16/9", borderRadius: 1.5, overflow: "hidden", bgcolor: "background.paper" }}>
-        {(episode.thumbnail_path || seriesPoster) ? (
-          <Box component="img" src={episode.thumbnail_path ?? seriesPoster!} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        ) : (
-          <Box sx={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)" }} />
-        )}
-
         <Box
-          className="ep-play"
           sx={{
             position: "absolute",
             inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "rgba(0,0,0,0.4)",
-            opacity: 0,
-            transition: "opacity 200ms",
+            filter: isAvailable ? "none" : "grayscale(1)",
+            opacity: isAvailable ? 1 : 0.55,
           }}
         >
-          <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Play size={20} color={neutral[950]} fill={neutral[950]} />
-          </Box>
+          {(episode.thumbnail_path || seriesPoster) ? (
+            <Box component="img" src={episode.thumbnail_path ?? seriesPoster!} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <Box sx={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)" }} />
+          )}
         </Box>
+
+        {isAvailable ? (
+          <Box
+            className="ep-play"
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(0,0,0,0.4)",
+              opacity: 0,
+              transition: "opacity 200ms",
+            }}
+          >
+            <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "primary.main", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Play size={20} color={neutral[950]} fill={neutral[950]} />
+            </Box>
+          </Box>
+        ) : (
+          <>
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "repeating-linear-gradient(135deg, transparent 0 8px, rgba(255,255,255,0.04) 8px 9px)",
+                pointerEvents: "none",
+              }}
+            />
+            <Box
+              sx={{
+                position: "absolute",
+                top: 6,
+                right: 6,
+                display: "flex",
+                alignItems: "center",
+                gap: 0.4,
+                px: 0.7,
+                py: 0.3,
+                bgcolor: "rgba(0,0,0,0.7)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 0.75,
+                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontSize: "0.55rem",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "rgba(245,241,235,0.85)",
+              }}
+            >
+              <Box component="span" aria-hidden sx={{ fontSize: "0.65rem", lineHeight: 1 }}>
+                ✕
+              </Box>
+              {t("episode.unavailableShort")}
+            </Box>
+          </>
+        )}
 
         {episode.progress_percentage != null && episode.progress_percentage > 0 && (
           <LinearProgress
@@ -525,7 +579,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
         )}
       </Box>
 
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box sx={{ flex: 1, minWidth: 0, opacity: isAvailable ? 1 : 0.55 }}>
         <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5, mb: 0.25 }}>
           <Typography variant="body2" fontWeight={600} sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}>
             {t("detail.episode", { number: episode.episode_number })}

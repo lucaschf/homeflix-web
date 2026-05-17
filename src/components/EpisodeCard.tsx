@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Box, LinearProgress, Typography } from "@mui/material";
+import { Box, LinearProgress, Tooltip, Typography } from "@mui/material";
 import { Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useEpisodeScrubFrame } from "../hooks/useEpisodeScrubFrame";
 import type { EpisodeOutput } from "../api/types";
 import { neutral } from "../theme/colors";
@@ -31,47 +32,63 @@ export function EpisodeCard({
   seriesPoster,
   onPlay,
 }: EpisodeCardProps) {
+  const { t } = useTranslation();
   const duration = formatDuration(episode.duration_seconds);
+  // An episode that exists in the catalog (TMDB enrichment populated
+  // title/duration/synopsis) but has no file on disk yet. Common after
+  // a Movie→Series promotion that creates the full TMDB shape while
+  // only the first part has a local file, or for series where the
+  // user hasn't downloaded every episode.
+  const isAvailable = (episode.files?.length ?? 0) > 0;
 
   // Only fetch the VTT when there's no real per-episode thumbnail and
   // the backend has actually generated a scrub sprite for the file.
   // Skips the request entirely otherwise so a season of 24 episodes
-  // doesn't fire 24 wasted fetches.
+  // doesn't fire 24 wasted fetches. Missing-file episodes have no
+  // scrub sprite either, so guarding on availability keeps the hook
+  // from firing for them too.
   const scrubFrame = useEpisodeScrubFrame({
     seriesId,
     seasonNumber,
     episodeNumber: episode.episode_number,
     durationSeconds: episode.duration_seconds,
-    enabled: !episode.thumbnail_path && !!episode.scrub_preview_path,
+    enabled: isAvailable && !episode.thumbnail_path && !!episode.scrub_preview_path,
   });
 
-  return (
+  const cardBody = (
     <Box
-      role="button"
-      tabIndex={0}
-      onClick={onPlay}
-      onKeyDown={(e) => {
-        // Activate on Enter / Space — the same affordance native
-        // <button> elements give for keyboard and screen-reader
-        // users. preventDefault on Space stops the page from
-        // scrolling when the card is focused.
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onPlay();
-        }
-      }}
+      role={isAvailable ? "button" : undefined}
+      tabIndex={isAvailable ? 0 : -1}
+      aria-disabled={isAvailable ? undefined : true}
+      onClick={isAvailable ? onPlay : undefined}
+      onKeyDown={
+        isAvailable
+          ? (e) => {
+              // Activate on Enter / Space — the same affordance native
+              // <button> elements give for keyboard and screen-reader
+              // users. preventDefault on Space stops the page from
+              // scrolling when the card is focused.
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onPlay();
+              }
+            }
+          : undefined
+      }
       sx={{
         flex: "0 0 auto",
         width: { xs: 220, sm: 260, md: 300 },
-        cursor: "pointer",
-        "&:hover .ep-card-thumb": { transform: "scale(1.03)" },
-        "&:hover .ep-play-overlay": { opacity: 1 },
-        "&:focus-visible": {
-          outline: "2px solid",
-          outlineColor: "primary.main",
-          outlineOffset: 2,
-          borderRadius: 8,
-        },
+        cursor: isAvailable ? "pointer" : "default",
+        "&:hover .ep-card-thumb": isAvailable ? { transform: "scale(1.03)" } : {},
+        "&:hover .ep-play-overlay": isAvailable ? { opacity: 1 } : {},
+        "&:focus-visible": isAvailable
+          ? {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+              borderRadius: 8,
+            }
+          : {},
       }}
     >
       <Box
@@ -90,6 +107,11 @@ export function EpisodeCard({
             position: "absolute",
             inset: 0,
             transition: "transform 250ms ease",
+            // De-saturate the thumbnail when the episode has no
+            // playable file — same visual idiom Collection uses for
+            // titles not in the catalog.
+            filter: isAvailable ? "none" : "grayscale(1)",
+            opacity: isAvailable ? 1 : 0.55,
           }}
         >
           {episode.thumbnail_path ? (
@@ -163,33 +185,75 @@ export function EpisodeCard({
           </Box>
         )}
 
-        <Box
-          className="ep-play-overlay"
-          sx={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "rgba(0,0,0,0.4)",
-            opacity: 0,
-            transition: "opacity 200ms",
-          }}
-        >
+        {isAvailable ? (
           <Box
+            className="ep-play-overlay"
             sx={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              bgcolor: "primary.main",
+              position: "absolute",
+              inset: 0,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              bgcolor: "rgba(0,0,0,0.4)",
+              opacity: 0,
+              transition: "opacity 200ms",
             }}
           >
-            <Play size={22} color={neutral[950]} fill={neutral[950]} />
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: "50%",
+                bgcolor: "primary.main",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Play size={22} color={neutral[950]} fill={neutral[950]} />
+            </Box>
           </Box>
-        </Box>
+        ) : (
+          // Reuses the Collection-style missing affordance: diagonal
+          // stripe texture across the thumbnail plus a pill badge so
+          // the state reads clearly even at carousel-card sizes.
+          <>
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "repeating-linear-gradient(135deg, transparent 0 8px, rgba(255,255,255,0.04) 8px 9px)",
+                pointerEvents: "none",
+              }}
+            />
+            <Box
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+                px: 0.85,
+                py: 0.4,
+                bgcolor: "rgba(0,0,0,0.7)",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 0.75,
+                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontSize: "0.6rem",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "rgba(245,241,235,0.85)",
+              }}
+            >
+              <Box component="span" aria-hidden sx={{ fontSize: "0.7rem", lineHeight: 1 }}>
+                ✕
+              </Box>
+              {t("episode.unavailableShort")}
+            </Box>
+          </>
+        )}
 
         {episode.progress_percentage != null && episode.progress_percentage > 0 && (
           <LinearProgress
@@ -208,7 +272,7 @@ export function EpisodeCard({
         )}
       </Box>
 
-      <Box sx={{ mt: 1.5 }}>
+      <Box sx={{ mt: 1.5, opacity: isAvailable ? 1 : 0.55 }}>
         <Typography variant="body2" fontWeight={600} noWrap>
           {episode.title}
         </Typography>
@@ -230,6 +294,17 @@ export function EpisodeCard({
         )}
       </Box>
     </Box>
+  );
+
+  // The "missing" tooltip explains the badge for users mousing over
+  // the card; available episodes render the body bare so the existing
+  // hover overlay isn't obscured by a tooltip.
+  return isAvailable ? (
+    cardBody
+  ) : (
+    <Tooltip title={t("episode.unavailableTooltip")} placement="top">
+      {cardBody}
+    </Tooltip>
   );
 }
 
