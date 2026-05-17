@@ -23,6 +23,7 @@ import { Profiles } from "./pages/Profiles";
 import { SeriesDetail } from "./pages/SeriesDetail";
 import { MyLists } from "./pages/MyLists";
 import { Settings } from "./pages/Settings";
+import { CatalogRequestsAdmin } from "./pages/admin/CatalogRequestsAdmin";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
 import { LibrariesAdmin } from "./pages/admin/LibrariesAdmin";
@@ -122,6 +123,7 @@ function App() {
                   <Route path="/admin/libraries/:id" element={<LibraryDetailAdmin />} />
                   <Route path="/admin/catalog/movies" element={<MoviesAdmin />} />
                   <Route path="/admin/catalog/series" element={<SeriesAdmin />} />
+                  <Route path="/admin/requests" element={<CatalogRequestsAdmin />} />
                   <Route path="/admin/intros" element={<IntroPicker />} />
                   <Route
                     path="/admin/intros/:seriesId/:season/:episode"

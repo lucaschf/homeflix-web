@@ -141,6 +141,7 @@ export interface CatalogRequest {
 }
 
 export type CatalogRequestResponse = ApiDetailResponse<CatalogRequest>;
+export type CatalogRequestsResponse = ApiListResponse<CatalogRequest>;
 
 export interface MovieDetail {
   id: string;

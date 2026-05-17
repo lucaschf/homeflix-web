@@ -15,6 +15,7 @@ import type {
   CatalogItem,
   CatalogRequest,
   CatalogRequestResponse,
+  CatalogRequestsResponse,
   CollectionDetail,
   CollectionDetailResponse,
   ContinueWatchingItem,
@@ -1457,6 +1458,40 @@ export function useDeleteSeries() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "catalog", "series"] });
       queryClient.invalidateQueries({ queryKey: ["series"] });
+    },
+  });
+}
+
+// ─── Admin — Catalog requests ───────────────────────────────
+
+/**
+ * List every pending catalog request across the household.
+ *
+ * Admin-only — hits ``GET /admin/catalog-requests`` rather than
+ * the user-facing endpoint. Used by the ``/admin/requests`` page
+ * so the operator can survey what titles the household is
+ * tracking, plus dismiss entries that are no longer wanted.
+ */
+export function useAdminCatalogRequests() {
+  return useQuery({
+    queryKey: ["admin", "catalog-requests"],
+    queryFn: async (): Promise<CatalogRequest[]> => {
+      const resp = await api.get<CatalogRequestsResponse>("/admin/catalog-requests");
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Soft-delete a pending catalog request by external id. Invalidates
+ * the admin queue so the row falls off the list immediately.
+ */
+export function useDismissCatalogRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) => api.del(`/admin/catalog-requests/${requestId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "catalog-requests"] });
     },
   });
 }
