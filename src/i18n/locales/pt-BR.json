@@ -376,6 +376,43 @@
         }
       }
     },
+    "requests": {
+      "title": "Solicitações de catálogo",
+      "subtitle": "Títulos do TMDB que membros marcaram pra inclusão. Clica numa linha pra abrir no TMDB; dispensa quando não quiser mais rastrear.",
+      "emptyTitle": "Sem solicitações pendentes",
+      "emptyBody": "Membros registram solicitações clicando em “Solicitar inclusão” numa página de Collection Detail.",
+      "errorLoading": "Não foi possível carregar a fila.",
+      "col": {
+        "tmdb": "TMDB",
+        "type": "Tipo",
+        "collection": "Coleção",
+        "notify": "Notificar",
+        "requestedAt": "Solicitado em"
+      },
+      "mediaType": {
+        "movie": "Filme",
+        "series": "Série"
+      },
+      "notify": {
+        "on": "Ligado",
+        "off": "—"
+      },
+      "action": {
+        "dismiss": "Dispensar"
+      },
+      "dismiss": {
+        "title": "Dispensar solicitação tmdb/{{tmdbId}}?",
+        "body": "A solicitação sofre soft-delete da fila. Membros perdem visibilidade do estado de rastreamento, mas podem recriar a solicitação depois visitando o mesmo título no TMDB.",
+        "consequenceQueue": "A linha some dessa lista.",
+        "consequenceNotify": "Qualquer assinatura de notificação de chegada é apagada.",
+        "consequenceRecreatable": "Membros podem recriar a solicitação depois pelo mesmo título no TMDB.",
+        "confirm": "Dispensar"
+      },
+      "snack": {
+        "dismissSuccess": "Solicitação tmdb/{{tmdbId}} dispensada.",
+        "dismissFailed": "Não foi possível dispensar essa solicitação."
+      }
+    },
     "catalog": {
       "movies": {
         "title": "Filmes",

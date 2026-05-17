@@ -376,6 +376,43 @@
         }
       }
     },
+    "requests": {
+      "title": "Catalog requests",
+      "subtitle": "TMDB titles the household flagged for inclusion. Click a row to open the title on TMDB; dismiss when you no longer want to track it.",
+      "emptyTitle": "No pending requests",
+      "emptyBody": "Members register a request by clicking “Request inclusion” from a Collection Detail page.",
+      "errorLoading": "Couldn't load the request queue.",
+      "col": {
+        "tmdb": "TMDB",
+        "type": "Type",
+        "collection": "Collection",
+        "notify": "Notify",
+        "requestedAt": "Requested"
+      },
+      "mediaType": {
+        "movie": "Movie",
+        "series": "Series"
+      },
+      "notify": {
+        "on": "On",
+        "off": "—"
+      },
+      "action": {
+        "dismiss": "Dismiss"
+      },
+      "dismiss": {
+        "title": "Dismiss request tmdb/{{tmdbId}}?",
+        "body": "The request will be soft-deleted from the queue. Members lose visibility on the tracking state but can re-create the request later by visiting the same TMDB title.",
+        "consequenceQueue": "The row disappears from this listing.",
+        "consequenceNotify": "Any arrival-notification subscription is dropped.",
+        "consequenceRecreatable": "Members can re-create the request later from the same TMDB title.",
+        "confirm": "Dismiss"
+      },
+      "snack": {
+        "dismissSuccess": "Request tmdb/{{tmdbId}} dismissed.",
+        "dismissFailed": "Could not dismiss this request."
+      }
+    },
     "catalog": {
       "movies": {
         "title": "Movies",
