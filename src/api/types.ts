@@ -389,6 +389,69 @@ export interface HlsCacheStats {
 
 export type HlsCacheStatsResponse = ApiDetailResponse<HlsCacheStats>;
 
+/**
+ * Lightweight admin user row returned by ``GET /api/v1/admin/users``.
+ * Profile count is precomputed server-side so the list page can
+ * render the multi-profile hint without a second round-trip.
+ */
+export interface AdminUserSummary {
+  id: string;
+  email: string;
+  role: "admin" | "member";
+  is_active: boolean;
+  profile_count: number;
+  created_at: string;
+}
+
+export type AdminUsersResponse = ApiListResponse<AdminUserSummary>;
+export type AdminUserSummaryResponse = ApiDetailResponse<AdminUserSummary>;
+
+/**
+ * Profile payload nested inside the admin user-detail response.
+ * Mirrors the user-facing profile shape — admin views it
+ * read-only in P3 (profile CRUD for other users stays out of
+ * scope until a follow-up).
+ */
+export interface AdminProfileSummary {
+  id: string;
+  user_id: string;
+  name: string;
+  avatar_url: string | null;
+  is_kids: boolean;
+  allowed_library_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * ``GET /api/v1/admin/users/{user_id}`` payload. The detail page
+ * renders the Account panel (email, role, delete) on the left
+ * and the read-only Profiles list on the right.
+ */
+export interface AdminUserDetail {
+  id: string;
+  email: string;
+  role: "admin" | "member";
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  profiles: AdminProfileSummary[];
+}
+
+export type AdminUserDetailResponse = ApiDetailResponse<AdminUserDetail>;
+
+/** Body for ``POST /api/v1/admin/users``. */
+export interface CreateAdminUserPayload {
+  email: string;
+  password: string;
+  role: "admin" | "member";
+}
+
+/** Body for ``PATCH /api/v1/admin/users/{user_id}``. */
+export interface UpdateUserRolePayload {
+  role: "admin" | "member";
+}
+
 // Watch Progress
 export type MediaType = "movie" | "episode";
 export type WatchStatus = "in_progress" | "completed";
