@@ -261,11 +261,28 @@
       "reviewSub": "Ver fila",
       "stats": {
         "movies": "Filmes",
+        "moviesSub": "Abrir catálogo",
         "series": "Séries",
+        "seriesSub": "Abrir catálogo",
         "review": "Para revisar",
         "lastScan": "Último scan",
         "users": "Usuários",
+        "usersSub": "Abrir usuários",
         "hlsCache": "HLS cache"
+      },
+      "lastScan": {
+        "never": "Nunca",
+        "neverSub": "Nenhum scan rodou ainda",
+        "status": {
+          "running": "Em andamento…",
+          "succeeded": "Concluído",
+          "failed": "Falhou",
+          "interrupted": "Interrompido"
+        }
+      },
+      "hlsCache": {
+        "sub": "Abrir System",
+        "subWithRatio": "{{percent}} % de {{cap}}"
       },
       "recentlyFlagged": {
         "title": "Marcados recentemente",

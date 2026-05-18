@@ -492,6 +492,42 @@ export interface TriggerBulkEnrichPayload {
   force: boolean;
 }
 
+/**
+ * Slim version of the scan-runs row carried inside
+ * ``AdminOverviewStats`` for the "Last scan" headline card.
+ */
+export interface AdminOverviewLastScan {
+  id: string;
+  started_at: string;
+  finished_at: string | null;
+  status: AdminScanRunStatus;
+}
+
+/**
+ * Slim HLS cache view inside ``AdminOverviewStats`` — drops the
+ * last-cleared timestamp versus the dedicated System page.
+ */
+export interface AdminOverviewHlsCache {
+  size_bytes: number;
+  max_bytes: number;
+}
+
+/**
+ * Aggregated counts + snapshots backing every card on the
+ * admin Overview page. One call replaces five individual
+ * endpoints so the cards settle in one loading transition.
+ */
+export interface AdminOverviewStats {
+  movies_count: number;
+  series_count: number;
+  users_count: number;
+  review_count: number;
+  last_scan: AdminOverviewLastScan | null;
+  hls_cache: AdminOverviewHlsCache;
+}
+
+export type AdminOverviewStatsResponse = ApiDetailResponse<AdminOverviewStats>;
+
 // Watch Progress
 export type MediaType = "movie" | "episode";
 export type WatchStatus = "in_progress" | "completed";

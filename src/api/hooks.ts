@@ -9,6 +9,8 @@ import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   AddItemToCustomListResponse,
+  AdminOverviewStats,
+  AdminOverviewStatsResponse,
   AdminScanRun,
   AdminScanRunKind,
   AdminScanRunResponse,
@@ -1722,5 +1724,27 @@ export function useTriggerBulkEnrich() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "scan-runs"] });
     },
+  });
+}
+
+// ─── Admin — Overview ───────────────────────────────────────
+
+/**
+ * Single round-trip for every headline card on the admin Overview
+ * (movies / series / users counts, review queue length, last
+ * scan snapshot, HLS cache occupancy). Replaces five individual
+ * queries so the dashboard cards settle in one loading
+ * transition rather than flickering through each separately.
+ */
+export function useAdminOverviewStats() {
+  return useQuery({
+    queryKey: ["admin", "overview-stats"],
+    queryFn: async (): Promise<AdminOverviewStats> => {
+      const resp = await api.get<AdminOverviewStatsResponse>("/admin/overview/stats");
+      return resp.data;
+    },
+    // Cheap aggregate read — keep it fresh-ish without
+    // hammering the backend on every focus change.
+    staleTime: 30_000,
   });
 }

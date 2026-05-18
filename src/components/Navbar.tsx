@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
   { to: "/browse?type=movie", labelKey: "nav.movies", icon: Film },
   { to: "/browse?type=series", labelKey: "nav.series", icon: Tv },
   {
-    to: "/admin/intros",
+    to: "/admin",
     labelKey: "nav.admin",
     icon: Wrench,
     desktopOnly: true,

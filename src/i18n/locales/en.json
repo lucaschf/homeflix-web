@@ -261,11 +261,28 @@
       "reviewSub": "View queue",
       "stats": {
         "movies": "Movies",
+        "moviesSub": "Open catalog",
         "series": "Series",
+        "seriesSub": "Open catalog",
         "review": "Needs review",
         "lastScan": "Last scan",
         "users": "Users",
+        "usersSub": "Open users",
         "hlsCache": "HLS cache"
+      },
+      "lastScan": {
+        "never": "Never",
+        "neverSub": "No scan has run yet",
+        "status": {
+          "running": "In progress…",
+          "succeeded": "Succeeded",
+          "failed": "Failed",
+          "interrupted": "Interrupted"
+        }
+      },
+      "hlsCache": {
+        "sub": "Open System",
+        "subWithRatio": "{{percent}} % of {{cap}}"
       },
       "recentlyFlagged": {
         "title": "Recently flagged",

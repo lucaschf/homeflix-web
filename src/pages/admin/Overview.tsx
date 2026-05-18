@@ -2,8 +2,12 @@ import { Box, ButtonBase, CircularProgress, Typography } from "@mui/material";
 import { AlertTriangle, ChevronRight, Film, HardDrive, ScanLine, Tv, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useMoviesNeedingReview, useReadiness } from "../../api/hooks";
-import type { NeedsReviewMovie } from "../../api/types";
+import {
+  useAdminOverviewStats,
+  useMoviesNeedingReview,
+  useReadiness,
+} from "../../api/hooks";
+import type { AdminOverviewStats, NeedsReviewMovie } from "../../api/types";
 import {
   AdminBadge,
   AdminCard,
@@ -15,27 +19,97 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
+type TFn = (key: string, vars?: Record<string, unknown>) => string;
+
+const KB = 1024;
+const MB = 1024 * 1024;
+const GB = 1024 * 1024 * 1024;
+
+function formatBytesShort(bytes: number): string {
+  if (bytes < KB) return `${bytes} B`;
+  if (bytes < MB) return `${(bytes / KB).toFixed(1)} KB`;
+  if (bytes < GB) return `${(bytes / MB).toFixed(1)} MB`;
+  return `${(bytes / GB).toFixed(2)} GB`;
+}
+
+/**
+ * Project the last-scan card's headline value: either a
+ * relative timestamp ("2h ago") or a dash when no scan has
+ * ever run.
+ */
+function formatLastScanValue(
+  scan: AdminOverviewStats["last_scan"],
+  locale: string,
+  t: TFn,
+): string {
+  if (!scan) return t("admin.overview.lastScan.never");
+  const reference = scan.finished_at ?? scan.started_at;
+  const diffMs = Date.now() - new Date(reference).getTime();
+  const seconds = Math.round(diffMs / 1000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+  if (Math.abs(seconds) < 60) return rtf.format(-seconds, "second");
+  const minutes = Math.round(seconds / 60);
+  if (Math.abs(minutes) < 60) return rtf.format(-minutes, "minute");
+  const hours = Math.round(minutes / 60);
+  if (Math.abs(hours) < 24) return rtf.format(-hours, "hour");
+  return rtf.format(-Math.round(hours / 24), "day");
+}
+
+/**
+ * Sub label for the last-scan card: status word when the row is
+ * available, generic copy otherwise.
+ */
+function formatLastScanSub(
+  scan: AdminOverviewStats["last_scan"],
+  t: TFn,
+): string {
+  if (!scan) return t("admin.overview.lastScan.neverSub");
+  return t(`admin.overview.lastScan.status.${scan.status}`);
+}
+
+/**
+ * HLS cache value renders the raw bytes-on-disk; the sub shows
+ * the occupancy ratio. ``"—"`` when stats haven't loaded yet.
+ */
+function formatHlsValue(cache: AdminOverviewStats["hls_cache"] | undefined): string {
+  if (!cache) return "—";
+  return formatBytesShort(cache.size_bytes);
+}
+
+function formatHlsSub(
+  cache: AdminOverviewStats["hls_cache"] | undefined,
+  t: TFn,
+): string {
+  if (!cache || cache.max_bytes <= 0) return t("admin.overview.hlsCache.sub");
+  const percent = Math.round((cache.size_bytes / cache.max_bytes) * 100);
+  return t("admin.overview.hlsCache.subWithRatio", {
+    percent,
+    cap: formatBytesShort(cache.max_bytes),
+  });
+}
+
 /**
  * Admin Overview dashboard.
  *
- * P0 ships the layout + three real stat cards (movies / series via
- * the catalog endpoints, needs-review via the existing
- * ``useMoviesNeedingReview`` hook) and three placeholder cards
- * (last scan, users count, HLS cache size) marked with the
- * ``HypothesisChip`` since their backends are pending.
+ * Six headline stat cards (movies / series / users / review queue
+ * / last scan / HLS cache) all driven by a single
+ * ``useAdminOverviewStats`` round-trip so the page settles in
+ * one loading transition rather than flickering through each
+ * card's own request.
  *
- * Later phases (P3, P4, P6, P7) wire the placeholders to real data
- * and add the "Recently flagged" + "Scan activity" panels and the
- * "System health" strip described in the design spec.
+ * The needs-review queue still uses its own hook for the
+ * "Recently flagged" panel below — the aggregated stats only
+ * surface the count, not the row payload.
  */
 export function AdminOverview() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   useDocumentTitle(t("admin.overview.title"));
 
+  const stats = useAdminOverviewStats();
   const reviewQueue = useMoviesNeedingReview();
-  const reviewCount = reviewQueue.data?.length ?? 0;
-  const reviewLoading = reviewQueue.isLoading;
+  const reviewCount = stats.data?.review_count ?? reviewQueue.data?.length ?? 0;
+  const statsLoading = stats.isLoading;
 
   return (
     <>
@@ -54,15 +128,19 @@ export function AdminOverview() {
       >
         <StatCard
           label={t("admin.overview.stats.movies")}
-          value={t("admin.overview.placeholder")}
-          sub={t("admin.overview.placeholderSub")}
+          value={stats.data?.movies_count ?? "—"}
+          sub={t("admin.overview.stats.moviesSub")}
           icon={Film}
+          loading={statsLoading}
+          onClick={() => navigate("/admin/catalog/movies")}
         />
         <StatCard
           label={t("admin.overview.stats.series")}
-          value={t("admin.overview.placeholder")}
-          sub={t("admin.overview.placeholderSub")}
+          value={stats.data?.series_count ?? "—"}
+          sub={t("admin.overview.stats.seriesSub")}
           icon={Tv}
+          loading={statsLoading}
+          onClick={() => navigate("/admin/catalog/series")}
         />
         <StatCard
           label={t("admin.overview.stats.review")}
@@ -70,33 +148,39 @@ export function AdminOverview() {
           sub={t("admin.overview.reviewSub")}
           icon={AlertTriangle}
           alert={reviewCount > 0}
-          loading={reviewLoading}
+          loading={statsLoading && reviewQueue.isLoading}
           onClick={() => navigate("/admin/catalog/review")}
         />
         <StatCard
           label={t("admin.overview.stats.lastScan")}
-          value={t("admin.overview.placeholder")}
-          sub={t("admin.overview.placeholderSub")}
+          value={formatLastScanValue(stats.data?.last_scan, i18n.language, t)}
+          sub={formatLastScanSub(stats.data?.last_scan, t)}
           icon={ScanLine}
+          loading={statsLoading}
+          onClick={() => navigate("/admin/scan")}
         />
         <StatCard
           label={t("admin.overview.stats.users")}
-          value={t("admin.overview.placeholder")}
-          sub={t("admin.overview.placeholderSub")}
+          value={stats.data?.users_count ?? "—"}
+          sub={t("admin.overview.stats.usersSub")}
           icon={Users}
+          loading={statsLoading}
+          onClick={() => navigate("/admin/users")}
         />
         <StatCard
           label={t("admin.overview.stats.hlsCache")}
-          value={t("admin.overview.placeholder")}
-          sub={t("admin.overview.placeholderSub")}
+          value={formatHlsValue(stats.data?.hls_cache)}
+          sub={formatHlsSub(stats.data?.hls_cache, t)}
           icon={HardDrive}
+          loading={statsLoading}
+          onClick={() => navigate("/admin/system/hls-cache")}
         />
       </Box>
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <RecentlyFlaggedPanel
           movies={reviewQueue.data}
-          loading={reviewLoading}
+          loading={reviewQueue.isLoading}
           onSeeAll={() => navigate("/admin/catalog/review")}
         />
         <SystemHealthPanel />
