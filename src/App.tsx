@@ -24,6 +24,7 @@ import { SeriesDetail } from "./pages/SeriesDetail";
 import { MyLists } from "./pages/MyLists";
 import { Settings } from "./pages/Settings";
 import { CatalogRequestsAdmin } from "./pages/admin/CatalogRequestsAdmin";
+import { EnrichAdmin } from "./pages/admin/EnrichAdmin";
 import { HealthAdmin } from "./pages/admin/HealthAdmin";
 import { HlsCacheAdmin } from "./pages/admin/HlsCacheAdmin";
 import { IntroPicker } from "./pages/admin/IntroPicker";
@@ -33,6 +34,7 @@ import { LibraryDetailAdmin } from "./pages/admin/LibraryDetailAdmin";
 import { MovieReview } from "./pages/admin/MovieReview";
 import { MoviesAdmin } from "./pages/admin/MoviesAdmin";
 import { AdminOverview } from "./pages/admin/Overview";
+import { ScanAdmin } from "./pages/admin/ScanAdmin";
 import { SeriesAdmin } from "./pages/admin/SeriesAdmin";
 import { UserDetailAdmin } from "./pages/admin/UserDetailAdmin";
 import { UsersAdmin } from "./pages/admin/UsersAdmin";
@@ -143,6 +145,8 @@ function App() {
                   />
                   <Route path="/admin/users" element={<UsersAdmin />} />
                   <Route path="/admin/users/:id" element={<UserDetailAdmin />} />
+                  <Route path="/admin/scan" element={<ScanAdmin />} />
+                  <Route path="/admin/enrich" element={<EnrichAdmin />} />
                   <Route path="/admin/system/hls-cache" element={<HlsCacheAdmin />} />
                   <Route path="/admin/system/health" element={<HealthAdmin />} />
                 </Route>
