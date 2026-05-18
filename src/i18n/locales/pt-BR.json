@@ -376,6 +376,83 @@
         }
       }
     },
+    "history": {
+      "errorLoading": "Não foi possível carregar o histórico.",
+      "col": {
+        "started": "Iniciado",
+        "status": "Status",
+        "trigger": "Origem",
+        "summary": "Resumo",
+        "duration": "Duração",
+        "errors": "Erros"
+      },
+      "status": {
+        "running": "Rodando",
+        "succeeded": "Concluído",
+        "failed": "Falhou",
+        "interrupted": "Interrompido"
+      },
+      "trigger": {
+        "manual": "Manual",
+        "scheduled": "Agendado"
+      },
+      "summary": {
+        "movies": "filmes",
+        "episodes": "episódios",
+        "enriched": "enriquecidos",
+        "skipped": "ignorados",
+        "nothingNew": "Nada novo"
+      }
+    },
+    "scan": {
+      "title": "Scan",
+      "subtitle": "Percorre os caminhos configurados de uma biblioteca e registra cada arquivo novo. Dispara um scan manual aqui; o scheduler usa o mesmo caminho em segundo plano.",
+      "snack": {
+        "dispatched": "Scan {{runId}} despachado.",
+        "failed": "Não foi possível iniciar o scan."
+      },
+      "trigger": {
+        "title": "Disparar um scan",
+        "subtitle": "Escolha uma biblioteca e rode um scan agora. A tarefa roda em background; essa página atualiza assim que terminar.",
+        "libraryLabel": "Biblioteca",
+        "libraryPlaceholder": "Escolha uma biblioteca…",
+        "librariesError": "Não foi possível carregar a lista de bibliotecas.",
+        "noLibrariesTitle": "Sem bibliotecas configuradas",
+        "noLibrariesBody": "Crie uma biblioteca primeiro na página Bibliotecas.",
+        "cta": "Rodar scan",
+        "submitting": "Despachando…"
+      },
+      "history": {
+        "title": "Scans recentes",
+        "subtitle": "Mais recentes primeiro. Inclui triggers manuais e os runs periódicos do scheduler.",
+        "livePolling": "Atualizando…",
+        "emptyTitle": "Sem scans ainda",
+        "emptyBody": "Dispare um acima ou aguarde o scheduler rodar."
+      }
+    },
+    "enrich": {
+      "title": "Enriquecer",
+      "subtitle": "Preenche os metadados do TMDB para cada filme + série com enriquecimento incompleto. Liga Forçar pra re-enriquecer linhas que já têm metadado.",
+      "snack": {
+        "dispatched": "Enrich {{runId}} despachado.",
+        "failed": "Não foi possível iniciar o enrich."
+      },
+      "trigger": {
+        "title": "Disparar enrich em massa",
+        "subtitle": "Percorre o catálogo e pede ao TMDB pra preencher títulos, sinopses, pôsteres e elenco em cada linha que ainda não tem metadado.",
+        "forceLabel": "Forçar re-enriquecimento",
+        "forceHelper": "Re-busca metadados mesmo nas linhas que já têm. Útil após queda do TMDB ou migração de schema.",
+        "cta": "Rodar enrich",
+        "submitting": "Despachando…"
+      },
+      "history": {
+        "title": "Enriches recentes",
+        "subtitle": "Mais recentes primeiro. Cada linha é uma operação em massa; detalhes dos erros por mídia ficam na coluna Erros.",
+        "livePolling": "Atualizando…",
+        "emptyTitle": "Sem enriches ainda",
+        "emptyBody": "Dispare um acima pra preencher metadados do catálogo."
+      }
+    },
     "users": {
       "title": "Usuários",
       "subtitle": "Cada membro da casa. Troca papéis, cria contas novas e remove acesso quando alguém sai.",

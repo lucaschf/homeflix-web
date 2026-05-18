@@ -9,6 +9,11 @@ import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   AddItemToCustomListResponse,
+  AdminScanRun,
+  AdminScanRunKind,
+  AdminScanRunResponse,
+  AdminScanRunsResponse,
+  AdminScanRunTrigger,
   AdminUserDetail,
   AdminUserDetailResponse,
   AdminUserSummary,
@@ -78,6 +83,8 @@ import type {
   TmdbSuggestionsPayload,
   TmdbSuggestionsResponse,
   ToggleWatchlistResponse,
+  TriggerBulkEnrichPayload,
+  TriggerScanPayload,
   UpdateUserRolePayload,
   WatchlistItemOutput,
   WatchlistResponse,
@@ -1628,6 +1635,92 @@ export function useDeleteAdminUser() {
     onSuccess: (_data, userId) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
+    },
+  });
+}
+
+// ─── Admin — Scan + Enrich runs ─────────────────────────────
+
+/**
+ * Paged history of scan + bulk-enrich runs. The list page keeps
+ * polling every 3 s as long as at least one row is still
+ * ``running`` so the operator sees the row flip to
+ * ``succeeded`` / ``failed`` without a manual refresh; once
+ * everything is terminal we drop the interval to keep the page
+ * idle-cheap.
+ */
+export function useAdminScanRuns(
+  kind?: AdminScanRunKind,
+  trigger?: AdminScanRunTrigger,
+) {
+  return useQuery({
+    queryKey: ["admin", "scan-runs", kind ?? "all", trigger ?? "all"],
+    queryFn: async (): Promise<AdminScanRun[]> => {
+      const params = new URLSearchParams();
+      if (kind) params.set("kind", kind);
+      if (trigger) params.set("trigger", trigger);
+      const query = params.toString() ? `?${params.toString()}` : "";
+      const resp = await api.get<AdminScanRunsResponse>(`/admin/scans${query}`);
+      return resp.data;
+    },
+    refetchInterval: (query) => {
+      const rows = query.state.data as AdminScanRun[] | undefined;
+      const anyRunning = rows?.some((r) => r.status === "running") ?? false;
+      return anyRunning ? 3000 : false;
+    },
+  });
+}
+
+/**
+ * Hydrate a single run. Used by the detail drawer / row expansion
+ * to read the full ``errors`` list (the list endpoint returns the
+ * count + first slice; the detail returns the whole thing).
+ */
+export function useAdminScanRun(runId: string | undefined) {
+  return useQuery({
+    queryKey: ["admin", "scan-run", runId],
+    enabled: !!runId,
+    queryFn: async (): Promise<AdminScanRun> => {
+      const resp = await api.get<AdminScanRunResponse>(`/admin/scans/${runId}`);
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Open a ``scan`` ``running`` row and dispatch the background
+ * task. Returns the new row so the page can route to detail /
+ * highlight it in the list.
+ */
+export function useTriggerScan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (libraryId: string) => {
+      const payload: TriggerScanPayload = { library_id: libraryId };
+      const resp = await api.post<AdminScanRunResponse>("/admin/scans", payload);
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "scan-runs"] });
+    },
+  });
+}
+
+/**
+ * Open an ``enrich`` ``running`` row and dispatch the bulk
+ * metadata refresh. ``force`` re-enriches rows that already have
+ * TMDB metadata.
+ */
+export function useTriggerBulkEnrich() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (force: boolean) => {
+      const payload: TriggerBulkEnrichPayload = { force };
+      const resp = await api.post<AdminScanRunResponse>("/admin/enrichments", payload);
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "scan-runs"] });
     },
   });
 }

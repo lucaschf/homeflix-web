@@ -452,6 +452,46 @@ export interface UpdateUserRolePayload {
   role: "admin" | "member";
 }
 
+export type AdminScanRunKind = "scan" | "enrich";
+export type AdminScanRunTrigger = "manual" | "scheduled";
+export type AdminScanRunStatus =
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "interrupted";
+
+/**
+ * Row returned by ``GET /api/v1/admin/scans``. Per-kind counters
+ * live inside ``summary`` (scans track movies/episodes
+ * created+updated; enriches track movies/series enriched + skipped)
+ * so the same response shape covers both kinds.
+ */
+export interface AdminScanRun {
+  id: string;
+  kind: AdminScanRunKind;
+  trigger: AdminScanRunTrigger;
+  library_id: string | null;
+  status: AdminScanRunStatus;
+  started_at: string;
+  finished_at: string | null;
+  summary: Record<string, number>;
+  errors_count: number;
+  errors: string[];
+}
+
+export type AdminScanRunsResponse = ApiListResponse<AdminScanRun>;
+export type AdminScanRunResponse = ApiDetailResponse<AdminScanRun>;
+
+/** Body for ``POST /api/v1/admin/scans``. */
+export interface TriggerScanPayload {
+  library_id: string;
+}
+
+/** Body for ``POST /api/v1/admin/enrichments``. */
+export interface TriggerBulkEnrichPayload {
+  force: boolean;
+}
+
 // Watch Progress
 export type MediaType = "movie" | "episode";
 export type WatchStatus = "in_progress" | "completed";
