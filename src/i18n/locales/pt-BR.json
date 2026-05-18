@@ -376,6 +376,90 @@
         }
       }
     },
+    "users": {
+      "title": "Usuários",
+      "subtitle": "Cada membro da casa. Troca papéis, cria contas novas e remove acesso quando alguém sai.",
+      "errorLoading": "Não foi possível carregar a lista.",
+      "emptyTitle": "Sem usuários ainda",
+      "emptyBody": "Convida o primeiro membro e ele aparece aqui.",
+      "youBadge": "(você)",
+      "inviteCta": "Convidar usuário",
+      "role": {
+        "admin": "Admin",
+        "member": "Membro"
+      },
+      "filter": {
+        "role": "Papel",
+        "all": "Todos"
+      },
+      "col": {
+        "email": "Email",
+        "role": "Papel",
+        "profiles": "Perfis",
+        "created": "Criado"
+      },
+      "action": {
+        "delete": "Excluir usuário"
+      },
+      "snack": {
+        "inviteSuccess": "{{email}} foi criado.",
+        "deleteSuccess": "{{email}} foi removido.",
+        "deleteFailed": "Não foi possível excluir o usuário.",
+        "roleUpdated": "{{email}} agora é {{role}}.",
+        "roleFailed": "Não foi possível trocar o papel."
+      },
+      "invite": {
+        "title": "Convidar um novo usuário",
+        "subtitle": "O usuário vai entrar com esse email e a senha inicial. Depois pode trocar a senha em /settings.",
+        "email": "Email",
+        "password": "Senha inicial",
+        "passwordHelper": "Mínimo 8 caracteres. O usuário deve trocar depois do primeiro login.",
+        "role": "Papel",
+        "submit": "Criar usuário",
+        "submitting": "Criando…",
+        "cancel": "Cancelar",
+        "error": "Não foi possível criar o usuário.",
+        "section": {
+          "account": "Conta",
+          "accountHelper": "Email + senha inicial que o usuário digita no primeiro login.",
+          "role": "Permissões",
+          "roleHelper": "Admins veem /admin/* e o catálogo todo. Membros só o catálogo."
+        }
+      },
+      "delete": {
+        "title": "Excluir {{email}}?",
+        "body": "O usuário é soft-deletado do sistema. Perde acesso imediato; o estado dele (progresso, listas) é limpo via o cascade cross-BC.",
+        "consequenceAccount": "A conta é soft-deletada — login rejeitado a partir de agora.",
+        "consequenceProgress": "Toda linha de progresso dos perfis do usuário é descartada.",
+        "consequenceLists": "Watchlist + listas customizadas dos perfis são soft-deletadas.",
+        "confirm": "Excluir usuário"
+      },
+      "detail": {
+        "title": "{{email}} — Usuários",
+        "subtitle": "Campos da conta e ACL por perfil desse membro da casa.",
+        "backCta": "Voltar pra usuários",
+        "account": {
+          "title": "Conta",
+          "subtitle": "Email e papel são geridos por admin. Gestão de perfis fica abaixo.",
+          "emailLabel": "Email",
+          "emailHelper": "O endereço que o usuário digita na página de login. Read-only aqui.",
+          "roleLabel": "Papel",
+          "roleHelper": "Alterna entre Admin (painel completo) e Membro (só catálogo).",
+          "roleHelperSelf": "Você não pode trocar seu próprio papel daqui.",
+          "dangerTitle": "Zona de perigo",
+          "dangerHelper": "Remover o usuário soft-deleta a conta e cascateia limpeza em progresso + listas.",
+          "deleteCta": "Excluir usuário"
+        },
+        "profiles": {
+          "title": "Perfis ({{count}})",
+          "subtitle": "Read-only no P3 — membros ainda gerem seus próprios perfis em /settings.",
+          "empty": "Sem perfis ainda. O usuário cria o primeiro no próximo login.",
+          "kidsBadge": "Kids",
+          "aclAll": "Vê todas as bibliotecas",
+          "aclScoped": "{{count}} bibliotecas"
+        }
+      }
+    },
     "system": {
       "hls": {
         "title": "Cache HLS",

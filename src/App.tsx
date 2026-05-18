@@ -34,6 +34,8 @@ import { MovieReview } from "./pages/admin/MovieReview";
 import { MoviesAdmin } from "./pages/admin/MoviesAdmin";
 import { AdminOverview } from "./pages/admin/Overview";
 import { SeriesAdmin } from "./pages/admin/SeriesAdmin";
+import { UserDetailAdmin } from "./pages/admin/UserDetailAdmin";
+import { UsersAdmin } from "./pages/admin/UsersAdmin";
 import { theme } from "./theme";
 import "@fontsource/inter/200.css";
 import "@fontsource/inter/300.css";
@@ -139,6 +141,8 @@ function App() {
                     path="/admin/movies/review"
                     element={<Navigate to="/admin/catalog/review" replace />}
                   />
+                  <Route path="/admin/users" element={<UsersAdmin />} />
+                  <Route path="/admin/users/:id" element={<UserDetailAdmin />} />
                   <Route path="/admin/system/hls-cache" element={<HlsCacheAdmin />} />
                   <Route path="/admin/system/health" element={<HealthAdmin />} />
                 </Route>

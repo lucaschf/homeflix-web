@@ -9,6 +9,11 @@ import { useTranslation } from "react-i18next";
 import { api } from "./client";
 import type {
   AddItemToCustomListResponse,
+  AdminUserDetail,
+  AdminUserDetailResponse,
+  AdminUserSummary,
+  AdminUserSummaryResponse,
+  AdminUsersResponse,
   ApiDetailResponse,
   BulkEnrichResponse,
   CatalogByGenreResponse,
@@ -20,6 +25,7 @@ import type {
   CollectionDetailResponse,
   ContinueWatchingItem,
   ContinueWatchingResponse,
+  CreateAdminUserPayload,
   CustomListDetailResponse,
   CustomListItemOutput,
   CustomListItemsResponse,
@@ -72,6 +78,7 @@ import type {
   TmdbSuggestionsPayload,
   TmdbSuggestionsResponse,
   ToggleWatchlistResponse,
+  UpdateUserRolePayload,
   WatchlistItemOutput,
   WatchlistResponse,
 } from "./types";
@@ -1528,6 +1535,99 @@ export function useClearHlsCacheGlobal() {
     mutationFn: () => api.del("/admin/hls-cache"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "hls-cache"] });
+    },
+  });
+}
+
+// ─── Admin — Users ──────────────────────────────────────────
+
+/**
+ * Page through every user, optionally filtered by role. The list
+ * page renders the role chip + profile count per row so the
+ * operator can eyeball multi-profile households without opening
+ * each detail.
+ */
+export function useAdminUsers(role?: "admin" | "member") {
+  return useQuery({
+    queryKey: ["admin", "users", role ?? "all"],
+    queryFn: async (): Promise<AdminUserSummary[]> => {
+      const query = role ? `?role=${role}` : "";
+      const resp = await api.get<AdminUsersResponse>(`/admin/users${query}`);
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Hydrate a single admin user + their (read-only) profile list.
+ * Used by the ``/admin/users/:id`` detail page.
+ */
+export function useAdminUser(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["admin", "user", userId],
+    enabled: !!userId,
+    queryFn: async (): Promise<AdminUserDetail> => {
+      const resp = await api.get<AdminUserDetailResponse>(`/admin/users/${userId}`);
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Admin creates a user from the invite drawer. The body's
+ * ``password`` is the initial credential the operator hands the
+ * member; the user is expected to change it from ``/settings``
+ * after first login. On success we drop the list cache so the
+ * new row appears immediately.
+ */
+export function useCreateAdminUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: CreateAdminUserPayload) => {
+      const resp = await api.post<AdminUserSummaryResponse>("/admin/users", payload);
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+}
+
+/**
+ * Flip a user's role. The server refuses to demote the last
+ * active admin with HTTP 409 — the route translates that to a
+ * typed error the UI surfaces in the confirm dialog.
+ */
+export function useUpdateUserRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: { userId: string; role: "admin" | "member" }) => {
+      const payload: UpdateUserRolePayload = { role: vars.role };
+      const resp = await api.patch<AdminUserSummaryResponse>(
+        `/admin/users/${vars.userId}`,
+        payload,
+      );
+      return resp.data;
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", vars.userId] });
+    },
+  });
+}
+
+/**
+ * Soft-delete a user. The server refuses self-deletion and
+ * last-admin removal (HTTP 409). On success the list + detail
+ * caches are dropped so the row disappears immediately.
+ */
+export function useDeleteAdminUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => api.del(`/admin/users/${userId}`),
+    onSuccess: (_data, userId) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
     },
   });
 }

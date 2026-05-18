@@ -376,6 +376,90 @@
         }
       }
     },
+    "users": {
+      "title": "Users",
+      "subtitle": "Every household member. Flip roles, create new accounts and remove access when somebody leaves.",
+      "errorLoading": "Couldn't load the user list.",
+      "emptyTitle": "No users yet",
+      "emptyBody": "Invite the first member and they'll appear here.",
+      "youBadge": "(you)",
+      "inviteCta": "Invite user",
+      "role": {
+        "admin": "Admin",
+        "member": "Member"
+      },
+      "filter": {
+        "role": "Role",
+        "all": "All"
+      },
+      "col": {
+        "email": "Email",
+        "role": "Role",
+        "profiles": "Profiles",
+        "created": "Created"
+      },
+      "action": {
+        "delete": "Delete user"
+      },
+      "snack": {
+        "inviteSuccess": "{{email}} was created.",
+        "deleteSuccess": "{{email}} was removed.",
+        "deleteFailed": "Could not delete this user.",
+        "roleUpdated": "{{email}} is now {{role}}.",
+        "roleFailed": "Could not change the role."
+      },
+      "invite": {
+        "title": "Invite a new user",
+        "subtitle": "The user will sign in with this email and the initial password. They can change the password from /settings once they're in.",
+        "email": "Email",
+        "password": "Initial password",
+        "passwordHelper": "Minimum 8 characters. The user is expected to change it after first sign-in.",
+        "role": "Role",
+        "submit": "Create user",
+        "submitting": "Creating…",
+        "cancel": "Cancel",
+        "error": "Could not create the user.",
+        "section": {
+          "account": "Account",
+          "accountHelper": "Email + initial password the user types on first sign-in.",
+          "role": "Permissions",
+          "roleHelper": "Admins see /admin/* and the full catalog. Members see the catalog only."
+        }
+      },
+      "delete": {
+        "title": "Delete {{email}}?",
+        "body": "The user is soft-deleted from the system. They lose access immediately; their household state (watch progress, lists) is wiped via the cross-BC cascade.",
+        "consequenceAccount": "The account is soft-deleted — login is rejected from now on.",
+        "consequenceProgress": "Every watch-progress row for the user's profiles is dropped.",
+        "consequenceLists": "Watchlist + custom lists owned by the user's profiles are soft-deleted.",
+        "confirm": "Delete user"
+      },
+      "detail": {
+        "title": "{{email}} — Users",
+        "subtitle": "Account fields and per-profile ACL grants for this household member.",
+        "backCta": "Back to users",
+        "account": {
+          "title": "Account",
+          "subtitle": "Email and role are admin-managed. Profile management lives below.",
+          "emailLabel": "Email",
+          "emailHelper": "The address the user types on the login page. Read-only here.",
+          "roleLabel": "Role",
+          "roleHelper": "Flip between Admin (full panel) and Member (catalog only).",
+          "roleHelperSelf": "You can't change your own role from this screen.",
+          "dangerTitle": "Danger zone",
+          "dangerHelper": "Removing the user soft-deletes them and cascades cleanup across watch progress + lists.",
+          "deleteCta": "Delete user"
+        },
+        "profiles": {
+          "title": "Profiles ({{count}})",
+          "subtitle": "Read-only here in P3 — members still manage their own profiles via /settings.",
+          "empty": "No profiles yet. The user creates the first one on their next sign-in.",
+          "kidsBadge": "Kids",
+          "aclAll": "Sees every library",
+          "aclScoped": "{{count}} libraries"
+        }
+      }
+    },
     "system": {
       "hls": {
         "title": "HLS cache",
