@@ -376,6 +376,45 @@
         }
       }
     },
+    "system": {
+      "hls": {
+        "title": "Cache HLS",
+        "subtitle": "Segmentos transcodificados ficam na raiz do cache. Limpa quando trocar alguma config de transcodificação e quiser que cada play futuro re-encode do zero.",
+        "errorLoading": "Não foi possível carregar o snapshot do cache.",
+        "clearCta": "Limpar cache",
+        "occupancy": {
+          "title": "Ocupação",
+          "subtitle": "Bytes em disco x teto configurado — o evictor começa a remover buckets LRU quando o uso passa do teto.",
+          "percent": "{{percent}} %",
+          "cap": "Limite {{cap}}",
+          "usedLabel": "Em uso",
+          "lastClearedLabel": "Última limpeza global",
+          "lastClearedNever": "Nunca"
+        },
+        "clear": {
+          "title": "Limpar todos os buckets do cache HLS?",
+          "body": "Cada playlist, segmento e legenda em cache gerados nesse servidor são removidos. O próximo play de qualquer filme vai re-encodar do zero.",
+          "consequenceWipe": "Cada bucket por fonte sob a raiz do cache é removido.",
+          "consequenceRetranscode": "O primeiro play de cada filme vai disparar um ffmpeg novo (início mais lento, normal depois).",
+          "consequenceMarker": "O timestamp da última limpeza vira agora.",
+          "confirm": "Limpar cache"
+        },
+        "snack": {
+          "clearSuccess": "Cache HLS limpo.",
+          "clearFailed": "Não foi possível limpar o cache."
+        }
+      },
+      "health": {
+        "title": "Saúde",
+        "subtitle": "Probes de readiness por componente — mesmo payload que alimenta o card compacto na Overview.",
+        "hypothesis": "probes fixos · checks reais entram depois",
+        "cardTitle": "Checks de readiness",
+        "cardSubtitle": "Atualiza a cada 30 s.",
+        "lastChecked": "Última checagem às {{at}}",
+        "overall": "Geral",
+        "error": "Não foi possível alcançar o endpoint de readiness."
+      }
+    },
     "requests": {
       "title": "Solicitações de catálogo",
       "subtitle": "Títulos do TMDB que membros marcaram pra inclusão. Clica numa linha pra abrir no TMDB; dispensa quando não quiser mais rastrear.",

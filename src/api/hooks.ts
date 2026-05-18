@@ -31,6 +31,8 @@ import type {
   Genre,
   GenresResponse,
   HealthResponse,
+  HlsCacheStats,
+  HlsCacheStatsResponse,
   IntroMarkerOutput,
   LibrariesResponse,
   Library,
@@ -1492,6 +1494,40 @@ export function useDismissCatalogRequest() {
     mutationFn: (requestId: string) => api.del(`/admin/catalog-requests/${requestId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "catalog-requests"] });
+    },
+  });
+}
+
+// ─── Admin — System (HLS cache + health) ───────────────────
+
+/**
+ * Snapshot of the HLS cache: bytes-on-disk, configured ceiling,
+ * and the timestamp of the last global clear. Drives the occupancy
+ * card on the admin System page; the underlying endpoint walks the
+ * cache directory server-side, so the page polls on demand only.
+ */
+export function useHlsCacheStats() {
+  return useQuery({
+    queryKey: ["admin", "hls-cache"],
+    queryFn: async (): Promise<HlsCacheStats> => {
+      const resp = await api.get<HlsCacheStatsResponse>("/admin/hls-cache");
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Wipe every cached HLS bucket. Used by the admin System page's
+ * "Clear cache" button — distinct from the per-movie clear under
+ * ``/stream/...``. Re-reads the stats so the occupancy bar drops
+ * back to zero immediately on success.
+ */
+export function useClearHlsCacheGlobal() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.del("/admin/hls-cache"),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "hls-cache"] });
     },
   });
 }

@@ -24,6 +24,8 @@ import { SeriesDetail } from "./pages/SeriesDetail";
 import { MyLists } from "./pages/MyLists";
 import { Settings } from "./pages/Settings";
 import { CatalogRequestsAdmin } from "./pages/admin/CatalogRequestsAdmin";
+import { HealthAdmin } from "./pages/admin/HealthAdmin";
+import { HlsCacheAdmin } from "./pages/admin/HlsCacheAdmin";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
 import { LibrariesAdmin } from "./pages/admin/LibrariesAdmin";
@@ -137,6 +139,8 @@ function App() {
                     path="/admin/movies/review"
                     element={<Navigate to="/admin/catalog/review" replace />}
                   />
+                  <Route path="/admin/system/hls-cache" element={<HlsCacheAdmin />} />
+                  <Route path="/admin/system/health" element={<HealthAdmin />} />
                 </Route>
               </Route>
             </Route>

@@ -376,6 +376,45 @@
         }
       }
     },
+    "system": {
+      "hls": {
+        "title": "HLS cache",
+        "subtitle": "Cached transcoded segments live under the cache root. Clear them when you've changed a transcode setting and want every future play to re-encode from scratch.",
+        "errorLoading": "Couldn't load the cache snapshot.",
+        "clearCta": "Clear cache",
+        "occupancy": {
+          "title": "Occupancy",
+          "subtitle": "Bytes on disk vs the configured ceiling — the evictor starts dropping LRU buckets once usage exceeds the cap.",
+          "percent": "{{percent}} %",
+          "cap": "Cap {{cap}}",
+          "usedLabel": "Used",
+          "lastClearedLabel": "Last globally cleared",
+          "lastClearedNever": "Never"
+        },
+        "clear": {
+          "title": "Clear every HLS cache bucket?",
+          "body": "Every cached playlist, segment and subtitle generated for this server is removed. The next play of any movie will re-encode from scratch.",
+          "consequenceWipe": "Every per-source bucket under the cache root is removed.",
+          "consequenceRetranscode": "The first play of every movie will trigger a fresh ffmpeg pass (slower start, normal afterwards).",
+          "consequenceMarker": "The last-cleared timestamp updates to now.",
+          "confirm": "Clear cache"
+        },
+        "snack": {
+          "clearSuccess": "HLS cache cleared.",
+          "clearFailed": "Could not clear the cache."
+        }
+      },
+      "health": {
+        "title": "Health",
+        "subtitle": "Per-component readiness probes — the same payload that drives the compact card on the Overview.",
+        "hypothesis": "probes hardcoded · real checks land later",
+        "cardTitle": "Readiness checks",
+        "cardSubtitle": "Polled every 30 s.",
+        "lastChecked": "Last checked at {{at}}",
+        "overall": "Overall",
+        "error": "Couldn't reach the readiness endpoint."
+      }
+    },
     "requests": {
       "title": "Catalog requests",
       "subtitle": "TMDB titles the household flagged for inclusion. Click a row to open the title on TMDB; dismiss when you no longer want to track it.",

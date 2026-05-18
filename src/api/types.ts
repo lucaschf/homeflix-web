@@ -375,6 +375,20 @@ export interface ReadinessResponse {
   checks: Record<string, string>;
 }
 
+/**
+ * ``GET /api/v1/admin/hls-cache`` payload. The admin System page
+ * renders ``size_bytes`` over ``max_bytes`` as an occupancy bar
+ * and shows ``last_cleared_at`` as the freshness signal for the
+ * "Clear cache" button.
+ */
+export interface HlsCacheStats {
+  size_bytes: number;
+  max_bytes: number;
+  last_cleared_at: string | null;
+}
+
+export type HlsCacheStatsResponse = ApiDetailResponse<HlsCacheStats>;
+
 // Watch Progress
 export type MediaType = "movie" | "episode";
 export type WatchStatus = "in_progress" | "completed";
