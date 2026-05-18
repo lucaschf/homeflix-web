@@ -406,26 +406,35 @@
     },
     "scan": {
       "title": "Scan",
-      "subtitle": "Percorre os caminhos configurados de uma biblioteca e registra cada arquivo novo. Dispara um scan manual aqui; o scheduler usa o mesmo caminho em segundo plano.",
+      "subtitle": "Detecta novos arquivos, atualiza metadados e popula a fila de revisão.",
       "snack": {
         "dispatched": "Scan {{runId}} despachado.",
+        "dispatchedMany": "{{count}} scans despachados.",
         "failed": "Não foi possível iniciar o scan."
       },
       "trigger": {
-        "title": "Disparar um scan",
-        "subtitle": "Escolha uma biblioteca e rode um scan agora. A tarefa roda em background; essa página atualiza assim que terminar.",
-        "libraryLabel": "Biblioteca",
-        "libraryPlaceholder": "Escolha uma biblioteca…",
+        "title": "Disparar scan",
+        "subtitle": "Selecione libraries e rode agora, ou aguarde o run agendado.",
+        "inflightSubtitle": "Scan em andamento — controles desabilitados.",
+        "running": "rodando",
+        "libraryLabel": "Libraries",
         "librariesError": "Não foi possível carregar a lista de bibliotecas.",
         "noLibrariesTitle": "Sem bibliotecas configuradas",
         "noLibrariesBody": "Crie uma biblioteca primeiro na página Bibliotecas.",
-        "cta": "Rodar scan",
-        "submitting": "Despachando…"
+        "scanAll": "Scan em todas as libraries",
+        "cta": "Rodar scan agora",
+        "submitting": "Despachando…",
+        "inflightCta": "Scan em andamento…",
+        "nextScheduled": "Próximo agendado: {{when}}",
+        "nextScheduledNone": "Nenhuma biblioteca agendada"
+      },
+      "inflight": {
+        "title": "Escaneando…",
+        "details": "{{elapsed}} decorridos · run {{runId}}"
       },
       "history": {
-        "title": "Scans recentes",
-        "subtitle": "Mais recentes primeiro. Inclui triggers manuais e os runs periódicos do scheduler.",
-        "livePolling": "Atualizando…",
+        "title": "Histórico",
+        "subtitle": "Mais recentes primeiro. Inclui triggers manuais e runs do scheduler.",
         "emptyTitle": "Sem scans ainda",
         "emptyBody": "Dispare um acima ou aguarde o scheduler rodar."
       }

@@ -406,26 +406,35 @@
     },
     "scan": {
       "title": "Scan",
-      "subtitle": "Walk the configured paths of a library and register every new file. Trigger a scan manually here; the scheduler hits the same path in the background.",
+      "subtitle": "Detects new files, refreshes metadata and feeds the review queue.",
       "snack": {
         "dispatched": "Scan {{runId}} dispatched.",
+        "dispatchedMany": "{{count}} scans dispatched.",
         "failed": "Could not start the scan."
       },
       "trigger": {
         "title": "Trigger a scan",
-        "subtitle": "Pick a library and run a scan now. The task runs in the background; this page will refresh as soon as it finishes.",
-        "libraryLabel": "Library",
-        "libraryPlaceholder": "Pick a library…",
+        "subtitle": "Pick libraries and run now, or wait for the next scheduled fire.",
+        "inflightSubtitle": "Scan in flight — controls are disabled while it runs.",
+        "running": "running",
+        "libraryLabel": "Libraries",
         "librariesError": "Couldn't load the library list.",
         "noLibrariesTitle": "No libraries configured",
         "noLibrariesBody": "Create a library first from the Libraries page.",
-        "cta": "Run scan",
-        "submitting": "Dispatching…"
+        "scanAll": "Scan every library",
+        "cta": "Run scan now",
+        "submitting": "Dispatching…",
+        "inflightCta": "Scan in flight…",
+        "nextScheduled": "Next scheduled: {{when}}",
+        "nextScheduledNone": "No library is scheduled"
+      },
+      "inflight": {
+        "title": "Scanning…",
+        "details": "{{elapsed}} elapsed · run {{runId}}"
       },
       "history": {
         "title": "Recent scans",
-        "subtitle": "Most recent first. Includes manual triggers and the scheduler's periodic runs.",
-        "livePolling": "Polling…",
+        "subtitle": "Last runs first. Includes manual triggers and the scheduler's periodic fires.",
         "emptyTitle": "No scans yet",
         "emptyBody": "Trigger one above or wait for the scheduler to fire."
       }
