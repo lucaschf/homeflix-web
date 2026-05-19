@@ -282,14 +282,8 @@ export function ScanAdmin() {
       <Stack spacing={2.5}>
         <AdminCard>
           <AdminCardHeader
-            title={
-              <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="wrap">
-                <Box sx={{ color: "text.secondary", display: "flex" }}>
-                  <ScanLine size={16} aria-hidden />
-                </Box>
-                <Box component="span">{t("admin.scan.trigger.title")}</Box>
-              </Stack>
-            }
+            icon={ScanLine}
+            title={t("admin.scan.trigger.title")}
             subtitle={
               isInflight
                 ? t("admin.scan.trigger.inflightSubtitle")

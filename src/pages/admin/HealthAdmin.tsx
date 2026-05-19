@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import { Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useReadiness } from "../../api/hooks";
@@ -113,14 +113,8 @@ export function HealthAdmin() {
 
       <AdminCard>
         <AdminCardHeader
-          title={
-            <Stack direction="row" alignItems="center" spacing={1.25}>
-              <Box sx={{ display: "flex", color: "text.secondary" }}>
-                <Heart size={16} aria-hidden />
-              </Box>
-              <Box component="span">{t("admin.system.health.cardTitle")}</Box>
-            </Stack>
-          }
+          icon={Heart}
+          title={t("admin.system.health.cardTitle")}
           subtitle={
             lastCheckedAt
               ? t("admin.system.health.lastChecked", { at: lastCheckedAt })

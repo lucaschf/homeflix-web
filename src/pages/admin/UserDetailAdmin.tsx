@@ -154,14 +154,8 @@ export function UserDetailAdmin() {
       >
         <AdminCard>
           <AdminCardHeader
-            title={
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Box sx={{ color: "text.secondary", display: "flex" }}>
-                  <UserIcon size={16} aria-hidden />
-                </Box>
-                <Box component="span">{t("admin.users.detail.account.title")}</Box>
-              </Stack>
-            }
+            icon={UserIcon}
+            title={t("admin.users.detail.account.title")}
             subtitle={t("admin.users.detail.account.subtitle")}
           />
 
@@ -242,18 +236,10 @@ export function UserDetailAdmin() {
 
         <AdminCard>
           <AdminCardHeader
-            title={
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Box sx={{ color: "text.secondary", display: "flex" }}>
-                  <UsersIcon size={16} aria-hidden />
-                </Box>
-                <Box component="span">
-                  {t("admin.users.detail.profiles.title", {
-                    count: data.profiles.length,
-                  })}
-                </Box>
-              </Stack>
-            }
+            icon={UsersIcon}
+            title={t("admin.users.detail.profiles.title", {
+              count: data.profiles.length,
+            })}
             subtitle={t("admin.users.detail.profiles.subtitle")}
           />
 

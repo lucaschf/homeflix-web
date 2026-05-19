@@ -69,14 +69,8 @@ export function EnrichAdmin() {
       <Stack spacing={2.5}>
         <AdminCard>
           <AdminCardHeader
-            title={
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Box sx={{ color: "text.secondary", display: "flex" }}>
-                  <Sparkles size={16} aria-hidden />
-                </Box>
-                <Box component="span">{t("admin.enrich.trigger.title")}</Box>
-              </Stack>
-            }
+            icon={Sparkles}
+            title={t("admin.enrich.trigger.title")}
             subtitle={t("admin.enrich.trigger.subtitle")}
           />
 
@@ -135,17 +129,15 @@ export function EnrichAdmin() {
 
         <AdminCard>
           <AdminCardHeader
-            title={
-              <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                <Box component="span">{t("admin.enrich.history.title")}</Box>
-                {runs.items.some((r) => r.status === "running") && (
-                  <AdminBadge tone="info">
-                    {t("admin.enrich.history.livePolling")}
-                  </AdminBadge>
-                )}
-              </Stack>
-            }
+            title={t("admin.enrich.history.title")}
             subtitle={t("admin.enrich.history.subtitle")}
+            titleBadge={
+              runs.items.some((r) => r.status === "running") ? (
+                <AdminBadge tone="info">
+                  {t("admin.enrich.history.livePolling")}
+                </AdminBadge>
+              ) : undefined
+            }
           />
 
           <ScanRunHistoryTable
