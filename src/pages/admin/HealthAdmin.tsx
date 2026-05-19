@@ -7,7 +7,6 @@ import {
   AdminCard,
   AdminCardHeader,
   AdminPageHeader,
-  HypothesisChip,
   type BadgeTone,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -89,11 +88,6 @@ function HealthRow({ label, status }: { label: string; status: string }) {
  * 30 s via the shared ``useReadiness`` hook (same source as the
  * Overview's compact card) and lists one row per backing
  * dependency the backend reports.
- *
- * Marked with a ``HypothesisChip`` because the upstream endpoint
- * currently hardcodes ``healthy`` for both ``database`` and
- * ``filesystem`` — once those probes are wired up server-side
- * this page picks up the real state without any client change.
  */
 export function HealthAdmin() {
   const { t } = useTranslation();
@@ -115,18 +109,16 @@ export function HealthAdmin() {
         breadcrumb={[t("admin.nav.group.system"), t("admin.nav.health")]}
         title={t("admin.system.health.title")}
         subtitle={t("admin.system.health.subtitle")}
-        hypothesis={t("admin.system.health.hypothesis")}
       />
 
       <AdminCard>
         <AdminCardHeader
           title={
-            <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="wrap">
+            <Stack direction="row" alignItems="center" spacing={1.25}>
               <Box sx={{ display: "flex", color: "text.secondary" }}>
                 <Heart size={16} aria-hidden />
               </Box>
               <Box component="span">{t("admin.system.health.cardTitle")}</Box>
-              <HypothesisChip>{t("admin.system.health.hypothesis")}</HypothesisChip>
             </Stack>
           }
           subtitle={

@@ -14,7 +14,6 @@ import {
   AdminCardHeader,
   AdminPageHeader,
   type BadgeTone,
-  HypothesisChip,
   StatCard,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -410,13 +409,6 @@ function toneFor(status: string): BadgeTone {
  * Overview. Polls ``/health/ready`` every 30 s (handled by the
  * hook) and renders one row per backing dependency the backend
  * reports.
- *
- * Marked with a ``HypothesisChip`` because the upstream endpoint
- * currently hardcodes ``healthy`` for both ``database`` and
- * ``filesystem`` — the real probes land in P6 alongside the
- * dedicated ``/admin/system/health`` page. When that ships, this
- * card stays as-is (the data path is already correct) and just
- * starts reflecting genuine state.
  */
 function SystemHealthPanel() {
   const { t } = useTranslation();
@@ -438,12 +430,7 @@ function SystemHealthPanel() {
   return (
     <AdminCard>
       <AdminCardHeader
-        title={
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap" }}>
-            <Box component="span">{t("admin.overview.systemHealth.title")}</Box>
-            <HypothesisChip>{t("admin.overview.systemHealth.hypothesis")}</HypothesisChip>
-          </Box>
-        }
+        title={t("admin.overview.systemHealth.title")}
         subtitle={
           lastCheckedAt
             ? t("admin.overview.systemHealth.lastChecked", { at: lastCheckedAt })

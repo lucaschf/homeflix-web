@@ -296,7 +296,6 @@
       "systemHealth": {
         "title": "Saúde do sistema",
         "subtitle": "Probes de readiness ao vivo — atualiza a cada 30 s.",
-        "hypothesis": "probes hardcoded · checks reais no P6",
         "lastChecked": "Última checagem às {{at}}",
         "overall": "Geral",
         "error": "Não foi possível alcançar o endpoint de readiness."
@@ -593,8 +592,7 @@
       },
       "health": {
         "title": "Saúde",
-        "subtitle": "Probes de readiness por componente — mesmo payload que alimenta o card compacto na Overview.",
-        "hypothesis": "probes fixos · checks reais entram depois",
+        "subtitle": "Probes de readiness ao vivo de cada dependência que a API precisa pra servir requests.",
         "cardTitle": "Checks de readiness",
         "cardSubtitle": "Atualiza a cada 30 s.",
         "lastChecked": "Última checagem às {{at}}",

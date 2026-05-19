@@ -296,7 +296,6 @@
       "systemHealth": {
         "title": "System health",
         "subtitle": "Live readiness probes — refreshes every 30 s.",
-        "hypothesis": "probes hardcoded · real checks land in P6",
         "lastChecked": "Last checked at {{at}}",
         "overall": "Overall",
         "error": "Couldn't reach the readiness endpoint."
@@ -593,8 +592,7 @@
       },
       "health": {
         "title": "Health",
-        "subtitle": "Per-component readiness probes — the same payload that drives the compact card on the Overview.",
-        "hypothesis": "probes hardcoded · real checks land later",
+        "subtitle": "Live readiness probes for every backing dependency the API needs to serve requests.",
         "cardTitle": "Readiness checks",
         "cardSubtitle": "Polled every 30 s.",
         "lastChecked": "Last checked at {{at}}",
