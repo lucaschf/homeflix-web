@@ -1,6 +1,6 @@
-import { Box, CircularProgress, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import { Eye, Sparkles, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -17,6 +17,7 @@ import {
   AdminEmptyState,
   AdminPageHeader,
   AdminTable,
+  AdminTablePagination,
   AdminToolbar,
   FilterChip,
   type AdminTableColumn,
@@ -46,6 +47,7 @@ export function SeriesAdmin() {
 
   const [libraryFilter, setLibraryFilter] = useState<string>("");
   const [enrichmentFilter, setEnrichmentFilter] = useState<EnrichmentFilterValue>("all");
+  const [pageSize, setPageSize] = useState(10);
   const [pendingDelete, setPendingDelete] = useState<SeriesSummary | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [snack, setSnack] = useState<Snack>(null);
@@ -57,25 +59,21 @@ export function SeriesAdmin() {
     return f;
   }, [libraryFilter, enrichmentFilter]);
 
-  const { items, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage, refetch } =
-    useAdminSeries(filters);
+  const {
+    items,
+    pageNumber,
+    canGoNext,
+    canGoPrevious,
+    goNext,
+    goPrevious,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useAdminSeries(filters, { pageSize });
   const { data: libraries } = useLibraries();
   const enrich = useEnrichSeries();
   const remove = useDeleteSeries();
-
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage || isFetchingNextPage) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) void fetchNextPage();
-      },
-      { rootMargin: "400px 0px" },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const libraryNameById = useMemo<Record<string, string>>(() => {
     if (!libraries) return {};
@@ -306,12 +304,17 @@ export function SeriesAdmin() {
         }
       />
 
-      <Box ref={sentinelRef} sx={{ height: 1 }} />
-
-      {isFetchingNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-          <CircularProgress size={20} color="primary" />
-        </Box>
+      {(items.length > 0 || canGoPrevious) && (
+        <AdminTablePagination
+          pageNumber={pageNumber}
+          canGoNext={canGoNext}
+          canGoPrevious={canGoPrevious}
+          onNext={goNext}
+          onPrevious={goPrevious}
+          isFetching={isFetching}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+        />
       )}
 
       <AdminConfirmDialog

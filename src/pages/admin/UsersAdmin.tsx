@@ -20,6 +20,7 @@ import {
   useAdminUsers,
   useCreateAdminUser,
   useDeleteAdminUser,
+  usePagedList,
 } from "../../api/hooks";
 import type { AdminUserSummary } from "../../api/types";
 import {
@@ -31,6 +32,7 @@ import {
   AdminInput,
   AdminPageHeader,
   AdminTable,
+  AdminTablePagination,
   AdminToolbar,
   FilterChip,
   type AdminTableColumn,
@@ -54,8 +56,11 @@ export function UsersAdmin() {
   useDocumentTitle(t("admin.users.title"));
 
   const [filter, setFilter] = useState<RoleFilter>("all");
+  const [pageSize, setPageSize] = useState(10);
   const role = filter === "all" ? undefined : filter;
   const { data, isLoading, isError, refetch } = useAdminUsers(role);
+  const allRows = data ?? [];
+  const paged = usePagedList<AdminUserSummary>(allRows, pageSize, role ?? "all");
   const { data: me } = useCurrentUser();
   const remove = useDeleteAdminUser();
 
@@ -220,7 +225,7 @@ export function UsersAdmin() {
 
       <AdminTable
         columns={columns}
-        rows={data}
+        rows={paged.items}
         rowKey="id"
         loading={isLoading}
         error={isError ? t("admin.users.errorLoading") : undefined}
@@ -243,6 +248,18 @@ export function UsersAdmin() {
           />
         }
       />
+
+      {allRows.length > pageSize && (
+        <AdminTablePagination
+          pageNumber={paged.pageNumber}
+          canGoNext={paged.canGoNext}
+          canGoPrevious={paged.canGoPrevious}
+          onNext={paged.goNext}
+          onPrevious={paged.goPrevious}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+        />
+      )}
 
       <InviteUserDialog
         open={inviteOpen}

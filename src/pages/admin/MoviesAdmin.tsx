@@ -1,6 +1,6 @@
-import { Box, CircularProgress, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import { Eye, Sparkles, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -18,6 +18,7 @@ import {
   AdminEmptyState,
   AdminPageHeader,
   AdminTable,
+  AdminTablePagination,
   AdminToolbar,
   FilterChip,
   type AdminTableColumn,
@@ -46,10 +47,9 @@ const REVIEW_OPTIONS: { label: string; value: ReviewFilterValue }[] = [
  * enrichment status / review queue and per-row actions
  * (open detail, re-enrich, soft-delete).
  *
- * Pagination uses the same cursor-based infinite scroll the
- * user-facing Browse page uses — IntersectionObserver fires
- * ``fetchNextPage`` when a sentinel ~400 px from the bottom
- * enters the viewport.
+ * Pagination uses explicit Previous / Next buttons backed by
+ * ``usePagedInfiniteQuery`` — the operator navigates page-by-
+ * page rather than hitting an infinite-scroll sentinel.
  */
 export function MoviesAdmin() {
   const { t, i18n } = useTranslation();
@@ -59,6 +59,7 @@ export function MoviesAdmin() {
   const [libraryFilter, setLibraryFilter] = useState<string>("");
   const [enrichmentFilter, setEnrichmentFilter] = useState<EnrichmentFilterValue>("all");
   const [reviewFilter, setReviewFilter] = useState<ReviewFilterValue>("all");
+  const [pageSize, setPageSize] = useState(10);
   const [pendingDelete, setPendingDelete] = useState<MovieSummary | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [snack, setSnack] = useState<Snack>(null);
@@ -71,25 +72,22 @@ export function MoviesAdmin() {
     return f;
   }, [libraryFilter, enrichmentFilter, reviewFilter]);
 
-  const { items, isLoading, isError, hasNextPage, fetchNextPage, isFetchingNextPage, refetch } =
-    useAdminMovies(filters);
+  const moviesQuery = useAdminMovies(filters, { pageSize });
+  const {
+    items,
+    pageNumber,
+    canGoNext,
+    canGoPrevious,
+    goNext,
+    goPrevious,
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = moviesQuery;
   const { data: libraries } = useLibraries();
   const enrich = useEnrichMovie();
   const remove = useDeleteMovie();
-
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage || isFetchingNextPage) return;
-    const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) void fetchNextPage();
-      },
-      { rootMargin: "400px 0px" },
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const libraryNameById = useMemo<Record<string, string>>(() => {
     if (!libraries) return {};
@@ -303,12 +301,17 @@ export function MoviesAdmin() {
         }
       />
 
-      <Box ref={sentinelRef} sx={{ height: 1 }} />
-
-      {isFetchingNextPage && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-          <CircularProgress size={20} color="primary" />
-        </Box>
+      {(items.length > 0 || canGoPrevious) && (
+        <AdminTablePagination
+          pageNumber={pageNumber}
+          canGoNext={canGoNext}
+          canGoPrevious={canGoPrevious}
+          onNext={goNext}
+          onPrevious={goPrevious}
+          isFetching={isFetching}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+        />
       )}
 
       <AdminConfirmDialog

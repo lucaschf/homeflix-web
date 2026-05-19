@@ -52,12 +52,12 @@ interface AdminTableProps<T> {
 }
 
 const ROW_HEIGHT: Record<TableDensity, number> = {
-  comfortable: 56,
-  compact: 40,
+  comfortable: 72,
+  compact: 52,
 };
 const HEADER_BG = "rgba(255,255,255,0.02)";
 const HAIRLINE = "1px solid rgba(255,255,255,0.08)";
-const PAD_X = 18;
+const PAD_X = 24;
 
 /**
  * Generic data table used across the admin panel.
@@ -126,12 +126,12 @@ export function AdminTable<T>({
                 align={c.align ?? "left"}
                 sx={{
                   fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                  fontSize: "0.625rem",
+                  fontSize: "0.6875rem",
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   color: "text.secondary",
                   fontWeight: 500,
-                  py: 1.25,
+                  py: 1.75,
                   px: `${PAD_X}px`,
                   borderBottom: HAIRLINE,
                   width: c.width,
@@ -165,7 +165,7 @@ export function AdminTable<T>({
                   sx={{
                     py: 0,
                     px: `${PAD_X}px`,
-                    fontSize: "0.84375rem",
+                    fontSize: "0.875rem",
                     color: c.muted ? "text.secondary" : "text.primary",
                     fontFamily: c.mono
                       ? "'JetBrains Mono', ui-monospace, monospace"
@@ -213,12 +213,12 @@ function TableLoadingState<T>({
                 scope="col"
                 sx={{
                   fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                  fontSize: "0.625rem",
+                  fontSize: "0.6875rem",
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   color: "text.secondary",
                   fontWeight: 500,
-                  py: 1.25,
+                  py: 1.75,
                   px: `${PAD_X}px`,
                   borderBottom: HAIRLINE,
                   whiteSpace: "nowrap",
