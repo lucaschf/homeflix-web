@@ -75,7 +75,7 @@ export function StatCard({
         </Typography>
         {Icon && (
           <Icon
-            size={16}
+            size={26}
             color={alert ? theme.palette.primary.main : theme.palette.text.secondary}
             aria-hidden
           />
