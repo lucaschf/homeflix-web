@@ -24,6 +24,7 @@ import {
   useRelinkMovie,
 } from "../../api/hooks";
 import type { NeedsReviewMovie, TmdbSuggestion } from "../../api/types";
+import { AdminPageHeader } from "../../components/admin";
 import { PromoteToSeriesConfirmDialog } from "../../components/admin/PromoteToSeriesConfirmDialog";
 import { TmdbSuggestionsDialog } from "../../components/admin/TmdbSuggestionsDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -128,12 +129,11 @@ export function MovieReview() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack spacing={1} mb={3}>
-        <Typography variant="h2">{t("admin.reviews.title")}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("admin.reviews.subtitle")}
-        </Typography>
-      </Stack>
+      <AdminPageHeader
+        breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.review")]}
+        title={t("admin.reviews.title")}
+        subtitle={t("admin.reviews.subtitle")}
+      />
 
       {isLoading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>

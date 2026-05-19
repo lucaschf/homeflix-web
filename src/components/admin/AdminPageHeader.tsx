@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { HypothesisChip } from "./HypothesisChip";
 
 interface AdminPageHeaderProps {
@@ -32,9 +33,18 @@ export function AdminPageHeader({
   primaryCTA,
   toolbar,
 }: AdminPageHeaderProps) {
+  const { t } = useTranslation();
+
+  // Always prepend "Admin" as the breadcrumb root so every admin
+  // page anchors at the same starting point. Consumers pass only
+  // the segments below "Admin" (e.g. ``[Catalog, Movies]``) and
+  // the component injects the root + chevrons.
+  const fullBreadcrumb: ReactNode[] | undefined =
+    breadcrumb && breadcrumb.length > 0 ? [t("admin.title"), ...breadcrumb] : undefined;
+
   return (
     <Box component="header" sx={{ mb: 3.5 }}>
-      {breadcrumb && breadcrumb.length > 0 && (
+      {fullBreadcrumb && (
         <Box
           sx={{
             display: "flex",
@@ -42,20 +52,20 @@ export function AdminPageHeader({
             gap: 1,
             mb: 1.5,
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            fontSize: "0.65625rem",
-            letterSpacing: "0.14em",
+            fontSize: "0.8rem",
+            letterSpacing: "0.1em",
             textTransform: "uppercase",
             color: "text.secondary",
           }}
         >
-          {breadcrumb.map((segment, i) => (
+          {fullBreadcrumb.map((segment, i) => (
             <Fragment key={i}>
-              {i > 0 && <ChevronRight size={11} aria-hidden />}
+              {i > 0 && <ChevronRight size={14} aria-hidden />}
               <Box
                 component="span"
                 sx={{
                   color:
-                    i === breadcrumb.length - 1
+                    i === fullBreadcrumb.length - 1
                       ? "rgba(245,241,235,0.7)"
                       : "inherit",
                 }}
@@ -90,7 +100,7 @@ export function AdminPageHeader({
               sx={{
                 m: 0,
                 fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-                fontSize: "1.75rem",
+                fontSize: "2rem",
                 fontWeight: 600,
                 letterSpacing: "-0.02em",
                 lineHeight: 1.1,
@@ -106,7 +116,7 @@ export function AdminPageHeader({
               variant="body2"
               sx={{
                 mt: 1,
-                fontSize: "0.84375rem",
+                fontSize: "1rem",
                 color: "rgba(245,241,235,0.55)",
                 maxWidth: 720,
                 lineHeight: 1.55,
