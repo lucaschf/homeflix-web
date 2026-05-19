@@ -53,14 +53,8 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
   return (
     <AdminCard>
       <AdminCardHeader
-        title={
-          <Stack direction="row" alignItems="center" spacing={1.25}>
-            <Box sx={{ display: "flex", color: "text.secondary" }}>
-              <HardDrive size={16} aria-hidden />
-            </Box>
-            <Box component="span">{t("admin.system.hls.occupancy.title")}</Box>
-          </Stack>
-        }
+        icon={HardDrive}
+        title={t("admin.system.hls.occupancy.title")}
         subtitle={t("admin.system.hls.occupancy.subtitle")}
         action={
           <AdminBadge tone={tone}>
