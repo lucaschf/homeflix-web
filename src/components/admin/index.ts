@@ -20,6 +20,7 @@ export {
   type AdminTableColumn,
   type TableDensity,
 } from "./AdminTable";
+export { AdminTablePagination } from "./AdminTablePagination";
 export { AdminToolbar, FilterChip, ToolbarSearch } from "./AdminToolbar";
 export { AdminTopbar } from "./AdminTopbar";
 export { HypothesisChip } from "./HypothesisChip";

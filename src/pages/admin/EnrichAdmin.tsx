@@ -18,6 +18,7 @@ import {
   AdminCard,
   AdminCardHeader,
   AdminPageHeader,
+  AdminTablePagination,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
@@ -34,7 +35,8 @@ export function EnrichAdmin() {
   const { t } = useTranslation();
   useDocumentTitle(t("admin.enrich.title"));
 
-  const runs = useAdminScanRuns("enrich");
+  const [pageSize, setPageSize] = useState(10);
+  const runs = useAdminScanRuns("enrich", undefined, { pageSize });
   const trigger = useTriggerBulkEnrich();
 
   const [force, setForce] = useState(false);
@@ -136,7 +138,7 @@ export function EnrichAdmin() {
             title={
               <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
                 <Box component="span">{t("admin.enrich.history.title")}</Box>
-                {runs.data?.some((r) => r.status === "running") && (
+                {runs.items.some((r) => r.status === "running") && (
                   <AdminBadge tone="info">
                     {t("admin.enrich.history.livePolling")}
                   </AdminBadge>
@@ -147,12 +149,25 @@ export function EnrichAdmin() {
           />
 
           <ScanRunHistoryTable
-            runs={runs.data}
+            runs={runs.items}
             isLoading={runs.isLoading}
             isError={runs.isError}
-            onRetry={() => void runs.refetch()}
+            onRetry={runs.refetch}
             kind="enrich"
           />
+
+          {(runs.items.length > 0 || runs.canGoPrevious) && (
+            <AdminTablePagination
+              pageNumber={runs.pageNumber}
+              canGoNext={runs.canGoNext}
+              canGoPrevious={runs.canGoPrevious}
+              onNext={runs.goNext}
+              onPrevious={runs.goPrevious}
+              isFetching={runs.isFetching}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
+          )}
         </AdminCard>
       </Stack>
 

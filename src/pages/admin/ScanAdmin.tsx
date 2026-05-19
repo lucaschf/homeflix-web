@@ -22,6 +22,7 @@ import {
   AdminCardHeader,
   AdminEmptyState,
   AdminPageHeader,
+  AdminTablePagination,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
@@ -207,7 +208,8 @@ export function ScanAdmin() {
   useDocumentTitle(t("admin.scan.title"));
 
   const libraries = useLibraries();
-  const runs = useAdminScanRuns("scan");
+  const [pageSize, setPageSize] = useState(10);
+  const runs = useAdminScanRuns("scan", undefined, { pageSize });
   const trigger = useTriggerScan();
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -216,8 +218,8 @@ export function ScanAdmin() {
   const [error, setError] = useState<string | null>(null);
 
   const inflightRun: AdminScanRun | undefined = useMemo(
-    () => runs.data?.find((r) => r.status === "running"),
-    [runs.data],
+    () => runs.items.find((r) => r.status === "running"),
+    [runs.items],
   );
   const isInflight = !!inflightRun;
   const elapsed = useElapsedSeconds(inflightRun?.started_at);
@@ -549,12 +551,25 @@ export function ScanAdmin() {
           />
 
           <ScanRunHistoryTable
-            runs={runs.data}
+            runs={runs.items}
             isLoading={runs.isLoading}
             isError={runs.isError}
-            onRetry={() => void runs.refetch()}
+            onRetry={runs.refetch}
             kind="scan"
           />
+
+          {(runs.items.length > 0 || runs.canGoPrevious) && (
+            <AdminTablePagination
+              pageNumber={runs.pageNumber}
+              canGoNext={runs.canGoNext}
+              canGoPrevious={runs.canGoPrevious}
+              onNext={runs.goNext}
+              onPrevious={runs.goPrevious}
+              isFetching={runs.isFetching}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
+          )}
         </AdminCard>
       </Stack>
 

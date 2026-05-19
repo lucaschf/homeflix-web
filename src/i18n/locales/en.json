@@ -244,7 +244,13 @@
     "table": {
       "emptyTitle": "No results",
       "emptyBody": "Nothing to show right now.",
-      "retry": "Retry"
+      "retry": "Retry",
+      "pagination": {
+        "page": "Page {{number}}",
+        "previous": "Previous",
+        "next": "Next",
+        "rowsPerPage": "Rows per page"
+      }
     },
     "confirm": {
       "confirm": "Confirm",

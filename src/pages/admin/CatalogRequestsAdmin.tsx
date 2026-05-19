@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import {
   useAdminCatalogRequests,
   useDismissCatalogRequest,
+  usePagedList,
 } from "../../api/hooks";
 import type { CatalogRequest } from "../../api/types";
 import { ApiError } from "../../api/client";
@@ -14,6 +15,7 @@ import {
   AdminEmptyState,
   AdminPageHeader,
   AdminTable,
+  AdminTablePagination,
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -43,6 +45,9 @@ export function CatalogRequestsAdmin() {
 
   const { data, isLoading, isError, refetch } = useAdminCatalogRequests();
   const dismiss = useDismissCatalogRequest();
+  const [pageSize, setPageSize] = useState(10);
+  const allRows = data ?? [];
+  const paged = usePagedList<CatalogRequest>(allRows, pageSize);
   const [pendingDismiss, setPendingDismiss] = useState<CatalogRequest | null>(null);
   const [dismissError, setDismissError] = useState<string | null>(null);
   const [snack, setSnack] = useState<Snack>(null);
@@ -191,7 +196,7 @@ export function CatalogRequestsAdmin() {
 
       <AdminTable
         columns={columns}
-        rows={data}
+        rows={paged.items}
         rowKey="id"
         loading={isLoading}
         error={isError ? t("admin.requests.errorLoading") : undefined}
@@ -204,6 +209,18 @@ export function CatalogRequestsAdmin() {
           />
         }
       />
+
+      {allRows.length > pageSize && (
+        <AdminTablePagination
+          pageNumber={paged.pageNumber}
+          canGoNext={paged.canGoNext}
+          canGoPrevious={paged.canGoPrevious}
+          onNext={paged.goNext}
+          onPrevious={paged.goPrevious}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+        />
+      )}
 
       <AdminConfirmDialog
         open={!!pendingDismiss}

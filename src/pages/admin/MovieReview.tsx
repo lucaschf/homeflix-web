@@ -20,11 +20,12 @@ import { AlertCircle, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
   useMoviesNeedingReview,
+  usePagedList,
   usePromoteMovieToSeries,
   useRelinkMovie,
 } from "../../api/hooks";
 import type { NeedsReviewMovie, TmdbSuggestion } from "../../api/types";
-import { AdminPageHeader } from "../../components/admin";
+import { AdminPageHeader, AdminTablePagination } from "../../components/admin";
 import { PromoteToSeriesConfirmDialog } from "../../components/admin/PromoteToSeriesConfirmDialog";
 import { TmdbSuggestionsDialog } from "../../components/admin/TmdbSuggestionsDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -39,6 +40,10 @@ export function MovieReview() {
   const { data: movies, isLoading, isError, refetch } = useMoviesNeedingReview();
   const relink = useRelinkMovie();
   const promote = usePromoteMovieToSeries();
+
+  const [pageSize, setPageSize] = useState(10);
+  const allMovies = movies ?? [];
+  const paged = usePagedList<NeedsReviewMovie>(allMovies, pageSize);
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [activeMovie, setActiveMovie] = useState<NeedsReviewMovie | null>(null);
@@ -167,50 +172,64 @@ export function MovieReview() {
       )}
 
       {movies && movies.length > 0 && (
-        <TableContainer component={Paper} variant="outlined">
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>{t("admin.reviews.table.title")}</TableCell>
-                <TableCell>{t("admin.reviews.table.year")}</TableCell>
-                <TableCell>{t("admin.reviews.table.filePath")}</TableCell>
-                <TableCell align="right">{t("admin.reviews.table.actions")}</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {movies.map((movie) => (
-                <TableRow key={movie.id} hover>
-                  <TableCell>{movie.title}</TableCell>
-                  <TableCell>{movie.year}</TableCell>
-                  <TableCell
-                    sx={{
-                      maxWidth: 380,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      color: "text.secondary",
-                      fontFamily: "monospace",
-                      fontSize: 12,
-                    }}
-                    title={movie.file_path ?? ""}
-                  >
-                    {movie.file_path ?? "—"}
-                  </TableCell>
-                  <TableCell align="right">
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<Search size={14} />}
-                      onClick={() => openPicker(movie)}
-                    >
-                      {t("admin.reviews.findOnTmdb")}
-                    </Button>
-                  </TableCell>
+        <>
+          <TableContainer component={Paper} variant="outlined">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t("admin.reviews.table.title")}</TableCell>
+                  <TableCell>{t("admin.reviews.table.year")}</TableCell>
+                  <TableCell>{t("admin.reviews.table.filePath")}</TableCell>
+                  <TableCell align="right">{t("admin.reviews.table.actions")}</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {paged.items.map((movie) => (
+                  <TableRow key={movie.id} hover>
+                    <TableCell>{movie.title}</TableCell>
+                    <TableCell>{movie.year}</TableCell>
+                    <TableCell
+                      sx={{
+                        maxWidth: 380,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        color: "text.secondary",
+                        fontFamily: "monospace",
+                        fontSize: 12,
+                      }}
+                      title={movie.file_path ?? ""}
+                    >
+                      {movie.file_path ?? "—"}
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Search size={14} />}
+                        onClick={() => openPicker(movie)}
+                      >
+                        {t("admin.reviews.findOnTmdb")}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {allMovies.length > pageSize && (
+            <AdminTablePagination
+              pageNumber={paged.pageNumber}
+              canGoNext={paged.canGoNext}
+              canGoPrevious={paged.canGoPrevious}
+              onNext={paged.goNext}
+              onPrevious={paged.goPrevious}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
+          )}
+        </>
       )}
 
       <TmdbSuggestionsDialog

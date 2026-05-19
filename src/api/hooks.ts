@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   useInfiniteQuery,
   useMutation,
@@ -1339,7 +1339,158 @@ export interface AdminSeriesFilters {
   hasTmdbId?: boolean;
 }
 
-const ADMIN_PAGE_LIMIT = 30;
+const ADMIN_PAGE_LIMIT = 10;
+
+/**
+ * Page-size choices surfaced by the admin pagination footer.
+ * Keep modest — anything bigger than 100 starts hurting the
+ * cursor walk and the table scrolls anyway.
+ */
+export const ADMIN_PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+
+/**
+ * Shape returned by the paged-pagination wrapper used by the
+ * admin catalog tables. Wraps the underlying TanStack
+ * ``useInfiniteQuery`` so the consumer page renders one cursor
+ * page at a time with explicit Previous / Next controls instead
+ * of an infinite-scroll sentinel.
+ */
+export interface PagedQuery<T> {
+  items: T[];
+  pageNumber: number;
+  canGoNext: boolean;
+  canGoPrevious: boolean;
+  goNext: () => void;
+  goPrevious: () => void;
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  refetch: () => void;
+}
+
+interface PageEnvelope<T> {
+  data: T[];
+}
+
+interface InfiniteQueryShape<T> {
+  data?: { pages: PageEnvelope<T>[] };
+  hasNextPage?: boolean;
+  isLoading: boolean;
+  isFetching: boolean;
+  isError: boolean;
+  isFetchingNextPage: boolean;
+  fetchNextPage: () => Promise<unknown>;
+  refetch: () => Promise<unknown>;
+}
+
+/**
+ * Convert a TanStack ``useInfiniteQuery`` into a page-by-page
+ * navigation API. Re-uses every page already in the query cache
+ * (Previous is instant); only fires ``fetchNextPage`` when the
+ * caller advances past the last loaded page.
+ *
+ * ``resetKey`` controls when the cursor resets — usually a
+ * stringified filter signature. Changing it (e.g. the operator
+ * flips a filter chip) walks back to page 1.
+ */
+function usePagedInfiniteQuery<T>(
+  query: InfiniteQueryShape<T>,
+  resetKey: string,
+): PagedQuery<T> {
+  const [pageIndex, setPageIndex] = useState(0);
+  // Snap back to page 1 whenever the underlying filter changes —
+  // otherwise the operator would land on whatever index they
+  // were on under the old filter set. Done via the
+  // derived-state-from-prop pattern (one render with the old
+  // index, then a state flush) instead of ``useEffect`` so React
+  // 19's ``set-state-in-effect`` rule doesn't fire.
+  const [trackedKey, setTrackedKey] = useState(resetKey);
+  if (trackedKey !== resetKey) {
+    setTrackedKey(resetKey);
+    setPageIndex(0);
+  }
+
+  const pagesLoaded = query.data?.pages.length ?? 0;
+  const currentPage = query.data?.pages[pageIndex];
+  const items = currentPage?.data ?? [];
+
+  const canGoPrevious = pageIndex > 0;
+  const canGoNext = (query.hasNextPage ?? false) || pageIndex < pagesLoaded - 1;
+
+  const goNext = useCallback(() => {
+    if (pageIndex < pagesLoaded - 1) {
+      setPageIndex((p) => p + 1);
+      return;
+    }
+    if (query.hasNextPage && !query.isFetchingNextPage) {
+      void query.fetchNextPage().then(() => {
+        setPageIndex((p) => p + 1);
+      });
+    }
+  }, [pageIndex, pagesLoaded, query]);
+
+  const goPrevious = useCallback(() => {
+    if (pageIndex > 0) setPageIndex((p) => p - 1);
+  }, [pageIndex]);
+
+  return {
+    items,
+    pageNumber: pageIndex + 1,
+    canGoNext,
+    canGoPrevious,
+    goNext,
+    goPrevious,
+    isLoading: query.isLoading,
+    isFetching: query.isFetching || query.isFetchingNextPage,
+    isError: query.isError,
+    refetch: () => {
+      setPageIndex(0);
+      void query.refetch();
+    },
+  };
+}
+
+/**
+ * Client-side pagination for tables whose endpoint returns the
+ * full list in one shot (Users, Catalog Requests, Movie Review).
+ * Slices the array into pages without firing any extra requests
+ * — pairs with ``AdminTablePagination`` so the operator sees the
+ * same Prev / Next / page-size affordance as the cursor-paged
+ * tables. ``resetKey`` snaps back to page 1 on filter change,
+ * same convention as ``usePagedInfiniteQuery``.
+ */
+export function usePagedList<T>(
+  allItems: T[],
+  pageSize: number,
+  resetKey: string = "",
+): Pick<
+  PagedQuery<T>,
+  "items" | "pageNumber" | "canGoNext" | "canGoPrevious" | "goNext" | "goPrevious"
+> {
+  const [pageIndex, setPageIndex] = useState(0);
+  const [trackedKey, setTrackedKey] = useState(`${resetKey}|${pageSize}`);
+  const currentKey = `${resetKey}|${pageSize}`;
+  if (trackedKey !== currentKey) {
+    setTrackedKey(currentKey);
+    setPageIndex(0);
+  }
+
+  const totalPages = Math.max(1, Math.ceil(allItems.length / pageSize));
+  // Clamp the index so a row delete that shrinks ``allItems``
+  // doesn't leave the operator stranded past the last page.
+  const safeIndex = Math.min(pageIndex, totalPages - 1);
+  const start = safeIndex * pageSize;
+  const items = allItems.slice(start, start + pageSize);
+
+  return {
+    items,
+    pageNumber: safeIndex + 1,
+    canGoNext: safeIndex < totalPages - 1,
+    canGoPrevious: safeIndex > 0,
+    goNext: () => setPageIndex(safeIndex + 1),
+    goPrevious: () => setPageIndex(Math.max(0, safeIndex - 1)),
+  };
+}
 
 function appendCommonAdminParams(
   params: Record<string, string>,
@@ -1363,21 +1514,18 @@ function appendCommonAdminParams(
  * starts a fresh paginated walk instead of trying to splice new
  * pages into the previous filter's cursor.
  */
-export function useAdminMovies(filters: AdminMoviesFilters = {}) {
+export function useAdminMovies(
+  filters: AdminMoviesFilters = {},
+  options: { pageSize?: number } = {},
+) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
+  const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
+  const filterKey = `${filters.libraryId ?? ""}|${filters.hasTmdbId ?? ""}|${filters.needsReview ?? ""}|${pageSize}`;
   const query = useInfiniteQuery({
-    queryKey: [
-      "admin",
-      "catalog",
-      "movies",
-      lang,
-      filters.libraryId ?? "",
-      filters.hasTmdbId ?? "",
-      filters.needsReview ?? "",
-    ],
+    queryKey: ["admin", "catalog", "movies", lang, filterKey],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
-      const params: Record<string, string> = { lang, limit: String(ADMIN_PAGE_LIMIT) };
+      const params: Record<string, string> = { lang, limit: String(pageSize) };
       appendCommonAdminParams(params, pageParam, filters);
       if (filters.needsReview !== undefined) params.needs_review = String(filters.needsReview);
       return api.get<ListMoviesResponse>("/movies", params);
@@ -1386,21 +1534,7 @@ export function useAdminMovies(filters: AdminMoviesFilters = {}) {
     getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
   });
 
-  const items = useMemo<MovieSummary[]>(
-    () => query.data?.pages.flatMap((p) => p.data) ?? [],
-    [query.data],
-  );
-
-  return {
-    items,
-    isLoading: query.isLoading,
-    isFetching: query.isFetching,
-    isFetchingNextPage: query.isFetchingNextPage,
-    hasNextPage: !!query.hasNextPage,
-    fetchNextPage: query.fetchNextPage,
-    isError: query.isError,
-    refetch: query.refetch,
-  };
+  return usePagedInfiniteQuery<MovieSummary>(query, filterKey);
 }
 
 /**
@@ -1409,20 +1543,18 @@ export function useAdminMovies(filters: AdminMoviesFilters = {}) {
  * Same shape as ``useAdminMovies`` but the filter set is smaller —
  * series don't carry a ``needs_enrichment_review`` flag yet.
  */
-export function useAdminSeries(filters: AdminSeriesFilters = {}) {
+export function useAdminSeries(
+  filters: AdminSeriesFilters = {},
+  options: { pageSize?: number } = {},
+) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
+  const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
+  const filterKey = `${filters.libraryId ?? ""}|${filters.hasTmdbId ?? ""}|${pageSize}`;
   const query = useInfiniteQuery({
-    queryKey: [
-      "admin",
-      "catalog",
-      "series",
-      lang,
-      filters.libraryId ?? "",
-      filters.hasTmdbId ?? "",
-    ],
+    queryKey: ["admin", "catalog", "series", lang, filterKey],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
-      const params: Record<string, string> = { lang, limit: String(ADMIN_PAGE_LIMIT) };
+      const params: Record<string, string> = { lang, limit: String(pageSize) };
       appendCommonAdminParams(params, pageParam, filters);
       return api.get<ListSeriesResponse>("/series", params);
     },
@@ -1430,21 +1562,7 @@ export function useAdminSeries(filters: AdminSeriesFilters = {}) {
     getNextPageParam: (lastPage) => lastPage.metadata.pagination?.next_cursor ?? null,
   });
 
-  const items = useMemo<SeriesSummary[]>(
-    () => query.data?.pages.flatMap((p) => p.data) ?? [],
-    [query.data],
-  );
-
-  return {
-    items,
-    isLoading: query.isLoading,
-    isFetching: query.isFetching,
-    isFetchingNextPage: query.isFetchingNextPage,
-    hasNextPage: !!query.hasNextPage,
-    fetchNextPage: query.fetchNextPage,
-    isError: query.isError,
-    refetch: query.refetch,
-  };
+  return usePagedInfiniteQuery<SeriesSummary>(query, filterKey);
 }
 
 /**
@@ -1650,27 +1768,43 @@ export function useDeleteAdminUser() {
  * ``succeeded`` / ``failed`` without a manual refresh; once
  * everything is terminal we drop the interval to keep the page
  * idle-cheap.
+ *
+ * Pagination uses offset-based ``useInfiniteQuery`` against the
+ * ``GET /api/v1/admin/scans?limit=N&offset=M`` endpoint, wrapped
+ * by ``usePagedInfiniteQuery`` so the page renders one cursor
+ * page at a time with explicit Previous / Next.
  */
 export function useAdminScanRuns(
   kind?: AdminScanRunKind,
   trigger?: AdminScanRunTrigger,
+  options: { pageSize?: number } = {},
 ) {
-  return useQuery({
-    queryKey: ["admin", "scan-runs", kind ?? "all", trigger ?? "all"],
-    queryFn: async (): Promise<AdminScanRun[]> => {
+  const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
+  const filterKey = `${kind ?? "all"}|${trigger ?? "all"}|${pageSize}`;
+  const query = useInfiniteQuery({
+    queryKey: ["admin", "scan-runs", filterKey],
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
       const params = new URLSearchParams();
       if (kind) params.set("kind", kind);
       if (trigger) params.set("trigger", trigger);
-      const query = params.toString() ? `?${params.toString()}` : "";
-      const resp = await api.get<AdminScanRunsResponse>(`/admin/scans${query}`);
-      return resp.data;
+      params.set("limit", String(pageSize));
+      params.set("offset", String(pageParam));
+      const resp = await api.get<AdminScanRunsResponse>(`/admin/scans?${params.toString()}`);
+      // Offset-based feed has no cursor; the next page exists iff
+      // the current page is "full" (``length === pageSize``). On a
+      // partially-full page we know we hit the tail.
+      return { data: resp.data, nextOffset: resp.data.length === pageSize ? pageParam + pageSize : null };
     },
-    refetchInterval: (query) => {
-      const rows = query.state.data as AdminScanRun[] | undefined;
-      const anyRunning = rows?.some((r) => r.status === "running") ?? false;
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    refetchInterval: (q) => {
+      const pages = q.state.data?.pages ?? [];
+      const anyRunning = pages.some((p) => p.data.some((r) => r.status === "running"));
       return anyRunning ? 3000 : false;
     },
   });
+
+  return usePagedInfiniteQuery<AdminScanRun>(query, filterKey);
 }
 
 /**
