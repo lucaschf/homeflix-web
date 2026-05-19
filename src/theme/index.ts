@@ -85,7 +85,11 @@ const themeOptions: ThemeOptions = {
         },
         text: {
           primary: neutral[50],
-          secondary: neutral[400],
+          // ``#8A857E`` matches the admin design's ``--muted`` token
+          // — a warmer / slightly darker tone than ``neutral[400]``
+          // that the spec uses for every "muted" surface: eyebrows,
+          // page subtitles, sidebar inactive items, hint copy.
+          secondary: "#8A857E",
           disabled: neutral[600],
         },
         divider: neutral[700],

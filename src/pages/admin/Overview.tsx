@@ -121,8 +121,8 @@ export function AdminOverview() {
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
-          gap: 1.75,
-          mb: 3,
+          gap: 2.25,
+          mb: 3.5,
         }}
       >
         <StatCard

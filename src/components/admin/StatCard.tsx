@@ -41,9 +41,9 @@ export function StatCard({
         textAlign: "left",
         bgcolor: "rgba(255,255,255,0.025)",
         border: `1px solid ${baseBorder}`,
-        borderRadius: 1,
-        py: 2.5,
-        px: 2.75,
+        borderRadius: "8px",
+        py: 3,
+        px: 3,
         width: "100%",
         transition: "border-color 140ms ease, background-color 140ms ease",
         ...(onClick && {
@@ -60,7 +60,7 @@ export function StatCard({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          mb: 1.25,
+          mb: 2,
         }}
       >
         <Typography
@@ -87,7 +87,7 @@ export function StatCard({
         <Box
           sx={{
             fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-            fontSize: "1.875rem",
+            fontSize: "2.2rem",
             fontWeight: 500,
             letterSpacing: "-0.025em",
             color: alert ? "primary.main" : "text.primary",
@@ -101,7 +101,7 @@ export function StatCard({
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ mt: 1, fontSize: "0.78125rem" }}
+          sx={{ mt: 1.5, fontSize: "0.78125rem" }}
         >
           {sub}
         </Typography>
@@ -118,7 +118,7 @@ export function StatCard({
       sx={{
         display: "block",
         width: "100%",
-        borderRadius: 1,
+        borderRadius: "8px",
         textAlign: "left",
         "&:focus-visible": {
           outline: `2px solid ${theme.palette.primary.main}`,
