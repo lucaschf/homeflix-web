@@ -1,6 +1,6 @@
 import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import { Eye, Sparkles, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -21,9 +21,12 @@ import {
   AdminTablePagination,
   AdminToolbar,
   FilterChip,
+  ToolbarSearch,
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 type Snack = { message: string; severity: "success" | "error" | "warning" } | null;
 
@@ -59,18 +62,27 @@ export function MoviesAdmin() {
   const [libraryFilter, setLibraryFilter] = useState<string>("");
   const [enrichmentFilter, setEnrichmentFilter] = useState<EnrichmentFilterValue>("all");
   const [reviewFilter, setReviewFilter] = useState<ReviewFilterValue>("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [pendingDelete, setPendingDelete] = useState<MovieSummary | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [snack, setSnack] = useState<Snack>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const filters: AdminMoviesFilters = useMemo(() => {
     const f: AdminMoviesFilters = {};
     if (libraryFilter) f.libraryId = libraryFilter;
     if (enrichmentFilter !== "all") f.hasTmdbId = enrichmentFilter === "yes";
     if (reviewFilter !== "all") f.needsReview = true;
+    const trimmedQ = debouncedSearch.trim();
+    if (trimmedQ) f.q = trimmedQ;
     return f;
-  }, [libraryFilter, enrichmentFilter, reviewFilter]);
+  }, [libraryFilter, enrichmentFilter, reviewFilter, debouncedSearch]);
 
   const moviesQuery = useAdminMovies(filters, { pageSize });
   const {
@@ -258,6 +270,11 @@ export function MoviesAdmin() {
         subtitle={t("admin.catalog.movies.subtitle")}
         toolbar={
           <AdminToolbar>
+            <ToolbarSearch
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder={t("admin.catalog.filter.searchPlaceholder")}
+            />
             <FilterChip
               label={t("admin.catalog.filter.library")}
               value={libraryFilter}
