@@ -23,7 +23,7 @@ export function AdminTopbar({ collapsed, onToggleCollapsed }: AdminTopbarProps) 
   return (
     <Box
       sx={{
-        height: 64,
+        height: 86,
         flexShrink: 0,
         display: "flex",
         alignItems: "center",
@@ -40,7 +40,7 @@ export function AdminTopbar({ collapsed, onToggleCollapsed }: AdminTopbarProps) 
           sx={{ color: "text.secondary" }}
           aria-label={t(collapsed ? "admin.topbar.expand" : "admin.topbar.collapse")}
         >
-          {collapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+          {collapsed ? <PanelLeft size={22} /> : <PanelLeftClose size={22} />}
         </IconButton>
       </Tooltip>
 

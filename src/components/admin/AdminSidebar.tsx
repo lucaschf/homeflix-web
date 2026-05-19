@@ -136,7 +136,7 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
                   fontSize: "0.6875rem",
                   pt: 1.5,
                   pb: 1,
-                  pl: 2.75,
+                  pl: 4,
                   letterSpacing: "0.18em",
                 }}
               >
@@ -173,17 +173,17 @@ function BrandRow({ collapsed }: { collapsed: boolean }) {
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 1.25,
-        px: 2.25,
+        gap: 1.5,
+        px: 4,
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         textDecoration: "none",
         color: "text.primary",
-        height: 64,
+        height: 86,
         flexShrink: 0,
       }}
     >
       <Box sx={{ display: "flex", flexShrink: 0, color: "primary.main" }}>
-        <Logo size={28} />
+        <Logo size={34} />
       </Box>
       {!collapsed && (
         <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
@@ -238,7 +238,7 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
         alignItems: "center",
         gap: 1.75,
         py: 1.5,
-        px: collapsed ? 0 : 2.75,
+        px: collapsed ? 0 : 4,
         justifyContent: collapsed ? "center" : "flex-start",
         bgcolor: isActive ? "rgba(217,119,87,0.07)" : "transparent",
         color: isActive ? "text.primary" : "rgba(245,241,235,0.7)",
@@ -267,7 +267,7 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
         />
       )}
       <Icon
-        size={20}
+        size={24}
         color={isActive ? "#D97757" : "currentColor"}
         aria-hidden
       />
@@ -312,9 +312,9 @@ function BackToAppRow({ collapsed }: { collapsed: boolean }) {
         display: "flex",
         alignItems: "center",
         justifyContent: collapsed ? "center" : "flex-start",
-        gap: 1.5,
+        gap: 1.75,
         py: 2,
-        px: collapsed ? 0 : 2.75,
+        px: collapsed ? 0 : 4,
         borderTop: "1px solid rgba(255,255,255,0.08)",
         color: "text.secondary",
         textDecoration: "none",
@@ -323,7 +323,7 @@ function BackToAppRow({ collapsed }: { collapsed: boolean }) {
         "&:hover": { color: "text.primary", bgcolor: "rgba(255,255,255,0.03)" },
       }}
     >
-      <ArrowLeft size={18} aria-hidden />
+      <ArrowLeft size={21} aria-hidden />
       {!collapsed && <Box>{t("admin.nav.backToApp")}</Box>}
     </Box>
   );

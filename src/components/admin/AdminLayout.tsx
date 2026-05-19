@@ -39,7 +39,7 @@ function readDensity(fallback: TableDensity): TableDensity {
  * Holds two persistent operator preferences in ``localStorage``:
  *
  * - ``sidebar.collapsed`` — toggled from the topbar; flips the rail
- *   between 240 px (full) and 64 px (icon-only).
+ *   between 320 px (full) and 88 px (icon-only).
  * - ``density`` — drives the ``data-density`` attribute on ``<main>``
  *   so descendant tables can opt into the compact 40 px row layout.
  *   The actual toggle UI ships in a later phase; for now the
@@ -72,7 +72,7 @@ export function AdminLayout() {
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: `${collapsed ? 64 : 240}px 1fr`,
+        gridTemplateColumns: `${collapsed ? 88 : 320}px 1fr`,
         gridTemplateRows: "auto 1fr",
         gridTemplateAreas: '"sidebar topbar" "sidebar main"',
         height: "100vh",

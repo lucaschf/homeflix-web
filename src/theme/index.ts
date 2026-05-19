@@ -186,6 +186,16 @@ const themeOptions: ThemeOptions = {
     },
     MuiCssBaseline: {
       styleOverrides: {
+        // Bump the document root so every ``rem``-based size in
+        // the theme + hardcoded ``sx`` values scales up ~19 %.
+        // 16 px was visibly tight against the admin design spec
+        // (subtitle, eyebrows and sub-label copy all reading
+        // smaller than the mockup). 19 px lands those at
+        // 13-17 px while keeping h1 + stat numbers in their
+        // intended range (28-36 px).
+        html: {
+          fontSize: "19px",
+        },
         body: {
           backgroundColor: neutral[950],
           scrollbarColor: `${neutral[700]} transparent`,

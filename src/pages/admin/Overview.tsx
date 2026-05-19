@@ -177,7 +177,14 @@ export function AdminOverview() {
         />
       </Box>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1.1fr 1fr" },
+          gap: 2,
+          alignItems: "start",
+        }}
+      >
         <RecentlyFlaggedPanel
           movies={reviewQueue.data}
           loading={reviewQueue.isLoading}
