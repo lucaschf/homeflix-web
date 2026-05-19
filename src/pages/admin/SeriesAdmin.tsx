@@ -1,6 +1,6 @@
 import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import { Eye, Sparkles, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -20,9 +20,12 @@ import {
   AdminTablePagination,
   AdminToolbar,
   FilterChip,
+  ToolbarSearch,
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 type Snack = { message: string; severity: "success" | "error" | "warning" } | null;
 type EnrichmentFilterValue = "all" | "yes" | "no";
@@ -47,17 +50,26 @@ export function SeriesAdmin() {
 
   const [libraryFilter, setLibraryFilter] = useState<string>("");
   const [enrichmentFilter, setEnrichmentFilter] = useState<EnrichmentFilterValue>("all");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pageSize, setPageSize] = useState(10);
   const [pendingDelete, setPendingDelete] = useState<SeriesSummary | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [snack, setSnack] = useState<Snack>(null);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const filters: AdminSeriesFilters = useMemo(() => {
     const f: AdminSeriesFilters = {};
     if (libraryFilter) f.libraryId = libraryFilter;
     if (enrichmentFilter !== "all") f.hasTmdbId = enrichmentFilter === "yes";
+    const trimmedQ = debouncedSearch.trim();
+    if (trimmedQ) f.q = trimmedQ;
     return f;
-  }, [libraryFilter, enrichmentFilter]);
+  }, [libraryFilter, enrichmentFilter, debouncedSearch]);
 
   const {
     items,
@@ -270,6 +282,11 @@ export function SeriesAdmin() {
         subtitle={t("admin.catalog.series.subtitle")}
         toolbar={
           <AdminToolbar>
+            <ToolbarSearch
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder={t("admin.catalog.filter.searchPlaceholder")}
+            />
             <FilterChip
               label={t("admin.catalog.filter.library")}
               value={libraryFilter}

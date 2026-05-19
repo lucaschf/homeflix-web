@@ -103,6 +103,7 @@ export function FilterChip<V extends string | number>({
     <Select<V>
       size="small"
       value={value}
+      displayEmpty
       onChange={(e) => onChange(e.target.value as V)}
       renderValue={(v) => {
         const opt = options.find((o) => o.value === v);

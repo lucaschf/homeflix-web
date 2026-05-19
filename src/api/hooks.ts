@@ -1332,11 +1332,15 @@ export interface AdminMoviesFilters {
   hasTmdbId?: boolean;
   /** ``true`` keeps only rows the enricher flagged for review. */
   needsReview?: boolean;
+  /** Case-insensitive substring match against title / original_title. */
+  q?: string;
 }
 
 export interface AdminSeriesFilters {
   libraryId?: string;
   hasTmdbId?: boolean;
+  /** Case-insensitive substring match against title / original_title. */
+  q?: string;
 }
 
 const ADMIN_PAGE_LIMIT = 10;
@@ -1495,11 +1499,13 @@ export function usePagedList<T>(
 function appendCommonAdminParams(
   params: Record<string, string>,
   pageParam: string | null,
-  filters: { libraryId?: string; hasTmdbId?: boolean },
+  filters: { libraryId?: string; hasTmdbId?: boolean; q?: string },
 ): void {
   if (pageParam) params.cursor = pageParam;
   if (filters.libraryId) params.library_id = filters.libraryId;
   if (filters.hasTmdbId !== undefined) params.has_tmdb_id = String(filters.hasTmdbId);
+  const trimmedQ = filters.q?.trim();
+  if (trimmedQ) params.q = trimmedQ;
 }
 
 /**
@@ -1521,7 +1527,8 @@ export function useAdminMovies(
   const { i18n } = useTranslation();
   const lang = i18n.language;
   const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
-  const filterKey = `${filters.libraryId ?? ""}|${filters.hasTmdbId ?? ""}|${filters.needsReview ?? ""}|${pageSize}`;
+  const normalizedQ = filters.q?.trim() ?? "";
+  const filterKey = `${filters.libraryId ?? ""}|${filters.hasTmdbId ?? ""}|${filters.needsReview ?? ""}|${normalizedQ}|${pageSize}`;
   const query = useInfiniteQuery({
     queryKey: ["admin", "catalog", "movies", lang, filterKey],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
@@ -1550,7 +1557,8 @@ export function useAdminSeries(
   const { i18n } = useTranslation();
   const lang = i18n.language;
   const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
-  const filterKey = `${filters.libraryId ?? ""}|${filters.hasTmdbId ?? ""}|${pageSize}`;
+  const normalizedQ = filters.q?.trim() ?? "";
+  const filterKey = `${filters.libraryId ?? ""}|${filters.hasTmdbId ?? ""}|${normalizedQ}|${pageSize}`;
   const query = useInfiniteQuery({
     queryKey: ["admin", "catalog", "series", lang, filterKey],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {

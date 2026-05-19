@@ -674,6 +674,7 @@
         "library": "Biblioteca",
         "tmdb": "TMDB",
         "review": "Revisão",
+        "searchPlaceholder": "Buscar por título…",
         "tmdbOption": {
           "all": "Todos",
           "yes": "Enriquecido",
