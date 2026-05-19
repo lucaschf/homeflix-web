@@ -113,6 +113,7 @@ export function AdminOverview() {
   return (
     <>
       <AdminPageHeader
+        breadcrumb={[t("admin.nav.overview")]}
         title={t("admin.overview.title")}
         subtitle={t("admin.overview.subtitle")}
       />

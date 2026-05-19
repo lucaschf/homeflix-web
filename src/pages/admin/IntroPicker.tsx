@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
 import { useListAllSeries, useSeriesDetail } from "../../api/hooks";
 import type { EpisodeOutput, SeasonOutput, SeriesDetail } from "../../api/types";
+import { AdminPageHeader } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 type IntroFilter = "all" | "unmarked" | "low_confidence" | "manual";
@@ -68,12 +69,11 @@ export function IntroPicker() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Stack spacing={1} mb={3}>
-        <Typography variant="h2">{t("admin.intros.title")}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("admin.intros.subtitle")}
-        </Typography>
-      </Stack>
+      <AdminPageHeader
+        breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.intros")]}
+        title={t("admin.intros.title")}
+        subtitle={t("admin.intros.subtitle")}
+      />
 
       <Box sx={{ display: "flex", gap: 2, alignItems: "stretch" }}>
         <Paper

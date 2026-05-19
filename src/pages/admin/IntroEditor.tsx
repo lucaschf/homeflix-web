@@ -27,6 +27,7 @@ import {
   useSetEpisodeIntro,
 } from "../../api/hooks";
 import type { EpisodeOutput, SeriesDetail } from "../../api/types";
+import { AdminPageHeader } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 function formatHms(totalSeconds: number): string {
@@ -66,12 +67,24 @@ export function IntroEditor() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Stack direction="row" alignItems="center" gap={1} mb={2}>
-        <IconButton onClick={() => navigate("/admin/intros")} aria-label={t("admin.intros.back")}>
-          <ArrowLeft size={20} />
-        </IconButton>
-        <Typography variant="h2">{t("admin.intros.editorTitle")}</Typography>
-      </Stack>
+      <AdminPageHeader
+        breadcrumb={[
+          t("admin.nav.group.catalog"),
+          t("admin.nav.intros"),
+          t("admin.intros.editorTitle"),
+        ]}
+        title={
+          <Stack direction="row" alignItems="center" gap={1}>
+            <IconButton
+              onClick={() => navigate("/admin/intros")}
+              aria-label={t("admin.intros.back")}
+            >
+              <ArrowLeft size={20} />
+            </IconButton>
+            {t("admin.intros.editorTitle")}
+          </Stack>
+        }
+      />
 
       {isLoading && <Typography color="text.secondary">{t("admin.intros.loading")}</Typography>}
 
