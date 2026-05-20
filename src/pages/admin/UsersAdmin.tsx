@@ -1,6 +1,5 @@
 import {
   Box,
-  Dialog,
   DialogContent,
   IconButton,
   MenuItem,
@@ -27,6 +26,7 @@ import {
   AdminBadge,
   AdminButton,
   AdminConfirmDialog,
+  AdminDialog,
   AdminEmptyState,
   AdminFormSection,
   AdminInput,
@@ -364,18 +364,11 @@ function InviteUserDialog({ open, onClose, onSuccess }: InviteUserDialogProps) {
   };
 
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={create.isPending ? undefined : onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: "#0d0d0d",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 1.5,
-        },
-      }}
     >
       <DialogContent sx={{ p: 3 }}>
         <Stack spacing={0.5} sx={{ mb: 2.5 }}>
@@ -479,6 +472,6 @@ function InviteUserDialog({ open, onClose, onSuccess }: InviteUserDialogProps) {
           </Stack>
         </Box>
       </DialogContent>
-    </Dialog>
+    </AdminDialog>
   );
 }

@@ -2,7 +2,6 @@ import {
   Alert,
   Box,
   CircularProgress,
-  Dialog,
   DialogContent,
   DialogTitle,
   IconButton,
@@ -14,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useMovieTmdbSuggestions } from "../../api/hooks";
 import type { TmdbSuggestion } from "../../api/types";
 import { neutral } from "../../theme/colors";
+import { AdminDialog } from "./AdminDialog";
 
 interface TmdbSuggestionsDialogProps {
   open: boolean;
@@ -52,7 +52,7 @@ export function TmdbSuggestionsDialog({
   const hasResults = !!data && (data.movies.length > 0 || data.series.length > 0);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+    <AdminDialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle
         sx={{
           display: "flex",
@@ -121,7 +121,7 @@ export function TmdbSuggestionsDialog({
           />
         )}
       </DialogContent>
-    </Dialog>
+    </AdminDialog>
   );
 }
 
