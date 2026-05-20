@@ -1124,6 +1124,10 @@ interface RequestCatalogVars {
   tmdb_id: number;
   /** Whether the target is a movie or series. */
   media_type: "movie" | "series";
+  /** Title snapshot at request time — surfaced in the admin queue
+   *  so the operator doesn't need to chase the tmdb id back to a
+   *  human-readable label. */
+  title?: string | null;
   /** TMDB collection id this request originated from, when applicable. */
   collection_tmdb_id?: number | null;
   /** Subscribe to the arrival notification at the same time. */
@@ -1162,6 +1166,10 @@ export function useRequestCatalogInclusion() {
 interface SubscribeNotifyVars {
   tmdb_id: number;
   media_type: "movie" | "series";
+  /** Title snapshot at subscription time — same purpose as on
+   *  ``RequestCatalogVars``: lets the admin queue read the title
+   *  without a TMDB round-trip. */
+  title?: string | null;
   collection_tmdb_id?: number | null;
 }
 

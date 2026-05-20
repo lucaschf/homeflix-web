@@ -620,8 +620,9 @@
       "emptyTitle": "No pending requests",
       "emptyBody": "Members register a request by clicking “Request inclusion” from a Collection Detail page.",
       "errorLoading": "Couldn't load the request queue.",
+      "untitled": "Untitled · pre-snapshot row",
       "col": {
-        "tmdb": "TMDB",
+        "title": "Title",
         "type": "Type",
         "collection": "Collection",
         "notify": "Notify",

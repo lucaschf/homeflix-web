@@ -620,8 +620,9 @@
       "emptyTitle": "Sem solicitações pendentes",
       "emptyBody": "Membros registram solicitações clicando em “Solicitar inclusão” numa página de Collection Detail.",
       "errorLoading": "Não foi possível carregar a fila.",
+      "untitled": "Sem título · linha antiga",
       "col": {
-        "tmdb": "TMDB",
+        "title": "Título",
         "type": "Tipo",
         "collection": "Coleção",
         "notify": "Notificar",
