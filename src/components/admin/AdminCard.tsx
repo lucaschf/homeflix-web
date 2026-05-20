@@ -76,17 +76,17 @@ export function AdminCardHeader({
               <Icon size={16} aria-hidden />
             </Box>
           )}
-          <Typography
-            variant="h3"
-            component="span"
-            sx={{ fontSize: "0.9375rem", fontWeight: 600 }}
-          >
+          <Typography variant="h3" component="span">
             {title}
           </Typography>
           {titleBadge}
         </Stack>
         {subtitle && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography
+            variant="cardSubtitle"
+            color="text.secondary"
+            sx={{ mt: 0.5 }}
+          >
             {subtitle}
           </Typography>
         )}

@@ -84,18 +84,12 @@ export function StatCard({
       {loading ? (
         <Skeleton variant="rectangular" width={120} height={32} sx={{ borderRadius: 0.5 }} />
       ) : (
-        <Box
-          sx={{
-            fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-            fontSize: "2.2rem",
-            fontWeight: 500,
-            letterSpacing: "-0.025em",
-            color: alert ? "primary.main" : "text.primary",
-            lineHeight: 1,
-          }}
+        <Typography
+          variant="statValue"
+          sx={{ color: alert ? "primary.main" : "text.primary" }}
         >
           {value}
-        </Box>
+        </Typography>
       )}
       {sub && (
         <Typography
