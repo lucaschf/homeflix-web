@@ -8,10 +8,11 @@ import {
   Typography,
 } from "@mui/material";
 import { Play, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import { useAdminScanRuns, useTriggerBulkEnrich } from "../../api/hooks";
+import type { AdminScanRun } from "../../api/types";
 import {
   AdminBadge,
   AdminButton,
@@ -21,6 +22,7 @@ import {
   AdminTablePagination,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { formatElapsed, useElapsedSeconds } from "./components/elapsed";
 import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -42,6 +44,15 @@ export function EnrichAdmin() {
   const [force, setForce] = useState(false);
   const [snack, setSnack] = useState<Snack>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const inflightRun: AdminScanRun | undefined = useMemo(
+    () => runs.items.find((r) => r.status === "running"),
+    [runs.items],
+  );
+  const isInflight = !!inflightRun;
+  const elapsed = useElapsedSeconds(inflightRun?.started_at);
+  const triggerBusy = trigger.isPending;
+  const canRun = !isInflight && !triggerBusy;
 
   const onTrigger = async () => {
     setError(null);
@@ -71,51 +82,87 @@ export function EnrichAdmin() {
           <AdminCardHeader
             icon={Sparkles}
             title={t("admin.enrich.trigger.title")}
-            subtitle={t("admin.enrich.trigger.subtitle")}
+            subtitle={
+              isInflight
+                ? t("admin.enrich.trigger.inflightSubtitle")
+                : t("admin.enrich.trigger.subtitle")
+            }
+            action={
+              isInflight ? (
+                <AdminBadge tone="warn">
+                  <Box
+                    component="span"
+                    sx={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      bgcolor: "#f5c46a",
+                      mr: 0.75,
+                      display: "inline-block",
+                    }}
+                  />
+                  {t("admin.enrich.trigger.running")}
+                </AdminBadge>
+              ) : undefined
+            }
           />
 
           <Stack
             direction={{ xs: "column", md: "row" }}
-            spacing={2}
-            alignItems={{ md: "center" }}
-            justifyContent="space-between"
+            spacing={3}
+            alignItems="flex-start"
+            flexWrap="wrap"
           >
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={force}
-                  onChange={(e) => setForce(e.target.checked)}
-                  size="small"
-                />
-              }
-              label={
-                <Box>
-                  <Typography variant="body2" fontWeight={500}>
-                    {t("admin.enrich.trigger.forceLabel")}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("admin.enrich.trigger.forceHelper")}
-                  </Typography>
-                </Box>
-              }
-              sx={{ alignItems: "flex-start", m: 0 }}
-            />
-            <Box sx={{ flexShrink: 0 }}>
+            <Box sx={{ flex: "1 1 360px", minWidth: 0 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={force}
+                    onChange={(e) => setForce(e.target.checked)}
+                    size="small"
+                    disabled={isInflight}
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={500}>
+                      {t("admin.enrich.trigger.forceLabel")}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {t("admin.enrich.trigger.forceHelper")}
+                    </Typography>
+                  </Box>
+                }
+                sx={{ alignItems: "flex-start", m: 0 }}
+              />
+            </Box>
+
+            <Box
+              sx={{
+                flexShrink: 0,
+                display: "flex",
+                flexDirection: "column",
+                gap: 1.25,
+                minWidth: 200,
+              }}
+            >
               <AdminButton
                 variant="primary"
                 icon={
-                  trigger.isPending ? (
+                  triggerBusy ? (
                     <CircularProgress size={12} sx={{ color: "inherit" }} />
                   ) : (
                     <Play size={14} />
                   )
                 }
                 onClick={() => void onTrigger()}
-                disabled={trigger.isPending}
+                disabled={!canRun}
               >
-                {trigger.isPending
-                  ? t("admin.enrich.trigger.submitting")
-                  : t("admin.enrich.trigger.cta")}
+                {isInflight
+                  ? t("admin.enrich.trigger.inflightCta")
+                  : triggerBusy
+                    ? t("admin.enrich.trigger.submitting")
+                    : t("admin.enrich.trigger.cta")}
               </AdminButton>
             </Box>
           </Stack>
@@ -126,6 +173,57 @@ export function EnrichAdmin() {
             </Typography>
           )}
         </AdminCard>
+
+        {isInflight && inflightRun && (
+          <AdminCard
+            sx={{
+              borderColor: "rgba(245,196,106,0.30)",
+              bgcolor: "rgba(245,196,106,0.04)",
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  bgcolor: "rgba(245,196,106,0.10)",
+                  border: "1px solid rgba(245,196,106,0.30)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  animation: "homeflix-spin 1.6s linear infinite",
+                  "@keyframes homeflix-spin": {
+                    "0%": { transform: "rotate(0deg)" },
+                    "100%": { transform: "rotate(360deg)" },
+                  },
+                }}
+              >
+                <Sparkles size={16} color="#f5c46a" aria-hidden />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body2" sx={{ color: "#f5c46a", fontWeight: 500 }}>
+                  {t("admin.enrich.inflight.title")}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: "block",
+                    mt: 0.5,
+                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    color: "rgba(245,241,235,0.6)",
+                  }}
+                >
+                  {t("admin.enrich.inflight.details", {
+                    elapsed: formatElapsed(elapsed),
+                    runId: inflightRun.id,
+                  })}
+                </Typography>
+              </Box>
+            </Stack>
+          </AdminCard>
+        )}
 
         <AdminCard>
           <AdminCardHeader
