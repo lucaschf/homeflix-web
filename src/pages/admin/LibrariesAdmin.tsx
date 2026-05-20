@@ -81,11 +81,7 @@ export function LibrariesAdmin() {
               <Typography variant="body2" fontWeight={500} noWrap>
                 {lib.name}
               </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
-              >
+              <Typography variant="metaMono" color="text.secondary">
                 {lib.id}
               </Typography>
             </Box>
@@ -101,7 +97,7 @@ export function LibrariesAdmin() {
             sx={{
               maxWidth: 360,
               fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-              fontSize: "0.6875rem",
+              fontSize: "0.78125rem",
               color: "text.secondary",
             }}
           >

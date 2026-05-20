@@ -172,13 +172,9 @@ export function UserDetailAdmin() {
               </Typography>
             </Stack>
             <Typography
-              variant="caption"
+              variant="metaMono"
               color="text.secondary"
-              sx={{
-                display: "block",
-                mt: 1,
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-              }}
+              sx={{ display: "block", mt: 1 }}
             >
               {data.id}
             </Typography>

@@ -444,13 +444,9 @@ function EditorForm({
                 {t("admin.intros.clear")}
               </AdminButton>
               <Typography
-                variant="caption"
+                variant="metaMono"
                 color="text.secondary"
-                sx={{
-                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                  alignSelf: "center",
-                  ml: "auto",
-                }}
+                sx={{ alignSelf: "center", ml: "auto" }}
               >
                 {t("admin.intros.currentTime")}: {formatHms(currentTime)}
               </Typography>
@@ -525,13 +521,9 @@ function EditorForm({
                 : ""}
           </Typography>
           <Typography
-            variant="caption"
+            variant="metaMono"
             color="text.secondary"
-            sx={{
-              display: "block",
-              mt: 1,
-              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            }}
+            sx={{ display: "block", mt: 1 }}
           >
             {formatHms(startSeconds)} → {formatHms(endSeconds)}
           </Typography>

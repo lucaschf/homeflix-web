@@ -345,14 +345,7 @@ function FlaggedRow({
           <Typography variant="body2" fontWeight={500} noWrap sx={{ minWidth: 0 }}>
             {movie.title}
           </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-              fontSize: "0.75rem",
-            }}
-          >
+          <Typography variant="metaMono" color="text.secondary">
             {movie.year}
           </Typography>
           <AdminBadge tone="peach">
@@ -360,11 +353,10 @@ function FlaggedRow({
           </AdminBadge>
         </Box>
         <Typography
-          variant="body2"
+          variant="metaMono"
           color="text.secondary"
           sx={{
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            fontSize: "0.6875rem",
+            display: "block",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",

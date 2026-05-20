@@ -83,15 +83,11 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
               },
             }}
           />
-          <Stack
-            direction="row"
-            justifyContent="space-between"
-            sx={{ mt: 1, fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
-          >
-            <Typography variant="caption" color="text.secondary">
+          <Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}>
+            <Typography variant="metaMono" color="text.secondary">
               {formatBytes(stats.size_bytes)}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="metaMono" color="text.secondary">
               {t("admin.system.hls.occupancy.cap", { cap: formatBytes(stats.max_bytes) })}
             </Typography>
           </Stack>
@@ -146,12 +142,8 @@ function StatBlock({
         {label}
       </Typography>
       <Typography
-        variant="body2"
-        sx={{
-          mt: 0.5,
-          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-          color: muted ? "text.disabled" : "text.primary",
-        }}
+        variant="metaMono"
+        sx={{ mt: 0.5, color: muted ? "text.disabled" : "text.primary" }}
       >
         {value}
       </Typography>

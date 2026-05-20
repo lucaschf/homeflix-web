@@ -83,15 +83,14 @@ export function CatalogRequestsAdmin() {
           <Box sx={{ color: "text.secondary", display: "flex", flexShrink: 0 }}>
             <Inbox size={14} aria-hidden />
           </Box>
-          <Box
+          <Typography
+            variant="metaMono"
             component="a"
             href={tmdbUrl(r)}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
             sx={{
-              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-              fontSize: "0.78125rem",
               color: "primary.main",
               textDecoration: "none",
               display: "flex",
@@ -102,7 +101,7 @@ export function CatalogRequestsAdmin() {
           >
             {r.media_type === "movie" ? "movie" : "tv"}/{r.tmdb_id}
             <ExternalLink size={11} aria-hidden />
-          </Box>
+          </Typography>
         </Stack>
       ),
     },

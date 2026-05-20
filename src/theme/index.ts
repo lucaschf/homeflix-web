@@ -48,6 +48,7 @@ declare module "@mui/material/styles" {
     breadcrumb: React.CSSProperties;
     cardSubtitle: React.CSSProperties;
     statValue: React.CSSProperties;
+    metaMono: React.CSSProperties;
   }
   interface TypographyVariantsOptions {
     overlayTitle?: React.CSSProperties;
@@ -59,6 +60,7 @@ declare module "@mui/material/styles" {
     breadcrumb?: React.CSSProperties;
     cardSubtitle?: React.CSSProperties;
     statValue?: React.CSSProperties;
+    metaMono?: React.CSSProperties;
   }
 }
 
@@ -73,6 +75,7 @@ declare module "@mui/material/Typography" {
     breadcrumb: true;
     cardSubtitle: true;
     statValue: true;
+    metaMono: true;
   }
 }
 
@@ -210,6 +213,11 @@ const themeOptions: ThemeOptions = {
       letterSpacing: "-0.025em",
       lineHeight: 1,
     },
+    metaMono: {
+      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      fontSize: "0.78125rem",
+      lineHeight: 1.4,
+    },
   },
   shape: {
     borderRadius: 8,
@@ -235,6 +243,7 @@ const themeOptions: ThemeOptions = {
           breadcrumb: "div",
           cardSubtitle: "p",
           statValue: "div",
+          metaMono: "span",
         },
       },
     },
