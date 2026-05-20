@@ -758,7 +758,8 @@
       "bulkPartial": "{{succeeded}} bem-sucedidos, {{failed}} falharam.",
       "confirm": "Aplicar",
       "cancel": "Cancelar",
-      "noNextUnmarked": "Não há mais episódios sem marcador."
+      "noNextUnmarked": "Não há mais episódios sem marcador.",
+      "noEpisodesForFilter": "Nenhum episódio bate com o filtro atual."
     },
     "reviews": {
       "title": "Fila de revisão de filmes",

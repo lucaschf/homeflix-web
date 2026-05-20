@@ -758,7 +758,8 @@
       "bulkPartial": "{{succeeded}} succeeded, {{failed}} failed.",
       "confirm": "Apply",
       "cancel": "Cancel",
-      "noNextUnmarked": "No more unmarked episodes."
+      "noNextUnmarked": "No more unmarked episodes.",
+      "noEpisodesForFilter": "No episodes match the current filter."
     },
     "reviews": {
       "title": "Movie review queue",
