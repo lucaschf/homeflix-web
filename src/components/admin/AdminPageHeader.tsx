@@ -45,17 +45,14 @@ export function AdminPageHeader({
   return (
     <Box component="header" sx={{ mb: 3.5 }}>
       {fullBreadcrumb && (
-        <Box
+        <Typography
+          variant="breadcrumb"
+          color="text.secondary"
           sx={{
             display: "flex",
             alignItems: "center",
             gap: 1,
             mb: 1.5,
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            fontSize: "0.8rem",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "text.secondary",
           }}
         >
           {fullBreadcrumb.map((segment, i) => (
@@ -74,7 +71,7 @@ export function AdminPageHeader({
               </Box>
             </Fragment>
           ))}
-        </Box>
+        </Typography>
       )}
       <Box
         sx={{
@@ -95,17 +92,8 @@ export function AdminPageHeader({
             }}
           >
             <Typography
-              variant="h1"
-              component="h1"
-              sx={{
-                m: 0,
-                fontFamily: "'Space Grotesk', 'Inter', sans-serif",
-                fontSize: "2rem",
-                fontWeight: 600,
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                color: "text.primary",
-              }}
+              variant="pageTitle"
+              sx={{ m: 0, color: "text.primary" }}
             >
               {title}
             </Typography>
@@ -113,13 +101,11 @@ export function AdminPageHeader({
           </Box>
           {subtitle && (
             <Typography
-              variant="body2"
+              variant="pageSubtitle"
               sx={{
                 mt: 1,
-                fontSize: "1rem",
                 color: "rgba(245,241,235,0.55)",
                 maxWidth: 720,
-                lineHeight: 1.55,
               }}
             >
               {subtitle}

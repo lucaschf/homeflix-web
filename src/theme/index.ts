@@ -1,5 +1,6 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 import { error, info, neutral, peach, success, warning } from "./colors";
+import React from "react";
 
 // -- Overlay token namespace ---------------------------------------------------
 //
@@ -42,12 +43,22 @@ declare module "@mui/material/styles" {
     overlaySubtitle: React.CSSProperties;
     overlayTimestamp: React.CSSProperties;
     eyebrow: React.CSSProperties;
+    pageTitle: React.CSSProperties;
+    pageSubtitle: React.CSSProperties;
+    breadcrumb: React.CSSProperties;
+    cardSubtitle: React.CSSProperties;
+    statValue: React.CSSProperties;
   }
   interface TypographyVariantsOptions {
     overlayTitle?: React.CSSProperties;
     overlaySubtitle?: React.CSSProperties;
     overlayTimestamp?: React.CSSProperties;
     eyebrow?: React.CSSProperties;
+    pageTitle?: React.CSSProperties;
+    pageSubtitle?: React.CSSProperties;
+    breadcrumb?: React.CSSProperties;
+    cardSubtitle?: React.CSSProperties;
+    statValue?: React.CSSProperties;
   }
 }
 
@@ -57,6 +68,11 @@ declare module "@mui/material/Typography" {
     overlaySubtitle: true;
     overlayTimestamp: true;
     eyebrow: true;
+    pageTitle: true;
+    pageSubtitle: true;
+    breadcrumb: true;
+    cardSubtitle: true;
+    statValue: true;
   }
 }
 
@@ -165,6 +181,35 @@ const themeOptions: ThemeOptions = {
         fontSize: "0.95rem",
       },
     },
+    pageTitle: {
+      fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
+      fontSize: "2rem",
+      fontWeight: 600,
+      lineHeight: 1.1,
+      letterSpacing: "-0.02em",
+    },
+    pageSubtitle: {
+      fontSize: "1rem",
+      lineHeight: 1.55,
+    },
+    breadcrumb: {
+      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      fontSize: "0.8rem",
+      letterSpacing: "0.1em",
+      textTransform: "uppercase",
+      lineHeight: 1.4,
+    },
+    cardSubtitle: {
+      fontSize: "0.9375rem",
+      lineHeight: 1.5,
+    },
+    statValue: {
+      fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+      fontSize: "2.2rem",
+      fontWeight: 500,
+      letterSpacing: "-0.025em",
+      lineHeight: 1,
+    },
   },
   shape: {
     borderRadius: 8,
@@ -185,6 +230,11 @@ const themeOptions: ThemeOptions = {
           overlaySubtitle: "div",
           overlayTimestamp: "div",
           eyebrow: "div",
+          pageTitle: "h1",
+          pageSubtitle: "p",
+          breadcrumb: "div",
+          cardSubtitle: "p",
+          statValue: "div",
         },
       },
     },
