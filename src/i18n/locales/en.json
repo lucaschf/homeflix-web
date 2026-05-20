@@ -560,7 +560,7 @@
         },
         "profiles": {
           "title": "Profiles ({{count}})",
-          "subtitle": "Read-only here in P3 — members still manage their own profiles via /settings.",
+          "subtitle": "Read-only here — members still manage their own profiles via /settings.",
           "empty": "No profiles yet. The user creates the first one on their next sign-in.",
           "kidsBadge": "Kids",
           "aclAll": "Sees every library",

@@ -382,8 +382,8 @@
         },
         "scan": {
           "title": "Scan & automação",
-          "helper": "Quando o scheduler roda o scan e quais jobs pós-scan disparam.",
-          "schedule": "Cron schedule (vazio = só manual)",
+          "helper": "Quando o agendador roda o scan e quais tarefas pós-scan disparam.",
+          "schedule": "Agendamento cron (vazio = só manual)",
           "schedulePlaceholder": "0 6 * * * (todo dia às 06:00)",
           "toggle": {
             "thumbnails": "Gerar miniaturas (scrub) após scan",
@@ -436,14 +436,14 @@
       },
       "trigger": {
         "title": "Disparar scan",
-        "subtitle": "Selecione libraries e rode agora, ou aguarde o run agendado.",
+        "subtitle": "Selecione bibliotecas e rode agora, ou aguarde a execução agendada.",
         "inflightSubtitle": "Scan em andamento — controles desabilitados.",
         "running": "rodando",
-        "libraryLabel": "Libraries",
+        "libraryLabel": "Bibliotecas",
         "librariesError": "Não foi possível carregar a lista de bibliotecas.",
         "noLibrariesTitle": "Sem bibliotecas configuradas",
         "noLibrariesBody": "Crie uma biblioteca primeiro na página Bibliotecas.",
-        "scanAll": "Scan em todas as libraries",
+        "scanAll": "Escanear todas as bibliotecas",
         "cta": "Rodar scan agora",
         "submitting": "Despachando…",
         "inflightCta": "Scan em andamento…",
@@ -452,35 +452,35 @@
       },
       "inflight": {
         "title": "Escaneando…",
-        "details": "{{elapsed}} decorridos · run {{runId}}"
+        "details": "{{elapsed}} decorridos · execução {{runId}}"
       },
       "history": {
         "title": "Histórico",
-        "subtitle": "Mais recentes primeiro. Inclui triggers manuais e runs do scheduler.",
+        "subtitle": "Mais recentes primeiro. Inclui disparos manuais e execuções do agendador.",
         "emptyTitle": "Sem scans ainda",
-        "emptyBody": "Dispare um acima ou aguarde o scheduler rodar."
+        "emptyBody": "Dispare um acima ou aguarde o agendador rodar."
       }
     },
     "enrich": {
       "title": "Enriquecer",
       "subtitle": "Preenche os metadados do TMDB para cada filme + série com enriquecimento incompleto. Liga Forçar pra re-enriquecer linhas que já têm metadado.",
       "snack": {
-        "dispatched": "Enrich {{runId}} despachado.",
-        "failed": "Não foi possível iniciar o enrich."
+        "dispatched": "Enriquecimento {{runId}} despachado.",
+        "failed": "Não foi possível iniciar o enriquecimento."
       },
       "trigger": {
-        "title": "Disparar enrich em massa",
+        "title": "Disparar enriquecimento em massa",
         "subtitle": "Percorre o catálogo e pede ao TMDB pra preencher títulos, sinopses, pôsteres e elenco em cada linha que ainda não tem metadado.",
         "forceLabel": "Forçar re-enriquecimento",
         "forceHelper": "Re-busca metadados mesmo nas linhas que já têm. Útil após queda do TMDB ou migração de schema.",
-        "cta": "Rodar enrich",
+        "cta": "Rodar enriquecimento",
         "submitting": "Despachando…"
       },
       "history": {
-        "title": "Enriches recentes",
+        "title": "Enriquecimentos recentes",
         "subtitle": "Mais recentes primeiro. Cada linha é uma operação em massa; detalhes dos erros por mídia ficam na coluna Erros.",
         "livePolling": "Atualizando…",
-        "emptyTitle": "Sem enriches ainda",
+        "emptyTitle": "Sem enriquecimentos ainda",
         "emptyBody": "Dispare um acima pra preencher metadados do catálogo."
       }
     },
@@ -550,7 +550,7 @@
           "title": "Conta",
           "subtitle": "Email e papel são geridos por admin. Gestão de perfis fica abaixo.",
           "emailLabel": "Email",
-          "emailHelper": "O endereço que o usuário digita na página de login. Read-only aqui.",
+          "emailHelper": "O endereço que o usuário digita na página de login. Somente leitura aqui.",
           "roleLabel": "Papel",
           "roleHelper": "Alterna entre Admin (painel completo) e Membro (só catálogo).",
           "roleHelperSelf": "Você não pode trocar seu próprio papel daqui.",
@@ -560,7 +560,7 @@
         },
         "profiles": {
           "title": "Perfis ({{count}})",
-          "subtitle": "Read-only no P3 — membros ainda gerem seus próprios perfis em /settings.",
+          "subtitle": "Somente leitura — membros ainda gerenciam seus próprios perfis em /settings.",
           "empty": "Sem perfis ainda. O usuário cria o primeiro no próximo login.",
           "kidsBadge": "Kids",
           "aclAll": "Vê todas as bibliotecas",
@@ -598,7 +598,7 @@
       },
       "health": {
         "title": "Saúde",
-        "subtitle": "Probes de readiness ao vivo de cada dependência que a API precisa pra servir requests.",
+        "subtitle": "Probes de readiness ao vivo de cada dependência que a API precisa pra servir requisições.",
         "cardTitle": "Checks de readiness",
         "cardSubtitle": "Atualiza a cada 30 s.",
         "lastChecked": "Última checagem às {{at}}",
