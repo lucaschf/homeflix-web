@@ -15,6 +15,7 @@ export { AdminFormSection } from "./AdminFormSection";
 export { AdminInput } from "./AdminInput";
 export { AdminLayout } from "./AdminLayout";
 export { AdminPageHeader } from "./AdminPageHeader";
+export { AdminSelect } from "./AdminSelect";
 export { AdminSidebar } from "./AdminSidebar";
 export {
   AdminTable,

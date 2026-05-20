@@ -370,8 +370,9 @@
         "playback": {
           "title": "Defaults de reprodução",
           "helper": "Idioma preferido de áudio + legenda escolhido no primeiro play, e quando mostrar legendas.",
-          "audioLang": "Idioma do áudio (ISO)",
-          "subtitleLang": "Idioma da legenda (ISO)",
+          "audioLang": "Idioma do áudio",
+          "subtitleLang": "Idioma da legenda",
+          "subtitleLangNone": "Nenhuma",
           "subtitleMode": "Modo de legenda",
           "subtitleModeOption": {
             "none": "Desligado",
