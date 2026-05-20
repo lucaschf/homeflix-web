@@ -1,26 +1,21 @@
-import { useMemo, useState } from "react";
-import {
-  Box,
-  Button,
-  Chip,
-  Container,
-  IconButton,
-  InputAdornment,
-  List,
-  ListItemButton,
-  ListItemText,
-  MenuItem,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { Pencil, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Pencil, Tv } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link as RouterLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useListAllSeries, useSeriesDetail } from "../../api/hooks";
 import type { EpisodeOutput, SeasonOutput, SeriesDetail } from "../../api/types";
-import { AdminPageHeader } from "../../components/admin";
+import {
+  AdminBadge,
+  AdminButton,
+  AdminCard,
+  AdminCardHeader,
+  AdminEmptyState,
+  AdminPageHeader,
+  type BadgeTone,
+  FilterChip,
+  ToolbarSearch,
+} from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 type IntroFilter = "all" | "unmarked" | "low_confidence" | "manual";
@@ -30,6 +25,7 @@ type IntroFilter = "all" | "unmarked" | "low_confidence" | "manual";
 // Picked from a quick eyeball of recent detections — anything under
 // 0.7 in our current pipeline tends to land on the wrong frame.
 const LOW_CONFIDENCE_THRESHOLD = 0.7;
+const SEARCH_DEBOUNCE_MS = 300;
 
 function matchesFilter(intro: EpisodeOutput["intro"], filter: IntroFilter): boolean {
   switch (filter) {
@@ -52,102 +48,148 @@ function matchesFilter(intro: EpisodeOutput["intro"], filter: IntroFilter): bool
 export function IntroPicker() {
   const { t } = useTranslation();
   useDocumentTitle(t("admin.intros.title"));
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
   const [filter, setFilter] = useState<IntroFilter>("all");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchInput), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const { items: allSeries, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
     useListAllSeries();
 
   const filteredSeries = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = debouncedSearch.trim().toLowerCase();
     if (!q) return allSeries;
     return allSeries.filter((s) => s.title.toLowerCase().includes(q));
-  }, [allSeries, search]);
+  }, [allSeries, debouncedSearch]);
 
   const { data: seriesDetail } = useSeriesDetail(selectedSeriesId ?? "");
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <>
       <AdminPageHeader
         breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.intros")]}
         title={t("admin.intros.title")}
         subtitle={t("admin.intros.subtitle")}
       />
 
-      <Box sx={{ display: "flex", gap: 2, alignItems: "stretch" }}>
-        <Paper
-          variant="outlined"
-          sx={{
-            width: 340,
-            display: "flex",
-            flexDirection: "column",
-            maxHeight: "calc(100vh - 220px)",
-          }}
-        >
-          <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-            <TextField
-              fullWidth
-              size="small"
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "340px 1fr" },
+          gap: 2.5,
+          alignItems: "start",
+        }}
+      >
+        <AdminCard sx={{ p: 0, display: "flex", flexDirection: "column", maxHeight: "calc(100vh - 240px)" }}>
+          <Box sx={{ p: 2, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <ToolbarSearch
+              value={searchInput}
+              onChange={setSearchInput}
               placeholder={t("admin.intros.searchSeries")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={16} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
             />
           </Box>
-          <Box sx={{ overflowY: "auto", flex: 1 }}>
+          <Box sx={{ overflowY: "auto", flex: 1, py: 0.5 }}>
             {isLoading ? (
-              <Box p={2}>
-                <Typography variant="body2" color="text.secondary">
-                  {t("admin.intros.loading")}
-                </Typography>
-              </Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ p: 2 }}
+              >
+                {t("admin.intros.loading")}
+              </Typography>
             ) : filteredSeries.length === 0 ? (
-              <Box p={2}>
-                <Typography variant="body2" color="text.secondary">
-                  {search ? t("admin.intros.noResults") : t("admin.intros.noSeries")}
-                </Typography>
-              </Box>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ p: 2 }}
+              >
+                {debouncedSearch
+                  ? t("admin.intros.noResults")
+                  : t("admin.intros.noSeries")}
+              </Typography>
             ) : (
-              <List dense disablePadding>
-                {filteredSeries.map((s) => (
-                  <ListItemButton
-                    key={s.id}
-                    selected={s.id === selectedSeriesId}
-                    onClick={() => setSelectedSeriesId(s.id)}
-                  >
-                    <ListItemText
-                      primary={s.title}
-                      secondary={t("common.episodes", { count: s.total_episodes })}
-                    />
-                  </ListItemButton>
-                ))}
-              </List>
+              <Stack spacing={0}>
+                {filteredSeries.map((s) => {
+                  const isActive = s.id === selectedSeriesId;
+                  return (
+                    <Box
+                      key={s.id}
+                      component="button"
+                      type="button"
+                      onClick={() => setSelectedSeriesId(s.id)}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        gap: 0.25,
+                        py: 1.25,
+                        px: 2,
+                        bgcolor: isActive
+                          ? "rgba(217,119,87,0.10)"
+                          : "transparent",
+                        borderLeft: "2px solid",
+                        borderColor: isActive ? "primary.main" : "transparent",
+                        color: isActive ? "primary.main" : "text.primary",
+                        fontFamily: "inherit",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        transition: "background-color 120ms ease",
+                        "&:hover": {
+                          bgcolor: isActive
+                            ? "rgba(217,119,87,0.14)"
+                            : "rgba(255,255,255,0.04)",
+                        },
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ fontWeight: 500, color: "inherit" }}
+                      >
+                        {s.title}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: "0.71875rem" }}
+                      >
+                        {t("common.episodes", { count: s.total_episodes })}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Stack>
             )}
             {hasNextPage && (
-              <Box p={1.5}>
-                <Button
-                  fullWidth
-                  size="small"
+              <Box sx={{ p: 1.5, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                <AdminButton
+                  variant="ghost"
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
                 >
                   {t("browse.loadMore")}
-                </Button>
+                </AdminButton>
               </Box>
             )}
           </Box>
-        </Paper>
+        </AdminCard>
 
-        <Paper variant="outlined" sx={{ flex: 1, p: 3, maxHeight: "calc(100vh - 220px)", overflowY: "auto" }}>
+        <AdminCard
+          sx={{
+            maxHeight: "calc(100vh - 240px)",
+            overflowY: "auto",
+            ...(!seriesDetail && {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 360,
+            }),
+          }}
+        >
           {seriesDetail ? (
             <SeriesEpisodes
               detail={seriesDetail}
@@ -155,22 +197,14 @@ export function IntroPicker() {
               onFilterChange={setFilter}
             />
           ) : (
-            <Box
-              sx={{
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                {t("admin.intros.selectSeriesHint")}
-              </Typography>
-            </Box>
+            <AdminEmptyState
+              icon={Tv}
+              title={t("admin.intros.selectSeriesHint")}
+            />
           )}
-        </Paper>
+        </AdminCard>
       </Box>
-    </Container>
+    </>
   );
 }
 
@@ -182,38 +216,51 @@ interface SeriesEpisodesProps {
 
 function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps) {
   const { t } = useTranslation();
-  return (
-    <Stack spacing={3}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} flexWrap="wrap">
-        <Typography variant="h3">{detail.title}</Typography>
-        <TextField
-          select
-          size="small"
-          label={t("admin.intros.filter")}
-          value={filter}
-          onChange={(e) => onFilterChange(e.target.value as IntroFilter)}
-          sx={{ minWidth: 220 }}
-        >
-          <MenuItem value="all">{t("admin.intros.filterAll")}</MenuItem>
-          <MenuItem value="unmarked">{t("admin.intros.filterUnmarked")}</MenuItem>
-          <MenuItem value="low_confidence">{t("admin.intros.filterLowConfidence")}</MenuItem>
-          <MenuItem value="manual">{t("admin.intros.filterManual")}</MenuItem>
-        </TextField>
-      </Stack>
+  const filterOptions: { label: string; value: IntroFilter }[] = [
+    { label: t("admin.intros.filterAll"), value: "all" },
+    { label: t("admin.intros.filterUnmarked"), value: "unmarked" },
+    { label: t("admin.intros.filterLowConfidence"), value: "low_confidence" },
+    { label: t("admin.intros.filterManual"), value: "manual" },
+  ];
 
-      {detail.seasons.map((season) => {
-        const visible = season.episodes.filter((e) => matchesFilter(e.intro, filter));
-        if (visible.length === 0) return null;
-        return (
-          <SeasonBlock
-            key={season.season_number}
-            seriesId={detail.id}
-            season={season}
-            visibleEpisodes={visible}
+  const visibleSeasons = detail.seasons
+    .map((season) => ({
+      season,
+      visible: season.episodes.filter((e) => matchesFilter(e.intro, filter)),
+    }))
+    .filter(({ visible }) => visible.length > 0);
+
+  return (
+    <>
+      <AdminCardHeader
+        title={detail.title}
+        action={
+          <FilterChip<IntroFilter>
+            label={t("admin.intros.filter")}
+            value={filter}
+            options={filterOptions}
+            onChange={onFilterChange}
           />
-        );
-      })}
-    </Stack>
+        }
+      />
+
+      {visibleSeasons.length === 0 ? (
+        <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+          {t("admin.intros.noEpisodesForFilter")}
+        </Typography>
+      ) : (
+        <Stack spacing={3}>
+          {visibleSeasons.map(({ season, visible }) => (
+            <SeasonBlock
+              key={season.season_number}
+              seriesId={detail.id}
+              season={season}
+              visibleEpisodes={visible}
+            />
+          ))}
+        </Stack>
+      )}
+    </>
   );
 }
 
@@ -231,10 +278,14 @@ function SeasonBlock({ seriesId, season, visibleEpisodes }: SeasonBlockProps) {
       : t("admin.intros.season", { number: season.season_number });
   return (
     <Stack spacing={1}>
-      <Typography variant="h4" color="text.secondary">
+      <Typography
+        variant="eyebrow"
+        component="div"
+        sx={{ color: "text.secondary" }}
+      >
         {heading}
       </Typography>
-      <Stack spacing={0.5}>
+      <Stack spacing={0.25}>
         {visibleEpisodes.map((ep) => (
           <EpisodeRow
             key={`${season.season_number}-${ep.episode_number}`}
@@ -256,6 +307,7 @@ interface EpisodeRowProps {
 
 function EpisodeRow({ seriesId, seasonNumber, episode }: EpisodeRowProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const intro = episode.intro;
   return (
     <Box
@@ -263,31 +315,54 @@ function EpisodeRow({ seriesId, seasonNumber, episode }: EpisodeRowProps) {
         display: "flex",
         alignItems: "center",
         gap: 1.5,
-        px: 1.5,
+        px: 1.25,
         py: 1,
         borderRadius: 1,
-        "&:hover": { bgcolor: "action.hover" },
+        transition: "background-color 120ms ease",
+        "&:hover": { bgcolor: "rgba(255,255,255,0.04)" },
       }}
     >
-      <Typography variant="body2" sx={{ width: 56, color: "text.secondary" }}>
+      <Typography
+        variant="caption"
+        sx={{
+          width: 56,
+          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+          color: "text.secondary",
+        }}
+      >
         {t("detail.episode", { number: episode.episode_number })}
       </Typography>
-      <Typography variant="body1" sx={{ flex: 1 }} noWrap>
+      <Typography variant="body2" sx={{ flex: 1, color: "text.primary" }} noWrap>
         {episode.title}
       </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ width: 64, textAlign: "right" }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          width: 64,
+          textAlign: "right",
+          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+        }}
+      >
         {episode.duration_formatted}
       </Typography>
       <IntroBadge intro={intro} />
-      <IconButton
-        component={RouterLink}
-        to={`/admin/intros/${seriesId}/${seasonNumber}/${episode.episode_number}`}
-        size="small"
-        aria-label={t("admin.intros.edit")}
-        disabled={!episode.file_path}
-      >
-        <Pencil size={16} />
-      </IconButton>
+      <Tooltip title={t("admin.intros.edit")}>
+        <span>
+          <IconButton
+            size="small"
+            disabled={!episode.file_path}
+            onClick={() =>
+              navigate(
+                `/admin/intros/${seriesId}/${seasonNumber}/${episode.episode_number}`,
+              )
+            }
+            sx={{ color: "text.secondary" }}
+          >
+            <Pencil size={15} />
+          </IconButton>
+        </span>
+      </Tooltip>
     </Box>
   );
 }
@@ -295,19 +370,17 @@ function EpisodeRow({ seriesId, seasonNumber, episode }: EpisodeRowProps) {
 function IntroBadge({ intro }: { intro: EpisodeOutput["intro"] }) {
   const { t } = useTranslation();
   if (!intro) {
-    return <Chip label={t("admin.intros.statusNone")} size="small" variant="outlined" />;
+    return <AdminBadge tone="neutral">{t("admin.intros.statusNone")}</AdminBadge>;
   }
   if (intro.source === "MANUAL") {
-    return <Chip label={t("admin.intros.statusManual")} size="small" color="success" />;
+    return <AdminBadge tone="ok">{t("admin.intros.statusManual")}</AdminBadge>;
   }
   const confidencePct = Math.round((intro.confidence ?? 0) * 100);
   const isLow = (intro.confidence ?? 0) < LOW_CONFIDENCE_THRESHOLD;
+  const tone: BadgeTone = isLow ? "warn" : "info";
   return (
-    <Chip
-      label={t("admin.intros.statusAuto", { confidence: confidencePct })}
-      size="small"
-      color={isLow ? "warning" : "default"}
-      variant={isLow ? "filled" : "outlined"}
-    />
+    <AdminBadge tone={tone}>
+      {t("admin.intros.statusAuto", { confidence: confidencePct })}
+    </AdminBadge>
   );
 }
