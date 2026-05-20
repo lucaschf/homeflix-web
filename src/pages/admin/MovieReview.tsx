@@ -1,21 +1,5 @@
 import { useState } from "react";
-import {
-  Alert,
-  Box,
-  Button,
-  CircularProgress,
-  Container,
-  Paper,
-  Snackbar,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
+import { Box, Snackbar, Typography } from "@mui/material";
 import { AlertCircle, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -25,11 +9,17 @@ import {
   useRelinkMovie,
 } from "../../api/hooks";
 import type { NeedsReviewMovie, TmdbSuggestion } from "../../api/types";
-import { AdminPageHeader, AdminTablePagination } from "../../components/admin";
+import {
+  AdminButton,
+  AdminEmptyState,
+  AdminPageHeader,
+  AdminTable,
+  AdminTablePagination,
+  type AdminTableColumn,
+} from "../../components/admin";
 import { PromoteToSeriesConfirmDialog } from "../../components/admin/PromoteToSeriesConfirmDialog";
 import { TmdbSuggestionsDialog } from "../../components/admin/TmdbSuggestionsDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { neutral } from "../../theme/colors";
 
 type Snack = { message: string; severity: "success" | "error" | "warning" } | null;
 
@@ -132,104 +122,97 @@ export function MovieReview() {
     }
   };
 
+  const columns: AdminTableColumn<NeedsReviewMovie>[] = [
+    {
+      id: "title",
+      label: t("admin.reviews.table.title"),
+      render: (m) => (
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          {m.title}
+        </Typography>
+      ),
+    },
+    {
+      id: "year",
+      label: t("admin.reviews.table.year"),
+      width: "90px",
+      mono: true,
+      muted: true,
+      render: (m) => m.year,
+    },
+    {
+      id: "file_path",
+      label: t("admin.reviews.table.filePath"),
+      mono: true,
+      muted: true,
+      render: (m) => (
+        <Box
+          component="span"
+          title={m.file_path ?? ""}
+          sx={{
+            display: "inline-block",
+            maxWidth: 420,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            verticalAlign: "bottom",
+          }}
+        >
+          {m.file_path ?? "—"}
+        </Box>
+      ),
+    },
+    {
+      id: "actions",
+      label: "",
+      width: "180px",
+      align: "right",
+      render: (m) => (
+        <AdminButton
+          variant="secondary"
+          icon={<Search size={14} />}
+          onClick={() => openPicker(m)}
+        >
+          {t("admin.reviews.findOnTmdb")}
+        </AdminButton>
+      ),
+    },
+  ];
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <>
       <AdminPageHeader
         breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.review")]}
         title={t("admin.reviews.title")}
         subtitle={t("admin.reviews.subtitle")}
       />
 
-      {isLoading && (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
-          <CircularProgress color="primary" />
-        </Box>
-      )}
+      <AdminTable
+        columns={columns}
+        rows={paged.items}
+        rowKey="id"
+        loading={isLoading}
+        error={isError ? t("admin.reviews.loadError") : undefined}
+        onRetry={() => void refetch()}
+        emptyState={
+          <AdminEmptyState
+            icon={AlertCircle}
+            title={t("admin.reviews.empty")}
+            body={t("admin.reviews.emptyHint")}
+          />
+        }
+      />
 
-      {isError && (
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={() => refetch()}>
-              {t("admin.reviews.retry")}
-            </Button>
-          }
-        >
-          {t("admin.reviews.loadError")}
-        </Alert>
-      )}
-
-      {!isLoading && !isError && movies && movies.length === 0 && (
-        <Paper variant="outlined" sx={{ p: 6, textAlign: "center" }}>
-          <Stack spacing={2} alignItems="center">
-            <AlertCircle size={48} color={neutral[600]} />
-            <Typography variant="body1">{t("admin.reviews.empty")}</Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t("admin.reviews.emptyHint")}
-            </Typography>
-          </Stack>
-        </Paper>
-      )}
-
-      {movies && movies.length > 0 && (
-        <>
-          <TableContainer component={Paper} variant="outlined">
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>{t("admin.reviews.table.title")}</TableCell>
-                  <TableCell>{t("admin.reviews.table.year")}</TableCell>
-                  <TableCell>{t("admin.reviews.table.filePath")}</TableCell>
-                  <TableCell align="right">{t("admin.reviews.table.actions")}</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {paged.items.map((movie) => (
-                  <TableRow key={movie.id} hover>
-                    <TableCell>{movie.title}</TableCell>
-                    <TableCell>{movie.year}</TableCell>
-                    <TableCell
-                      sx={{
-                        maxWidth: 380,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        color: "text.secondary",
-                        fontFamily: "monospace",
-                        fontSize: 12,
-                      }}
-                      title={movie.file_path ?? ""}
-                    >
-                      {movie.file_path ?? "—"}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<Search size={14} />}
-                        onClick={() => openPicker(movie)}
-                      >
-                        {t("admin.reviews.findOnTmdb")}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          {allMovies.length > pageSize && (
-            <AdminTablePagination
-              pageNumber={paged.pageNumber}
-              canGoNext={paged.canGoNext}
-              canGoPrevious={paged.canGoPrevious}
-              onNext={paged.goNext}
-              onPrevious={paged.goPrevious}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
-            />
-          )}
-        </>
+      {allMovies.length > pageSize && (
+        <AdminTablePagination
+          pageNumber={paged.pageNumber}
+          canGoNext={paged.canGoNext}
+          canGoPrevious={paged.canGoPrevious}
+          onNext={paged.goNext}
+          onPrevious={paged.goPrevious}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
+        />
       )}
 
       <TmdbSuggestionsDialog
@@ -261,15 +244,27 @@ export function MovieReview() {
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         {snack ? (
-          <Alert
-            severity={snack.severity}
-            onClose={() => setSnack(null)}
-            sx={{ width: "100%" }}
+          <Box
+            sx={{
+              bgcolor:
+                snack.severity === "success"
+                  ? "rgba(80,180,120,0.15)"
+                  : snack.severity === "error"
+                    ? "rgba(220,80,70,0.18)"
+                    : "rgba(240,180,80,0.15)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "text.primary",
+              borderRadius: 1,
+              px: 2,
+              py: 1.25,
+              fontSize: "0.875rem",
+              maxWidth: 480,
+            }}
           >
             {snack.message}
-          </Alert>
+          </Box>
         ) : undefined}
       </Snackbar>
-    </Container>
+    </>
   );
 }
