@@ -845,3 +845,52 @@ export interface PromoteMovieToSeriesPayload {
 }
 
 export type PromoteMovieToSeriesResponse = ApiDetailResponse<PromoteMovieToSeriesPayload>;
+
+// ─── Notifications ──────────────────────────────────────────
+
+/**
+ * Discriminator for in-app notifications.
+ *
+ * The renderer keys icon + body fallback off this value. Stays a
+ * narrow union so a new kind landing server-side without a
+ * matching frontend handler is caught at compile time the next
+ * time the dropdown renders it.
+ */
+export type NotificationKind = "catalog_request_fulfilled";
+
+/**
+ * Free-form per-kind payload. The fields are kind-specific —
+ * `catalog_request_fulfilled` carries ``tmdb_id``, ``media_id``,
+ * and ``media_type``; future kinds may use other keys.
+ */
+export type NotificationPayload = Record<string, unknown>;
+
+export interface Notification {
+  id: string;
+  recipient_user_id: string;
+  kind: NotificationKind;
+  title: string;
+  /** Optional subtitle; the renderer falls back to a kind-specific
+   *  i18n template when ``null``. */
+  body: string | null;
+  payload: NotificationPayload;
+  is_read: boolean;
+  /** ISO-8601 read timestamp, or ``null`` when still unread. */
+  read_at: string | null;
+  created_at: string;
+}
+
+export type NotificationResponse = ApiDetailResponse<Notification>;
+
+/**
+ * List shape for ``GET /api/v1/notifications``. The metadata
+ * carries the household-wide unread count so the header bell can
+ * render the badge off a single round-trip — the dropdown content
+ * (possibly filtered to read-only via ``?unread_only``) and the
+ * badge stay decoupled.
+ */
+export interface NotificationsResponse extends ApiListResponse<Notification> {
+  metadata: ApiListResponse<Notification>["metadata"] & {
+    unread_count?: number;
+  };
+}

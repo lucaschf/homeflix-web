@@ -18,6 +18,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../api/auth";
 import { AccountMenu } from "./AccountMenu";
 import { Logo } from "./Logo";
+import { NotificationBell } from "./NotificationBell";
 import { SearchOverlay } from "./SearchOverlay";
 
 interface NavItem {
@@ -193,6 +194,7 @@ export function Navbar() {
               <Bookmark size={22} />
             </IconButton>
           )}
+          <NotificationBell />
           <AccountMenu />
         </Toolbar>
       </AppBar>
