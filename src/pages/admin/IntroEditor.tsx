@@ -2,17 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
-  Button,
   Checkbox,
-  Container,
+  CircularProgress,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControlLabel,
-  IconButton,
   Snackbar,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import Hls from "hls.js";
@@ -26,7 +23,13 @@ import {
   useSetEpisodeIntro,
 } from "../../api/hooks";
 import type { EpisodeOutput, SeriesDetail } from "../../api/types";
-import { AdminDialog, AdminPageHeader } from "../../components/admin";
+import {
+  AdminButton,
+  AdminCard,
+  AdminDialog,
+  AdminInput,
+  AdminPageHeader,
+} from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 function formatHms(totalSeconds: number): string {
@@ -64,28 +67,36 @@ export function IntroEditor() {
     return season?.episodes.find((e) => e.episode_number === episodeNumber) ?? null;
   }, [seriesDetail, seasonNumber, episodeNumber]);
 
+  const subtitle = episode
+    ? `${seriesDetail?.title} · ${t("admin.intros.season", { number: seasonNumber })} · ${t("detail.episode", { number: episodeNumber })} · ${t("admin.intros.duration")}: ${episode.duration_formatted}`
+    : undefined;
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <>
       <AdminPageHeader
         breadcrumb={[
           t("admin.nav.group.catalog"),
           t("admin.nav.intros"),
           t("admin.intros.editorTitle"),
         ]}
-        title={
-          <Stack direction="row" alignItems="center" gap={1}>
-            <IconButton
-              onClick={() => navigate("/admin/intros")}
-              aria-label={t("admin.intros.back")}
-            >
-              <ArrowLeft size={20} />
-            </IconButton>
-            {t("admin.intros.editorTitle")}
-          </Stack>
+        title={episode?.title ?? t("admin.intros.editorTitle")}
+        subtitle={subtitle}
+        primaryCTA={
+          <AdminButton
+            variant="ghost"
+            icon={<ArrowLeft size={14} />}
+            onClick={() => navigate("/admin/intros")}
+          >
+            {t("admin.intros.back")}
+          </AdminButton>
         }
       />
 
-      {isLoading && <Typography color="text.secondary">{t("admin.intros.loading")}</Typography>}
+      {isLoading && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+          <CircularProgress size={20} color="primary" />
+        </Box>
+      )}
 
       {!isLoading && !episode && (
         <Alert severity="warning">{t("admin.intros.episodeNotFound")}</Alert>
@@ -104,7 +115,7 @@ export function IntroEditor() {
           episodeNumber={episodeNumber}
         />
       )}
-    </Container>
+    </>
   );
 }
 
@@ -317,132 +328,180 @@ function EditorForm({
   }, [currentTime]);
 
   return (
-    <Stack spacing={3}>
-      <Box>
-        <Typography variant="h3">{episode.title}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {seriesDetail.title} · {t("admin.intros.season", { number: seasonNumber })} ·{" "}
-          {t("detail.episode", { number: episodeNumber })} ·{" "}
-          {t("admin.intros.duration")}: {episode.duration_formatted}
-        </Typography>
-      </Box>
+    <>
+      <Stack spacing={2.5}>
+        <AdminCard>
+          {!episode.file_path ? (
+            <Alert severity="info">{t("admin.intros.noFile")}</Alert>
+          ) : (
+            <Box
+              sx={{
+                bgcolor: "black",
+                borderRadius: 1,
+                overflow: "hidden",
+                aspectRatio: "16 / 9",
+                width: "100%",
+                maxWidth: 960,
+                mx: "auto",
+              }}
+            >
+              <video
+                ref={videoRef}
+                controls
+                style={{ width: "100%", height: "100%", display: "block" }}
+              />
+            </Box>
+          )}
 
-      {!episode.file_path ? (
-        <Alert severity="info">{t("admin.intros.noFile")}</Alert>
-      ) : (
-        <Box
-          sx={{
-            bgcolor: "black",
-            borderRadius: 1,
-            overflow: "hidden",
-            aspectRatio: "16 / 9",
-            width: "100%",
-            maxWidth: 960,
-          }}
-        >
-          <video
-            ref={videoRef}
-            controls
-            style={{ width: "100%", height: "100%", display: "block" }}
-          />
-        </Box>
-      )}
-
-      <TimelineOverlay
-        duration={duration}
-        currentTime={currentTime}
-        startSeconds={startSeconds}
-        endSeconds={endSeconds}
-      />
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <TextField
-          label={t("admin.intros.startSeconds")}
-          type="number"
-          size="small"
-          value={startSeconds}
-          onChange={(e) => setStartSeconds(Math.max(0, Number(e.target.value) || 0))}
-          helperText={formatHms(startSeconds)}
-          slotProps={{ htmlInput: { min: 0, step: 1 } }}
-          sx={{ flex: 1 }}
-        />
-        <Button startIcon={<MapPin size={16} />} onClick={markStart} disabled={!episode.file_path}>
-          {t("admin.intros.markStart")}
-        </Button>
-      </Stack>
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <TextField
-          label={t("admin.intros.endSeconds")}
-          type="number"
-          size="small"
-          value={endSeconds}
-          onChange={(e) => setEndSeconds(Math.max(0, Number(e.target.value) || 0))}
-          helperText={formatHms(endSeconds)}
-          slotProps={{ htmlInput: { min: 1, step: 1 } }}
-          sx={{ flex: 1 }}
-        />
-        <Button startIcon={<MapPin size={16} />} onClick={markEnd} disabled={!episode.file_path}>
-          {t("admin.intros.markEnd")}
-        </Button>
-      </Stack>
-
-      {validationError && <Alert severity="error">{validationError}</Alert>}
-
-      <Stack direction="row" spacing={2} flexWrap="wrap">
-        <Button
-          variant="contained"
-          startIcon={<Save size={16} />}
-          onClick={handleSave}
-          disabled={!!validationError || setIntro.isPending || !episodeId}
-        >
-          {t("admin.intros.save")}
-        </Button>
-        <Button
-          variant="outlined"
-          color="error"
-          startIcon={<Trash2 size={16} />}
-          onClick={handleClear}
-          disabled={clearIntro.isPending || !episodeId || !episode.intro}
-        >
-          {t("admin.intros.clear")}
-        </Button>
-        <Typography variant="caption" color="text.secondary" sx={{ alignSelf: "center" }}>
-          {t("admin.intros.currentTime")}: {formatHms(currentTime)}
-        </Typography>
-      </Stack>
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center" flexWrap="wrap">
-        <Button
-          variant="outlined"
-          startIcon={<Zap size={16} />}
-          onClick={() => setPendingBulk("season")}
-          disabled={
-            !!validationError || bulkSet.isPending || eligibleInSeason.length === 0
-          }
-        >
-          {t("admin.intros.applyToSeason")} ({eligibleInSeason.length})
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<Zap size={16} />}
-          onClick={() => setPendingBulk("series")}
-          disabled={
-            !!validationError || bulkSet.isPending || eligibleInSeries.length === 0
-          }
-        >
-          {t("admin.intros.applyToSeries")} ({eligibleInSeries.length})
-        </Button>
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={autoAdvance}
-              onChange={(e) => setAutoAdvance(e.target.checked)}
-              size="small"
+          <Box sx={{ mt: 2.5 }}>
+            <TimelineOverlay
+              duration={duration}
+              currentTime={currentTime}
+              startSeconds={startSeconds}
+              endSeconds={endSeconds}
             />
-          }
-          label={t("admin.intros.autoAdvance")}
-        />
+          </Box>
+        </AdminCard>
+
+        <AdminCard>
+          <Stack spacing={2}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 260px" },
+                columnGap: 2,
+                rowGap: 2,
+                alignItems: "center",
+              }}
+            >
+              <AdminInput
+                label={t("admin.intros.startSeconds")}
+                mono
+                type="number"
+                value={startSeconds}
+                onChange={(e) =>
+                  setStartSeconds(Math.max(0, Number(e.target.value) || 0))
+                }
+                helperText={formatHms(startSeconds)}
+                inputProps={{ min: 0, step: 1 }}
+                fullWidth
+              />
+              <AdminButton
+                variant="secondary"
+                icon={<MapPin size={14} />}
+                onClick={markStart}
+                disabled={!episode.file_path}
+                fullWidth
+              >
+                {t("admin.intros.markStart")}
+              </AdminButton>
+              <AdminInput
+                label={t("admin.intros.endSeconds")}
+                mono
+                type="number"
+                value={endSeconds}
+                onChange={(e) =>
+                  setEndSeconds(Math.max(0, Number(e.target.value) || 0))
+                }
+                helperText={formatHms(endSeconds)}
+                inputProps={{ min: 1, step: 1 }}
+                fullWidth
+              />
+              <AdminButton
+                variant="secondary"
+                icon={<MapPin size={14} />}
+                onClick={markEnd}
+                disabled={!episode.file_path}
+                fullWidth
+              >
+                {t("admin.intros.markEnd")}
+              </AdminButton>
+            </Box>
+
+            {validationError && <Alert severity="error">{validationError}</Alert>}
+
+            <Stack
+              direction="row"
+              spacing={1.5}
+              alignItems="center"
+              flexWrap="wrap"
+              sx={{ pt: 0.5 }}
+            >
+              <AdminButton
+                variant="primary"
+                icon={<Save size={14} />}
+                onClick={handleSave}
+                disabled={!!validationError || setIntro.isPending || !episodeId}
+              >
+                {t("admin.intros.save")}
+              </AdminButton>
+              <AdminButton
+                variant="danger"
+                icon={<Trash2 size={14} />}
+                onClick={handleClear}
+                disabled={clearIntro.isPending || !episodeId || !episode.intro}
+              >
+                {t("admin.intros.clear")}
+              </AdminButton>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  alignSelf: "center",
+                  ml: "auto",
+                }}
+              >
+                {t("admin.intros.currentTime")}: {formatHms(currentTime)}
+              </Typography>
+            </Stack>
+          </Stack>
+        </AdminCard>
+
+        <AdminCard>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            alignItems={{ sm: "center" }}
+            flexWrap="wrap"
+          >
+            <AdminButton
+              variant="secondary"
+              icon={<Zap size={14} />}
+              onClick={() => setPendingBulk("season")}
+              disabled={
+                !!validationError || bulkSet.isPending || eligibleInSeason.length === 0
+              }
+            >
+              {t("admin.intros.applyToSeason")} ({eligibleInSeason.length})
+            </AdminButton>
+            <AdminButton
+              variant="secondary"
+              icon={<Zap size={14} />}
+              onClick={() => setPendingBulk("series")}
+              disabled={
+                !!validationError || bulkSet.isPending || eligibleInSeries.length === 0
+              }
+            >
+              {t("admin.intros.applyToSeries")} ({eligibleInSeries.length})
+            </AdminButton>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={autoAdvance}
+                  onChange={(e) => setAutoAdvance(e.target.checked)}
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="body2" color="text.secondary">
+                  {t("admin.intros.autoAdvance")}
+                </Typography>
+              }
+              sx={{ ml: { sm: 0 } }}
+            />
+          </Stack>
+        </AdminCard>
       </Stack>
 
       <AdminDialog
@@ -455,7 +514,7 @@ function EditorForm({
           {t("admin.intros.bulkConfirmTitle")}
         </DialogTitle>
         <DialogContent sx={{ px: 3, pb: 1 }}>
-          <Typography>
+          <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.72)" }}>
             {pendingBulk === "season"
               ? t("admin.intros.bulkConfirmSeason", {
                   count: eligibleInSeason.length,
@@ -465,21 +524,36 @@ function EditorForm({
                 ? t("admin.intros.bulkConfirmSeries", { count: eligibleInSeries.length })
                 : ""}
           </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: "block",
+              mt: 1,
+              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            }}
+          >
             {formatHms(startSeconds)} → {formatHms(endSeconds)}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1.25 }}>
-          <Button onClick={() => setPendingBulk(null)} disabled={bulkSet.isPending}>
-            {t("admin.intros.cancel")}
-          </Button>
-          <Button
-            variant="contained"
-            onClick={confirmBulkApply}
+          <AdminButton
+            variant="ghost"
+            onClick={() => setPendingBulk(null)}
             disabled={bulkSet.isPending}
           >
+            {t("admin.intros.cancel")}
+          </AdminButton>
+          <AdminButton
+            variant="primary"
+            onClick={confirmBulkApply}
+            disabled={bulkSet.isPending}
+            icon={
+              bulkSet.isPending ? <CircularProgress size={12} sx={{ color: "inherit" }} /> : undefined
+            }
+          >
             {bulkSet.isPending ? t("admin.intros.bulkInProgress") : t("admin.intros.confirm")}
-          </Button>
+          </AdminButton>
         </DialogActions>
       </AdminDialog>
 
@@ -489,9 +563,27 @@ function EditorForm({
         onClose={() => setToast(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        {toast ? <Alert severity={toast.severity}>{toast.message}</Alert> : undefined}
+        {toast ? (
+          <Box
+            sx={{
+              bgcolor:
+                toast.severity === "success"
+                  ? "rgba(80,180,120,0.15)"
+                  : "rgba(220,80,70,0.18)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              color: "text.primary",
+              borderRadius: 1,
+              px: 2,
+              py: 1.25,
+              fontSize: "0.875rem",
+              maxWidth: 480,
+            }}
+          >
+            {toast.message}
+          </Box>
+        ) : undefined}
       </Snackbar>
-    </Stack>
+    </>
   );
 }
 
@@ -520,7 +612,7 @@ function TimelineOverlay({
       sx={{
         position: "relative",
         height: 12,
-        bgcolor: "action.disabledBackground",
+        bgcolor: "rgba(255,255,255,0.06)",
         borderRadius: 1,
         overflow: "hidden",
       }}
@@ -543,7 +635,7 @@ function TimelineOverlay({
           bottom: 0,
           left: `${playheadPct}%`,
           width: 2,
-          bgcolor: "secondary.main",
+          bgcolor: "#f5c46a",
         }}
       />
     </Box>
