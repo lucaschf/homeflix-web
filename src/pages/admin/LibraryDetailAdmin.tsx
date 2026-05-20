@@ -2,11 +2,8 @@ import {
   Alert,
   Box,
   CircularProgress,
-  FormControl,
   FormControlLabel,
   IconButton,
-  MenuItem,
-  Select,
   Snackbar,
   Stack,
   Switch,
@@ -31,8 +28,10 @@ import {
   AdminFormSection,
   AdminInput,
   AdminPageHeader,
+  AdminSelect,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { buildLanguageOptions } from "../../i18n/languageOptions";
 
 type LibraryType = "movies" | "series";
 type SubtitleMode = "always" | "foreign" | "forced" | "none";
@@ -71,10 +70,27 @@ const SUBTITLE_MODE_OPTIONS: SubtitleMode[] = ["none", "always", "foreign", "for
  * across edits because the body sends only changed fields.
  */
 export function LibraryDetailAdmin() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isCreate = !id || id === "new";
+
+  const languageOptions = useMemo(
+    () => buildLanguageOptions(i18n.language),
+    [i18n.language],
+  );
+  const SUBTITLE_LANGUAGE_NONE = "__none__";
+  const subtitleLanguageOptions = useMemo(
+    () => [
+      {
+        value: SUBTITLE_LANGUAGE_NONE,
+        label: t("admin.libraries.detail.playback.subtitleLangNone"),
+        meta: "",
+      },
+      ...languageOptions,
+    ],
+    [languageOptions, t],
+  );
 
   const detail = useLibrary(isCreate ? undefined : id);
   const create = useCreateLibrary();
@@ -246,38 +262,16 @@ export function LibraryDetailAdmin() {
               onChange={(e) => setName(e.target.value)}
               placeholder={t("admin.libraries.detail.identity.namePlaceholder")}
             />
-            <Box>
-              <Typography
-                variant="eyebrow"
-                component="label"
-                sx={{
-                  display: "block",
-                  color: "text.secondary",
-                  letterSpacing: "0.14em",
-                  fontSize: "0.625rem",
-                  mb: 0.875,
-                }}
-              >
-                {t("admin.libraries.detail.identity.type")}
-              </Typography>
-              <FormControl size="small">
-                <Select<LibraryType>
-                  value={libraryType}
-                  onChange={(e) => setLibraryType(e.target.value as LibraryType)}
-                  sx={{
-                    fontSize: "0.875rem",
-                    minWidth: 180,
-                    bgcolor: "rgba(255,255,255,0.025)",
-                  }}
-                >
-                  {LIBRARY_TYPE_OPTIONS.map((opt) => (
-                    <MenuItem key={opt} value={opt} sx={{ fontSize: "0.875rem" }}>
-                      {t(`admin.libraries.detail.identity.typeOption.${opt}`)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
+            <AdminSelect<LibraryType>
+              label={t("admin.libraries.detail.identity.type")}
+              value={libraryType}
+              onChange={(e) => setLibraryType(e.target.value as LibraryType)}
+              options={LIBRARY_TYPE_OPTIONS.map((opt) => ({
+                value: opt,
+                label: t(`admin.libraries.detail.identity.typeOption.${opt}`),
+              }))}
+              sx={{ minWidth: 220 }}
+            />
             <PathsEditor paths={paths} onChange={setPaths} />
           </Stack>
         </AdminFormSection>
@@ -288,63 +282,49 @@ export function LibraryDetailAdmin() {
         >
           <Stack spacing={2}>
             <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <AdminInput
-                label={t("admin.libraries.detail.playback.audioLang")}
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                mono
-                sx={{ flex: 1 }}
-              />
-              <AdminInput
-                label={t("admin.libraries.detail.playback.subtitleLang")}
-                value={settings.preferred_subtitle_language ?? ""}
-                onChange={(e) =>
-                  setSettings((s) => ({
-                    ...s,
-                    preferred_subtitle_language: e.target.value || null,
-                  }))
-                }
-                mono
-                sx={{ flex: 1 }}
-              />
-            </Stack>
-            <Box>
-              <Typography
-                variant="eyebrow"
-                component="label"
-                sx={{
-                  display: "block",
-                  color: "text.secondary",
-                  letterSpacing: "0.14em",
-                  fontSize: "0.625rem",
-                  mb: 0.875,
-                }}
-              >
-                {t("admin.libraries.detail.playback.subtitleMode")}
-              </Typography>
-              <FormControl size="small">
-                <Select<SubtitleMode>
-                  value={(settings.subtitle_mode as SubtitleMode) ?? "none"}
-                  onChange={(e) =>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <AdminSelect<string>
+                  label={t("admin.libraries.detail.playback.audioLang")}
+                  value={language}
+                  onChange={(e) => setLanguage(String(e.target.value))}
+                  options={languageOptions}
+                  fullWidth
+                />
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <AdminSelect<string>
+                  label={t("admin.libraries.detail.playback.subtitleLang")}
+                  value={
+                    settings.preferred_subtitle_language ?? SUBTITLE_LANGUAGE_NONE
+                  }
+                  onChange={(e) => {
+                    const next = String(e.target.value);
                     setSettings((s) => ({
                       ...s,
-                      subtitle_mode: e.target.value as SubtitleMode,
-                    }))
-                  }
-                  sx={{
-                    fontSize: "0.875rem",
-                    minWidth: 220,
-                    bgcolor: "rgba(255,255,255,0.025)",
+                      preferred_subtitle_language:
+                        next === SUBTITLE_LANGUAGE_NONE ? null : next,
+                    }));
                   }}
-                >
-                  {SUBTITLE_MODE_OPTIONS.map((opt) => (
-                    <MenuItem key={opt} value={opt} sx={{ fontSize: "0.875rem" }}>
-                      {t(`admin.libraries.detail.playback.subtitleModeOption.${opt}`)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
+                  options={subtitleLanguageOptions}
+                  fullWidth
+                />
+              </Box>
+            </Stack>
+            <AdminSelect<SubtitleMode>
+              label={t("admin.libraries.detail.playback.subtitleMode")}
+              value={(settings.subtitle_mode as SubtitleMode) ?? "none"}
+              onChange={(e) =>
+                setSettings((s) => ({
+                  ...s,
+                  subtitle_mode: e.target.value as SubtitleMode,
+                }))
+              }
+              options={SUBTITLE_MODE_OPTIONS.map((opt) => ({
+                value: opt,
+                label: t(`admin.libraries.detail.playback.subtitleModeOption.${opt}`),
+              }))}
+              sx={{ minWidth: 260 }}
+            />
           </Stack>
         </AdminFormSection>
 
@@ -475,14 +455,7 @@ function PathsEditor({ paths, onChange }: PathsEditorProps) {
   const { t } = useTranslation();
   return (
     <Stack spacing={1}>
-      <Typography
-        variant="eyebrow"
-        sx={{
-          color: "text.secondary",
-          letterSpacing: "0.14em",
-          fontSize: "0.625rem",
-        }}
-      >
+      <Typography variant="eyebrow" sx={{ color: "text.secondary" }}>
         {t("admin.libraries.detail.identity.paths")}
       </Typography>
       {paths.map((path, idx) => (

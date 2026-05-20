@@ -370,8 +370,9 @@
         "playback": {
           "title": "Playback defaults",
           "helper": "Preferred audio + subtitle language picked on first play, plus when to show subtitles.",
-          "audioLang": "Audio language (ISO)",
-          "subtitleLang": "Subtitle language (ISO)",
+          "audioLang": "Audio language",
+          "subtitleLang": "Subtitle language",
+          "subtitleLangNone": "None",
           "subtitleMode": "Subtitle mode",
           "subtitleModeOption": {
             "none": "Off",
