@@ -149,6 +149,7 @@ export function Collection() {
             subscribeNotify.mutateAsync({
               tmdb_id: part.tmdb_id,
               media_type: "movie",
+              title: part.title,
               collection_tmdb_id: collection.tmdb_id,
             }),
           );
@@ -674,6 +675,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
     requestMutation.mutate({
       tmdb_id: part.tmdb_id,
       media_type: "movie",
+      title: part.title,
       collection_tmdb_id: collectionTmdbId,
     });
   };
@@ -684,6 +686,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
     subscribeMutation.mutate({
       tmdb_id: part.tmdb_id,
       media_type: "movie",
+      title: part.title,
       collection_tmdb_id: collectionTmdbId,
     });
   };

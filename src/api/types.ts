@@ -133,6 +133,9 @@ export interface CatalogRequest {
   id: string;
   tmdb_id: number;
   media_type: "movie" | "series";
+  /** Snapshot of the title taken at request time. ``null`` on rows
+   *  created before the backend stored the title. */
+  title: string | null;
   collection_tmdb_id: number | null;
   notify_on_arrival: boolean;
   is_fulfilled: boolean;

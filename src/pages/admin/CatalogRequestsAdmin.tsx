@@ -1,4 +1,4 @@
-import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Snackbar, Tooltip, Typography } from "@mui/material";
 import { ExternalLink, Inbox, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -75,14 +75,23 @@ export function CatalogRequestsAdmin() {
 
   const columns: AdminTableColumn<CatalogRequest>[] = [
     {
-      id: "tmdb",
-      label: t("admin.requests.col.tmdb"),
-      width: "160px",
+      id: "title",
+      label: t("admin.requests.col.title"),
       render: (r) => (
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Box sx={{ color: "text.secondary", display: "flex", flexShrink: 0 }}>
-            <Inbox size={14} aria-hidden />
-          </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 500,
+              color: r.title ? "text.primary" : "text.secondary",
+              fontStyle: r.title ? "normal" : "italic",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {r.title ?? t("admin.requests.untitled")}
+          </Typography>
           <Typography
             variant="metaMono"
             component="a"
@@ -93,16 +102,17 @@ export function CatalogRequestsAdmin() {
             sx={{
               color: "primary.main",
               textDecoration: "none",
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
               gap: 0.5,
+              mt: 0.25,
               "&:hover": { textDecoration: "underline" },
             }}
           >
             {r.media_type === "movie" ? "movie" : "tv"}/{r.tmdb_id}
             <ExternalLink size={11} aria-hidden />
           </Typography>
-        </Stack>
+        </Box>
       ),
     },
     {
