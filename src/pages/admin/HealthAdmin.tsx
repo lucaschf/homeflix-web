@@ -65,10 +65,8 @@ function HealthRow({ label, status }: { label: string; status: string }) {
           }}
         />
         <Typography
-          variant="body2"
+          variant="metaMono"
           sx={{
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            fontSize: "0.8125rem",
             color: "text.primary",
             overflow: "hidden",
             textOverflow: "ellipsis",

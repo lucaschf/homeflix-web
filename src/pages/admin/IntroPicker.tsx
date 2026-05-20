@@ -322,27 +322,16 @@ function EpisodeRow({ seriesId, seasonNumber, episode }: EpisodeRowProps) {
         "&:hover": { bgcolor: "rgba(255,255,255,0.04)" },
       }}
     >
-      <Typography
-        variant="caption"
-        sx={{
-          width: 56,
-          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-          color: "text.secondary",
-        }}
-      >
+      <Typography variant="metaMono" sx={{ width: 56, color: "text.secondary" }}>
         {t("detail.episode", { number: episode.episode_number })}
       </Typography>
       <Typography variant="body2" sx={{ flex: 1, color: "text.primary" }} noWrap>
         {episode.title}
       </Typography>
       <Typography
-        variant="caption"
+        variant="metaMono"
         color="text.secondary"
-        sx={{
-          width: 64,
-          textAlign: "right",
-          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-        }}
+        sx={{ width: 64, textAlign: "right" }}
       >
         {episode.duration_formatted}
       </Typography>

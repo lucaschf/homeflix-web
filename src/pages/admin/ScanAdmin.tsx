@@ -438,13 +438,8 @@ export function ScanAdmin() {
                       : t("admin.scan.trigger.cta")}
                 </AdminButton>
                 <Typography
-                  variant="caption"
-                  sx={{
-                    color: "text.secondary",
-                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                    textAlign: "center",
-                    fontSize: "0.71875rem",
-                  }}
+                  variant="metaMono"
+                  sx={{ color: "text.secondary", textAlign: "center" }}
                 >
                   {nextRun
                     ? t("admin.scan.trigger.nextScheduled", {
@@ -496,13 +491,8 @@ export function ScanAdmin() {
                   {t("admin.scan.inflight.title")}
                 </Typography>
                 <Typography
-                  variant="caption"
-                  sx={{
-                    display: "block",
-                    mt: 0.5,
-                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                    color: "rgba(245,241,235,0.6)",
-                  }}
+                  variant="metaMono"
+                  sx={{ display: "block", mt: 0.5, color: "rgba(245,241,235,0.6)" }}
                 >
                   {t("admin.scan.inflight.details", {
                     elapsed: formatElapsed(elapsed),

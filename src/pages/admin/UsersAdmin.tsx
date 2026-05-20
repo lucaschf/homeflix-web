@@ -125,11 +125,7 @@ export function UsersAdmin() {
                   </Box>
                 )}
               </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
-              >
+              <Typography variant="metaMono" color="text.secondary">
                 {u.id}
               </Typography>
             </Box>
@@ -151,12 +147,7 @@ export function UsersAdmin() {
         label: t("admin.users.col.profiles"),
         width: "100px",
         render: (u) => (
-          <Typography
-            variant="body2"
-            sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
-          >
-            {u.profile_count}
-          </Typography>
+          <Typography variant="metaMono">{u.profile_count}</Typography>
         ),
       },
       {

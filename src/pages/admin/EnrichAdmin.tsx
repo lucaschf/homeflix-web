@@ -207,13 +207,8 @@ export function EnrichAdmin() {
                   {t("admin.enrich.inflight.title")}
                 </Typography>
                 <Typography
-                  variant="caption"
-                  sx={{
-                    display: "block",
-                    mt: 0.5,
-                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                    color: "rgba(245,241,235,0.6)",
-                  }}
+                  variant="metaMono"
+                  sx={{ display: "block", mt: 0.5, color: "rgba(245,241,235,0.6)" }}
                 >
                   {t("admin.enrich.inflight.details", {
                     elapsed: formatElapsed(elapsed),
