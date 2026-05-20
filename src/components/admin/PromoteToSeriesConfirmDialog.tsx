@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -12,6 +11,7 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import type { TmdbSuggestion } from "../../api/types";
+import { AdminDialog } from "./AdminDialog";
 
 interface PromoteToSeriesConfirmDialogProps {
   open: boolean;
@@ -46,9 +46,11 @@ export function PromoteToSeriesConfirmDialog({
   const { t } = useTranslation();
 
   return (
-    <Dialog open={open} onClose={busy ? undefined : onCancel} maxWidth="sm" fullWidth>
-      <DialogTitle>{t("admin.reviews.promote.title")}</DialogTitle>
-      <DialogContent>
+    <AdminDialog open={open} onClose={busy ? undefined : onCancel} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ px: 3, pt: 3, pb: 1.5 }}>
+        {t("admin.reviews.promote.title")}
+      </DialogTitle>
+      <DialogContent sx={{ px: 3, pb: 1 }}>
         {errorMessage && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {errorMessage}
@@ -95,7 +97,7 @@ export function PromoteToSeriesConfirmDialog({
           </Alert>
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1.25 }}>
         <Button onClick={onCancel} disabled={busy}>
           {t("admin.reviews.promote.cancel")}
         </Button>
@@ -111,6 +113,6 @@ export function PromoteToSeriesConfirmDialog({
             : t("admin.reviews.promote.confirm")}
         </Button>
       </DialogActions>
-    </Dialog>
+    </AdminDialog>
   );
 }

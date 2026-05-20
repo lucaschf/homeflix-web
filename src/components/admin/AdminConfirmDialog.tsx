@@ -2,7 +2,6 @@ import {
   Alert,
   Box,
   CircularProgress,
-  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -12,6 +11,7 @@ import {
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { AdminButton } from "./AdminButton";
+import { AdminDialog } from "./AdminDialog";
 
 interface AdminConfirmDialogProps {
   open: boolean;
@@ -71,21 +71,25 @@ export function AdminConfirmDialog({
   const finalCancelLabel = cancelLabel ?? t("admin.confirm.cancel", "Cancel");
 
   return (
-    <Dialog
+    <AdminDialog
       open={open}
       onClose={busy ? undefined : onCancel}
       maxWidth="sm"
       fullWidth
     >
-      <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+      <DialogTitle sx={{ px: 3, pt: 3, pb: 1.5 }}>{title}</DialogTitle>
+      <DialogContent sx={{ px: 3, pb: 1 }}>
         {errorMessage && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {errorMessage}
           </Alert>
         )}
         <Stack spacing={2}>
-          {body && <Typography variant="body2">{body}</Typography>}
+          {body && (
+            <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.72)" }}>
+              {body}
+            </Typography>
+          )}
           {consequences && consequences.length > 0 && (
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
@@ -93,7 +97,12 @@ export function AdminConfirmDialog({
               </Typography>
               <Box component="ul" sx={{ pl: 3, my: 0 }}>
                 {consequences.map((line, i) => (
-                  <Typography key={i} component="li" variant="body2" sx={{ mb: 0.5 }}>
+                  <Typography
+                    key={i}
+                    component="li"
+                    variant="body2"
+                    sx={{ mb: 0.5, color: "rgba(245,241,235,0.72)" }}
+                  >
                     {line}
                   </Typography>
                 ))}
@@ -110,7 +119,7 @@ export function AdminConfirmDialog({
           )}
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1.25 }}>
         <AdminButton onClick={onCancel} disabled={busy} variant="ghost">
           {finalCancelLabel}
         </AdminButton>
@@ -123,6 +132,6 @@ export function AdminConfirmDialog({
           {busy ? finalConfirmingLabel : finalConfirmLabel}
         </AdminButton>
       </DialogActions>
-    </Dialog>
+    </AdminDialog>
   );
 }

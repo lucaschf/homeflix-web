@@ -9,6 +9,7 @@ export { AdminBadge, type BadgeTone } from "./AdminBadge";
 export { AdminButton } from "./AdminButton";
 export { AdminCard, AdminCardHeader } from "./AdminCard";
 export { AdminConfirmDialog } from "./AdminConfirmDialog";
+export { AdminDialog } from "./AdminDialog";
 export { AdminEmptyState } from "./AdminEmptyState";
 export { AdminFormSection } from "./AdminFormSection";
 export { AdminInput } from "./AdminInput";

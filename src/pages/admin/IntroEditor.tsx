@@ -5,7 +5,6 @@ import {
   Button,
   Checkbox,
   Container,
-  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -27,7 +26,7 @@ import {
   useSetEpisodeIntro,
 } from "../../api/hooks";
 import type { EpisodeOutput, SeriesDetail } from "../../api/types";
-import { AdminPageHeader } from "../../components/admin";
+import { AdminDialog, AdminPageHeader } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 
 function formatHms(totalSeconds: number): string {
@@ -446,9 +445,16 @@ function EditorForm({
         />
       </Stack>
 
-      <Dialog open={pendingBulk !== null} onClose={() => setPendingBulk(null)}>
-        <DialogTitle>{t("admin.intros.bulkConfirmTitle")}</DialogTitle>
-        <DialogContent>
+      <AdminDialog
+        open={pendingBulk !== null}
+        onClose={() => setPendingBulk(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ px: 3, pt: 3, pb: 1.5 }}>
+          {t("admin.intros.bulkConfirmTitle")}
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, pb: 1 }}>
           <Typography>
             {pendingBulk === "season"
               ? t("admin.intros.bulkConfirmSeason", {
@@ -463,7 +469,7 @@ function EditorForm({
             {formatHms(startSeconds)} → {formatHms(endSeconds)}
           </Typography>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1.25 }}>
           <Button onClick={() => setPendingBulk(null)} disabled={bulkSet.isPending}>
             {t("admin.intros.cancel")}
           </Button>
@@ -475,7 +481,7 @@ function EditorForm({
             {bulkSet.isPending ? t("admin.intros.bulkInProgress") : t("admin.intros.confirm")}
           </Button>
         </DialogActions>
-      </Dialog>
+      </AdminDialog>
 
       <Snackbar
         open={!!toast}
