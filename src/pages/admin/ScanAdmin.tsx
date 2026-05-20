@@ -6,7 +6,7 @@ import {
   Typography,
 } from "@mui/material";
 import { Check, Play, ScanLine } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import {
@@ -25,6 +25,7 @@ import {
   AdminTablePagination,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { formatElapsed, useElapsedSeconds } from "./components/elapsed";
 import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -165,31 +166,6 @@ function formatRelative(date: Date, locale: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-/**
- * Live-updating "elapsed" counter for the in-flight banner. Reads
- * the latest started-running row's ``started_at`` and ticks every
- * second so the operator sees the timer move.
- */
-function useElapsedSeconds(startIso: string | undefined): number {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!startIso) return;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, [startIso]);
-
-  if (!startIso) return 0;
-  return Math.max(0, Math.floor((now - new Date(startIso).getTime()) / 1000));
-}
-
-function formatElapsed(seconds: number): string {
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  return `${minutes}m ${remainder}s`;
 }
 
 /**

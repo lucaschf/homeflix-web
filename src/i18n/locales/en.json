@@ -471,10 +471,17 @@
       "trigger": {
         "title": "Trigger a bulk enrich",
         "subtitle": "Walk the catalog and ask TMDB to fill in titles, summaries, posters and cast for every row that still lacks metadata.",
+        "inflightSubtitle": "Enrich in flight — controls disabled.",
+        "running": "running",
         "forceLabel": "Force re-enrich",
         "forceHelper": "Re-fetch metadata even for rows that already have it. Use after a TMDB outage or schema migration.",
         "cta": "Run enrich",
-        "submitting": "Dispatching…"
+        "submitting": "Dispatching…",
+        "inflightCta": "Enrich in flight…"
+      },
+      "inflight": {
+        "title": "Enriching…",
+        "details": "{{elapsed}} elapsed · run {{runId}}"
       },
       "history": {
         "title": "Recent enriches",

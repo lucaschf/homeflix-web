@@ -471,10 +471,17 @@
       "trigger": {
         "title": "Disparar enriquecimento em massa",
         "subtitle": "Percorre o catálogo e pede ao TMDB pra preencher títulos, sinopses, pôsteres e elenco em cada linha que ainda não tem metadado.",
+        "inflightSubtitle": "Enriquecimento em andamento — controles desabilitados.",
+        "running": "rodando",
         "forceLabel": "Forçar re-enriquecimento",
         "forceHelper": "Re-busca metadados mesmo nas linhas que já têm. Útil após queda do TMDB ou migração de schema.",
         "cta": "Rodar enriquecimento",
-        "submitting": "Despachando…"
+        "submitting": "Despachando…",
+        "inflightCta": "Enriquecimento em andamento…"
+      },
+      "inflight": {
+        "title": "Enriquecendo…",
+        "details": "{{elapsed}} decorridos · execução {{runId}}"
       },
       "history": {
         "title": "Enriquecimentos recentes",
