@@ -226,8 +226,11 @@ export function Collection() {
       <Box
         component="section"
         sx={{
+          position: "relative",
+          zIndex: 1,
           px: { xs: "22px", md: 6, lg: 10 },
           py: { xs: 3, md: 6 },
+          bgcolor: "background.default",
         }}
       >
         <Stack
@@ -398,7 +401,7 @@ function CollectionHero({
             pb: { xs: "22px", md: 0 },
           }}
         >
-          <Box sx={{ maxWidth: { xs: "100%", md: 720 } }}>
+          <Box sx={{ maxWidth: { xs: "100%", md: 820 } }}>
             <Box
               sx={{
                 fontFamily: "'JetBrains Mono', ui-monospace, monospace",
@@ -441,7 +444,7 @@ function CollectionHero({
                   fontSize: { xs: "0.8125rem", md: "0.9375rem" },
                   lineHeight: { xs: 1.5, md: 1.6 },
                   color: "rgba(245,241,235,0.78)",
-                  maxWidth: { xs: "100%", md: 580 },
+                  maxWidth: { xs: "100%", md: 760 },
                 }}
               >
                 {collection.overview}
