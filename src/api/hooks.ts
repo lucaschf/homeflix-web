@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "./client";
+import { notifyOtherTabs } from "./notificationsChannel";
 import type {
   AddItemToCustomListResponse,
   AdminOverviewStats,
@@ -55,6 +56,8 @@ import type {
   ListSeriesResponse,
   PlaybackPreferencesData,
   PreferencesResponse,
+  MarkAllNotificationsReadPayload,
+  MarkAllNotificationsReadResponse,
   MovieDetail,
   MovieDetailResponse,
   MovieSummary,
@@ -1972,6 +1975,35 @@ export function useMarkNotificationRead() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      notifyOtherTabs();
+    },
+  });
+}
+
+/**
+ * Bulk-clear the caller's unread inbox in one round-trip.
+ *
+ * The backend performs a single bulk ``UPDATE`` so a long-
+ * untouched inbox flips without an N+1 fetch. Idempotent —
+ * calling on an already-clean inbox returns ``marked_read=0``
+ * without a DB write, so the caller never has to branch on the
+ * empty case. Same cache-invalidation flow as
+ * ``useMarkNotificationRead``: ``["notifications"]`` is dropped
+ * on success so the badge + dropdown reconcile on the next
+ * refetch.
+ */
+export function useMarkAllNotificationsRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<MarkAllNotificationsReadPayload> => {
+      const resp = await api.post<MarkAllNotificationsReadResponse>(
+        "/notifications/read-all",
+      );
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      notifyOtherTabs();
     },
   });
 }
