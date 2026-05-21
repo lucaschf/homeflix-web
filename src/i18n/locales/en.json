@@ -22,6 +22,13 @@
     "empty": "You're all caught up.",
     "unreadCount_one": "{{count}} unread",
     "unreadCount_other": "{{count}} unread",
+    "markAllRead": "Mark all read",
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This week",
+      "older": "Older"
+    },
     "kind": {
       "catalog_request_fulfilled": {
         "body": "The title you requested is now available in your catalog."

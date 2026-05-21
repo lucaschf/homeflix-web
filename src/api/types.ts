@@ -894,3 +894,17 @@ export interface NotificationsResponse extends ApiListResponse<Notification> {
     unread_count?: number;
   };
 }
+
+/**
+ * Payload returned by ``POST /api/v1/notifications/read-all``.
+ *
+ * ``marked_read`` reports how many rows flipped on this call; an
+ * already-clean inbox returns ``0`` so the frontend can skip
+ * branching on the empty case.
+ */
+export interface MarkAllNotificationsReadPayload {
+  marked_read: number;
+}
+
+export type MarkAllNotificationsReadResponse =
+  ApiDetailResponse<MarkAllNotificationsReadPayload>;
