@@ -11,9 +11,22 @@
     "search": "Buscar",
     "admin": "Admin",
     "account": "Conta",
+    "notifications": "Notificações",
     "switchProfile": "Trocar perfil",
     "manageProfiles": "Gerenciar perfis",
     "logout": "Sair"
+  },
+  "notifications": {
+    "title": "Notificações",
+    "loading": "Carregando…",
+    "empty": "Tudo em dia por aqui.",
+    "unreadCount_one": "{{count}} não lida",
+    "unreadCount_other": "{{count}} não lidas",
+    "kind": {
+      "catalog_request_fulfilled": {
+        "body": "O título solicitado já está disponível no seu catálogo."
+      }
+    }
   },
   "auth": {
     "login": {

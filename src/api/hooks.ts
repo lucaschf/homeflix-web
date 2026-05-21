@@ -61,6 +61,9 @@ import type {
   MoviesByActorResponse,
   NeedsReviewMovie,
   NeedsReviewMoviesResponse,
+  Notification,
+  NotificationResponse,
+  NotificationsResponse,
   PersonBio,
   PersonBioResponse,
   PromoteMovieToSeriesInput,
@@ -1896,5 +1899,79 @@ export function useAdminOverviewStats() {
     // Cheap aggregate read — keep it fresh-ish without
     // hammering the backend on every focus change.
     staleTime: 30_000,
+  });
+}
+
+// ─── Notifications ──────────────────────────────────────────
+
+/**
+ * Polling interval for the header bell. 30 s matches the cadence
+ * of ``useHealth`` / ``useReadiness`` — frequent enough that an
+ * arrival ping (catalog request fulfilled) lands in the badge
+ * within half a minute of the backend handler firing, infrequent
+ * enough that the inbox never dominates the request log.
+ */
+const NOTIFICATIONS_POLL_MS = 30_000;
+
+/**
+ * Default page size for the dropdown. Bigger than what the
+ * dropdown ever shows so a small inbox renders end-to-end without
+ * a "Load more" affordance; smaller than 200 (the backend cap) so
+ * a runaway user (hundreds of notifications) doesn't ship the
+ * full history on every poll.
+ */
+const NOTIFICATIONS_PAGE_LIMIT = 50;
+
+export interface NotificationsListResult {
+  items: Notification[];
+  unreadCount: number;
+}
+
+/**
+ * Fetch the caller's notifications inbox + unread badge count.
+ *
+ * Polled at ``NOTIFICATIONS_POLL_MS`` so the bell stays roughly
+ * live without a websocket. The ``unread_count`` in the response
+ * metadata is the canonical source for the badge — never derived
+ * from ``items`` (the dropdown may be filtered or capped, but the
+ * badge must reflect the household-wide total).
+ */
+export function useNotifications() {
+  return useQuery({
+    queryKey: ["notifications"],
+    queryFn: async (): Promise<NotificationsListResult> => {
+      const resp = await api.get<NotificationsResponse>("/notifications", {
+        limit: String(NOTIFICATIONS_PAGE_LIMIT),
+      });
+      return {
+        items: resp.data,
+        unreadCount: resp.metadata.unread_count ?? 0,
+      };
+    },
+    refetchInterval: NOTIFICATIONS_POLL_MS,
+  });
+}
+
+/**
+ * Mark a single notification read.
+ *
+ * The backend is idempotent — re-marking an already-read row
+ * returns the existing state without a DB write — so the
+ * frontend never has to guard against double-clicks. Invalidates
+ * the inbox query so both the dropdown row and the badge update
+ * after the round-trip lands.
+ */
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (notificationId: string): Promise<Notification> => {
+      const resp = await api.patch<NotificationResponse>(
+        `/notifications/${notificationId}/read`,
+      );
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }

@@ -11,9 +11,22 @@
     "search": "Search",
     "admin": "Admin",
     "account": "Account",
+    "notifications": "Notifications",
     "switchProfile": "Switch profile",
     "manageProfiles": "Manage profiles",
     "logout": "Sign out"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "loading": "Loading…",
+    "empty": "You're all caught up.",
+    "unreadCount_one": "{{count}} unread",
+    "unreadCount_other": "{{count}} unread",
+    "kind": {
+      "catalog_request_fulfilled": {
+        "body": "The title you requested is now available in your catalog."
+      }
+    }
   },
   "auth": {
     "login": {
