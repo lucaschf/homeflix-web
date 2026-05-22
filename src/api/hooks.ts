@@ -17,6 +17,11 @@ import type {
   AdminScanRunResponse,
   AdminScanRunsResponse,
   AdminScanRunTrigger,
+  AdminSettingDetail,
+  AdminSettingDetailResponse,
+  AdminSettingKey,
+  AdminSettingsResponse,
+  AdminSettingsValue,
   AdminUserDetail,
   AdminUserDetailResponse,
   AdminUserSummary,
@@ -1777,6 +1782,75 @@ export function useDeleteAdminUser() {
     onSuccess: (_data, userId) => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "user", userId] });
+    },
+  });
+}
+
+// ─── Admin — Settings (ADR-013 phase 4) ─────────────────────
+
+/**
+ * URL-slug for each bucket key. The backend uses
+ * ``thumbnail_backfill`` / ``intro_detection`` in JSON payloads and
+ * the matching hyphenated slugs on the route path, so the hook
+ * normalises the two ends from a single source of truth here.
+ */
+const ADMIN_SETTINGS_SLUG: Record<AdminSettingKey, string> = {
+  scheduler: "scheduler",
+  thumbnail_backfill: "thumbnail-backfill",
+  intro_detection: "intro-detection",
+  streaming: "streaming",
+  avatar: "avatar",
+};
+
+/**
+ * Pull every settings bucket in one round-trip. The response always
+ * has one entry per ``SettingKey`` — never-edited buckets are
+ * synthesised with ``source: "default"`` so the admin page can render
+ * every form without a second request.
+ *
+ * ``staleTime`` is left at the global default (``0``) so the page
+ * always refetches on focus; admin edits invalidate this key
+ * imperatively (see ``useUpdateAdminSetting``).
+ */
+export function useAdminSettings() {
+  return useQuery({
+    queryKey: ["admin", "settings"],
+    queryFn: async (): Promise<AdminSettingDetail[]> => {
+      const resp = await api.get<AdminSettingsResponse>("/admin/settings");
+      return resp.data;
+    },
+  });
+}
+
+/**
+ * Replace a settings bucket. Full-replace semantics: ``payload``
+ * carries the entire VO; the backend re-validates against the
+ * matching Pydantic model. On success the read cache is dropped so
+ * the form re-hydrates from the persisted row (carrying the new
+ * ``updated_at`` / ``updated_by_user_id``) without an extra refetch
+ * round-trip.
+ *
+ * Bucket-specific mutations are thin wrappers around this hook —
+ * see ``useUpdateSchedulerSettings`` and friends below — so each form
+ * can stay typed against its concrete VO while the network call
+ * stays in one place.
+ */
+export function useUpdateAdminSetting<V extends AdminSettingsValue>() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: {
+      key: AdminSettingKey;
+      payload: V;
+    }): Promise<AdminSettingDetail> => {
+      const slug = ADMIN_SETTINGS_SLUG[vars.key];
+      const resp = await api.patch<AdminSettingDetailResponse>(
+        `/admin/settings/${slug}`,
+        vars.payload,
+      );
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "settings"] });
     },
   });
 }

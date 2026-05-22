@@ -250,6 +250,7 @@
       "users": "Usuários",
       "hls": "HLS cache",
       "health": "Saúde",
+      "settings": "Configurações",
       "backToApp": "Voltar ao app",
       "group": {
         "catalog": "Catálogo",
@@ -632,6 +633,180 @@
         "lastChecked": "Última checagem às {{at}}",
         "overall": "Geral",
         "error": "Não foi possível alcançar o endpoint de readiness."
+      }
+    },
+    "settings": {
+      "title": "Configurações de runtime",
+      "subtitle": "Tunáveis operacionais persistidos no banco. Edições propagam para os consumidores em segundos — sem restart.",
+      "errorLoading": "Não foi possível carregar o snapshot de configurações.",
+      "propagationNote": "Alterações invalidam o cache do snapshot imediatamente; consumidores downstream (HLS, scheduler, intro detection) pegam o novo valor na próxima leitura. O diretório de avatar é a exceção — fica em cache no startup, então mudanças exigem restart + mover os arquivos existentes na mão.",
+      "lastEdited": "Editado pela última vez em {{date}}",
+      "switch": {
+        "on": "Ligado",
+        "off": "Desligado"
+      },
+      "source": {
+        "admin": "Admin",
+        "migration_seed": "Migration seed",
+        "sql_override": "Override SQL",
+        "default": "Padrão"
+      },
+      "actions": {
+        "save": "Salvar alterações",
+        "saving": "Salvando…",
+        "reset": "Descartar"
+      },
+      "snack": {
+        "saveFailed": "Não foi possível salvar as alterações."
+      },
+      "errors": {
+        "required": "Obrigatório.",
+        "minOne": "Deve ser pelo menos 1.",
+        "minZero": "Deve ser 0 ou maior.",
+        "minTen": "Deve ser pelo menos 10.",
+        "minSixty": "Deve ser pelo menos 60.",
+        "zeroToOne": "Deve estar entre 0.0 e 1.0.",
+        "zeroTo32": "Deve estar entre 0 e 32.",
+        "oneTo20": "Deve estar entre 1 e 20.",
+        "sixtyFourTo1024": "Deve estar entre 64 e 1024.",
+        "minLessThanMax": "Mínimo deve ser menor que o máximo."
+      },
+      "units": {
+        "minutes": "minutos",
+        "seconds": "segundos",
+        "items": "itens por tick",
+        "seasons": "temporadas por tick",
+        "threads": "threads",
+        "hashes": "falhas consecutivas",
+        "megabytes": "MB"
+      },
+      "scheduler": {
+        "title": "Scheduler",
+        "subtitle": "Master switch de todos os jobs periódicos (scans de biblioteca, thumbnail backfill, intro detection). Desligado aqui significa que nenhum job roda, independente do switch individual.",
+        "enabled": {
+          "label": "Ativo",
+          "helper": "Desligado paralisa todo o scheduler. Os switches por job abaixo só valem com isso ligado."
+        },
+        "reconcile": {
+          "label": "Intervalo de reconciliação",
+          "helper": "Com que frequência o APScheduler relê os agendamentos das bibliotecas. Mais baixo pega edições antes; mais alto reduz chatter no banco."
+        },
+        "snack": {
+          "saved": "Configurações do scheduler salvas."
+        }
+      },
+      "thumbnailBackfill": {
+        "title": "Thumbnail backfill",
+        "subtitle": "Job periódico que gera sprites de scrub-preview para itens que o operador ainda não streamou.",
+        "enabled": {
+          "label": "Ativo",
+          "helper": "Liga/desliga o loop de backfill. O master switch do scheduler também precisa estar ligado pra rodar."
+        },
+        "cadence": {
+          "label": "Cadência",
+          "helper": "Batch menor suaviza picos de CPU; maior recupera mais rápido em catálogos novos."
+        },
+        "batchSize": {
+          "label": "Batch size"
+        },
+        "interval": {
+          "label": "Intervalo"
+        },
+        "subdir": {
+          "label": "Subdiretório",
+          "helper": "Caminho (relativo à pasta de cada mídia) onde os pares sprite + VTT são gravados."
+        },
+        "snack": {
+          "saved": "Configurações de thumbnail backfill salvas."
+        }
+      },
+      "introDetection": {
+        "title": "Intro detection",
+        "subtitle": "Detector de aberturas de séries baseado em Chromaprint. Requer o binário fpcalc no PATH do servidor.",
+        "enabled": {
+          "label": "Ativo",
+          "helper": "Liga/desliga o loop de detecção. O master switch do scheduler também precisa estar ligado."
+        },
+        "cadence": {
+          "label": "Cadência",
+          "helper": "Cada temporada dispara ffmpeg + fpcalc por episódio; valores acima de 2 podem saturar o host em temporadas grandes."
+        },
+        "batchSize": {
+          "label": "Batch size"
+        },
+        "interval": {
+          "label": "Intervalo"
+        },
+        "audioWindow": {
+          "label": "Janela de áudio",
+          "helper": "Áudio inicial analisado por episódio. 600 s cobre os tamanhos típicos de cold-open + abertura; reduzir acelera ao custo de perder aberturas tardias."
+        },
+        "matching": {
+          "label": "Matching",
+          "helper": "Confiança + distância de Hamming por hash + tolerância de falhas consecutivas. Ajuste com cautela — calibrado contra detecções reais."
+        },
+        "minConfidence": {
+          "label": "Confiança mínima"
+        },
+        "maxHashHamming": {
+          "label": "Hamming máx por hash"
+        },
+        "toleranceHashes": {
+          "label": "Tolerância"
+        },
+        "bounds": {
+          "label": "Limites de duração",
+          "helper": "Detecções fora dessa faixa são descartadas (curto demais = stinger, longo demais = underscore vazando após o título)."
+        },
+        "minIntroSeconds": {
+          "label": "Mín"
+        },
+        "maxIntroSeconds": {
+          "label": "Máx"
+        },
+        "snack": {
+          "saved": "Configurações de intro detection salvas."
+        }
+      },
+      "streaming": {
+        "title": "Streaming",
+        "subtitle": "Limite de paralelismo do ffmpeg + teto do cache HLS. Aplica a transcoding HLS, extração de legendas e geração de sprites de scrub-preview.",
+        "threads": {
+          "label": "Threads do ffmpeg",
+          "helper": "Limita threads por invocação do ffmpeg. Desligado deixa em auto (usa todo core lógico). cpu_count / 2 limita transcoding a ~50 % do host. Limita paralelismo, não CPU absoluto — use cgroups para limite rígido.",
+          "capOn": "Cap ligado",
+          "capOff": "Auto (todos os cores)"
+        },
+        "cacheCap": {
+          "label": "Cap do cache HLS",
+          "helper": "Tamanho máximo do diretório de cache. O evictor LRU descarta os buckets menos acessados quando o uso passa esse limite. Aumenta em catálogos grandes para evitar re-transcoding dos populares.",
+          "unlimited": "0 desabilita o evictor — cache cresce sem limite."
+        },
+        "snack": {
+          "saved": "Configurações de streaming salvas."
+        }
+      },
+      "avatar": {
+        "title": "Avatares de perfil",
+        "subtitle": "Local de armazenamento e dimensionamento dos avatares enviados.",
+        "storageSubdir": {
+          "label": "Subdiretório de armazenamento",
+          "helper": "Caminho (relativo ao diretório de thumbnails) onde os avatares WebP são gravados. Lazy-cached no startup."
+        },
+        "sizing": {
+          "label": "Dimensionamento",
+          "helper": "Tamanho máximo de upload + lado final em pixels após resize. 256 px é o tamanho que o picker renderiza em 1×; aumentar deixa crisper em 2× / 3×."
+        },
+        "maxSizeMb": {
+          "label": "Tamanho máx do upload"
+        },
+        "sizePixels": {
+          "label": "Tamanho"
+        },
+        "subdirMigrationWarning": "Trocar o subdiretório exige restart do app + mover os avatares existentes na mão. O novo caminho só vale para uploads futuros.",
+        "snack": {
+          "saved": "Configurações de avatar salvas."
+        }
       }
     },
     "requests": {

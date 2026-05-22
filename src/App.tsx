@@ -36,6 +36,7 @@ import { MoviesAdmin } from "./pages/admin/MoviesAdmin";
 import { AdminOverview } from "./pages/admin/Overview";
 import { ScanAdmin } from "./pages/admin/ScanAdmin";
 import { SeriesAdmin } from "./pages/admin/SeriesAdmin";
+import { SettingsAdmin } from "./pages/admin/SettingsAdmin";
 import { UserDetailAdmin } from "./pages/admin/UserDetailAdmin";
 import { UsersAdmin } from "./pages/admin/UsersAdmin";
 import { theme } from "./theme";
@@ -149,6 +150,7 @@ function App() {
                   <Route path="/admin/enrich" element={<EnrichAdmin />} />
                   <Route path="/admin/system/hls-cache" element={<HlsCacheAdmin />} />
                   <Route path="/admin/system/health" element={<HealthAdmin />} />
+                  <Route path="/admin/system/settings" element={<SettingsAdmin />} />
                 </Route>
               </Route>
             </Route>
