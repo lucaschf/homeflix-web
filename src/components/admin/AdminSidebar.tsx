@@ -11,6 +11,7 @@ import {
   type LucideIcon,
   Music,
   ScanLine,
+  SlidersHorizontal,
   Sparkles,
   Tv,
   Users,
@@ -103,6 +104,11 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
       items: [
         { labelKey: "admin.nav.hls", to: "/admin/system/hls-cache", icon: HardDrive },
         { labelKey: "admin.nav.health", to: "/admin/system/health", icon: Heart },
+        {
+          labelKey: "admin.nav.settings",
+          to: "/admin/system/settings",
+          icon: SlidersHorizontal,
+        },
       ],
     },
   ];

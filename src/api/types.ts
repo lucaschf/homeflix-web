@@ -455,6 +455,104 @@ export interface UpdateUserRolePayload {
   role: "admin" | "member";
 }
 
+// ─── Admin — Settings (ADR-013 phase 4) ───────────────────────────
+//
+// The backend persists five operational tunable buckets in
+// ``app_settings``; each row is a self-contained Pydantic VO. The
+// admin panel reads them all in one shot via ``GET /admin/settings``
+// and replaces a bucket atomically via ``PATCH /admin/settings/<key>``
+// — the body is the full VO payload (no partial PATCH; the UI
+// submits the entire form).
+
+/** Bucket identifier — matches ``SettingKey`` on the backend. */
+export type AdminSettingKey =
+  | "scheduler"
+  | "thumbnail_backfill"
+  | "intro_detection"
+  | "streaming"
+  | "avatar";
+
+/** Provenance marker. ``default`` is synthesised by the read endpoint
+ *  for buckets that have never been persisted. */
+export type AdminSettingSource =
+  | "migration_seed"
+  | "admin"
+  | "sql_override"
+  | "default";
+
+/** Scheduler bucket — master switch + reconcile cadence. */
+export interface SchedulerSettings {
+  enabled: boolean;
+  reconcile_interval_minutes: number;
+}
+
+/** Thumbnail backfill bucket — cadence + per-tick batch size + subdir. */
+export interface ThumbnailBackfillSettings {
+  enabled: boolean;
+  batch_size: number;
+  interval_minutes: number;
+  subdir: string;
+}
+
+/** Intro detection bucket — Chromaprint detector calibration. */
+export interface IntroDetectionSettings {
+  enabled: boolean;
+  batch_size: number;
+  interval_minutes: number;
+  audio_window_seconds: number;
+  min_confidence: number;
+  max_hash_hamming: number;
+  tolerance_hashes: number;
+  min_intro_seconds: number;
+  max_intro_seconds: number;
+}
+
+/** Streaming bucket — ffmpeg parallelism + HLS cache cap. */
+export interface StreamingSettings {
+  /** ``null`` leaves ffmpeg in auto mode (uses every logical core). */
+  ffmpeg_threads: number | null;
+  /** ``0`` disables LRU eviction entirely. */
+  hls_cache_max_size_mb: number;
+}
+
+/** Avatar bucket — storage subdir + upload sizing. */
+export interface AvatarSettings {
+  storage_subdir: string;
+  max_size_mb: number;
+  size_pixels: number;
+}
+
+/**
+ * Union of every settings VO payload. The ``key`` on the parent
+ * ``AdminSettingDetail`` disambiguates which concrete shape ``value``
+ * carries — read sites narrow via ``detail.key === "scheduler"``
+ * before touching bucket-specific fields.
+ */
+export type AdminSettingsValue =
+  | SchedulerSettings
+  | ThumbnailBackfillSettings
+  | IntroDetectionSettings
+  | StreamingSettings
+  | AvatarSettings;
+
+/**
+ * Row returned by ``GET /api/v1/admin/settings``. ``source`` is
+ * ``"default"`` when the bucket has never been written — the backend
+ * synthesises the row from the VO defaults so the UI can render every
+ * bucket in a single response.
+ */
+export interface AdminSettingDetail {
+  key: AdminSettingKey;
+  value: AdminSettingsValue;
+  source: AdminSettingSource;
+  updated_by_user_id: string | null;
+  /** ISO-8601 UTC; ``null`` for synthesised defaults. */
+  updated_at: string | null;
+}
+
+export type AdminSettingsResponse = ApiListResponse<AdminSettingDetail>;
+export type AdminSettingDetailResponse = ApiDetailResponse<AdminSettingDetail>;
+
 export type AdminScanRunKind = "scan" | "enrich";
 export type AdminScanRunTrigger = "manual" | "scheduled";
 export type AdminScanRunStatus =

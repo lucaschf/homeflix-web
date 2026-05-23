@@ -250,6 +250,7 @@
       "users": "Users",
       "hls": "HLS cache",
       "health": "Health",
+      "settings": "Settings",
       "backToApp": "Back to app",
       "group": {
         "catalog": "Catalog",
@@ -632,6 +633,180 @@
         "lastChecked": "Last checked at {{at}}",
         "overall": "Overall",
         "error": "Couldn't reach the readiness endpoint."
+      }
+    },
+    "settings": {
+      "title": "Runtime settings",
+      "subtitle": "Operational tunables persisted in the database. Edits propagate to consumers within seconds — no restart required.",
+      "errorLoading": "Couldn't load the settings snapshot.",
+      "propagationNote": "Changes flush the snapshot cache immediately; downstream consumers (HLS, scheduler, intro detection) pick them up on their next read. Avatar storage directory is the lone exception — it lazy-caches at startup, so changes require a restart and a manual move of existing files.",
+      "lastEdited": "Last edited {{date}}",
+      "switch": {
+        "on": "On",
+        "off": "Off"
+      },
+      "source": {
+        "admin": "Admin",
+        "migration_seed": "Migration seed",
+        "sql_override": "SQL override",
+        "default": "Default"
+      },
+      "actions": {
+        "save": "Save changes",
+        "saving": "Saving…",
+        "reset": "Reset"
+      },
+      "snack": {
+        "saveFailed": "Could not save the changes."
+      },
+      "errors": {
+        "required": "Required.",
+        "minOne": "Must be at least 1.",
+        "minZero": "Must be 0 or higher.",
+        "minTen": "Must be at least 10.",
+        "minSixty": "Must be at least 60.",
+        "zeroToOne": "Must be between 0.0 and 1.0.",
+        "zeroTo32": "Must be between 0 and 32.",
+        "oneTo20": "Must be between 1 and 20.",
+        "sixtyFourTo1024": "Must be between 64 and 1024.",
+        "minLessThanMax": "Min must be less than max."
+      },
+      "units": {
+        "minutes": "minutes",
+        "seconds": "seconds",
+        "items": "items per tick",
+        "seasons": "seasons per tick",
+        "threads": "threads",
+        "hashes": "consecutive misses",
+        "megabytes": "MB"
+      },
+      "scheduler": {
+        "title": "Scheduler",
+        "subtitle": "Master switch for every periodic job (library scans, thumbnail backfill, intro detection). Off here means no job ticks at all, regardless of its per-job switch.",
+        "enabled": {
+          "label": "Enabled",
+          "helper": "Off disables the entire scheduler. Per-job switches below still apply when this is on."
+        },
+        "reconcile": {
+          "label": "Reconcile interval",
+          "helper": "How often APScheduler re-reads library schedules from the database. Lower picks up edits sooner; higher reduces idle DB chatter."
+        },
+        "snack": {
+          "saved": "Scheduler settings saved."
+        }
+      },
+      "thumbnailBackfill": {
+        "title": "Thumbnail backfill",
+        "subtitle": "Periodic job that fills in scrub-preview sprites for items the operator hasn't streamed yet.",
+        "enabled": {
+          "label": "Enabled",
+          "helper": "Toggle the backfill loop. The scheduler master switch must also be on for this to tick."
+        },
+        "cadence": {
+          "label": "Cadence",
+          "helper": "Lower batch size smooths CPU spikes; higher catches up faster on a fresh catalog."
+        },
+        "batchSize": {
+          "label": "Batch size"
+        },
+        "interval": {
+          "label": "Interval"
+        },
+        "subdir": {
+          "label": "Subdirectory",
+          "helper": "Path (relative to each media file's parent folder) where sprite + VTT pairs are written."
+        },
+        "snack": {
+          "saved": "Thumbnail backfill settings saved."
+        }
+      },
+      "introDetection": {
+        "title": "Intro detection",
+        "subtitle": "Chromaprint-based detector for series intros. Requires the fpcalc binary on PATH on the server.",
+        "enabled": {
+          "label": "Enabled",
+          "helper": "Toggle the detection loop. The scheduler master switch must also be on for this to tick."
+        },
+        "cadence": {
+          "label": "Cadence",
+          "helper": "Each season triggers ffmpeg + fpcalc per episode, so values above 2 can saturate the host on large seasons."
+        },
+        "batchSize": {
+          "label": "Batch size"
+        },
+        "interval": {
+          "label": "Interval"
+        },
+        "audioWindow": {
+          "label": "Audio window",
+          "helper": "Leading audio analysed per episode. 600 s covers all common cold-open + intro lengths; trim lower to speed up at the cost of missing late intros."
+        },
+        "matching": {
+          "label": "Matching",
+          "helper": "Confidence + per-hash Hamming distance + consecutive-miss tolerance. Tune cautiously — these settings were calibrated against real-world detections."
+        },
+        "minConfidence": {
+          "label": "Min confidence"
+        },
+        "maxHashHamming": {
+          "label": "Max hash hamming"
+        },
+        "toleranceHashes": {
+          "label": "Tolerance"
+        },
+        "bounds": {
+          "label": "Length bounds",
+          "helper": "Detections outside this range are dropped (too short = stinger, too long = shared underscore bleeding past the title)."
+        },
+        "minIntroSeconds": {
+          "label": "Min length"
+        },
+        "maxIntroSeconds": {
+          "label": "Max length"
+        },
+        "snack": {
+          "saved": "Intro detection settings saved."
+        }
+      },
+      "streaming": {
+        "title": "Streaming",
+        "subtitle": "ffmpeg parallelism cap + HLS cache ceiling. Applies to HLS transcoding, subtitle extraction, and scrub-preview sprite generation.",
+        "threads": {
+          "label": "ffmpeg threads",
+          "helper": "Caps worker threads per ffmpeg invocation. Off leaves ffmpeg in auto (uses every logical core). Set to roughly cpu_count / 2 to cap transcoding to ~50 % of the host. Caps parallelism, not absolute CPU — use cgroups or equivalent for a hard limit.",
+          "capOn": "Cap enabled",
+          "capOff": "Auto (every core)"
+        },
+        "cacheCap": {
+          "label": "HLS cache cap",
+          "helper": "Maximum cache directory size. The LRU evictor drops least-recently-accessed buckets once usage exceeds this. Bump on large catalogs to avoid re-transcoding popular titles.",
+          "unlimited": "0 disables eviction — cache grows without bound."
+        },
+        "snack": {
+          "saved": "Streaming settings saved."
+        }
+      },
+      "avatar": {
+        "title": "Profile avatars",
+        "subtitle": "Output location and sizing for uploaded profile avatars.",
+        "storageSubdir": {
+          "label": "Storage subdirectory",
+          "helper": "Path (relative to the thumbnails directory) where uploaded WebP avatars are written. Lazy-cached at startup."
+        },
+        "sizing": {
+          "label": "Sizing",
+          "helper": "Max upload size + final square side length after resize. 256 px is the size the picker renders at 1×; bumping it lets the picker render crisper at 2× / 3×."
+        },
+        "maxSizeMb": {
+          "label": "Max upload size"
+        },
+        "sizePixels": {
+          "label": "Size"
+        },
+        "subdirMigrationWarning": "Changing the storage subdirectory requires an app restart and a manual move of existing avatar files. The path takes effect for new uploads only.",
+        "snack": {
+          "saved": "Avatar settings saved."
+        }
       }
     },
     "requests": {

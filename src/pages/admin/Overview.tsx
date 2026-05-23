@@ -153,8 +153,8 @@ export function AdminOverview() {
         />
         <StatCard
           label={t("admin.overview.stats.lastScan")}
-          value={formatLastScanValue(stats.data?.last_scan, i18n.language, t)}
-          sub={formatLastScanSub(stats.data?.last_scan, t)}
+          value={formatLastScanValue(stats.data?.last_scan ?? null, i18n.language, t)}
+          sub={formatLastScanSub(stats.data?.last_scan ?? null, t)}
           icon={ScanLine}
           loading={statsLoading}
           onClick={() => navigate("/admin/scan")}
