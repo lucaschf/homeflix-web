@@ -842,6 +842,22 @@
         "winnerWas": "Winner: {{title}}",
         "at": "Resolved {{when}}"
       },
+      "bulk": {
+        "selected": "{{count}} selected",
+        "clear": "Clear",
+        "markDistinct": "Mark as distinct",
+        "selectRow": "Select conflict",
+        "snack": {
+          "done": "{{count}} conflicts marked as distinct.",
+          "partial": "{{resolved}} marked as distinct, {{skipped}} skipped."
+        },
+        "dialog": {
+          "title": "Mark conflicts as distinct",
+          "body": "Mark the {{count}} selected conflicts as intentionally distinct?",
+          "consequence1": "The detector won't re-queue these pairs on future enrichment passes.",
+          "consequence2": "No movies are deleted — both titles in each pair stay in the catalog."
+        }
+      },
       "empty": {
         "title": "No pending conflicts",
         "subtitle": "Every detected duplicate has been resolved or none has been flagged yet.",

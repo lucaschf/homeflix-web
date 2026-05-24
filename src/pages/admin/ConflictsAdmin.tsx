@@ -1,6 +1,7 @@
 import {
   Alert,
   Box,
+  Checkbox,
   CircularProgress,
   DialogActions,
   DialogContent,
@@ -18,13 +19,18 @@ import {
   FileVideo,
   GitMerge,
   Layers,
+  ListChecks,
   ShieldCheck,
   UserCheck,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
-import { useAdminConflicts, useResolveAdminConflict } from "../../api/hooks";
+import {
+  useAdminConflicts,
+  useBulkMarkDistinctConflicts,
+  useResolveAdminConflict,
+} from "../../api/hooks";
 import type {
   AdminConflictAction,
   AdminConflictCandidateFile,
@@ -36,6 +42,7 @@ import {
   AdminBadge,
   AdminButton,
   AdminCard,
+  AdminConfirmDialog,
   AdminPageHeader,
 } from "../../components/admin";
 import { AdminDialog } from "../../components/admin/AdminDialog";
@@ -100,8 +107,25 @@ export function ConflictsAdmin() {
   });
   const [dialog, setDialog] = useState<DialogState>({ open: false });
   const [snack, setSnack] = useState<Snack>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const bulk = useBulkMarkDistinctConflicts();
 
   const isAuditView = activeTab !== "pending";
+
+  const changeTab = (key: TabKey) => {
+    setActiveTab(key);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const openResolveDialog = (conflict: AdminConflictSummary) =>
     setDialog({ open: true, conflict });
@@ -111,6 +135,31 @@ export function ConflictsAdmin() {
     setSnack({ message, severity: "success" });
   const notifyError = (message: string) =>
     setSnack({ message, severity: "error" });
+
+  const confirmBulkMarkDistinct = async () => {
+    setBulkError(null);
+    try {
+      const result = await bulk.mutateAsync([...selectedIds]);
+      setBulkConfirmOpen(false);
+      setSelectedIds(new Set());
+      const skipped = result.skipped.length;
+      notifySuccess(
+        skipped > 0
+          ? t("admin.conflicts.bulk.snack.partial", {
+              resolved: result.resolved_ids.length,
+              skipped,
+            })
+          : t("admin.conflicts.bulk.snack.done", {
+              count: result.resolved_ids.length,
+            }),
+      );
+    } catch (err) {
+      const msg =
+        err instanceof ApiError ? err.message : t("admin.conflicts.snack.failed");
+      setBulkError(msg);
+      notifyError(msg);
+    }
+  };
 
   return (
     <>
@@ -125,12 +174,48 @@ export function ConflictsAdmin() {
           <AdminButton
             key={def.key}
             variant={activeTab === def.key ? "primary" : "ghost"}
-            onClick={() => setActiveTab(def.key)}
+            onClick={() => changeTab(def.key)}
           >
             {t(def.labelKey)}
           </AdminButton>
         ))}
       </Stack>
+
+      {!isAuditView && selectedIds.size > 0 && (
+        <Stack
+          direction="row"
+          spacing={1.5}
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{
+            mb: 2,
+            px: 2,
+            py: 1.25,
+            borderRadius: 1,
+            bgcolor: "rgba(120,160,255,0.08)",
+            border: "1px solid rgba(120,160,255,0.2)",
+          }}
+        >
+          <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.85)" }}>
+            {t("admin.conflicts.bulk.selected", { count: selectedIds.size })}
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <AdminButton variant="ghost" onClick={() => setSelectedIds(new Set())}>
+              {t("admin.conflicts.bulk.clear")}
+            </AdminButton>
+            <AdminButton
+              variant="primary"
+              icon={<ListChecks size={14} />}
+              onClick={() => {
+                setBulkError(null);
+                setBulkConfirmOpen(true);
+              }}
+            >
+              {t("admin.conflicts.bulk.markDistinct")}
+            </AdminButton>
+          </Stack>
+        </Stack>
+      )}
 
       {paged.isLoading && !paged.items.length ? (
         <AdminCard>
@@ -175,6 +260,9 @@ export function ConflictsAdmin() {
             <ConflictRow
               key={conflict.conflict_id}
               conflict={conflict}
+              selectable={!isAuditView}
+              selected={selectedIds.has(conflict.conflict_id)}
+              onToggleSelect={() => toggleSelect(conflict.conflict_id)}
               onResolveClick={() => openResolveDialog(conflict)}
             />
           ))}
@@ -200,6 +288,25 @@ export function ConflictsAdmin() {
           onFailed={notifyError}
         />
       )}
+
+      <AdminConfirmDialog
+        open={bulkConfirmOpen}
+        title={t("admin.conflicts.bulk.dialog.title")}
+        body={t("admin.conflicts.bulk.dialog.body", { count: selectedIds.size })}
+        consequences={[
+          t("admin.conflicts.bulk.dialog.consequence1"),
+          t("admin.conflicts.bulk.dialog.consequence2"),
+        ]}
+        busy={bulk.isPending}
+        errorMessage={bulkError}
+        confirmLabel={t("admin.conflicts.bulk.markDistinct")}
+        confirmingLabel={t("admin.confirm.confirming")}
+        cancelLabel={t("admin.confirm.cancel")}
+        onCancel={() => {
+          if (!bulk.isPending) setBulkConfirmOpen(false);
+        }}
+        onConfirm={confirmBulkMarkDistinct}
+      />
 
       <Snackbar
         open={!!snack}
@@ -233,9 +340,15 @@ export function ConflictsAdmin() {
 
 function ConflictRow({
   conflict,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
   onResolveClick,
 }: {
   conflict: AdminConflictSummary;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
   onResolveClick: () => void;
 }) {
   const { t, i18n } = useTranslation();
@@ -270,6 +383,17 @@ function ConflictRow({
           spacing={1.5}
         >
           <Stack direction="row" spacing={1.25} alignItems="center">
+            {selectable && (
+              <Checkbox
+                size="small"
+                checked={selected}
+                onChange={onToggleSelect}
+                sx={{ p: 0.5, color: "rgba(245,241,235,0.45)" }}
+                inputProps={{
+                  "aria-label": t("admin.conflicts.bulk.selectRow"),
+                }}
+              />
+            )}
             <Layers size={16} color="rgba(245,241,235,0.55)" />
             <Typography variant="subtitle2" sx={{ color: "rgba(245,241,235,0.78)" }}>
               {t("admin.conflicts.matchReason." + conflict.match_reason)}
