@@ -843,7 +843,9 @@
       "candidate": {
         "a": "Candidato A",
         "b": "Candidato B",
-        "missingTitle": "Título indisponível"
+        "missingTitle": "Título indisponível",
+        "primary": "Principal",
+        "noFiles": "Sem arquivos em disco"
       },
       "action": {
         "resolve": "Resolver…",

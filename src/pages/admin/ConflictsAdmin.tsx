@@ -13,13 +13,21 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { Bot, GitMerge, Layers, ShieldCheck, UserCheck } from "lucide-react";
+import {
+  Bot,
+  FileVideo,
+  GitMerge,
+  Layers,
+  ShieldCheck,
+  UserCheck,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
 import { useAdminConflicts, useResolveAdminConflict } from "../../api/hooks";
 import type {
   AdminConflictAction,
+  AdminConflictCandidateFile,
   AdminConflictCandidateSummary,
   AdminConflictResolutionSource,
   AdminConflictSummary,
@@ -32,6 +40,17 @@ import {
 } from "../../components/admin";
 import { AdminDialog } from "../../components/admin/AdminDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+
+const KB = 1024;
+const MB = KB * 1024;
+const GB = MB * 1024;
+
+function formatBytes(bytes: number): string {
+  if (bytes < KB) return `${bytes} B`;
+  if (bytes < MB) return `${(bytes / KB).toFixed(1)} KB`;
+  if (bytes < GB) return `${(bytes / MB).toFixed(1)} MB`;
+  return `${(bytes / GB).toFixed(2)} GB`;
+}
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 
@@ -415,6 +434,53 @@ function CandidatePane({
       >
         {candidate.media_id}
         {candidate.year ? ` · ${candidate.year}` : ""}
+      </Typography>
+
+      {candidate.files.length > 0 ? (
+        <Stack spacing={0.75} sx={{ mt: 1.25 }}>
+          {candidate.files.map((file) => (
+            <CandidateFileRow key={file.file_path} file={file} />
+          ))}
+        </Stack>
+      ) : (
+        <Typography
+          variant="caption"
+          sx={{ display: "block", mt: 1.25, color: "rgba(245,241,235,0.4)" }}
+        >
+          {t("admin.conflicts.candidate.noFiles")}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+function CandidateFileRow({ file }: { file: AdminConflictCandidateFile }) {
+  const { t } = useTranslation();
+  const meta = [file.resolution, formatBytes(file.file_size)];
+  if (file.video_codec) meta.push(file.video_codec);
+  if (file.hdr_format) meta.push(file.hdr_format);
+
+  return (
+    <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.05)", pt: 0.75 }}>
+      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 0.25 }}>
+        <FileVideo size={12} color="rgba(245,241,235,0.45)" />
+        <Typography variant="caption" sx={{ color: "rgba(245,241,235,0.7)" }}>
+          {meta.join(" · ")}
+        </Typography>
+        {file.is_primary && (
+          <AdminBadge tone="ok">{t("admin.conflicts.candidate.primary")}</AdminBadge>
+        )}
+      </Stack>
+      <Typography
+        variant="caption"
+        sx={{
+          display: "block",
+          color: "rgba(245,241,235,0.45)",
+          fontFamily: "monospace",
+          wordBreak: "break-all",
+        }}
+      >
+        {file.file_path}
       </Typography>
     </Box>
   );
