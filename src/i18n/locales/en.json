@@ -814,9 +814,22 @@
       "title": "Content conflicts",
       "subtitle": "Pairs of titles flagged as the same content by the post-enrich detector. Resolve each one as intentionally distinct, replace, or merge keeping both files as variants.",
       "errorLoading": "Couldn't load the conflict queue.",
+      "tabs": {
+        "pending": "Pending",
+        "manual": "Resolved (manual)",
+        "auto": "Auto-merged"
+      },
+      "resolved": {
+        "byAdmin": "Manual",
+        "byAuto": "Auto-merge",
+        "winnerWas": "Winner: {{title}}",
+        "at": "Resolved {{when}}"
+      },
       "empty": {
         "title": "No pending conflicts",
-        "subtitle": "Every detected duplicate has been resolved or none has been flagged yet."
+        "subtitle": "Every detected duplicate has been resolved or none has been flagged yet.",
+        "auditTitle": "Nothing in the audit log yet",
+        "auditSubtitle": "Resolved entries appear here once the operator (or the auto-merge detector) closes them."
       },
       "detectedAt": "Detected {{when}}",
       "runtimeDelta": "Runtime delta: {{minutes}} min",

@@ -813,9 +813,22 @@
       "title": "Conflitos de conteúdo",
       "subtitle": "Pares de títulos sinalizados como o mesmo conteúdo pelo detector pós-enrich. Resolva cada um como distintos intencionais, substituir ou mesclar mantendo ambas as variantes.",
       "errorLoading": "Não foi possível carregar a fila de conflitos.",
+      "tabs": {
+        "pending": "Pendentes",
+        "manual": "Resolvidos (manual)",
+        "auto": "Auto-merge"
+      },
+      "resolved": {
+        "byAdmin": "Manual",
+        "byAuto": "Auto-merge",
+        "winnerWas": "Vencedor: {{title}}",
+        "at": "Resolvido em {{when}}"
+      },
       "empty": {
         "title": "Sem conflitos pendentes",
-        "subtitle": "Todos os duplicados detectados foram resolvidos, ou nenhum foi sinalizado ainda."
+        "subtitle": "Todos os duplicados detectados foram resolvidos, ou nenhum foi sinalizado ainda.",
+        "auditTitle": "Nada no histórico ainda",
+        "auditSubtitle": "Entradas resolvidas aparecem aqui depois que o operador (ou o auto-merge) fecha cada uma."
       },
       "detectedAt": "Detectado em {{when}}",
       "runtimeDelta": "Delta de duração: {{minutes}} min",
