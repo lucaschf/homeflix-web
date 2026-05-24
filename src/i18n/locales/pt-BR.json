@@ -807,6 +807,23 @@
         "snack": {
           "saved": "Configurações de avatar salvas."
         }
+      },
+      "scanDedup": {
+        "title": "Deduplicação no scan",
+        "subtitle": "Limiares de diferença de duração para o detector de conflitos pós-enrich. Uma duplicata só é sinalizada como edição diferente quando a diferença de duração ultrapassa AMBOS os limites.",
+        "thresholds": {
+          "label": "Limiares de edição diferente",
+          "helper": "Um par cuja diferença de duração fique dentro de qualquer um dos limites é tratado como o mesmo lançamento. Ambos precisam ser ultrapassados para sugerir um corte do diretor / versão de cinema."
+        },
+        "absMinutes": {
+          "label": "Diferença absoluta"
+        },
+        "relative": {
+          "label": "Diferença relativa"
+        },
+        "snack": {
+          "saved": "Configurações de dedup do scan salvas."
+        }
       }
     },
     "conflicts": {
