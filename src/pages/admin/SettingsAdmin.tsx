@@ -7,6 +7,7 @@ import type {
   AdminSettingKey,
   AvatarSettings,
   IntroDetectionSettings,
+  ScanDedupSettings,
   SchedulerSettings,
   StreamingSettings,
   ThumbnailBackfillSettings,
@@ -19,6 +20,7 @@ import {
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { AvatarSettingsCard } from "./components/AvatarSettingsCard";
 import { IntroDetectionSettingsCard } from "./components/IntroDetectionSettingsCard";
+import { ScanDedupSettingsCard } from "./components/ScanDedupSettingsCard";
 import { SchedulerSettingsCard } from "./components/SchedulerSettingsCard";
 import { StreamingSettingsCard } from "./components/StreamingSettingsCard";
 import { ThumbnailBackfillSettingsCard } from "./components/ThumbnailBackfillSettingsCard";
@@ -107,6 +109,7 @@ export function SettingsAdmin() {
   const introDetection = detailFor(data, "intro_detection");
   const streaming = detailFor(data, "streaming");
   const avatar = detailFor(data, "avatar");
+  const scanDedup = detailFor(data, "scan_dedup");
 
   return (
     <>
@@ -181,6 +184,17 @@ export function SettingsAdmin() {
             detail={{
               ...avatar,
               value: avatar.value as AvatarSettings,
+            }}
+            onSuccess={notifySuccess}
+            onError={notifyError}
+          />
+        )}
+        {scanDedup && (
+          <ScanDedupSettingsCard
+            key={scanDedup.updated_at ?? "default"}
+            detail={{
+              ...scanDedup,
+              value: scanDedup.value as ScanDedupSettings,
             }}
             onSuccess={notifySuccess}
             onError={notifyError}

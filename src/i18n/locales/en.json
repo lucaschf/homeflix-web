@@ -808,6 +808,23 @@
         "snack": {
           "saved": "Avatar settings saved."
         }
+      },
+      "scanDedup": {
+        "title": "Scan deduplication",
+        "subtitle": "Runtime-delta thresholds for the post-enrich conflict detector. A duplicate is flagged as a suspected different edit only when its runtime delta exceeds BOTH bounds.",
+        "thresholds": {
+          "label": "Different-edit thresholds",
+          "helper": "A pair whose runtime delta stays within either bound is treated as the same release. Both must be exceeded to suggest a Director's Cut / Theatrical split."
+        },
+        "absMinutes": {
+          "label": "Absolute delta"
+        },
+        "relative": {
+          "label": "Relative delta"
+        },
+        "snack": {
+          "saved": "Scan dedup settings saved."
+        }
       }
     },
     "conflicts": {

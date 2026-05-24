@@ -470,7 +470,8 @@ export type AdminSettingKey =
   | "thumbnail_backfill"
   | "intro_detection"
   | "streaming"
-  | "avatar";
+  | "avatar"
+  | "scan_dedup";
 
 /** Provenance marker. ``default`` is synthesised by the read endpoint
  *  for buckets that have never been persisted. */
@@ -523,6 +524,18 @@ export interface AvatarSettings {
 }
 
 /**
+ * Scan-dedup bucket — runtime-delta bounds that classify a detected
+ * content-identity conflict as likely-same vs suspected-different-edit
+ * (ADR-015). A pair is only flagged as a different edit when its delta
+ * exceeds BOTH bounds.
+ */
+export interface ScanDedupSettings {
+  runtime_delta_abs_minutes: number;
+  /** Fraction of the shorter runtime (``0.10`` = 10%). */
+  runtime_delta_relative: number;
+}
+
+/**
  * Union of every settings VO payload. The ``key`` on the parent
  * ``AdminSettingDetail`` disambiguates which concrete shape ``value``
  * carries — read sites narrow via ``detail.key === "scheduler"``
@@ -533,7 +546,8 @@ export type AdminSettingsValue =
   | ThumbnailBackfillSettings
   | IntroDetectionSettings
   | StreamingSettings
-  | AvatarSettings;
+  | AvatarSettings
+  | ScanDedupSettings;
 
 /**
  * Row returned by ``GET /api/v1/admin/settings``. ``source`` is

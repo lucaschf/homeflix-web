@@ -1807,6 +1807,7 @@ const ADMIN_SETTINGS_SLUG: Record<AdminSettingKey, string> = {
   intro_detection: "intro-detection",
   streaming: "streaming",
   avatar: "avatar",
+  scan_dedup: "scan-dedup",
 };
 
 /**
