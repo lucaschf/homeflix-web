@@ -821,6 +821,10 @@
         "relative": {
           "label": "Diferença relativa"
         },
+        "fallback": {
+          "label": "Fallback título + ano",
+          "helper": "Quando ligado, também sinaliza duplicatas por título original normalizado + ano — pegando entradas cujo enriquecimento nunca fixou um TMDB id. Esses matches mais fracos sempre vão para a fila e nunca são auto-mesclados."
+        },
         "snack": {
           "saved": "Configurações de dedup do scan salvas."
         }
