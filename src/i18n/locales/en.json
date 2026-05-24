@@ -844,7 +844,9 @@
       "candidate": {
         "a": "Candidate A",
         "b": "Candidate B",
-        "missingTitle": "Title unavailable"
+        "missingTitle": "Title unavailable",
+        "primary": "Primary",
+        "noFiles": "No file variants on disk"
       },
       "action": {
         "resolve": "Resolve…",

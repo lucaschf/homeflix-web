@@ -1049,6 +1049,20 @@ export type AdminConflictAction =
   | "merge_replace";
 
 /**
+ * One file variant of a conflict candidate, projected by the backend
+ * so the operator can compare on-disk context (path, resolution,
+ * size) before deciding a merge.
+ */
+export interface AdminConflictCandidateFile {
+  file_path: string;
+  resolution: string;
+  file_size: number;
+  video_codec: string | null;
+  hdr_format: string | null;
+  is_primary: boolean;
+}
+
+/**
  * Display projection of one side of a conflict pair, hydrated by the
  * backend so the UI doesn't have to round-trip per candidate.
  */
@@ -1057,6 +1071,7 @@ export interface AdminConflictCandidateSummary {
   media_type: AdminConflictCandidateType;
   title: string | null;
   year: number | null;
+  files: AdminConflictCandidateFile[];
 }
 
 /**
