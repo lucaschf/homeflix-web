@@ -1060,7 +1060,25 @@ export interface AdminConflictCandidateSummary {
 }
 
 /**
- * One row in the admin conflict queue.
+ * Resolution provenance for an audit-view row. ``"manual"`` means
+ * the admin clicked through the resolve dialog (Phase 2);
+ * ``"auto"`` means the post-enrich detector silently absorbed an
+ * orphan candidate (Phase 3).
+ */
+export type AdminConflictResolutionSource = "manual" | "auto";
+
+/**
+ * Tab filter for ``GET /admin/conflicts``. ``"pending"`` is the
+ * operator queue (default); ``"resolved"`` powers the audit view.
+ */
+export type AdminConflictListState = "pending" | "resolved";
+
+/**
+ * One row in the admin conflict queue or audit view. For pending
+ * rows ``resolved_at`` / ``resolution`` / ``winner_id`` /
+ * ``resolution_source`` are ``null``; the admin UI uses their
+ * presence to switch between the resolve-action affordance and the
+ * audit-row read-only chrome.
  */
 export interface AdminConflictSummary {
   conflict_id: string;
@@ -1070,6 +1088,10 @@ export interface AdminConflictSummary {
   runtime_delta_minutes: number | null;
   suggested_action: AdminConflictSuggestedAction;
   detected_at: string;
+  resolved_at: string | null;
+  resolution: AdminConflictAction | null;
+  winner_id: string | null;
+  resolution_source: AdminConflictResolutionSource | null;
 }
 
 export type AdminConflictsResponse = ApiListResponse<AdminConflictSummary>;

@@ -13,7 +13,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { GitMerge, Layers, ShieldCheck } from "lucide-react";
+import { Bot, GitMerge, Layers, ShieldCheck, UserCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../../api/client";
@@ -21,6 +21,7 @@ import { useAdminConflicts, useResolveAdminConflict } from "../../api/hooks";
 import type {
   AdminConflictAction,
   AdminConflictCandidateSummary,
+  AdminConflictResolutionSource,
   AdminConflictSummary,
 } from "../../api/types";
 import {
@@ -37,6 +38,19 @@ type Snack = { message: string; severity: "success" | "error" } | null;
 type DialogState =
   | { open: false }
   | { open: true; conflict: AdminConflictSummary };
+
+type TabKey = "pending" | "manual" | "auto";
+
+const TAB_DEFINITIONS: ReadonlyArray<{
+  key: TabKey;
+  state: "pending" | "resolved";
+  source: AdminConflictResolutionSource | null;
+  labelKey: string;
+}> = [
+  { key: "pending", state: "pending", source: null, labelKey: "admin.conflicts.tabs.pending" },
+  { key: "manual", state: "resolved", source: "manual", labelKey: "admin.conflicts.tabs.manual" },
+  { key: "auto", state: "resolved", source: "auto", labelKey: "admin.conflicts.tabs.auto" },
+];
 
 /**
  * Admin conflict queue (ADR-015 Phase 2).
@@ -57,9 +71,18 @@ export function ConflictsAdmin() {
   const { t } = useTranslation();
   useDocumentTitle(t("admin.conflicts.title"));
 
-  const paged = useAdminConflicts();
+  const [activeTab, setActiveTab] = useState<TabKey>("pending");
+  const activeTabDef =
+    TAB_DEFINITIONS.find((d) => d.key === activeTab) ?? TAB_DEFINITIONS[0];
+
+  const paged = useAdminConflicts({
+    state: activeTabDef.state,
+    source: activeTabDef.source,
+  });
   const [dialog, setDialog] = useState<DialogState>({ open: false });
   const [snack, setSnack] = useState<Snack>(null);
+
+  const isAuditView = activeTab !== "pending";
 
   const openResolveDialog = (conflict: AdminConflictSummary) =>
     setDialog({ open: true, conflict });
@@ -77,6 +100,18 @@ export function ConflictsAdmin() {
         title={t("admin.conflicts.title")}
         subtitle={t("admin.conflicts.subtitle")}
       />
+
+      <Stack direction="row" spacing={1} sx={{ mb: 2.5 }}>
+        {TAB_DEFINITIONS.map((def) => (
+          <AdminButton
+            key={def.key}
+            variant={activeTab === def.key ? "primary" : "ghost"}
+            onClick={() => setActiveTab(def.key)}
+          >
+            {t(def.labelKey)}
+          </AdminButton>
+        ))}
+      </Stack>
 
       {paged.isLoading && !paged.items.length ? (
         <AdminCard>
@@ -100,10 +135,18 @@ export function ConflictsAdmin() {
           <Stack alignItems="center" spacing={1} sx={{ py: 6 }}>
             <ShieldCheck size={28} color="rgba(245,241,235,0.4)" />
             <Typography variant="body1" sx={{ color: "rgba(245,241,235,0.85)" }}>
-              {t("admin.conflicts.empty.title")}
+              {t(
+                isAuditView
+                  ? "admin.conflicts.empty.auditTitle"
+                  : "admin.conflicts.empty.title",
+              )}
             </Typography>
             <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.55)" }}>
-              {t("admin.conflicts.empty.subtitle")}
+              {t(
+                isAuditView
+                  ? "admin.conflicts.empty.auditSubtitle"
+                  : "admin.conflicts.empty.subtitle",
+              )}
             </Typography>
           </Stack>
         </AdminCard>
@@ -181,8 +224,22 @@ function ConflictRow({
     () => new Date(conflict.detected_at).toLocaleString(i18n.language),
     [conflict.detected_at, i18n.language],
   );
+  const resolvedAt = useMemo(
+    () =>
+      conflict.resolved_at
+        ? new Date(conflict.resolved_at).toLocaleString(i18n.language)
+        : null,
+    [conflict.resolved_at, i18n.language],
+  );
   const suggestedTone =
     conflict.suggested_action === "different_edit_suspected" ? "warn" : "info";
+  const isResolved = conflict.resolved_at !== null;
+  const winner =
+    conflict.winner_id === conflict.candidate_a.media_id
+      ? conflict.candidate_a
+      : conflict.winner_id === conflict.candidate_b.media_id
+        ? conflict.candidate_b
+        : null;
 
   return (
     <AdminCard>
@@ -230,17 +287,93 @@ function ConflictRow({
           </Typography>
         )}
 
-        <Stack direction="row" justifyContent="flex-end">
-          <AdminButton
-            variant="primary"
-            icon={<GitMerge size={14} />}
-            onClick={onResolveClick}
-          >
-            {t("admin.conflicts.action.resolve")}
-          </AdminButton>
-        </Stack>
+        {isResolved ? (
+          <ResolvedFooter
+            conflict={conflict}
+            winner={winner}
+            resolvedAt={resolvedAt}
+          />
+        ) : (
+          <Stack direction="row" justifyContent="flex-end">
+            <AdminButton
+              variant="primary"
+              icon={<GitMerge size={14} />}
+              onClick={onResolveClick}
+            >
+              {t("admin.conflicts.action.resolve")}
+            </AdminButton>
+          </Stack>
+        )}
       </Stack>
     </AdminCard>
+  );
+}
+
+function ResolvedFooter({
+  conflict,
+  winner,
+  resolvedAt,
+}: {
+  conflict: AdminConflictSummary;
+  winner: AdminConflictCandidateSummary | null;
+  resolvedAt: string | null;
+}) {
+  const { t } = useTranslation();
+  if (!conflict.resolution) return null;
+
+  const sourceLabel =
+    conflict.resolution_source === "auto"
+      ? t("admin.conflicts.resolved.byAuto")
+      : t("admin.conflicts.resolved.byAdmin");
+  const sourceIcon =
+    conflict.resolution_source === "auto" ? (
+      <Bot size={12} />
+    ) : (
+      <UserCheck size={12} />
+    );
+  const sourceTone = conflict.resolution_source === "auto" ? "info" : "neutral";
+
+  const isMarkDistinct = conflict.resolution === "mark_distinct";
+
+  return (
+    <Stack
+      direction={{ xs: "column", md: "row" }}
+      spacing={1.25}
+      justifyContent="space-between"
+      alignItems={{ xs: "stretch", md: "center" }}
+      sx={{
+        bgcolor: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.06)",
+        borderRadius: 1,
+        px: 1.75,
+        py: 1.25,
+      }}
+    >
+      <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap">
+        <AdminBadge tone={sourceTone} icon={sourceIcon}>
+          {sourceLabel}
+        </AdminBadge>
+        <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.78)" }}>
+          {t("admin.conflicts.action." + conflict.resolution)}
+        </Typography>
+        {!isMarkDistinct && winner && (
+          <Typography
+            variant="caption"
+            sx={{ color: "rgba(245,241,235,0.55)" }}
+          >
+            {t("admin.conflicts.resolved.winnerWas", {
+              title:
+                winner.title ?? t("admin.conflicts.candidate.missingTitle"),
+            })}
+          </Typography>
+        )}
+      </Stack>
+      {resolvedAt && (
+        <Typography variant="caption" sx={{ color: "rgba(245,241,235,0.45)" }}>
+          {t("admin.conflicts.resolved.at", { when: resolvedAt })}
+        </Typography>
+      )}
+    </Stack>
   );
 }
 

@@ -11,6 +11,8 @@ import { notifyOtherTabs } from "./notificationsChannel";
 import type {
   AddItemToCustomListResponse,
   AdminConflictAction,
+  AdminConflictListState,
+  AdminConflictResolutionSource,
   AdminConflictSummary,
   AdminConflictsResponse,
   ResolveAdminConflictPayload,
@@ -1908,21 +1910,37 @@ export function useAdminScanRuns(
   return usePagedInfiniteQuery<AdminScanRun>(query, filterKey);
 }
 
-// ─── Admin — Media conflicts (ADR-015 Phase 2) ─────────────────
+// ─── Admin — Media conflicts (ADR-015 Phases 1-3) ───────────────
 
 /**
- * Paged feed of pending content-identity conflicts surfaced by the
+ * Paged feed of content-identity conflicts surfaced by the
  * post-enrich detector. Cursor-paged (newest first) and wrapped by
  * ``usePagedInfiniteQuery`` so the page renders one cursor slice at
  * a time with the standard Prev / Next chrome.
+ *
+ * ``state="pending"`` (default) is the operator queue;
+ * ``state="resolved"`` powers the Phase 3 audit view, optionally
+ * filtered by ``source`` (manual admin decisions vs. silent auto-
+ * merges). Each filter combo lives under its own queryKey so the
+ * tabs cache independently.
  */
-export function useAdminConflicts(options: { pageSize?: number } = {}) {
+export function useAdminConflicts(
+  filters: {
+    state?: AdminConflictListState;
+    source?: AdminConflictResolutionSource | null;
+  } = {},
+  options: { pageSize?: number } = {},
+) {
+  const state = filters.state ?? "pending";
+  const source = filters.source ?? null;
   const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
-  const filterKey = `${pageSize}`;
+  const filterKey = `${state}|${source ?? "all"}|${pageSize}`;
   const query = useInfiniteQuery({
     queryKey: ["admin", "conflicts", filterKey],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const params = new URLSearchParams();
+      params.set("state", state);
+      if (source) params.set("source", source);
       params.set("limit", String(pageSize));
       if (pageParam) params.set("cursor", pageParam);
       return api.get<AdminConflictsResponse>(`/admin/conflicts?${params.toString()}`);
