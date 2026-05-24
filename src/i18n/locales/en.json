@@ -822,6 +822,10 @@
         "relative": {
           "label": "Relative delta"
         },
+        "fallback": {
+          "label": "Title + year fallback",
+          "helper": "When on, also flags duplicates by normalized original title + year — catching entries whose enrichment never locked a TMDB id. These weaker matches always go to the queue and are never auto-merged."
+        },
         "snack": {
           "saved": "Scan dedup settings saved."
         }

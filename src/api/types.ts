@@ -533,6 +533,9 @@ export interface ScanDedupSettings {
   runtime_delta_abs_minutes: number;
   /** Fraction of the shorter runtime (``0.10`` = 10%). */
   runtime_delta_relative: number;
+  /** When ``true``, also flag duplicates by (normalized original
+   *  title, year) for entries that never locked a TMDB id. */
+  title_year_fallback_enabled: boolean;
 }
 
 /**

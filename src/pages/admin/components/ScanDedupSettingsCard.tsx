@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import { FormControlLabel, Stack, Switch } from "@mui/material";
 import { CopyCheck } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,11 +27,15 @@ export function ScanDedupSettingsCard({ detail, onSuccess, onError }: Props) {
 
   const [absMinutes, setAbsMinutes] = useState(detail.value.runtime_delta_abs_minutes);
   const [relative, setRelative] = useState(detail.value.runtime_delta_relative);
+  const [fallbackEnabled, setFallbackEnabled] = useState(
+    detail.value.title_year_fallback_enabled,
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const dirty =
     absMinutes !== detail.value.runtime_delta_abs_minutes ||
-    relative !== detail.value.runtime_delta_relative;
+    relative !== detail.value.runtime_delta_relative ||
+    fallbackEnabled !== detail.value.title_year_fallback_enabled;
 
   const absValid = Number.isFinite(absMinutes) && absMinutes >= 0;
   const relativeValid = Number.isFinite(relative) && relative >= 0 && relative <= 1;
@@ -40,6 +44,7 @@ export function ScanDedupSettingsCard({ detail, onSuccess, onError }: Props) {
   const onReset = () => {
     setAbsMinutes(detail.value.runtime_delta_abs_minutes);
     setRelative(detail.value.runtime_delta_relative);
+    setFallbackEnabled(detail.value.title_year_fallback_enabled);
     setErrorMessage(null);
   };
 
@@ -52,6 +57,7 @@ export function ScanDedupSettingsCard({ detail, onSuccess, onError }: Props) {
         payload: {
           runtime_delta_abs_minutes: absMinutes,
           runtime_delta_relative: relative,
+          title_year_fallback_enabled: fallbackEnabled,
         },
       });
       onSuccess(t("admin.settings.scanDedup.snack.saved"));
@@ -108,6 +114,26 @@ export function ScanDedupSettingsCard({ detail, onSuccess, onError }: Props) {
             sx={{ flex: 1 }}
           />
         </Stack>
+      </AdminFormSection>
+
+      <AdminFormSection
+        title={t("admin.settings.scanDedup.fallback.label")}
+        helper={t("admin.settings.scanDedup.fallback.helper")}
+      >
+        <FormControlLabel
+          control={
+            <Switch
+              checked={fallbackEnabled}
+              onChange={(_e, checked) => setFallbackEnabled(checked)}
+              color="primary"
+            />
+          }
+          label={
+            fallbackEnabled
+              ? t("admin.settings.switch.on")
+              : t("admin.settings.switch.off")
+          }
+        />
       </AdminFormSection>
     </SettingsCardShell>
   );
