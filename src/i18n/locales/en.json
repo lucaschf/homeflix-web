@@ -247,6 +247,7 @@
       "enrich": "Enrich",
       "intros": "Intros",
       "requests": "Catalog requests",
+      "conflicts": "Conflicts",
       "users": "Users",
       "hls": "HLS cache",
       "health": "Health",
@@ -807,6 +808,57 @@
         "snack": {
           "saved": "Avatar settings saved."
         }
+      }
+    },
+    "conflicts": {
+      "title": "Content conflicts",
+      "subtitle": "Pairs of titles flagged as the same content by the post-enrich detector. Resolve each one as intentionally distinct, replace, or merge keeping both files as variants.",
+      "errorLoading": "Couldn't load the conflict queue.",
+      "empty": {
+        "title": "No pending conflicts",
+        "subtitle": "Every detected duplicate has been resolved or none has been flagged yet."
+      },
+      "detectedAt": "Detected {{when}}",
+      "runtimeDelta": "Runtime delta: {{minutes}} min",
+      "matchReason": {
+        "tmdb_id": "Matched by TMDB id",
+        "title_year_fallback": "Matched by title + year"
+      },
+      "suggestedAction": {
+        "likely_same_release": "Likely same release",
+        "different_edit_suspected": "Different edit suspected"
+      },
+      "candidate": {
+        "a": "Candidate A",
+        "b": "Candidate B",
+        "missingTitle": "Title unavailable"
+      },
+      "action": {
+        "resolve": "Resolve…",
+        "mark_distinct": "Mark as distinct",
+        "merge_keep_both": "Merge — keep both",
+        "merge_replace": "Merge — replace"
+      },
+      "dialog": {
+        "title": "Resolve conflict",
+        "body": "Pick the disposition for this pair. Merge actions soft-delete the losing movie and update cross-context references; mark-as-distinct is a no-op for the data itself.",
+        "actionLabel": "Action",
+        "winnerLabel": "Winner",
+        "confirm": "Apply resolution",
+        "irreversibleWarning": "Merge actions soft-delete the loser and cannot be undone from this UI.",
+        "mark_distinct": {
+          "description": "The pair is intentionally different; the detector won't re-queue it."
+        },
+        "merge_replace": {
+          "description": "Keep the winner only; the loser is soft-deleted and its file variants are desreferenced."
+        },
+        "merge_keep_both": {
+          "description": "Transfer the loser's file variants to the winner before soft-deleting; the player can pick the best stream at playback time."
+        }
+      },
+      "snack": {
+        "resolved": "Conflict resolved as: {{action}}",
+        "failed": "Couldn't resolve this conflict. Please try again."
       }
     },
     "requests": {

@@ -10,6 +10,11 @@ import { api } from "./client";
 import { notifyOtherTabs } from "./notificationsChannel";
 import type {
   AddItemToCustomListResponse,
+  AdminConflictAction,
+  AdminConflictSummary,
+  AdminConflictsResponse,
+  ResolveAdminConflictPayload,
+  ResolveAdminConflictResponse,
   AdminOverviewStats,
   AdminOverviewStatsResponse,
   AdminScanRun,
@@ -1901,6 +1906,72 @@ export function useAdminScanRuns(
   });
 
   return usePagedInfiniteQuery<AdminScanRun>(query, filterKey);
+}
+
+// ─── Admin — Media conflicts (ADR-015 Phase 2) ─────────────────
+
+/**
+ * Paged feed of pending content-identity conflicts surfaced by the
+ * post-enrich detector. Cursor-paged (newest first) and wrapped by
+ * ``usePagedInfiniteQuery`` so the page renders one cursor slice at
+ * a time with the standard Prev / Next chrome.
+ */
+export function useAdminConflicts(options: { pageSize?: number } = {}) {
+  const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
+  const filterKey = `${pageSize}`;
+  const query = useInfiniteQuery({
+    queryKey: ["admin", "conflicts", filterKey],
+    queryFn: async ({ pageParam }: { pageParam: string | null }) => {
+      const params = new URLSearchParams();
+      params.set("limit", String(pageSize));
+      if (pageParam) params.set("cursor", pageParam);
+      return api.get<AdminConflictsResponse>(`/admin/conflicts?${params.toString()}`);
+    },
+    initialPageParam: null,
+    getNextPageParam: (lastPage) =>
+      lastPage.metadata?.pagination?.next_cursor ?? null,
+  });
+
+  return usePagedInfiniteQuery<AdminConflictSummary>(query, filterKey);
+}
+
+/**
+ * Resolve one pending conflict. The mutation invalidates the
+ * conflict queue (so the row disappears from the list) plus any
+ * catalog read that may have changed: the loser movie is
+ * soft-deleted on MERGE, so movie/series listings need a refresh.
+ *
+ * The cross-BC fan-out (watch_progress + collections) happens on
+ * the backend event bus and is not reflected here — the relevant
+ * pages reload their own data when next opened.
+ */
+export function useResolveAdminConflict() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars: {
+      conflictId: string;
+      action: AdminConflictAction;
+      winnerId?: string | null;
+    }) => {
+      const body: ResolveAdminConflictPayload = {
+        action: vars.action,
+        winner_id: vars.winnerId ?? null,
+      };
+      const resp = await api.post<ResolveAdminConflictResponse>(
+        `/admin/conflicts/${vars.conflictId}/resolve`,
+        body,
+      );
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "conflicts"] });
+      // MERGE actions soft-delete the loser, which alters the
+      // catalog. Invalidate the broad catalog/admin trees so any
+      // open list re-fetches on next focus.
+      queryClient.invalidateQueries({ queryKey: ["admin", "catalog"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "needs-review"] });
+    },
+  });
 }
 
 /**

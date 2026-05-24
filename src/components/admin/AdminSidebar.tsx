@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Film,
+  GitMerge,
   HardDrive,
   Heart,
   Inbox,
@@ -91,6 +92,11 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
           matchPrefix: true,
         },
         { labelKey: "admin.nav.requests", to: "/admin/requests", icon: Inbox },
+        {
+          labelKey: "admin.nav.conflicts",
+          to: "/admin/catalog/conflicts",
+          icon: GitMerge,
+        },
       ],
     },
     {
