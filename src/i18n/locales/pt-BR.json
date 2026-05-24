@@ -841,6 +841,22 @@
         "winnerWas": "Vencedor: {{title}}",
         "at": "Resolvido em {{when}}"
       },
+      "bulk": {
+        "selected": "{{count}} selecionados",
+        "clear": "Limpar",
+        "markDistinct": "Marcar como distintos",
+        "selectRow": "Selecionar conflito",
+        "snack": {
+          "done": "{{count}} conflitos marcados como distintos.",
+          "partial": "{{resolved}} marcados como distintos, {{skipped}} ignorados."
+        },
+        "dialog": {
+          "title": "Marcar conflitos como distintos",
+          "body": "Marcar os {{count}} conflitos selecionados como intencionalmente distintos?",
+          "consequence1": "O detector não vai re-enfileirar esses pares nos próximos enriquecimentos.",
+          "consequence2": "Nenhum filme é excluído — os dois títulos de cada par permanecem no catálogo."
+        }
+      },
       "empty": {
         "title": "Sem conflitos pendentes",
         "subtitle": "Todos os duplicados detectados foram resolvidos, ou nenhum foi sinalizado ainda.",

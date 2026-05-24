@@ -11,10 +11,12 @@ import { notifyOtherTabs } from "./notificationsChannel";
 import type {
   AddItemToCustomListResponse,
   AdminConflictAction,
+  AdminBulkMarkDistinctResponse,
   AdminConflictListState,
   AdminConflictResolutionSource,
   AdminConflictSummary,
   AdminConflictsResponse,
+  BulkMarkDistinctPayload,
   ResolveAdminConflictPayload,
   ResolveAdminConflictResponse,
   AdminOverviewStats,
@@ -1989,6 +1991,30 @@ export function useResolveAdminConflict() {
       // open list re-fetches on next focus.
       queryClient.invalidateQueries({ queryKey: ["admin", "catalog"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "needs-review"] });
+    },
+  });
+}
+
+/**
+ * Mark a selection of pending conflicts as intentionally distinct in
+ * one call. Bulk is limited to ``mark_distinct`` (no winner, no
+ * soft-delete), so it only invalidates the conflict queue — the
+ * catalog is untouched. The result reports ``resolved_ids`` plus any
+ * ``skipped`` ids (already resolved / missing / malformed).
+ */
+export function useBulkMarkDistinctConflicts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (conflictIds: string[]) => {
+      const body: BulkMarkDistinctPayload = { conflict_ids: conflictIds };
+      const resp = await api.post<AdminBulkMarkDistinctResponse>(
+        "/admin/conflicts/bulk-mark-distinct",
+        body,
+      );
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "conflicts"] });
     },
   });
 }

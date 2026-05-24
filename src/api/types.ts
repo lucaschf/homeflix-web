@@ -1149,3 +1149,31 @@ export interface ResolveAdminConflictResult {
 
 export type ResolveAdminConflictResponse =
   ApiDetailResponse<ResolveAdminConflictResult>;
+
+/** Why a conflict was skipped by the bulk mark-distinct endpoint. */
+export type AdminBulkSkipReason = "not_found" | "already_resolved" | "invalid_id";
+
+/** One conflict the bulk operation could not resolve. */
+export interface AdminBulkSkippedConflict {
+  conflict_id: string;
+  reason: AdminBulkSkipReason;
+}
+
+/** Body for ``POST /admin/conflicts/bulk-mark-distinct``. */
+export interface BulkMarkDistinctPayload {
+  conflict_ids: string[];
+}
+
+/**
+ * Result of a bulk mark-distinct call. ``resolved_ids`` left the
+ * pending queue; ``skipped`` lists ids that were missing, malformed,
+ * or already resolved (each with a reason).
+ */
+export interface AdminBulkMarkDistinctResult {
+  requested: number;
+  resolved_ids: string[];
+  skipped: AdminBulkSkippedConflict[];
+}
+
+export type AdminBulkMarkDistinctResponse =
+  ApiDetailResponse<AdminBulkMarkDistinctResult>;
