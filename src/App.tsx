@@ -27,6 +27,7 @@ import { CatalogRequestsAdmin } from "./pages/admin/CatalogRequestsAdmin";
 import { EnrichAdmin } from "./pages/admin/EnrichAdmin";
 import { HealthAdmin } from "./pages/admin/HealthAdmin";
 import { HlsCacheAdmin } from "./pages/admin/HlsCacheAdmin";
+import { ConflictsAdmin } from "./pages/admin/ConflictsAdmin";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
 import { LibrariesAdmin } from "./pages/admin/LibrariesAdmin";
@@ -137,6 +138,7 @@ function App() {
                     element={<IntroEditor />}
                   />
                   <Route path="/admin/catalog/review" element={<MovieReview />} />
+                  <Route path="/admin/catalog/conflicts" element={<ConflictsAdmin />} />
                   {/* Legacy redirect — bookmarks / open tabs landing
                       on the old movie-review path get folded into the
                       new catalog/review namespace. */}

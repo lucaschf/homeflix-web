@@ -809,6 +809,57 @@
         }
       }
     },
+    "conflicts": {
+      "title": "Conflitos de conteúdo",
+      "subtitle": "Pares de títulos sinalizados como o mesmo conteúdo pelo detector pós-enrich. Resolva cada um como distintos intencionais, substituir ou mesclar mantendo ambas as variantes.",
+      "errorLoading": "Não foi possível carregar a fila de conflitos.",
+      "empty": {
+        "title": "Sem conflitos pendentes",
+        "subtitle": "Todos os duplicados detectados foram resolvidos, ou nenhum foi sinalizado ainda."
+      },
+      "detectedAt": "Detectado em {{when}}",
+      "runtimeDelta": "Delta de duração: {{minutes}} min",
+      "matchReason": {
+        "tmdb_id": "Match por TMDB id",
+        "title_year_fallback": "Match por título + ano"
+      },
+      "suggestedAction": {
+        "likely_same_release": "Provável mesmo release",
+        "different_edit_suspected": "Edição diferente suspeita"
+      },
+      "candidate": {
+        "a": "Candidato A",
+        "b": "Candidato B",
+        "missingTitle": "Título indisponível"
+      },
+      "action": {
+        "resolve": "Resolver…",
+        "mark_distinct": "Marcar como distintos",
+        "merge_keep_both": "Mesclar — manter ambos",
+        "merge_replace": "Mesclar — substituir"
+      },
+      "dialog": {
+        "title": "Resolver conflito",
+        "body": "Escolha a disposição pra este par. Ações de merge fazem soft-delete do perdedor e atualizam referências cross-context; marcar como distintos não muda os dados.",
+        "actionLabel": "Ação",
+        "winnerLabel": "Vencedor",
+        "confirm": "Aplicar resolução",
+        "irreversibleWarning": "Ações de merge fazem soft-delete do perdedor e não podem ser desfeitas por esta UI.",
+        "mark_distinct": {
+          "description": "O par é intencionalmente diferente; o detector não vai re-enfileirá-lo."
+        },
+        "merge_replace": {
+          "description": "Mantém só o vencedor; o perdedor é soft-deletado e suas variantes ficam órfãs."
+        },
+        "merge_keep_both": {
+          "description": "Transfere as variantes de arquivo do perdedor pro vencedor antes do soft-delete; o player escolhe o melhor stream em runtime."
+        }
+      },
+      "snack": {
+        "resolved": "Conflito resolvido como: {{action}}",
+        "failed": "Não foi possível resolver este conflito. Tente novamente."
+      }
+    },
     "requests": {
       "title": "Solicitações de catálogo",
       "subtitle": "Títulos do TMDB que membros marcaram pra inclusão. Clica numa linha pra abrir no TMDB; dispensa quando não quiser mais rastrear.",

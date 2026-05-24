@@ -1006,3 +1006,95 @@ export interface MarkAllNotificationsReadPayload {
 
 export type MarkAllNotificationsReadResponse =
   ApiDetailResponse<MarkAllNotificationsReadPayload>;
+
+// ---------------------------------------------------------------------------
+// Admin — Conflicts (ADR-015 Phase 2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Which content-identity rule fired the collision on the backend.
+ */
+export type AdminConflictMatchReason = "tmdb_id" | "title_year_fallback";
+
+/**
+ * Pre-computed hint shown next to each row in the queue. The backend
+ * derives this from the runtime delta between the two candidates so
+ * the UI never has to re-do the math.
+ */
+export type AdminConflictSuggestedAction =
+  | "likely_same_release"
+  | "different_edit_suspected";
+
+/**
+ * Discriminator for each side of a queued conflict. Phase 1 only
+ * writes ``"movie"`` but the schema is polymorphic so ``"series"``
+ * lands later without a breaking change.
+ */
+export type AdminConflictCandidateType = "movie" | "series";
+
+/**
+ * Resolution actions accepted by ``POST /admin/conflicts/{id}/resolve``.
+ *
+ * - ``mark_distinct`` — operator says the pair is intentionally different
+ *   (Director's Cut, Theatrical, etc.); detector won't re-queue.
+ * - ``merge_replace`` — soft-deletes the loser movie; loser's file
+ *   variants are left desreferenciados.
+ * - ``merge_keep_both`` — same as ``merge_replace`` plus the loser's
+ *   file variants are transferred onto the winner so the player can
+ *   pick at playback time.
+ */
+export type AdminConflictAction =
+  | "mark_distinct"
+  | "merge_keep_both"
+  | "merge_replace";
+
+/**
+ * Display projection of one side of a conflict pair, hydrated by the
+ * backend so the UI doesn't have to round-trip per candidate.
+ */
+export interface AdminConflictCandidateSummary {
+  media_id: string;
+  media_type: AdminConflictCandidateType;
+  title: string | null;
+  year: number | null;
+}
+
+/**
+ * One row in the admin conflict queue.
+ */
+export interface AdminConflictSummary {
+  conflict_id: string;
+  candidate_a: AdminConflictCandidateSummary;
+  candidate_b: AdminConflictCandidateSummary;
+  match_reason: AdminConflictMatchReason;
+  runtime_delta_minutes: number | null;
+  suggested_action: AdminConflictSuggestedAction;
+  detected_at: string;
+}
+
+export type AdminConflictsResponse = ApiListResponse<AdminConflictSummary>;
+
+/**
+ * Body for ``POST /admin/conflicts/{id}/resolve``. ``winner_id`` is
+ * required for ``merge_*`` actions and must be one of the candidate
+ * ids; backend rejects with 422 otherwise.
+ */
+export interface ResolveAdminConflictPayload {
+  action: AdminConflictAction;
+  winner_id?: string | null;
+}
+
+/**
+ * Result of a successful resolution call. ``variants_transferred`` is
+ * non-zero only for ``merge_keep_both``.
+ */
+export interface ResolveAdminConflictResult {
+  conflict_id: string;
+  action: AdminConflictAction;
+  winner_id: string | null;
+  loser_id: string | null;
+  variants_transferred: number;
+}
+
+export type ResolveAdminConflictResponse =
+  ApiDetailResponse<ResolveAdminConflictResult>;
