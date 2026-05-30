@@ -20,6 +20,7 @@ import {
   GitMerge,
   Layers,
   ListChecks,
+  RefreshCw,
   ShieldCheck,
   UserCheck,
 } from "lucide-react";
@@ -30,6 +31,7 @@ import {
   useAdminConflicts,
   useBulkMarkDistinctConflicts,
   useResolveAdminConflict,
+  useSweepConflicts,
 } from "../../api/hooks";
 import type {
   AdminConflictAction,
@@ -111,6 +113,9 @@ export function ConflictsAdmin() {
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const bulk = useBulkMarkDistinctConflicts();
+  const [sweepConfirmOpen, setSweepConfirmOpen] = useState(false);
+  const [sweepError, setSweepError] = useState<string | null>(null);
+  const sweep = useSweepConflicts();
 
   const isAuditView = activeTab !== "pending";
 
@@ -135,6 +140,29 @@ export function ConflictsAdmin() {
     setSnack({ message, severity: "success" });
   const notifyError = (message: string) =>
     setSnack({ message, severity: "error" });
+
+  const confirmSweep = async () => {
+    setSweepError(null);
+    try {
+      const result = await sweep.mutateAsync();
+      setSweepConfirmOpen(false);
+      notifySuccess(
+        result.conflicts_created > 0
+          ? t("admin.conflicts.sweep.snack.found", {
+              scanned: result.movies_scanned,
+              created: result.conflicts_created,
+            })
+          : t("admin.conflicts.sweep.snack.clean", {
+              scanned: result.movies_scanned,
+            }),
+      );
+    } catch (err) {
+      const msg =
+        err instanceof ApiError ? err.message : t("admin.conflicts.snack.failed");
+      setSweepError(msg);
+      notifyError(msg);
+    }
+  };
 
   const confirmBulkMarkDistinct = async () => {
     setBulkError(null);
@@ -169,16 +197,37 @@ export function ConflictsAdmin() {
         subtitle={t("admin.conflicts.subtitle")}
       />
 
-      <Stack direction="row" spacing={1} sx={{ mb: 2.5 }}>
-        {TAB_DEFINITIONS.map((def) => (
-          <AdminButton
-            key={def.key}
-            variant={activeTab === def.key ? "primary" : "ghost"}
-            onClick={() => changeTab(def.key)}
-          >
-            {t(def.labelKey)}
-          </AdminButton>
-        ))}
+      <Stack
+        direction="row"
+        spacing={1}
+        sx={{ mb: 2.5 }}
+        alignItems="center"
+        justifyContent="space-between"
+      >
+        <Stack direction="row" spacing={1}>
+          {TAB_DEFINITIONS.map((def) => (
+            <AdminButton
+              key={def.key}
+              variant={activeTab === def.key ? "primary" : "ghost"}
+              onClick={() => changeTab(def.key)}
+            >
+              {t(def.labelKey)}
+            </AdminButton>
+          ))}
+        </Stack>
+        <AdminButton
+          variant="secondary"
+          icon={<RefreshCw size={14} />}
+          onClick={() => {
+            setSweepError(null);
+            setSweepConfirmOpen(true);
+          }}
+          disabled={sweep.isPending}
+        >
+          {sweep.isPending
+            ? t("admin.conflicts.sweep.running")
+            : t("admin.conflicts.sweep.button")}
+        </AdminButton>
       </Stack>
 
       {!isAuditView && selectedIds.size > 0 && (
@@ -306,6 +355,25 @@ export function ConflictsAdmin() {
           if (!bulk.isPending) setBulkConfirmOpen(false);
         }}
         onConfirm={confirmBulkMarkDistinct}
+      />
+
+      <AdminConfirmDialog
+        open={sweepConfirmOpen}
+        title={t("admin.conflicts.sweep.dialog.title")}
+        body={t("admin.conflicts.sweep.dialog.body")}
+        consequences={[
+          t("admin.conflicts.sweep.dialog.consequence1"),
+          t("admin.conflicts.sweep.dialog.consequence2"),
+        ]}
+        busy={sweep.isPending}
+        errorMessage={sweepError}
+        confirmLabel={t("admin.conflicts.sweep.button")}
+        confirmingLabel={t("admin.conflicts.sweep.running")}
+        cancelLabel={t("admin.confirm.cancel")}
+        onCancel={() => {
+          if (!sweep.isPending) setSweepConfirmOpen(false);
+        }}
+        onConfirm={confirmSweep}
       />
 
       <Snackbar

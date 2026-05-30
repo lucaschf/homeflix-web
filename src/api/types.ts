@@ -536,6 +536,11 @@ export interface ScanDedupSettings {
   /** When ``true``, also flag duplicates by (normalized original
    *  title, year) for entries that never locked a TMDB id. */
   title_year_fallback_enabled: boolean;
+  /** When ``true``, the scheduler runs a catalog-wide dedup sweep
+   *  on the configured interval (ADR-015 Phase 6.5). */
+  sweep_enabled: boolean;
+  /** Minutes between successive sweep ticks. Floor is 15. */
+  sweep_interval_minutes: number;
 }
 
 /**
@@ -1180,3 +1185,16 @@ export interface AdminBulkMarkDistinctResult {
 
 export type AdminBulkMarkDistinctResponse =
   ApiDetailResponse<AdminBulkMarkDistinctResult>;
+
+/**
+ * Result of a manual catalog-wide dedup sweep
+ * (``POST /admin/conflicts/sweep`` — ADR-015 Phase 6.5).
+ */
+export interface AdminConflictSweepResult {
+  movies_scanned: number;
+  conflicts_created: number;
+  conflict_ids: string[];
+}
+
+export type AdminConflictSweepResponse =
+  ApiDetailResponse<AdminConflictSweepResult>;

@@ -826,6 +826,14 @@
           "label": "Title + year fallback",
           "helper": "When on, also flags duplicates by normalized original title + year — catching entries whose enrichment never locked a TMDB id. These weaker matches always go to the queue and are never auto-merged."
         },
+        "sweep": {
+          "label": "Scheduled sweep",
+          "helper": "When on, a background job walks the whole catalog on the configured interval and re-runs the detector — catches duplicates that landed after the original enrich and pairs that never matched TMDB."
+        },
+        "sweepInterval": {
+          "label": "Sweep interval",
+          "error": "Minimum is 15 minutes."
+        },
         "snack": {
           "saved": "Scan dedup settings saved."
         }
@@ -860,6 +868,20 @@
           "body": "Mark the {{count}} selected conflicts as intentionally distinct?",
           "consequence1": "The detector won't re-queue these pairs on future enrichment passes.",
           "consequence2": "No movies are deleted — both titles in each pair stay in the catalog."
+        }
+      },
+      "sweep": {
+        "button": "Run sweep now",
+        "running": "Sweeping…",
+        "snack": {
+          "clean": "Swept {{scanned}} movies — no new conflicts.",
+          "found": "Swept {{scanned}} movies — queued {{created}} new conflict(s)."
+        },
+        "dialog": {
+          "title": "Run catalog dedup sweep?",
+          "body": "Re-runs the conflict detector against every movie in the catalog. Useful for catching duplicates the event-driven detector missed.",
+          "consequence1": "No movies are re-enriched and nothing is auto-merged — pairs only land in the queue.",
+          "consequence2": "Large catalogs may take a moment. The queue refreshes once the sweep finishes."
         }
       },
       "empty": {
