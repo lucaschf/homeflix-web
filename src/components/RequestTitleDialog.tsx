@@ -77,6 +77,12 @@ export function RequestTitleDialog({
         tmdb_id: candidate.tmdb_id,
         media_type: candidate.media_type === "tv" ? "series" : "movie",
         title: candidate.title,
+        // Always subscribe to the arrival notification from this
+        // dialog — the user took an intentional action to request
+        // the title, so by default they want to be told when it
+        // lands. They can still mute the subscription later via
+        // the request management page.
+        notify_on_arrival: true,
       });
       setRequestedIds((prev) => new Set(prev).add(candidateKey(candidate)));
       // No close — keep the dialog open so the user can request more
