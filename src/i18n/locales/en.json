@@ -1212,8 +1212,32 @@
     "clearAll": "Clear All",
     "noResults": "No results for \"{{query}}\"",
     "tryDifferent": "Try a different search term",
+    "requestCta": "Can't find it? Request a title",
     "movies": "Movies",
     "series": "Series"
+  },
+  "request": {
+    "dialog": {
+      "title": "Request a title",
+      "subtitle": "Paste a TMDB id, IMDb id, a link, or just type a title.",
+      "placeholder": "603, tt0133093, themoviedb.org/movie/603, or \"The Matrix\"",
+      "hint": "Pick how you want to find the title",
+      "hintExamples": "Examples: 603 · tt0133093 · https://www.themoviedb.org/movie/603 · https://www.imdb.com/title/tt0133093 · the matrix",
+      "noCandidates": "Nothing on TMDB matches \"{{query}}\".",
+      "lookupFailed": "Couldn't reach the metadata provider. Try again in a moment."
+    },
+    "badge": {
+      "movie": "Movie",
+      "series": "Series",
+      "requested": "Requested"
+    },
+    "action": {
+      "request": "Request this title"
+    },
+    "snack": {
+      "alreadyAvailable": "This title is already in the catalog.",
+      "failed": "Couldn't register the request. Please try again."
+    }
   },
   "lists": {
     "title": "My Lists",

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
+  Button,
   Chip,
   CircularProgress,
   Dialog,
@@ -8,12 +9,13 @@ import {
   InputBase,
   Typography,
 } from "@mui/material";
-import { Film, Search, Tv, X } from "lucide-react";
+import { Film, Search, Send, Tv, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../api/hooks";
 import type { CatalogItem } from "../api/types";
 import { neutral } from "../theme/colors";
+import { RequestTitleDialog } from "./RequestTitleDialog";
 
 const RECENT_STORAGE_KEY = "homeflix-recent-searches";
 const MAX_RECENT = 5;
@@ -29,6 +31,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const { data: searchResults, isLoading: searchLoading } = useSearch(query);
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) || "[]");
@@ -183,16 +186,30 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
         {/* No Results */}
         {showNoResults && (
-          <Box sx={{ textAlign: "center", py: 5 }}>
+          <Box sx={{ textAlign: "center", py: 5, px: 2 }}>
             <Typography variant="body1" color="text.secondary">
               {t("search.noResults", { query })}
             </Typography>
             <Typography variant="body2" color="text.tertiary" sx={{ mt: 0.5 }}>
               {t("search.tryDifferent")}
             </Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Send size={14} />}
+              onClick={() => setRequestDialogOpen(true)}
+              sx={{ mt: 2.5 }}
+            >
+              {t("search.requestCta")}
+            </Button>
           </Box>
         )}
       </Box>
+      <RequestTitleDialog
+        open={requestDialogOpen}
+        onClose={() => setRequestDialogOpen(false)}
+        initialQuery={normalizedQuery}
+      />
     </Dialog>
   );
 }
