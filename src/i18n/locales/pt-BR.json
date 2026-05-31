@@ -825,6 +825,14 @@
           "label": "Fallback título + ano",
           "helper": "Quando ligado, também sinaliza duplicatas por título original normalizado + ano — pegando entradas cujo enriquecimento nunca fixou um TMDB id. Esses matches mais fracos sempre vão para a fila e nunca são auto-mesclados."
         },
+        "sweep": {
+          "label": "Varredura agendada",
+          "helper": "Quando ligada, um job em background percorre o catálogo inteiro no intervalo configurado e roda o detector de novo — pega duplicatas que entraram depois do enrich original e pares que nunca casaram no TMDB."
+        },
+        "sweepInterval": {
+          "label": "Intervalo da varredura",
+          "error": "O mínimo é 15 minutos."
+        },
         "snack": {
           "saved": "Configurações de dedup do scan salvas."
         }
@@ -859,6 +867,20 @@
           "body": "Marcar os {{count}} conflitos selecionados como intencionalmente distintos?",
           "consequence1": "O detector não vai re-enfileirar esses pares nos próximos enriquecimentos.",
           "consequence2": "Nenhum filme é excluído — os dois títulos de cada par permanecem no catálogo."
+        }
+      },
+      "sweep": {
+        "button": "Rodar varredura agora",
+        "running": "Varrendo…",
+        "snack": {
+          "clean": "Varredura concluída em {{scanned}} filmes — sem novos conflitos.",
+          "found": "Varredura concluída em {{scanned}} filmes — {{created}} novo(s) conflito(s) enfileirado(s)."
+        },
+        "dialog": {
+          "title": "Rodar varredura de dedup do catálogo?",
+          "body": "Roda o detector de conflitos contra todos os filmes do catálogo. Útil para pegar duplicatas que o detector orientado a eventos deixou passar.",
+          "consequence1": "Nenhum filme é re-enriquecido e nada é auto-mesclado — pares só caem na fila.",
+          "consequence2": "Catálogos grandes podem demorar um pouco. A fila atualiza assim que a varredura termina."
         }
       },
       "empty": {

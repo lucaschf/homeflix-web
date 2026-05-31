@@ -15,6 +15,7 @@ import type {
   AdminConflictListState,
   AdminConflictResolutionSource,
   AdminConflictSummary,
+  AdminConflictSweepResponse,
   AdminConflictsResponse,
   BulkMarkDistinctPayload,
   ResolveAdminConflictPayload,
@@ -2010,6 +2011,28 @@ export function useBulkMarkDistinctConflicts() {
       const resp = await api.post<AdminBulkMarkDistinctResponse>(
         "/admin/conflicts/bulk-mark-distinct",
         body,
+      );
+      return resp.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "conflicts"] });
+    },
+  });
+}
+
+/**
+ * Trigger one catalog-wide dedup sweep on demand
+ * (``POST /admin/conflicts/sweep`` — ADR-015 Phase 6.5). Re-runs the
+ * detector against every movie regardless of whether the scheduled
+ * sweep is enabled. Invalidates the conflict queue so any new
+ * pending row surfaces immediately.
+ */
+export function useSweepConflicts() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const resp = await api.post<AdminConflictSweepResponse>(
+        "/admin/conflicts/sweep",
       );
       return resp.data;
     },

@@ -30,21 +30,31 @@ export function ScanDedupSettingsCard({ detail, onSuccess, onError }: Props) {
   const [fallbackEnabled, setFallbackEnabled] = useState(
     detail.value.title_year_fallback_enabled,
   );
+  const [sweepEnabled, setSweepEnabled] = useState(detail.value.sweep_enabled);
+  const [sweepInterval, setSweepInterval] = useState(
+    detail.value.sweep_interval_minutes,
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const dirty =
     absMinutes !== detail.value.runtime_delta_abs_minutes ||
     relative !== detail.value.runtime_delta_relative ||
-    fallbackEnabled !== detail.value.title_year_fallback_enabled;
+    fallbackEnabled !== detail.value.title_year_fallback_enabled ||
+    sweepEnabled !== detail.value.sweep_enabled ||
+    sweepInterval !== detail.value.sweep_interval_minutes;
 
   const absValid = Number.isFinite(absMinutes) && absMinutes >= 0;
   const relativeValid = Number.isFinite(relative) && relative >= 0 && relative <= 1;
-  const canSave = dirty && absValid && relativeValid;
+  const sweepIntervalValid =
+    Number.isFinite(sweepInterval) && Number.isInteger(sweepInterval) && sweepInterval >= 15;
+  const canSave = dirty && absValid && relativeValid && sweepIntervalValid;
 
   const onReset = () => {
     setAbsMinutes(detail.value.runtime_delta_abs_minutes);
     setRelative(detail.value.runtime_delta_relative);
     setFallbackEnabled(detail.value.title_year_fallback_enabled);
+    setSweepEnabled(detail.value.sweep_enabled);
+    setSweepInterval(detail.value.sweep_interval_minutes);
     setErrorMessage(null);
   };
 
@@ -58,6 +68,8 @@ export function ScanDedupSettingsCard({ detail, onSuccess, onError }: Props) {
           runtime_delta_abs_minutes: absMinutes,
           runtime_delta_relative: relative,
           title_year_fallback_enabled: fallbackEnabled,
+          sweep_enabled: sweepEnabled,
+          sweep_interval_minutes: sweepInterval,
         },
       });
       onSuccess(t("admin.settings.scanDedup.snack.saved"));
@@ -134,6 +146,43 @@ export function ScanDedupSettingsCard({ detail, onSuccess, onError }: Props) {
               : t("admin.settings.switch.off")
           }
         />
+      </AdminFormSection>
+
+      <AdminFormSection
+        title={t("admin.settings.scanDedup.sweep.label")}
+        helper={t("admin.settings.scanDedup.sweep.helper")}
+      >
+        <Stack spacing={2} sx={{ maxWidth: 520 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={sweepEnabled}
+                onChange={(_e, checked) => setSweepEnabled(checked)}
+                color="primary"
+              />
+            }
+            label={
+              sweepEnabled
+                ? t("admin.settings.switch.on")
+                : t("admin.settings.switch.off")
+            }
+          />
+          <AdminInput
+            label={t("admin.settings.scanDedup.sweepInterval.label")}
+            type="number"
+            inputProps={{ min: 15, step: 15 }}
+            value={sweepInterval}
+            onChange={(e) => setSweepInterval(Number(e.target.value))}
+            disabled={!sweepEnabled}
+            error={!sweepIntervalValid}
+            helperText={
+              !sweepIntervalValid
+                ? t("admin.settings.scanDedup.sweepInterval.error")
+                : t("admin.settings.units.minutes")
+            }
+            sx={{ maxWidth: 240 }}
+          />
+        </Stack>
       </AdminFormSection>
     </SettingsCardShell>
   );
