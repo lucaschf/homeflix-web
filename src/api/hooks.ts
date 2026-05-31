@@ -41,6 +41,8 @@ import type {
   BulkEnrichResponse,
   CatalogByGenreResponse,
   CatalogItem,
+  CatalogLookupResponse,
+  CatalogLookupResult,
   CatalogRequest,
   CatalogRequestResponse,
   CatalogRequestsResponse,
@@ -1180,6 +1182,34 @@ export function useRequestCatalogInclusion() {
           queryKey: ["collection", req.collection_tmdb_id],
         });
       }
+    },
+  });
+}
+
+/**
+ * Resolve a user-pasted query (TMDB id / IMDb id / TMDB URL / IMDb
+ * URL / plain title) into picker candidates the "Request a title"
+ * dialog renders. Disabled while ``q`` is empty so the dialog can
+ * cheaply gate on ``query.length > 0``; staleness defaults are
+ * fine — the dialog is short-lived and re-queries on focus anyway.
+ */
+export function useCatalogLookup(q: string, limit: number = 5) {
+  const [debounced, setDebounced] = useState(q);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(q), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [q]);
+
+  const trimmed = debounced.trim();
+  return useQuery({
+    queryKey: ["catalog-lookup", trimmed, limit],
+    enabled: trimmed.length > 0,
+    queryFn: async (): Promise<CatalogLookupResult> => {
+      const resp = await api.get<CatalogLookupResponse>("/catalog/lookup", {
+        q: trimmed,
+        limit: String(limit),
+      });
+      return resp.data;
     },
   });
 }

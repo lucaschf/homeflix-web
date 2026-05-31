@@ -146,6 +146,38 @@ export interface CatalogRequest {
 export type CatalogRequestResponse = ApiDetailResponse<CatalogRequest>;
 export type CatalogRequestsResponse = ApiListResponse<CatalogRequest>;
 
+/**
+ * Which detection branch the backend's lookup parser took.
+ * ``tmdb_id`` and ``imdb_id`` are direct-id resolutions (≤ 2 hits);
+ * ``text`` is the free-text search branch.
+ */
+export type CatalogLookupKind = "tmdb_id" | "imdb_id" | "text";
+
+/**
+ * One picker row in the "Request a title" dialog. Mirrors the
+ * backend ``TmdbLookupCandidate`` DTO 1:1.
+ */
+export interface CatalogLookupCandidate {
+  tmdb_id: number;
+  /** ``"movie"`` (``/movie/{id}``) or ``"tv"`` (``/tv/{id}``). The
+   *  request POST takes ``"movie"`` / ``"series"`` — the dialog maps
+   *  ``"tv"`` → ``"series"`` at submit time. */
+  media_type: "movie" | "tv";
+  title: string;
+  year: number | null;
+  overview: string | null;
+  poster_url: string | null;
+}
+
+export interface CatalogLookupResult {
+  /** Echo of the cleaned query (empty when input was whitespace). */
+  query: string;
+  kind: CatalogLookupKind;
+  candidates: CatalogLookupCandidate[];
+}
+
+export type CatalogLookupResponse = ApiDetailResponse<CatalogLookupResult>;
+
 export interface MovieDetail {
   id: string;
   title: string;

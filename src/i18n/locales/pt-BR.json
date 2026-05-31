@@ -1211,8 +1211,33 @@
     "clearAll": "Limpar Tudo",
     "noResults": "Nenhum resultado para \"{{query}}\"",
     "tryDifferent": "Tente um termo de busca diferente",
+    "requestCta": "Não encontrou? Solicite o título",
     "movies": "Filmes",
     "series": "Series"
+  },
+  "request": {
+    "dialog": {
+      "title": "Solicitar um título",
+      "subtitle": "Cole um id do TMDB ou IMDb, um link, ou digite o nome.",
+      "placeholder": "603, tt0133093, themoviedb.org/movie/603 ou \"Matrix\"",
+      "hint": "Escolha como quer encontrar o título",
+      "hintExamples": "Exemplos: 603 · tt0133093 · https://www.themoviedb.org/movie/603 · https://www.imdb.com/title/tt0133093 · matrix",
+      "noCandidates": "Nada no TMDB corresponde a \"{{query}}\".",
+      "lookupFailed": "Não foi possível consultar o provedor de metadados. Tente de novo em instantes."
+    },
+    "badge": {
+      "movie": "Filme",
+      "series": "Série",
+      "requested": "Solicitado"
+    },
+    "action": {
+      "request": "Solicitar este título",
+      "openTmdb": "Abrir no TMDB"
+    },
+    "snack": {
+      "alreadyAvailable": "Esse título já está no catálogo.",
+      "failed": "Não foi possível registrar a solicitação. Tente novamente."
+    }
   },
   "lists": {
     "title": "Minhas Listas",
