@@ -1232,7 +1232,8 @@
       "requested": "Requested"
     },
     "action": {
-      "request": "Request this title"
+      "request": "Request this title",
+      "openTmdb": "Open on TMDB"
     },
     "snack": {
       "alreadyAvailable": "This title is already in the catalog.",

@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { Check, Search, Send, X } from "lucide-react";
+import { Check, ExternalLink, Search, Send, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../api/client";
@@ -295,7 +295,19 @@ function CandidateRow({
           </Typography>
         )}
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center" }}>
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        <IconButton
+          component="a"
+          size="small"
+          href={tmdbUrl(candidate)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={t("request.action.openTmdb")}
+          title={t("request.action.openTmdb")}
+        >
+          <ExternalLink size={16} />
+        </IconButton>
         {isRequested ? (
           <Chip
             icon={<Check size={14} />}
@@ -320,7 +332,11 @@ function CandidateRow({
             <Send size={16} />
           </IconButton>
         )}
-      </Box>
+      </Stack>
     </Box>
   );
+}
+
+function tmdbUrl(c: CatalogLookupCandidate): string {
+  return `https://www.themoviedb.org/${c.media_type}/${c.tmdb_id}`;
 }
