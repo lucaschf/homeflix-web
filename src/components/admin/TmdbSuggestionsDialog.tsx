@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Alert,
   Box,
@@ -5,12 +6,14 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  InputAdornment,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
-import { Film, Tv, X } from "lucide-react";
+import { Film, Search, Tv, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useMovieTmdbSuggestions } from "../../api/hooks";
+import { useCatalogLookup, useMovieTmdbSuggestions } from "../../api/hooks";
 import type { TmdbSuggestion } from "../../api/types";
 import { neutral } from "../../theme/colors";
 import { AdminDialog } from "./AdminDialog";
@@ -47,9 +50,35 @@ export function TmdbSuggestionsDialog({
   busy = false,
 }: TmdbSuggestionsDialogProps) {
   const { t } = useTranslation();
-  const { data, isLoading, isError } = useMovieTmdbSuggestions(open ? movieId : null);
 
-  const hasResults = !!data && (data.movies.length > 0 || data.series.length > 0);
+  const [query, setQuery] = useState("");
+  // Reset the search box whenever the dialog opens or targets a new
+  // movie so a leftover query from a previous row doesn't carry over.
+  // Render-time reset (see React "you might not need an effect").
+  const resetKey = `${open}:${movieId}`;
+  const [seenKey, setSeenKey] = useState(resetKey);
+  if (resetKey !== seenKey) {
+    setSeenKey(resetKey);
+    setQuery("");
+  }
+
+  const searching = query.trim().length > 0;
+  // Seeded suggestions only while the search box is empty; the manual
+  // lookup takes over once the admin types.
+  const seeded = useMovieTmdbSuggestions(open && !searching ? movieId : null);
+  const lookup = useCatalogLookup(open ? query : "");
+
+  const lookupCandidates = lookup.data?.candidates ?? [];
+  const movies: TmdbSuggestion[] = searching
+    ? lookupCandidates.filter((c) => c.media_type === "movie")
+    : (seeded.data?.movies ?? []);
+  const series: TmdbSuggestion[] = searching
+    ? lookupCandidates.filter((c) => c.media_type === "tv")
+    : (seeded.data?.series ?? []);
+  const isLoading = searching ? lookup.isFetching : seeded.isLoading;
+  const isError = searching ? lookup.isError : seeded.isError;
+
+  const hasResults = movies.length > 0 || series.length > 0;
 
   return (
     <AdminDialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -74,6 +103,25 @@ export function TmdbSuggestionsDialog({
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
+        <TextField
+          fullWidth
+          size="small"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("admin.reviews.dialog.searchPlaceholder")}
+          helperText={t("admin.reviews.dialog.searchHint")}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search size={16} />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ mb: 2 }}
+        />
+
         {errorMessage && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             {errorMessage}
@@ -98,21 +146,21 @@ export function TmdbSuggestionsDialog({
           </Box>
         )}
 
-        {data && data.movies.length > 0 && (
+        {movies.length > 0 && (
           <SuggestionSection
             heading={t("admin.reviews.dialog.moviesHeading")}
             icon={<Film size={18} />}
-            suggestions={data.movies}
+            suggestions={movies}
             onSelect={onSelect}
             disabled={busy}
           />
         )}
 
-        {data && data.series.length > 0 && (
+        {series.length > 0 && (
           <SuggestionSection
             heading={t("admin.reviews.dialog.seriesHeading")}
             icon={<Tv size={18} />}
-            suggestions={data.series}
+            suggestions={series}
             onSelect={onSelect}
             disabled={busy}
             // Surface the limitation upfront so the admin doesn't
