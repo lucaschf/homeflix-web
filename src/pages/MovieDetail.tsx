@@ -4,22 +4,26 @@ import {
   Button,
   CircularProgress,
   IconButton,
+  Snackbar,
   Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Bookmark, Play, RefreshCw, Clapperboard } from "lucide-react";
+import { alpha } from "@mui/material/styles";
+import { Bookmark, Play, RefreshCw, Clapperboard, Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   useEnrichMovie,
+  useFlagMovieEnrichment,
   useIsInWatchlist,
   useMovie,
   useProgress,
   useRelatedMovies,
   useToggleWatchlist,
 } from "../api/hooks";
+import { useCurrentUser } from "../api/auth";
 import { CastCard } from "../components/CastCard";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
@@ -31,7 +35,7 @@ import { TrailerDialog } from "../components/TrailerDialog";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
-import { inkAlpha, panelScrim, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { inkAlpha, panelScrim, peachAlpha, scrim, status, whiteAlpha } from "../theme/tokens";
 import { neutral } from "../theme/colors";
 
 export function MovieDetail() {
@@ -46,6 +50,12 @@ export function MovieDetail() {
   // from seeing a flash of "loading · HomeFlix".
   useDocumentTitle(movie ? `${movie.title} (${movie.year})` : undefined);
   const enrichMutation = useEnrichMovie();
+  const flagEnrichment = useFlagMovieEnrichment();
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === "admin";
+  const [flagSnack, setFlagSnack] = useState<
+    { message: string; severity: "success" | "error" } | null
+  >(null);
   const { data: inWatchlist } = useIsInWatchlist(movieId!);
   const toggleWatchlist = useToggleWatchlist();
   const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
@@ -115,6 +125,15 @@ export function MovieDetail() {
     }
     return rows;
   }, [movie, langs, t]);
+
+  const handleFlagEnrichment = async () => {
+    try {
+      await flagEnrichment.mutateAsync(movieId!);
+      setFlagSnack({ message: t("detail.flagEnrichment.success"), severity: "success" });
+    } catch {
+      setFlagSnack({ message: t("detail.flagEnrichment.error"), severity: "error" });
+    }
+  };
 
   if (isLoading || !movie) {
     return (
@@ -309,6 +328,52 @@ export function MovieDetail() {
                   <RefreshCw size={18} />
                 </IconButton>
               )}
+              {isAdmin && movie.tmdb_id && (
+                // Admin-only: report a wrong enrichment so the movie
+                // re-enters the needs-review queue for relinking. Shown
+                // only once the movie is enriched (has a tmdb_id) —
+                // un-enriched movies use the enrich button above. The
+                // flagged appearance persists across reloads via the
+                // detail payload's ``needs_enrichment_review``; the
+                // session mutation state covers the optimistic gap
+                // before the invalidated query refetches.
+                (() => {
+                  const flagged = movie.needs_enrichment_review || flagEnrichment.isSuccess;
+                  return (
+                    <Tooltip
+                      title={
+                        flagged
+                          ? t("detail.flagEnrichment.flagged")
+                          : t("detail.flagEnrichment.tooltip")
+                      }
+                      arrow
+                    >
+                      {/* span wrapper so the tooltip still works while
+                          the button is disabled (flagged state) */}
+                      <span>
+                        <IconButton
+                          onClick={handleFlagEnrichment}
+                          disabled={flagEnrichment.isPending || flagged}
+                          sx={{
+                            color: flagged ? status.warn.fg : "text.primary",
+                            bgcolor: whiteAlpha(0.08),
+                            border: `1px solid ${whiteAlpha(0.12)}`,
+                            borderRadius: 1,
+                            width: 46,
+                            height: 46,
+                            "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
+                            "&.Mui-disabled": {
+                              color: flagged ? status.warn.fg : "text.disabled",
+                            },
+                          }}
+                        >
+                          <Flag size={18} fill={flagged ? "currentColor" : "none"} />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  );
+                })()
+              )}
             </Box>
           </Box>
         </Box>
@@ -463,6 +528,33 @@ export function MovieDetail() {
       {movie.trailer_url && (
         <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} url={movie.trailer_url} />
       )}
+
+      <Snackbar
+        open={!!flagSnack}
+        autoHideDuration={4000}
+        onClose={() => setFlagSnack(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        {flagSnack ? (
+          <Box
+            sx={{
+              bgcolor:
+                flagSnack.severity === "success"
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
+              color: "text.primary",
+              borderRadius: 1,
+              px: 2,
+              py: 1.25,
+              fontSize: "0.875rem",
+              maxWidth: 480,
+            }}
+          >
+            {flagSnack.message}
+          </Box>
+        ) : undefined}
+      </Snackbar>
     </Box>
   );
 }

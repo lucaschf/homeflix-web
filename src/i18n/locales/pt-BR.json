@@ -139,6 +139,12 @@
   },
   "detail": {
     "trailer": "Trailer",
+    "flagEnrichment": {
+      "tooltip": "Marcar enriquecimento como incorreto",
+      "flagged": "Marcado para revisão",
+      "success": "Enriquecimento marcado — o filme voltou para a fila de revisão.",
+      "error": "Não foi possível marcar o enriquecimento. Tente novamente."
+    },
     "watchNow": "Assistir Agora",
     "watch": "Assistir",
     "resume": "Continuar",
