@@ -95,6 +95,8 @@ import type {
   RecentlyAddedSeriesResponse,
   RelatedMoviesResponse,
   RelatedSeriesResponse,
+  FlagMovieEnrichmentPayload,
+  FlagMovieEnrichmentResponse,
   RelinkMovieInput,
   RelinkMoviePayload,
   RelinkMovieResponse,
@@ -1334,6 +1336,33 @@ export function useRelinkMovie() {
         queryKey: ["admin", "movies", "needs-review"],
       });
       queryClient.invalidateQueries({ queryKey: ["movie", vars.movieId] });
+    },
+  });
+}
+
+/**
+ * Flag an already-enriched movie whose metadata matched the wrong
+ * title. The backend sets ``needs_enrichment_review`` so the movie
+ * shows up again on the admin review queue, where it can be relinked
+ * to the correct TMDB id (see {@link useRelinkMovie}).
+ *
+ * Invalidates the review listing and the movie's detail cache so the
+ * flag state surfaces immediately.
+ */
+export function useFlagMovieEnrichment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (movieId: string): Promise<FlagMovieEnrichmentPayload> => {
+      const resp = await api.post<FlagMovieEnrichmentResponse>(
+        `/admin/movies/${movieId}/flag-enrichment`,
+      );
+      return resp.data;
+    },
+    onSuccess: (_, movieId) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "movies", "needs-review"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
     },
   });
 }

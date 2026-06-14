@@ -139,6 +139,12 @@
   },
   "detail": {
     "trailer": "Trailer",
+    "flagEnrichment": {
+      "tooltip": "Flag enrichment as wrong",
+      "flagged": "Flagged for review",
+      "success": "Enrichment flagged — the movie is back in the review queue.",
+      "error": "Couldn't flag the enrichment. Try again."
+    },
     "watchNow": "Watch Now",
     "watch": "Watch",
     "resume": "Resume",

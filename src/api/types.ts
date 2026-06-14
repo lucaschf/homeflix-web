@@ -203,6 +203,7 @@ export interface MovieDetail {
   files: MediaFileOutput[];
   tmdb_id: number | null;
   imdb_id: string | null;
+  needs_enrichment_review: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -991,6 +992,16 @@ export interface RelinkMoviePayload {
 export type NeedsReviewMoviesResponse = ApiListResponse<NeedsReviewMovie>;
 export type TmdbSuggestionsResponse = ApiDetailResponse<TmdbSuggestionsPayload>;
 export type RelinkMovieResponse = ApiDetailResponse<RelinkMoviePayload>;
+
+// Operator flags an already-enriched movie whose metadata matched the
+// wrong title — it re-enters the admin needs-review queue so it can be
+// relinked to the correct TMDB id.
+export interface FlagMovieEnrichmentPayload {
+  movie_id: string;
+  needs_enrichment_review: boolean;
+}
+
+export type FlagMovieEnrichmentResponse = ApiDetailResponse<FlagMovieEnrichmentPayload>;
 
 // Cross-type conversion: an admin picked a TV card in the suggestion
 // picker, confirming that the misclassified movie row should be
