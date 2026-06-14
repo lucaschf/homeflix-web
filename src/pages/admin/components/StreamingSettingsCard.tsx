@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../../../api/client";
 import { useUpdateAdminSetting } from "../../../api/hooks";
-import type { AdminSettingDetail, StreamingSettings } from "../../../api/types";
-import { AdminFormSection, AdminInput } from "../../../components/admin";
+import type { AdminSettingDetail, HardwareAccel, StreamingSettings } from "../../../api/types";
+import { AdminFormSection, AdminInput, AdminSelect } from "../../../components/admin";
 import { SettingsCardShell } from "./SettingsCardShell";
+
+const HW_ACCEL_OPTIONS: HardwareAccel[] = ["auto", "nvenc", "off"];
 
 interface Props {
   detail: AdminSettingDetail & { value: StreamingSettings };
@@ -39,6 +41,7 @@ export function StreamingSettingsCard({ detail, onSuccess, onError }: Props) {
     detail.value.ffmpeg_threads ?? DEFAULT_THREADS_CAP,
   );
   const [maxCacheMb, setMaxCacheMb] = useState(detail.value.hls_cache_max_size_mb);
+  const [hwAccel, setHwAccel] = useState<HardwareAccel>(detail.value.hw_accel);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const persistedCapped = detail.value.ffmpeg_threads !== null;
@@ -47,7 +50,8 @@ export function StreamingSettingsCard({ detail, onSuccess, onError }: Props) {
     threadsCapped !== persistedCapped ||
     (threadsCapped && ffmpegThreads !== persistedThreads);
   const cacheDirty = maxCacheMb !== detail.value.hls_cache_max_size_mb;
-  const dirty = threadsDirty || cacheDirty;
+  const hwAccelDirty = hwAccel !== detail.value.hw_accel;
+  const dirty = threadsDirty || cacheDirty || hwAccelDirty;
 
   const threadsValid = !threadsCapped || (Number.isFinite(ffmpegThreads) && ffmpegThreads >= 1);
   const cacheValid = Number.isFinite(maxCacheMb) && maxCacheMb >= 0;
@@ -57,6 +61,7 @@ export function StreamingSettingsCard({ detail, onSuccess, onError }: Props) {
     setThreadsCapped(persistedCapped);
     setFfmpegThreads(persistedThreads);
     setMaxCacheMb(detail.value.hls_cache_max_size_mb);
+    setHwAccel(detail.value.hw_accel);
     setErrorMessage(null);
   };
 
@@ -69,6 +74,7 @@ export function StreamingSettingsCard({ detail, onSuccess, onError }: Props) {
         payload: {
           ffmpeg_threads: threadsCapped ? ffmpegThreads : null,
           hls_cache_max_size_mb: maxCacheMb,
+          hw_accel: hwAccel,
         },
       });
       onSuccess(t("admin.settings.streaming.snack.saved"));
@@ -93,6 +99,24 @@ export function StreamingSettingsCard({ detail, onSuccess, onError }: Props) {
       onReset={onReset}
       errorMessage={errorMessage}
     >
+      <AdminFormSection
+        title={t("admin.settings.streaming.hwAccel.label")}
+        helper={t("admin.settings.streaming.hwAccel.helper")}
+      >
+        <Stack sx={{ maxWidth: 320 }}>
+          <AdminSelect<HardwareAccel>
+            value={hwAccel}
+            onChange={(e) => setHwAccel(e.target.value as HardwareAccel)}
+            options={HW_ACCEL_OPTIONS.map((value) => ({
+              value,
+              label: t(`admin.settings.streaming.hwAccel.options.${value}.label`),
+              meta: value,
+            }))}
+            fullWidth
+          />
+        </Stack>
+      </AdminFormSection>
+
       <AdminFormSection
         title={t("admin.settings.streaming.threads.label")}
         helper={t("admin.settings.streaming.threads.helper")}
