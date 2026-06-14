@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Film,
+  Flag,
   GitMerge,
   HardDrive,
   Heart,
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 import { Link as RouterLink, useLocation, useMatch } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useMoviesNeedingReview } from "../../api/hooks";
+import { useMoviesNeedingReview, useSeriesNeedingReview } from "../../api/hooks";
 import { neutral, peach } from "../../theme/colors";
 import { inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
 import { Logo } from "../Logo";
@@ -61,6 +62,8 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
 
   const reviewQueue = useMoviesNeedingReview();
   const reviewBadge = reviewQueue.data?.length ?? 0;
+  const seriesReviewQueue = useSeriesNeedingReview();
+  const seriesReviewBadge = seriesReviewQueue.data?.length ?? 0;
 
   const groups: SidebarGroup[] = [
     {
@@ -84,6 +87,12 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
           to: "/admin/catalog/review",
           icon: AlertTriangle,
           badgeCount: reviewBadge,
+        },
+        {
+          labelKey: "admin.nav.seriesReview",
+          to: "/admin/catalog/series-review",
+          icon: Flag,
+          badgeCount: seriesReviewBadge,
         },
         { labelKey: "admin.nav.scan", to: "/admin/scan", icon: ScanLine },
         { labelKey: "admin.nav.enrich", to: "/admin/enrich", icon: Sparkles },

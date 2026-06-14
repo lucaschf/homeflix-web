@@ -249,6 +249,7 @@
       "movies": "Filmes",
       "series": "Séries",
       "review": "Fila de revisão",
+      "seriesReview": "Revisão de séries",
       "scan": "Scan",
       "enrich": "Enriquecer",
       "intros": "Aberturas",
@@ -1152,6 +1153,31 @@
         "cancel": "Cancelar",
         "confirm": "Sim, promover a série",
         "confirming": "Promovendo…"
+      }
+    },
+    "seriesReviews": {
+      "title": "Fila de revisão de séries",
+      "subtitle": "Séries que o enriquecimento não casou no TMDB, mais as marcadas como erradas. Escolha o item correto abaixo e o catálogo é atualizado automaticamente.",
+      "empty": "Nada para revisar.",
+      "emptyHint": "Novos itens aparecem aqui sempre que um enriquecimento de série não encontra correspondência no TMDB ou um admin marca uma como errada.",
+      "loadError": "Não foi possível carregar a fila de revisão.",
+      "findOnTmdb": "Buscar no TMDB",
+      "table": {
+        "title": "Título",
+        "year": "Ano",
+        "tmdbId": "TMDB atual"
+      },
+      "dialog": {
+        "title": "Escolha uma correspondência no TMDB",
+        "seriesHeading": "Séries",
+        "noResults": "O TMDB não retornou candidatos para este título.",
+        "fetchError": "Não foi possível buscar candidatos no TMDB.",
+        "noPoster": "Sem pôster"
+      },
+      "snack": {
+        "success": "“{{title}}” revinculada com sucesso.",
+        "enrichmentFailed": "ID do TMDB aceito, mas o enriquecimento falhou. Tente outro candidato.",
+        "relinkFailed": "Não foi possível revincular esta série."
       }
     }
   },

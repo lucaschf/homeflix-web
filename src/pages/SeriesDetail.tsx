@@ -14,11 +14,14 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Typography,
+  Snackbar,
 } from "@mui/material";
-import { Bookmark, LayoutGrid, List, Play, RefreshCw, Clapperboard } from "lucide-react";
+import { alpha } from "@mui/material/styles";
+import { Bookmark, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useContinueWatching, useEnrichSeries, useIsInWatchlist, useRelatedSeries, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
+import { useContinueWatching, useEnrichSeries, useFlagSeriesEnrichment, useIsInWatchlist, useRelatedSeries, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
+import { useCurrentUser } from "../api/auth";
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
@@ -32,7 +35,7 @@ import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
-import { inkAlpha, panelScrim, scrim, whiteAlpha } from "../theme/tokens";
+import { inkAlpha, panelScrim, scrim, status, whiteAlpha } from "../theme/tokens";
 
 type EpisodeView = "list" | "cards";
 
@@ -54,6 +57,12 @@ export function SeriesDetail() {
   const { data: series, isLoading } = useSeriesDetail(seriesId!);
   useDocumentTitle(series?.title);
   const enrichMutation = useEnrichSeries();
+  const flagEnrichment = useFlagSeriesEnrichment();
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === "admin";
+  const [flagSnack, setFlagSnack] = useState<
+    { message: string; severity: "success" | "error" } | null
+  >(null);
   const { data: inWatchlist } = useIsInWatchlist(seriesId!);
   const toggleWatchlist = useToggleWatchlist();
   const { data: continueWatching } = useContinueWatching();
@@ -78,6 +87,15 @@ export function SeriesDetail() {
     observer.observe(el);
     return () => observer.disconnect();
   }, [series?.synopsis, expanded]);
+
+  const handleFlagEnrichment = async () => {
+    try {
+      await flagEnrichment.mutateAsync(seriesId!);
+      setFlagSnack({ message: t("detail.flagEnrichment.success"), severity: "success" });
+    } catch {
+      setFlagSnack({ message: t("detail.flagEnrichment.error"), severity: "error" });
+    }
+  };
 
   if (isLoading || !series) {
     return (
@@ -217,6 +235,48 @@ export function SeriesDetail() {
                 >
                   <RefreshCw size={18} />
                 </IconButton>
+              )}
+              {isAdmin && series.tmdb_id && (
+                // Admin-only: report a wrong enrichment so the series
+                // re-enters the needs-review queue for relinking. Shown
+                // only once enriched (has a tmdb_id). Flagged state
+                // persists across reloads via the detail payload's
+                // ``needs_enrichment_review``; the mutation success
+                // state covers the optimistic gap before refetch.
+                (() => {
+                  const flagged = series.needs_enrichment_review || flagEnrichment.isSuccess;
+                  return (
+                    <Tooltip
+                      title={
+                        flagged
+                          ? t("detail.flagEnrichment.flagged")
+                          : t("detail.flagEnrichment.tooltip")
+                      }
+                      arrow
+                    >
+                      {/* span keeps the tooltip working while disabled */}
+                      <span>
+                        <IconButton
+                          onClick={handleFlagEnrichment}
+                          disabled={flagEnrichment.isPending || flagged}
+                          sx={{
+                            color: flagged ? status.warn.fg : "text.secondary",
+                            border: `1px solid ${whiteAlpha(0.2)}`,
+                            borderRadius: 1.5,
+                            width: 38,
+                            height: 38,
+                            "&:hover": { color: "text.primary", borderColor: whiteAlpha(0.4) },
+                            "&.Mui-disabled": {
+                              color: flagged ? status.warn.fg : "text.disabled",
+                            },
+                          }}
+                        >
+                          <Flag size={18} fill={flagged ? "currentColor" : "none"} />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  );
+                })()
               )}
             </Box>
           </Box>
@@ -425,6 +485,33 @@ export function SeriesDetail() {
           </MediaCarousel>
         </Box>
       )}
+
+      <Snackbar
+        open={!!flagSnack}
+        autoHideDuration={4000}
+        onClose={() => setFlagSnack(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        {flagSnack ? (
+          <Box
+            sx={{
+              bgcolor:
+                flagSnack.severity === "success"
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
+              color: "text.primary",
+              borderRadius: 1,
+              px: 2,
+              py: 1.25,
+              fontSize: "0.875rem",
+              maxWidth: 480,
+            }}
+          >
+            {flagSnack.message}
+          </Box>
+        ) : undefined}
+      </Snackbar>
     </Box>
   );
 }

@@ -97,9 +97,18 @@ import type {
   RelatedSeriesResponse,
   FlagMovieEnrichmentPayload,
   FlagMovieEnrichmentResponse,
+  FlagSeriesEnrichmentPayload,
+  FlagSeriesEnrichmentResponse,
+  NeedsReviewSeries,
+  NeedsReviewSeriesResponse,
   RelinkMovieInput,
   RelinkMoviePayload,
   RelinkMovieResponse,
+  RelinkSeriesInput,
+  RelinkSeriesPayload,
+  RelinkSeriesResponse,
+  SeriesTmdbSuggestionsPayload,
+  SeriesTmdbSuggestionsResponse,
   ProgressOutput,
   ProgressResponse,
   ScanResponse,
@@ -1363,6 +1372,85 @@ export function useFlagMovieEnrichment() {
         queryKey: ["admin", "movies", "needs-review"],
       });
       queryClient.invalidateQueries({ queryKey: ["movie", movieId] });
+    },
+  });
+}
+
+// ─── Series enrichment review ───────────────────────────────
+
+/** List series flagged for enrichment review (admin). */
+export function useSeriesNeedingReview() {
+  return useQuery({
+    queryKey: ["admin", "series", "needs-review"],
+    queryFn: async (): Promise<NeedsReviewSeries[]> => {
+      const resp = await api.get<NeedsReviewSeriesResponse>("/admin/series/needs-review");
+      return resp.data;
+    },
+  });
+}
+
+/** Live TMDB TV candidates for a series needing review. */
+export function useSeriesTmdbSuggestions(seriesId: string | null) {
+  return useQuery({
+    queryKey: ["admin", "series", seriesId, "tmdb-suggestions"],
+    queryFn: async (): Promise<SeriesTmdbSuggestionsPayload> => {
+      const resp = await api.get<SeriesTmdbSuggestionsResponse>(
+        `/admin/series/${seriesId}/tmdb-suggestions`,
+      );
+      return resp.data;
+    },
+    enabled: !!seriesId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+interface RelinkSeriesVars extends RelinkSeriesInput {
+  seriesId: string;
+}
+
+/**
+ * Commit an admin's TV pick on a flagged series — stamps the chosen
+ * TMDB id and force-enriches. Invalidates the review listing and the
+ * series detail cache so the flag/badge state updates immediately.
+ */
+export function useRelinkSeries() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      seriesId,
+      tmdb_id,
+      media_type,
+    }: RelinkSeriesVars): Promise<RelinkSeriesPayload> => {
+      const resp = await api.post<RelinkSeriesResponse>(
+        `/admin/series/${seriesId}/relink`,
+        { tmdb_id, media_type },
+      );
+      return resp.data;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "series", "needs-review"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
+  });
+}
+
+/** Flag a wrongly-enriched series so it re-enters the review queue. */
+export function useFlagSeriesEnrichment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (seriesId: string): Promise<FlagSeriesEnrichmentPayload> => {
+      const resp = await api.post<FlagSeriesEnrichmentResponse>(
+        `/admin/series/${seriesId}/flag-enrichment`,
+      );
+      return resp.data;
+    },
+    onSuccess: (_, seriesId) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "series", "needs-review"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["series", seriesId] });
     },
   });
 }

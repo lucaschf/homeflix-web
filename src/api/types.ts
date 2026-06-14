@@ -282,6 +282,7 @@ export interface SeriesDetail {
   trailer_url: string | null;
   tmdb_id: number | null;
   imdb_id: string | null;
+  needs_enrichment_review: boolean;
   season_count: number;
   total_episodes: number;
   seasons: SeasonOutput[];
@@ -1002,6 +1003,44 @@ export interface FlagMovieEnrichmentPayload {
 }
 
 export type FlagMovieEnrichmentResponse = ApiDetailResponse<FlagMovieEnrichmentPayload>;
+
+// ─── Series enrichment review ───────────────────────────────
+
+export interface NeedsReviewSeries {
+  id: string;
+  title: string;
+  year: number;
+  tmdb_id: number | null;
+}
+
+export interface SeriesTmdbSuggestionsPayload {
+  series_id: string;
+  // TV candidates only — re-pointing a series at a movie isn't supported.
+  series: TmdbSuggestion[];
+}
+
+export interface RelinkSeriesInput {
+  tmdb_id: number;
+  // Backend pins this to "tv"; a movie pick is rejected with a 422.
+  media_type: "tv";
+}
+
+export interface RelinkSeriesPayload {
+  series_id: string;
+  enriched: boolean;
+  provider: string | null;
+  error: string | null;
+}
+
+export interface FlagSeriesEnrichmentPayload {
+  series_id: string;
+  needs_enrichment_review: boolean;
+}
+
+export type NeedsReviewSeriesResponse = ApiListResponse<NeedsReviewSeries>;
+export type SeriesTmdbSuggestionsResponse = ApiDetailResponse<SeriesTmdbSuggestionsPayload>;
+export type RelinkSeriesResponse = ApiDetailResponse<RelinkSeriesPayload>;
+export type FlagSeriesEnrichmentResponse = ApiDetailResponse<FlagSeriesEnrichmentPayload>;
 
 // Cross-type conversion: an admin picked a TV card in the suggestion
 // picker, confirming that the misclassified movie row should be
