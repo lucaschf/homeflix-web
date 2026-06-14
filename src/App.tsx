@@ -37,6 +37,7 @@ import { MoviesAdmin } from "./pages/admin/MoviesAdmin";
 import { AdminOverview } from "./pages/admin/Overview";
 import { ScanAdmin } from "./pages/admin/ScanAdmin";
 import { SeriesAdmin } from "./pages/admin/SeriesAdmin";
+import { SeriesReview } from "./pages/admin/SeriesReview";
 import { SettingsAdmin } from "./pages/admin/SettingsAdmin";
 import { UserDetailAdmin } from "./pages/admin/UserDetailAdmin";
 import { UsersAdmin } from "./pages/admin/UsersAdmin";
@@ -138,6 +139,7 @@ function App() {
                     element={<IntroEditor />}
                   />
                   <Route path="/admin/catalog/review" element={<MovieReview />} />
+                  <Route path="/admin/catalog/series-review" element={<SeriesReview />} />
                   <Route path="/admin/catalog/conflicts" element={<ConflictsAdmin />} />
                   {/* Legacy redirect — bookmarks / open tabs landing
                       on the old movie-review path get folded into the
