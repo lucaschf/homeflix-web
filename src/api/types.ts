@@ -540,12 +540,24 @@ export interface IntroDetectionSettings {
   max_intro_seconds: number;
 }
 
-/** Streaming bucket — ffmpeg parallelism + HLS cache cap. */
+/**
+ * Video encoder selection for the transcode + sprite paths.
+ *
+ * - ``auto`` — probe for a working NVENC encoder and use it, else
+ *   fall back to software libx264 (safe default).
+ * - ``nvenc`` — force NVIDIA NVENC, skipping the probe.
+ * - ``off`` — force software libx264, ignoring any GPU.
+ */
+export type HardwareAccel = "auto" | "nvenc" | "off";
+
+/** Streaming bucket — ffmpeg parallelism + HLS cache cap + hardware accel. */
 export interface StreamingSettings {
   /** ``null`` leaves ffmpeg in auto mode (uses every logical core). */
   ffmpeg_threads: number | null;
   /** ``0`` disables LRU eviction entirely. */
   hls_cache_max_size_mb: number;
+  /** Video encoder for the HLS transcode + scrub-preview sprite paths. */
+  hw_accel: HardwareAccel;
 }
 
 /** Avatar bucket — storage subdir + upload sizing. */

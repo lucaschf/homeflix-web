@@ -772,6 +772,15 @@
       "streaming": {
         "title": "Streaming",
         "subtitle": "ffmpeg parallelism cap + HLS cache ceiling. Applies to HLS transcoding, subtitle extraction, and scrub-preview sprite generation.",
+        "hwAccel": {
+          "label": "Hardware acceleration",
+          "helper": "Video encoder for HLS transcoding and scrub-preview sprites. Auto uses NVIDIA NVENC when a working GPU encoder is detected and falls back to software — decisive for 4K/HEVC, which otherwise saturates the CPU. Has no effect on already-H.264 sources, which are remuxed, not re-encoded.",
+          "options": {
+            "auto": { "label": "Auto (NVENC, else software)" },
+            "nvenc": { "label": "NVENC (force GPU)" },
+            "off": { "label": "Off (software libx264)" }
+          }
+        },
         "threads": {
           "label": "ffmpeg threads",
           "helper": "Caps worker threads per ffmpeg invocation. Off leaves ffmpeg in auto (uses every logical core). Set to roughly cpu_count / 2 to cap transcoding to ~50 % of the host. Caps parallelism, not absolute CPU — use cgroups or equivalent for a hard limit.",

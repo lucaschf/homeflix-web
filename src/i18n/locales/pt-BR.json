@@ -771,6 +771,15 @@
       "streaming": {
         "title": "Streaming",
         "subtitle": "Limite de paralelismo do ffmpeg + teto do cache HLS. Aplica a transcoding HLS, extração de legendas e geração de sprites de scrub-preview.",
+        "hwAccel": {
+          "label": "Aceleração por hardware",
+          "helper": "Encoder de vídeo para o transcoding HLS e os sprites de scrub-preview. Auto usa NVIDIA NVENC quando um encoder de GPU funcional é detectado e cai para software caso contrário — decisivo em 4K/HEVC, que senão satura a CPU. Não afeta fontes já em H.264, que são remuxadas, não re-encodadas.",
+          "options": {
+            "auto": { "label": "Auto (NVENC, senão software)" },
+            "nvenc": { "label": "NVENC (forçar GPU)" },
+            "off": { "label": "Desligado (software libx264)" }
+          }
+        },
         "threads": {
           "label": "Threads do ffmpeg",
           "helper": "Limita threads por invocação do ffmpeg. Desligado deixa em auto (usa todo core lógico). cpu_count / 2 limita transcoding a ~50 % do host. Limita paralelismo, não CPU absoluto — use cgroups para limite rígido.",
