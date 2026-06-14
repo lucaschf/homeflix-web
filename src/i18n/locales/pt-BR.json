@@ -1122,6 +1122,8 @@
       },
       "dialog": {
         "title": "Escolher correspondência no TMDB",
+        "searchPlaceholder": "Buscar no TMDB — título, ano, id/URL do TMDB ou IMDb",
+        "searchHint": "Match errado acima? Busque manualmente, ex.: “From 2022”.",
         "moviesHeading": "Filmes",
         "seriesHeading": "Séries",
         "seriesHint": "Escolher uma série converte o filme em uma — você verá uma confirmação antes.",
@@ -1169,6 +1171,8 @@
       },
       "dialog": {
         "title": "Escolha uma correspondência no TMDB",
+        "searchPlaceholder": "Buscar no TMDB — título, ano, id/URL do TMDB ou IMDb",
+        "searchHint": "Match errado acima? Busque manualmente, ex.: “From 2022”.",
         "seriesHeading": "Séries",
         "noResults": "O TMDB não retornou candidatos para este título.",
         "fetchError": "Não foi possível buscar candidatos no TMDB.",

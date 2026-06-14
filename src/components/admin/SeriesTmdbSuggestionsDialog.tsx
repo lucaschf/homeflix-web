@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Alert,
   Box,
@@ -5,12 +6,14 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  InputAdornment,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
-import { Tv, X } from "lucide-react";
+import { Search, Tv, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useSeriesTmdbSuggestions } from "../../api/hooks";
+import { useCatalogLookup, useSeriesTmdbSuggestions } from "../../api/hooks";
 import type { TmdbSuggestion } from "../../api/types";
 import { neutral } from "../../theme/colors";
 import { AdminDialog } from "./AdminDialog";
@@ -31,10 +34,12 @@ interface SeriesTmdbSuggestionsDialogProps {
 }
 
 /**
- * Modal showing live TMDB TV candidates for a flagged series. The
- * admin clicks a card → ``onSelect`` fires with the chosen suggestion;
- * the parent commits the relink. TV-only by design — re-pointing a
- * series at a movie isn't supported.
+ * Modal showing live TMDB TV candidates for a flagged series. Opens
+ * with candidates seeded from the series' stored title/year; a search
+ * box lets the admin override that query (title, year, TMDB id, or
+ * URL) when the automatic match is wrong. The admin clicks a card →
+ * ``onSelect`` fires; the parent commits the relink. TV-only by
+ * design — re-pointing a series at a movie isn't supported.
  */
 export function SeriesTmdbSuggestionsDialog({
   open,
@@ -46,9 +51,32 @@ export function SeriesTmdbSuggestionsDialog({
   busy = false,
 }: SeriesTmdbSuggestionsDialogProps) {
   const { t } = useTranslation();
-  const { data, isLoading, isError } = useSeriesTmdbSuggestions(open ? seriesId : null);
 
-  const hasResults = !!data && data.series.length > 0;
+  const [query, setQuery] = useState("");
+  // Reset the search box whenever the dialog opens or targets a new
+  // series so a leftover query from a previous row doesn't carry over.
+  // Render-time reset (see React "you might not need an effect").
+  const resetKey = `${open}:${seriesId}`;
+  const [seenKey, setSeenKey] = useState(resetKey);
+  if (resetKey !== seenKey) {
+    setSeenKey(resetKey);
+    setQuery("");
+  }
+
+  const searching = query.trim().length > 0;
+  // Seeded suggestions only while the search box is empty; the manual
+  // lookup takes over once the admin types.
+  const seeded = useSeriesTmdbSuggestions(open && !searching ? seriesId : null);
+  const lookup = useCatalogLookup(open ? query : "");
+
+  // Manual lookup returns both movies and series — keep TV only, since
+  // a series can only relink to another TV entry.
+  const candidates: TmdbSuggestion[] = searching
+    ? (lookup.data?.candidates ?? []).filter((c) => c.media_type === "tv")
+    : (seeded.data?.series ?? []);
+  const isLoading = searching ? lookup.isFetching : seeded.isLoading;
+  const isError = searching ? lookup.isError : seeded.isError;
+  const hasResults = candidates.length > 0;
 
   return (
     <AdminDialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -73,6 +101,25 @@ export function SeriesTmdbSuggestionsDialog({
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
+        <TextField
+          fullWidth
+          size="small"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={t("admin.seriesReviews.dialog.searchPlaceholder")}
+          helperText={t("admin.seriesReviews.dialog.searchHint")}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search size={16} />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{ mb: 2 }}
+        />
+
         {errorMessage && (
           <Alert severity="warning" sx={{ mb: 2 }}>
             {errorMessage}
@@ -95,7 +142,7 @@ export function SeriesTmdbSuggestionsDialog({
           </Box>
         )}
 
-        {data && data.series.length > 0 && (
+        {hasResults && (
           <Box>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
               <Tv size={18} />
@@ -114,7 +161,7 @@ export function SeriesTmdbSuggestionsDialog({
                 gap: 2,
               }}
             >
-              {data.series.map((s) => (
+              {candidates.map((s) => (
                 <SuggestionCard
                   key={`${s.media_type}-${s.tmdb_id}`}
                   suggestion={s}
