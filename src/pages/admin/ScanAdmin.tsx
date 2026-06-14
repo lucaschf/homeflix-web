@@ -25,12 +25,22 @@ import {
   AdminTablePagination,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { peach } from "../../theme/colors";
+import {
+  accentGold,
+  goldAlpha,
+  inkAlpha,
+  peachAlpha,
+  status,
+  whiteAlpha,
+} from "../../theme/tokens";
+import { alpha } from "@mui/material/styles";
 import { formatElapsed, useElapsedSeconds } from "./components/elapsed";
 import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 
-const PEACH = "#d97757";
+const PEACH = peach.main;
 
 // Parse a single cron field into a predicate keyed on the
 // numeric value. Handles ``*``, ``5``, ``0-30``, "*/5" (every N)
@@ -274,7 +284,7 @@ export function ScanAdmin() {
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      bgcolor: "#f5c46a",
+                      bgcolor: accentGold,
                       mr: 0.75,
                       display: "inline-block",
                     }}
@@ -338,13 +348,13 @@ export function ScanAdmin() {
                           py: 0.75,
                           px: 1.5,
                           bgcolor: active
-                            ? "rgba(217,119,87,0.12)"
-                            : "rgba(255,255,255,0.03)",
+                            ? peachAlpha(0.12)
+                            : whiteAlpha(0.03),
                           border: "1px solid",
                           borderColor: active
-                            ? "rgba(217,119,87,0.35)"
-                            : "rgba(255,255,255,0.08)",
-                          color: active ? PEACH : "rgba(245,241,235,0.7)",
+                            ? peachAlpha(0.35)
+                            : whiteAlpha(0.08),
+                          color: active ? PEACH : inkAlpha(0.7),
                           fontFamily: "inherit",
                           fontSize: "0.78125rem",
                           fontWeight: 500,
@@ -355,8 +365,8 @@ export function ScanAdmin() {
                             "background-color 140ms ease, border-color 140ms ease, color 140ms ease",
                           "&:hover:not(:disabled)": {
                             bgcolor: active
-                              ? "rgba(217,119,87,0.18)"
-                              : "rgba(255,255,255,0.06)",
+                              ? peachAlpha(0.18)
+                              : whiteAlpha(0.06),
                           },
                         }}
                       >
@@ -375,7 +385,7 @@ export function ScanAdmin() {
                     gap: 1.25,
                     mt: 2.25,
                     fontSize: "0.8125rem",
-                    color: "rgba(245,241,235,0.75)",
+                    color: inkAlpha(0.75),
                     cursor: isInflight ? "not-allowed" : "pointer",
                     userSelect: "none",
                   }}
@@ -387,7 +397,7 @@ export function ScanAdmin() {
                       height: 16,
                       borderRadius: 0.375,
                       border: "1px solid",
-                      borderColor: scanAll ? PEACH : "rgba(255,255,255,0.25)",
+                      borderColor: scanAll ? PEACH : whiteAlpha(0.25),
                       bgcolor: scanAll ? PEACH : "transparent",
                       display: "inline-flex",
                       alignItems: "center",
@@ -461,8 +471,8 @@ export function ScanAdmin() {
         {isInflight && inflightRun && (
           <AdminCard
             sx={{
-              borderColor: "rgba(245,196,106,0.30)",
-              bgcolor: "rgba(245,196,106,0.04)",
+              borderColor: goldAlpha(0.30),
+              bgcolor: goldAlpha(0.04),
             }}
           >
             <Stack direction="row" alignItems="center" spacing={2}>
@@ -471,8 +481,8 @@ export function ScanAdmin() {
                   width: 36,
                   height: 36,
                   borderRadius: "50%",
-                  bgcolor: "rgba(245,196,106,0.10)",
-                  border: "1px solid rgba(245,196,106,0.30)",
+                  bgcolor: goldAlpha(0.10),
+                  border: `1px solid ${goldAlpha(0.30)}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -484,15 +494,15 @@ export function ScanAdmin() {
                   },
                 }}
               >
-                <ScanLine size={16} color="#f5c46a" aria-hidden />
+                <ScanLine size={16} color={accentGold} aria-hidden />
               </Box>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="body2" sx={{ color: "#f5c46a", fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ color: accentGold, fontWeight: 500 }}>
                   {t("admin.scan.inflight.title")}
                 </Typography>
                 <Typography
                   variant="metaMono"
-                  sx={{ display: "block", mt: 0.5, color: "rgba(245,241,235,0.6)" }}
+                  sx={{ display: "block", mt: 0.5, color: inkAlpha(0.6) }}
                 >
                   {t("admin.scan.inflight.details", {
                     elapsed: formatElapsed(elapsed),
@@ -544,9 +554,9 @@ export function ScanAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,

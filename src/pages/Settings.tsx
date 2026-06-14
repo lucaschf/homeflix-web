@@ -17,6 +17,7 @@ import {
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
 import { neutral } from "../theme/colors";
+import { whiteAlpha } from "../theme/tokens";
 
 /**
  * Per-profile settings page surfaced under ``/settings``.
@@ -157,9 +158,9 @@ function SettingsSection({
       </Box>
       <Box
         sx={{
-          bgcolor: "rgba(255,255,255,0.03)",
+          bgcolor: whiteAlpha(0.03),
           borderRadius: 2,
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: `1px solid ${whiteAlpha(0.06)}`,
           overflow: "hidden",
         }}
       >

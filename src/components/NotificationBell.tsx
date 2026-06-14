@@ -22,6 +22,7 @@ import {
 } from "../api/hooks";
 import { useNotificationsCrossTabSync } from "../api/notificationsChannel";
 import type { Notification, NotificationKind } from "../api/types";
+import { whiteAlpha, inkAlpha } from "../theme/tokens";
 import { formatRelativeTime } from "../utils/schedule";
 
 const DROPDOWN_WIDTH = 380;
@@ -213,7 +214,7 @@ export function NotificationBell() {
               width: DROPDOWN_WIDTH,
               maxWidth: "calc(100vw - 32px)",
               bgcolor: "background.paper",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              border: `1px solid ${whiteAlpha(0.08)}`,
               overflow: "hidden",
             },
           },
@@ -263,7 +264,7 @@ export function NotificationBell() {
                 minWidth: 0,
                 "&:hover": {
                   color: "text.primary",
-                  bgcolor: "rgba(255, 255, 255, 0.04)",
+                  bgcolor: whiteAlpha(0.04),
                 },
                 "&.Mui-disabled": { color: "text.disabled" },
               }}
@@ -272,7 +273,7 @@ export function NotificationBell() {
             </Button>
           </Stack>
         </Box>
-        <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
+        <Divider sx={{ borderColor: whiteAlpha(0.08) }} />
 
         {isLoading ? (
           <Box sx={{ px: 2, py: 3, textAlign: "center" }}>
@@ -293,7 +294,7 @@ export function NotificationBell() {
           >
             <Inbox
               size={28}
-              color="rgba(245, 241, 235, 0.4)"
+              color={inkAlpha(0.4)}
               aria-hidden
             />
             <Typography
@@ -347,10 +348,10 @@ export function NotificationBell() {
                         py: 1.25,
                         alignItems: "flex-start",
                         gap: 1.25,
-                        borderBottom: "1px solid rgba(255, 255, 255, 0.04)",
+                        borderBottom: `1px solid ${whiteAlpha(0.04)}`,
                         "&:last-of-type": { borderBottom: 0 },
                         "&:hover": {
-                          bgcolor: "rgba(255, 255, 255, 0.04)",
+                          bgcolor: whiteAlpha(0.04),
                         },
                       }}
                     >

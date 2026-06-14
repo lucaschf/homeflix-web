@@ -1,6 +1,7 @@
 import { Box, ButtonBase, Skeleton, Typography, alpha, useTheme } from "@mui/material";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { whiteAlpha } from "../../theme/tokens";
 
 interface StatCardProps {
   label: ReactNode;
@@ -33,13 +34,13 @@ export function StatCard({
   const theme = useTheme();
   const baseBorder = alert
     ? alpha(theme.palette.primary.main, 0.35)
-    : "rgba(255,255,255,0.08)";
+    : whiteAlpha(0.08);
 
   const content = (
     <Box
       sx={{
         textAlign: "left",
-        bgcolor: "rgba(255,255,255,0.025)",
+        bgcolor: whiteAlpha(0.025),
         border: `1px solid ${baseBorder}`,
         borderRadius: "8px",
         py: 3,
@@ -49,8 +50,8 @@ export function StatCard({
         ...(onClick && {
           cursor: "pointer",
           "&:hover": {
-            bgcolor: "rgba(255,255,255,0.04)",
-            borderColor: alert ? baseBorder : "rgba(255,255,255,0.18)",
+            bgcolor: whiteAlpha(0.04),
+            borderColor: alert ? baseBorder : whiteAlpha(0.18),
           },
         }),
       }}

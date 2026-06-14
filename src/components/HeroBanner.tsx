@@ -3,6 +3,7 @@ import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
 import { Bookmark, Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
+import { whiteAlpha, panelScrim } from "../theme/tokens";
 import { ContentRatingBadge } from "./ContentRatingBadge";
 import { TitleLogo } from "./TitleLogo";
 import { TrailerDialog } from "./TrailerDialog";
@@ -123,7 +124,7 @@ export function HeroBanner({
           height: "75dvh",
           minHeight: 500,
           background:
-            "linear-gradient(180deg, rgba(20,20,20,1) 0%, rgba(13,13,13,1) 70%, rgba(13,13,13,1) 100%)",
+            `linear-gradient(180deg, rgba(20,20,20,1) 0%, ${panelScrim(1)} 70%, ${panelScrim(1)} 100%)`,
         }}
       />
     );
@@ -174,8 +175,8 @@ export function HeroBanner({
           right: 0,
           bottom: { xs: -200, md: -250 },
           background: {
-            xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)",
-            md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)",
+            xs: `linear-gradient(to right, ${panelScrim(0.97)} 0%, ${panelScrim(0.75)} 50%, ${panelScrim(0.3)} 100%)`,
+            md: `linear-gradient(to right, ${panelScrim(0.95)} 0%, ${panelScrim(0.6)} 40%, transparent 70%)`,
           },
         }}
       />
@@ -187,8 +188,8 @@ export function HeroBanner({
           right: 0,
           bottom: { xs: -200, md: -250 },
           background: {
-            xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.95) 8%, rgba(13,13,13,0.78) 20%, rgba(13,13,13,0.5) 35%, rgba(13,13,13,0.2) 55%, transparent 75%)",
-            md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,0.92) 8%, rgba(13,13,13,0.7) 18%, rgba(13,13,13,0.4) 32%, rgba(13,13,13,0.15) 50%, transparent 70%)",
+            xs: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(0.95)} 8%, ${panelScrim(0.78)} 20%, ${panelScrim(0.5)} 35%, ${panelScrim(0.2)} 55%, transparent 75%)`,
+            md: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(0.92)} 8%, ${panelScrim(0.7)} 18%, ${panelScrim(0.4)} 32%, ${panelScrim(0.15)} 50%, transparent 70%)`,
           },
         }}
       />
@@ -234,7 +235,7 @@ export function HeroBanner({
               key={genre}
               label={genre}
               size="small"
-              sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.7rem" }}
+              sx={{ bgcolor: whiteAlpha(0.1), color: "text.secondary", height: 22, fontSize: "0.7rem" }}
             />
           ))}
         </Box>
@@ -267,12 +268,12 @@ export function HeroBanner({
             }}
             sx={{
               color: inWatchlist ? "primary.main" : "text.secondary",
-              border: inWatchlist ? "1px solid" : "1px solid rgba(255,255,255,0.2)",
+              border: inWatchlist ? "1px solid" : `1px solid ${whiteAlpha(0.2)}`,
               borderColor: inWatchlist ? "primary.main" : undefined,
               borderRadius: 1.5,
               width: 42,
               height: 42,
-              "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.4)" },
+              "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : whiteAlpha(0.4) },
             }}
           >
             <Bookmark size={20} fill={inWatchlist ? "currentColor" : "none"} />
@@ -284,8 +285,8 @@ export function HeroBanner({
               onClick={() => setTrailerOpen(true)}
               sx={{
                 color: "text.secondary",
-                borderColor: "rgba(255,255,255,0.2)",
-                "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+                borderColor: whiteAlpha(0.2),
+                "&:hover": { color: "text.primary", borderColor: whiteAlpha(0.4) },
                 height: 42,
               }}
             >
@@ -309,10 +310,10 @@ export function HeroBanner({
                 width: i === current ? 32 : 10,
                 height: 10,
                 borderRadius: 5,
-                bgcolor: i === current ? "primary.main" : "rgba(255,255,255,0.4)",
+                bgcolor: i === current ? "primary.main" : whiteAlpha(0.4),
                 cursor: "pointer",
                 transition: "all 300ms",
-                "&:hover": { bgcolor: i === current ? "primary.main" : "rgba(255,255,255,0.7)" },
+                "&:hover": { bgcolor: i === current ? "primary.main" : whiteAlpha(0.7) },
               }}
             />
           ))}

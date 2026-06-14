@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
 import type { CollectionOutput } from "../api/types";
+import { inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 
 interface CollectionChipProps {
   collection: CollectionOutput;
@@ -21,19 +22,19 @@ export function CollectionChip({ collection }: CollectionChipProps) {
         gap: 1,
         alignSelf: "flex-start",
         padding: "8px 14px 8px 12px",
-        bgcolor: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        bgcolor: whiteAlpha(0.04),
+        border: `1px solid ${whiteAlpha(0.08)}`,
         borderRadius: "20px",
         fontSize: "0.8125rem",
-        color: "rgba(245,241,235,0.85)",
+        color: inkAlpha(0.85),
         lineHeight: 1.4,
         whiteSpace: "nowrap",
         textDecoration: "none",
         cursor: "pointer",
         transition: "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
         "&:hover": {
-          bgcolor: "rgba(217,119,87,0.06)",
-          borderColor: "rgba(217,119,87,0.35)",
+          bgcolor: peachAlpha(0.06),
+          borderColor: peachAlpha(0.35),
           color: "text.primary",
         },
         "&:focus-visible": {

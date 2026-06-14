@@ -1,4 +1,5 @@
 import { Box, ButtonBase, CircularProgress, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { AlertTriangle, ChevronRight, Film, HardDrive, ScanLine, Tv, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +18,7 @@ import {
   StatCard,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { inkAlpha, peachAlpha, status as statusTone, whiteAlpha } from "../../theme/tokens";
 
 type TFn = (key: string, vars?: Record<string, unknown>) => string;
 
@@ -311,8 +313,8 @@ function FlaggedRow({
         border: "1px solid transparent",
         transition: "background-color 120ms ease, border-color 120ms ease",
         "&:hover": {
-          bgcolor: "rgba(255,255,255,0.025)",
-          borderColor: "rgba(255,255,255,0.08)",
+          bgcolor: whiteAlpha(0.025),
+          borderColor: whiteAlpha(0.08),
         },
       }}
     >
@@ -322,8 +324,8 @@ function FlaggedRow({
           width: 36,
           height: 36,
           borderRadius: 1,
-          bgcolor: "rgba(217,119,87,0.10)",
-          border: "1px solid rgba(217,119,87,0.30)",
+          bgcolor: peachAlpha(0.1),
+          border: `1px solid ${peachAlpha(0.3)}`,
           color: "primary.main",
           display: "flex",
           alignItems: "center",
@@ -473,9 +475,9 @@ function HealthRow({ label, status }: { label: string; status: string }) {
         gap: 1.5,
         py: 1.25,
         px: 1.5,
-        border: "1px solid rgba(255,255,255,0.06)",
+        border: `1px solid ${whiteAlpha(0.06)}`,
         borderRadius: 1,
-        bgcolor: "rgba(255,255,255,0.015)",
+        bgcolor: whiteAlpha(0.015),
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0 }}>
@@ -488,19 +490,19 @@ function HealthRow({ label, status }: { label: string; status: string }) {
             flexShrink: 0,
             bgcolor:
               tone === "ok"
-                ? "#7adf9a"
+                ? statusTone.ok.fg
                 : tone === "warn"
-                  ? "#f5c46a"
+                  ? statusTone.warn.fg
                   : tone === "err"
-                    ? "#ff8a7a"
-                    : "rgba(245,241,235,0.5)",
+                    ? statusTone.err.fg
+                    : inkAlpha(0.5),
             boxShadow:
               tone === "ok"
-                ? "0 0 0 3px rgba(80,180,120,0.18)"
+                ? `0 0 0 3px ${alpha(statusTone.ok.base, 0.18)}`
                 : tone === "warn"
-                  ? "0 0 0 3px rgba(240,180,80,0.18)"
+                  ? `0 0 0 3px ${alpha(statusTone.warn.base, 0.18)}`
                   : tone === "err"
-                    ? "0 0 0 3px rgba(220,80,70,0.18)"
+                    ? `0 0 0 3px ${alpha(statusTone.err.base, 0.18)}`
                     : "none",
           }}
         />

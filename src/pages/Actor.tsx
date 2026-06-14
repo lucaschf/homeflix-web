@@ -16,6 +16,7 @@ import { useMoviesByActor, usePerson } from "../api/hooks";
 import type { MovieSummary, PersonBio } from "../api/types";
 import { MediaCard } from "../components/MediaCard";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 
 type SortKey = "recent" | "oldest" | "title";
 
@@ -161,8 +162,7 @@ function PersonHero({ person, actorName, profilePath, movieCount, t, lang }: Per
         sx={{
           position: "absolute",
           inset: 0,
-          background:
-            "radial-gradient(ellipse at 20% 30%, rgba(217,119,87,0.08), transparent 50%)",
+          background: `radial-gradient(ellipse at 20% 30%, ${peachAlpha(0.08)}, transparent 50%)`,
           pointerEvents: "none",
         }}
       />
@@ -218,7 +218,7 @@ function PersonPortrait({ name, profilePath }: { name: string; profilePath: stri
         aspectRatio: "7 / 9",
         borderRadius: 1,
         overflow: "hidden",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: `1px solid ${whiteAlpha(0.08)}`,
         position: "relative",
         flexShrink: 0,
         // Warm radial fallback that matches the spec's placeholder
@@ -245,7 +245,7 @@ function PersonPortrait({ name, profilePath }: { name: string; profilePath: stri
             justifyContent: "center",
             fontFamily: "Georgia, serif",
             fontSize: 88,
-            color: "rgba(255,255,255,0.18)",
+            color: whiteAlpha(0.18),
           }}
         >
           {initialsFor(name)}
@@ -313,7 +313,7 @@ function StatStrip({ person, movieCount, lang, t }: StatStripProps) {
         rowGap: 2,
         mt: 3,
         pb: 3,
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        borderBottom: `1px solid ${whiteAlpha(0.08)}`,
       }}
     >
       {stats.map((s) => (
@@ -425,9 +425,9 @@ function FilmographySection({ movies, sort, onSortChange, t, onPlay, onOpen }: F
                 color: "text.primary",
                 fontSize: "0.75rem",
                 "& .MuiSelect-select": { py: 0.75, pl: 1.25, pr: 4 },
-                "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.12)" },
+                "& .MuiOutlinedInput-notchedOutline": { borderColor: whiteAlpha(0.12) },
                 "&:hover .MuiOutlinedInput-notchedOutline": {
-                  borderColor: "rgba(255,255,255,0.24)",
+                  borderColor: whiteAlpha(0.24),
                 },
               }}
             >
@@ -536,7 +536,7 @@ function PersonBiography({ text, t }: { text: string; t: TFunction }) {
         sx={{
           fontSize: { xs: "0.875rem", md: "0.9375rem" },
           lineHeight: 1.7,
-          color: "rgba(245,241,235,0.78)",
+          color: inkAlpha(0.78),
           maxWidth: 720,
           ...(expanded
             ? {}

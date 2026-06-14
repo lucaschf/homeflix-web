@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { inkAlpha } from "../../theme/tokens";
 import { AdminButton } from "./AdminButton";
 import { AdminDialog } from "./AdminDialog";
 
@@ -86,7 +87,7 @@ export function AdminConfirmDialog({
         )}
         <Stack spacing={2}>
           {body && (
-            <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.72)" }}>
+            <Typography variant="body2" sx={{ color: inkAlpha(0.72) }}>
               {body}
             </Typography>
           )}
@@ -101,7 +102,7 @@ export function AdminConfirmDialog({
                     key={i}
                     component="li"
                     variant="body2"
-                    sx={{ mb: 0.5, color: "rgba(245,241,235,0.72)" }}
+                    sx={{ mb: 0.5, color: inkAlpha(0.72) }}
                   >
                     {line}
                   </Typography>

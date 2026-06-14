@@ -19,8 +19,10 @@ import {
   useCatalogLookup,
   useRequestCatalogInclusion,
 } from "../api/hooks";
+import { alpha } from "@mui/material/styles";
 import type { CatalogLookupCandidate } from "../api/types";
 import { success } from "../theme/colors";
+import { whiteAlpha, status } from "../theme/tokens";
 
 interface RequestTitleDialogProps {
   open: boolean;
@@ -230,12 +232,12 @@ function CandidateRow({
         p: 1.25,
         borderRadius: 1.5,
         cursor: isRequested || isPending ? "default" : "pointer",
-        bgcolor: isRequested ? "rgba(80,180,120,0.08)" : "transparent",
-        border: "1px solid rgba(255,255,255,0.06)",
+        bgcolor: isRequested ? alpha(status.ok.base, 0.08) : "transparent",
+        border: `1px solid ${whiteAlpha(0.06)}`,
         transition: "background-color 120ms",
         "&:hover": isRequested || isPending
           ? {}
-          : { bgcolor: "rgba(255,255,255,0.04)" },
+          : { bgcolor: whiteAlpha(0.04) },
       }}
     >
       <Box
@@ -244,7 +246,7 @@ function CandidateRow({
           minWidth: 56,
           height: 84,
           borderRadius: 1,
-          bgcolor: "rgba(255,255,255,0.06)",
+          bgcolor: whiteAlpha(0.06),
           overflow: "hidden",
           flexShrink: 0,
         }}

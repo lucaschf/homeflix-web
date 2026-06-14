@@ -1,4 +1,5 @@
 import { Box, CircularProgress, LinearProgress, Snackbar, Stack, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { HardDrive, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,6 +16,7 @@ import {
   type BadgeTone,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 
@@ -71,12 +73,12 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
             sx={{
               height: 8,
               borderRadius: 999,
-              backgroundColor: "rgba(255,255,255,0.06)",
+              backgroundColor: whiteAlpha(0.06),
               "& .MuiLinearProgress-bar": {
                 borderRadius: 999,
                 backgroundColor:
                   tone === "err"
-                    ? "#ff8a7a"
+                    ? accentCoral
                     : tone === "warn"
                       ? "#f3c266"
                       : "#7ec488",
@@ -127,9 +129,9 @@ function StatBlock({
   return (
     <Box
       sx={{
-        border: "1px solid rgba(255,255,255,0.06)",
+        border: `1px solid ${whiteAlpha(0.06)}`,
         borderRadius: 1,
-        bgcolor: "rgba(255,255,255,0.015)",
+        bgcolor: whiteAlpha(0.015),
         px: 1.5,
         py: 1.25,
       }}
@@ -252,9 +254,9 @@ export function HlsCacheAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,

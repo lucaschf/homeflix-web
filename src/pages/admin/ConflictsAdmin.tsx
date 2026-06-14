@@ -1,3 +1,4 @@
+import { alpha } from "@mui/material/styles";
 import {
   Alert,
   Box,
@@ -49,6 +50,7 @@ import {
 } from "../../components/admin";
 import { AdminDialog } from "../../components/admin/AdminDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { inkAlpha, status, whiteAlpha } from "../../theme/tokens";
 
 const KB = 1024;
 const MB = KB * 1024;
@@ -245,7 +247,7 @@ export function ConflictsAdmin() {
             border: "1px solid rgba(120,160,255,0.2)",
           }}
         >
-          <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.85)" }}>
+          <Typography variant="body2" sx={{ color: inkAlpha(0.85) }}>
             {t("admin.conflicts.bulk.selected", { count: selectedIds.size })}
           </Typography>
           <Stack direction="row" spacing={1}>
@@ -286,15 +288,15 @@ export function ConflictsAdmin() {
       ) : paged.items.length === 0 ? (
         <AdminCard>
           <Stack alignItems="center" spacing={1} sx={{ py: 6 }}>
-            <ShieldCheck size={28} color="rgba(245,241,235,0.4)" />
-            <Typography variant="body1" sx={{ color: "rgba(245,241,235,0.85)" }}>
+            <ShieldCheck size={28} color={inkAlpha(0.4)} />
+            <Typography variant="body1" sx={{ color: inkAlpha(0.85) }}>
               {t(
                 isAuditView
                   ? "admin.conflicts.empty.auditTitle"
                   : "admin.conflicts.empty.title",
               )}
             </Typography>
-            <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.55)" }}>
+            <Typography variant="body2" sx={{ color: inkAlpha(0.55) }}>
               {t(
                 isAuditView
                   ? "admin.conflicts.empty.auditSubtitle"
@@ -387,9 +389,9 @@ export function ConflictsAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,
@@ -456,21 +458,21 @@ function ConflictRow({
                 size="small"
                 checked={selected}
                 onChange={onToggleSelect}
-                sx={{ p: 0.5, color: "rgba(245,241,235,0.45)" }}
+                sx={{ p: 0.5, color: inkAlpha(0.45) }}
                 inputProps={{
                   "aria-label": t("admin.conflicts.bulk.selectRow"),
                 }}
               />
             )}
-            <Layers size={16} color="rgba(245,241,235,0.55)" />
-            <Typography variant="subtitle2" sx={{ color: "rgba(245,241,235,0.78)" }}>
+            <Layers size={16} color={inkAlpha(0.55)} />
+            <Typography variant="subtitle2" sx={{ color: inkAlpha(0.78) }}>
               {t("admin.conflicts.matchReason." + conflict.match_reason)}
             </Typography>
             <AdminBadge tone={suggestedTone}>
               {t("admin.conflicts.suggestedAction." + conflict.suggested_action)}
             </AdminBadge>
           </Stack>
-          <Typography variant="caption" sx={{ color: "rgba(245,241,235,0.45)" }}>
+          <Typography variant="caption" sx={{ color: inkAlpha(0.45) }}>
             {t("admin.conflicts.detectedAt", { when: detected })}
           </Typography>
         </Stack>
@@ -491,7 +493,7 @@ function ConflictRow({
         </Stack>
 
         {conflict.runtime_delta_minutes !== null && (
-          <Typography variant="caption" sx={{ color: "rgba(245,241,235,0.5)" }}>
+          <Typography variant="caption" sx={{ color: inkAlpha(0.5) }}>
             {t("admin.conflicts.runtimeDelta", {
               minutes: conflict.runtime_delta_minutes.toFixed(1),
             })}
@@ -553,8 +555,8 @@ function ResolvedFooter({
       justifyContent="space-between"
       alignItems={{ xs: "stretch", md: "center" }}
       sx={{
-        bgcolor: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        bgcolor: whiteAlpha(0.02),
+        border: `1px solid ${whiteAlpha(0.06)}`,
         borderRadius: 1,
         px: 1.75,
         py: 1.25,
@@ -564,13 +566,13 @@ function ResolvedFooter({
         <AdminBadge tone={sourceTone} icon={sourceIcon}>
           {sourceLabel}
         </AdminBadge>
-        <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.78)" }}>
+        <Typography variant="body2" sx={{ color: inkAlpha(0.78) }}>
           {t("admin.conflicts.action." + conflict.resolution)}
         </Typography>
         {!isMarkDistinct && winner && (
           <Typography
             variant="caption"
-            sx={{ color: "rgba(245,241,235,0.55)" }}
+            sx={{ color: inkAlpha(0.55) }}
           >
             {t("admin.conflicts.resolved.winnerWas", {
               title:
@@ -580,7 +582,7 @@ function ResolvedFooter({
         )}
       </Stack>
       {resolvedAt && (
-        <Typography variant="caption" sx={{ color: "rgba(245,241,235,0.45)" }}>
+        <Typography variant="caption" sx={{ color: inkAlpha(0.45) }}>
           {t("admin.conflicts.resolved.at", { when: resolvedAt })}
         </Typography>
       )}
@@ -600,8 +602,8 @@ function CandidatePane({
     <Box
       sx={{
         flex: 1,
-        bgcolor: "rgba(255,255,255,0.02)",
-        border: "1px solid rgba(255,255,255,0.06)",
+        bgcolor: whiteAlpha(0.02),
+        border: `1px solid ${whiteAlpha(0.06)}`,
         borderRadius: 1,
         p: 1.5,
       }}
@@ -610,7 +612,7 @@ function CandidatePane({
         variant="overline"
         sx={{
           display: "block",
-          color: "rgba(245,241,235,0.45)",
+          color: inkAlpha(0.45),
           letterSpacing: "0.08em",
           mb: 0.5,
         }}
@@ -622,7 +624,7 @@ function CandidatePane({
       </Typography>
       <Typography
         variant="caption"
-        sx={{ color: "rgba(245,241,235,0.55)", fontFamily: "monospace" }}
+        sx={{ color: inkAlpha(0.55), fontFamily: "monospace" }}
       >
         {candidate.media_id}
         {candidate.year ? ` · ${candidate.year}` : ""}
@@ -637,7 +639,7 @@ function CandidatePane({
       ) : (
         <Typography
           variant="caption"
-          sx={{ display: "block", mt: 1.25, color: "rgba(245,241,235,0.4)" }}
+          sx={{ display: "block", mt: 1.25, color: inkAlpha(0.4) }}
         >
           {t("admin.conflicts.candidate.noFiles")}
         </Typography>
@@ -653,10 +655,10 @@ function CandidateFileRow({ file }: { file: AdminConflictCandidateFile }) {
   if (file.hdr_format) meta.push(file.hdr_format);
 
   return (
-    <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.05)", pt: 0.75 }}>
+    <Box sx={{ borderTop: `1px solid ${whiteAlpha(0.05)}`, pt: 0.75 }}>
       <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mb: 0.25 }}>
-        <FileVideo size={12} color="rgba(245,241,235,0.45)" />
-        <Typography variant="caption" sx={{ color: "rgba(245,241,235,0.7)" }}>
+        <FileVideo size={12} color={inkAlpha(0.45)} />
+        <Typography variant="caption" sx={{ color: inkAlpha(0.7) }}>
           {meta.join(" · ")}
         </Typography>
         {file.is_primary && (
@@ -667,7 +669,7 @@ function CandidateFileRow({ file }: { file: AdminConflictCandidateFile }) {
         variant="caption"
         sx={{
           display: "block",
-          color: "rgba(245,241,235,0.45)",
+          color: inkAlpha(0.45),
           fontFamily: "monospace",
           wordBreak: "break-all",
         }}
@@ -701,7 +703,7 @@ function PaginationRow({
       justifyContent="flex-end"
       alignItems="center"
     >
-      <Typography variant="caption" sx={{ color: "rgba(245,241,235,0.5)" }}>
+      <Typography variant="caption" sx={{ color: inkAlpha(0.5) }}>
         {t("admin.table.pagination.page", { number: pageNumber })}
       </Typography>
       <AdminButton
@@ -777,7 +779,7 @@ function ResolveConflictDialog({
           </Alert>
         )}
         <Stack spacing={2.5}>
-          <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.72)" }}>
+          <Typography variant="body2" sx={{ color: inkAlpha(0.72) }}>
             {t("admin.conflicts.dialog.body")}
           </Typography>
 
@@ -901,7 +903,7 @@ function ActionLabel({
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
         {title}
       </Typography>
-      <Typography variant="caption" sx={{ color: "rgba(245,241,235,0.55)" }}>
+      <Typography variant="caption" sx={{ color: inkAlpha(0.55) }}>
         {description}
       </Typography>
     </Box>
@@ -921,7 +923,7 @@ function CandidateRadioLabel({
       </Typography>
       <Typography
         variant="caption"
-        sx={{ color: "rgba(245,241,235,0.55)", fontFamily: "monospace" }}
+        sx={{ color: inkAlpha(0.55), fontFamily: "monospace" }}
       >
         {candidate.media_id}
         {candidate.year ? ` · ${candidate.year}` : ""}

@@ -1,4 +1,5 @@
 import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Library as LibraryIcon, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -16,6 +17,7 @@ import {
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { accentCoral, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 
@@ -67,7 +69,7 @@ export function LibrariesAdmin() {
                 width: 28,
                 height: 28,
                 borderRadius: 0.75,
-                bgcolor: "rgba(217,119,87,0.10)",
+                bgcolor: peachAlpha(0.1),
                 color: "primary.main",
                 display: "flex",
                 alignItems: "center",
@@ -195,7 +197,7 @@ export function LibrariesAdmin() {
                   setPendingDelete(lib);
                   setDeleteError(null);
                 }}
-                sx={{ color: "#ff8a7a" }}
+                sx={{ color: accentCoral }}
               >
                 <Trash2 size={15} />
               </IconButton>
@@ -281,9 +283,9 @@ export function LibrariesAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,

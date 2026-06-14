@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { Alert, Box, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import { inkAlpha } from "../theme/tokens";
+import { error as errorPalette } from "../theme/colors";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../api/client";
 import { useLogin } from "../api/auth";
@@ -132,7 +135,7 @@ export function Login() {
               mb: 4.5,
               fontSize: 14,
               lineHeight: 1.55,
-              color: "rgba(245, 241, 235, 0.55)",
+              color: inkAlpha(0.55),
               textAlign: "center",
               maxWidth: 320,
             }}
@@ -146,9 +149,9 @@ export function Login() {
               sx={{
                 width: "100%",
                 mb: 2,
-                bgcolor: "rgba(248, 113, 113, 0.08)",
-                color: "rgba(252, 165, 165, 0.95)",
-                border: "1px solid rgba(248, 113, 113, 0.25)",
+                bgcolor: alpha(errorPalette.main, 0.08),
+                color: alpha(errorPalette.light, 0.95),
+                border: `1px solid ${alpha(errorPalette.main, 0.25)}`,
               }}
             >
               {error}

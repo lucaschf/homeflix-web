@@ -31,6 +31,8 @@ import { TrailerDialog } from "../components/TrailerDialog";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
+import { inkAlpha, panelScrim, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { neutral } from "../theme/colors";
 
 export function MovieDetail() {
   const { t } = useTranslation();
@@ -152,8 +154,7 @@ export function MovieDetail() {
           sx={{
             position: "absolute",
             inset: 0,
-            background:
-              "linear-gradient(180deg, rgba(13,13,13,0) 0%, rgba(13,13,13,0) 30%, rgba(13,13,13,0.5) 55%, rgba(13,13,13,0.85) 80%, #0D0D0D 100%)",
+            background: `linear-gradient(180deg, ${panelScrim(0)} 0%, ${panelScrim(0)} 30%, ${panelScrim(0.5)} 55%, ${panelScrim(0.85)} 80%, ${neutral[950]} 100%)`,
           }}
         />
         <Box
@@ -161,8 +162,8 @@ export function MovieDetail() {
             position: "absolute",
             inset: 0,
             background: {
-              xs: "linear-gradient(90deg, rgba(13,13,13,0.85) 0%, rgba(13,13,13,0.55) 35%, rgba(13,13,13,0.2) 65%, rgba(13,13,13,0) 100%)",
-              md: "linear-gradient(90deg, rgba(13,13,13,0.7) 0%, rgba(13,13,13,0.35) 30%, rgba(13,13,13,0) 55%)",
+              xs: `linear-gradient(90deg, ${panelScrim(0.85)} 0%, ${panelScrim(0.55)} 35%, ${panelScrim(0.2)} 65%, ${panelScrim(0)} 100%)`,
+              md: `linear-gradient(90deg, ${panelScrim(0.7)} 0%, ${panelScrim(0.35)} 30%, ${panelScrim(0)} 55%)`,
             },
           }}
         />
@@ -183,7 +184,7 @@ export function MovieDetail() {
                 aspectRatio: "2/3",
                 borderRadius: 2,
                 objectFit: "cover",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                boxShadow: `0 8px 24px ${scrim(0.6)}`,
               }}
             />
           )}
@@ -229,7 +230,7 @@ export function MovieDetail() {
                   // content. The previous 16px reservation pushed
                   // the label noticeably above center, which read as
                   // a vertical-alignment bug.
-                  boxShadow: "0 2px 6px rgba(217,119,87,0.2)",
+                  boxShadow: `0 2px 6px ${peachAlpha(0.2)}`,
                 }}
               >
                 {hasProgress
@@ -243,14 +244,14 @@ export function MovieDetail() {
                       left: 0,
                       right: 0,
                       height: 3,
-                      bgcolor: "rgba(0,0,0,0.2)",
+                      bgcolor: scrim(0.2),
                     }}
                   >
                     <Box
                       sx={{
                         width: `${(progress.position_seconds / movie.duration_seconds) * 100}%`,
                         height: "100%",
-                        bgcolor: "rgba(0,0,0,0.55)",
+                        bgcolor: scrim(0.55),
                       }}
                     />
                   </Box>
@@ -261,15 +262,15 @@ export function MovieDetail() {
                   onClick={() => toggleWatchlist.mutate({ media_id: movie.id, media_type: "movie" })}
                   sx={{
                     color: inWatchlist ? "primary.main" : "text.primary",
-                    bgcolor: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.12)",
+                    bgcolor: whiteAlpha(0.08),
+                    border: `1px solid ${whiteAlpha(0.12)}`,
+                    borderColor: inWatchlist ? "primary.main" : whiteAlpha(0.12),
                     borderRadius: 1,
                     width: 46,
                     height: 46,
                     "&:hover": {
-                      bgcolor: "rgba(255,255,255,0.12)",
-                      borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.2)",
+                      bgcolor: whiteAlpha(0.12),
+                      borderColor: inWatchlist ? "primary.main" : whiteAlpha(0.2),
                     },
                   }}
                 >
@@ -282,16 +283,16 @@ export function MovieDetail() {
                   onClick={() => setTrailerOpen(true)}
                   sx={{
                     color: "text.primary",
-                    bgcolor: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.12)",
+                    bgcolor: whiteAlpha(0.08),
+                    border: `1px solid ${whiteAlpha(0.12)}`,
                     borderRadius: 1,
                     height: 46,
                     px: 2,
                     fontSize: "0.8125rem",
                     fontWeight: 500,
                     "&:hover": {
-                      bgcolor: "rgba(255,255,255,0.12)",
-                      borderColor: "rgba(255,255,255,0.2)",
+                      bgcolor: whiteAlpha(0.12),
+                      borderColor: whiteAlpha(0.2),
                     },
                   }}
                 >
@@ -346,7 +347,7 @@ export function MovieDetail() {
                 fontSize: { xs: "0.9375rem", md: "1rem" },
                 lineHeight: 1.4,
                 letterSpacing: "0.01em",
-                color: "rgba(245,241,235,0.55)",
+                color: inkAlpha(0.55),
                 m: 0,
               }}
             >
@@ -360,7 +361,7 @@ export function MovieDetail() {
               sx={{
                 fontSize: { xs: "0.875rem", md: "0.9375rem" },
                 lineHeight: 1.65,
-                color: "rgba(245,241,235,0.78)",
+                color: inkAlpha(0.78),
                 m: 0,
                 ...(expanded
                   ? {}
@@ -478,7 +479,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
       >
         {label}
       </Box>
-      <Box component="span" sx={{ color: "rgba(245,241,235,0.85)" }}>
+      <Box component="span" sx={{ color: inkAlpha(0.85) }}>
         {value}
       </Box>
     </Box>

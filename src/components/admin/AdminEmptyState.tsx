@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import { Inbox, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { whiteAlpha } from "../../theme/tokens";
 
 interface AdminEmptyStateProps {
   icon?: LucideIcon;
@@ -33,9 +34,9 @@ export function AdminEmptyState({
         textAlign: "center",
         py: 8,
         px: 3,
-        border: "1px dashed rgba(255,255,255,0.10)",
+        border: `1px dashed ${whiteAlpha(0.1)}`,
         borderRadius: 1,
-        bgcolor: "rgba(255,255,255,0.015)",
+        bgcolor: whiteAlpha(0.015),
       }}
     >
       <Box
@@ -43,8 +44,8 @@ export function AdminEmptyState({
           width: 52,
           height: 52,
           borderRadius: 1,
-          bgcolor: "rgba(255,255,255,0.04)",
-          border: "1px solid rgba(255,255,255,0.08)",
+          bgcolor: whiteAlpha(0.04),
+          border: `1px solid ${whiteAlpha(0.08)}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

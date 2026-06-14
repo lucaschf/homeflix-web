@@ -2,6 +2,7 @@ import { Box, Typography } from "@mui/material";
 import { ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { inkAlpha } from "../../theme/tokens";
 import { HypothesisChip } from "./HypothesisChip";
 
 interface AdminPageHeaderProps {
@@ -63,7 +64,7 @@ export function AdminPageHeader({
                 sx={{
                   color:
                     i === fullBreadcrumb.length - 1
-                      ? "rgba(245,241,235,0.7)"
+                      ? inkAlpha(0.7)
                       : "inherit",
                 }}
               >
@@ -104,7 +105,7 @@ export function AdminPageHeader({
               variant="pageSubtitle"
               sx={{
                 mt: 1,
-                color: "rgba(245,241,235,0.55)",
+                color: inkAlpha(0.55),
                 maxWidth: 720,
               }}
             >

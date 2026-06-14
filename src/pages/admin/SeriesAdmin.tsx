@@ -1,4 +1,5 @@
 import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Eye, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,6 +25,7 @@ import {
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -147,8 +149,8 @@ export function SeriesAdmin() {
             width: 32,
             height: 48,
             borderRadius: 0.5,
-            bgcolor: "rgba(255,255,255,0.04)",
-            border: "1px solid rgba(255,255,255,0.06)",
+            bgcolor: whiteAlpha(0.04),
+            border: `1px solid ${whiteAlpha(0.06)}`,
             overflow: "hidden",
             flexShrink: 0,
           }}
@@ -211,7 +213,7 @@ export function SeriesAdmin() {
         s.tmdb_id ? (
           `tmdb/${s.tmdb_id}`
         ) : (
-          <Typography component="span" sx={{ color: "#ff8a7a", fontFamily: "inherit" }}>
+          <Typography component="span" sx={{ color: accentCoral, fontFamily: "inherit" }}>
             —
           </Typography>
         ),
@@ -264,7 +266,7 @@ export function SeriesAdmin() {
                 setPendingDelete(s);
                 setDeleteError(null);
               }}
-              sx={{ color: "#ff8a7a" }}
+              sx={{ color: accentCoral }}
             >
               <Trash2 size={15} />
             </IconButton>
@@ -365,11 +367,11 @@ export function SeriesAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
+                  ? alpha(status.ok.base, 0.15)
                   : snack.severity === "error"
-                    ? "rgba(220,80,70,0.18)"
-                    : "rgba(240,180,80,0.15)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                    ? alpha(status.err.base, 0.18)
+                    : alpha(status.warn.base, 0.15),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,

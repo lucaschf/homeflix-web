@@ -9,6 +9,7 @@ import {
   Switch,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Folder, Plus, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,6 +33,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { buildLanguageOptions } from "../../i18n/languageOptions";
+import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
 
 type LibraryType = "movies" | "series";
 type SubtitleMode = "always" | "foreign" | "forced" | "none";
@@ -427,9 +429,9 @@ export function LibraryDetailAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,
@@ -481,7 +483,7 @@ function PathsEditor({ paths, onChange }: PathsEditorProps) {
               onChange(next.length ? next : [""]);
             }}
             disabled={paths.length === 1 && !path.trim()}
-            sx={{ color: "#ff8a7a" }}
+            sx={{ color: accentCoral }}
             aria-label={t("admin.libraries.detail.identity.removePath")}
           >
             <Trash2 size={14} />

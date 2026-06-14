@@ -17,7 +17,10 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import { whiteAlpha, scrim } from "../../theme/tokens";
+import { error as errorColor } from "../../theme/colors";
 import { useDeleteProfileAvatar, useUploadProfileAvatar } from "../../api/auth";
 import { ApiError } from "../../api/client";
 import type { CreateProfileInput, Library, Profile } from "../../api/types";
@@ -184,9 +187,9 @@ export function ProfileFormDialog({
               mb: 2,
               p: 1.5,
               borderRadius: 1,
-              bgcolor: "rgba(248, 113, 113, 0.08)",
-              border: "1px solid rgba(248, 113, 113, 0.25)",
-              color: "rgba(252, 165, 165, 0.95)",
+              bgcolor: alpha(errorColor.main, 0.08),
+              border: `1px solid ${alpha(errorColor.main, 0.25)}`,
+              color: alpha(errorColor.light, 0.95),
               fontSize: 13,
             }}
           >
@@ -202,7 +205,7 @@ export function ProfileFormDialog({
               gap: 2.5,
               mb: 2,
               pb: 2,
-              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              borderBottom: `1px solid ${whiteAlpha(0.08)}`,
             }}
           >
             <Box sx={{ position: "relative" }}>
@@ -219,7 +222,7 @@ export function ProfileFormDialog({
                     position: "absolute",
                     inset: 0,
                     borderRadius: "50%",
-                    bgcolor: "rgba(0, 0, 0, 0.55)",
+                    bgcolor: scrim(0.55),
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -238,11 +241,11 @@ export function ProfileFormDialog({
                   size="small"
                   sx={{
                     textTransform: "none",
-                    borderColor: "rgba(255, 255, 255, 0.15)",
+                    borderColor: whiteAlpha(0.15),
                     color: "text.primary",
                     "&:hover": {
-                      borderColor: "rgba(255, 255, 255, 0.3)",
-                      bgcolor: "rgba(255, 255, 255, 0.04)",
+                      borderColor: whiteAlpha(0.3),
+                      bgcolor: whiteAlpha(0.04),
                     },
                   }}
                 >
@@ -256,8 +259,8 @@ export function ProfileFormDialog({
                     color="inherit"
                     sx={{
                       textTransform: "none",
-                      color: "rgba(255, 255, 255, 0.6)",
-                      "&:hover": { color: "text.primary", bgcolor: "rgba(255, 255, 255, 0.04)" },
+                      color: whiteAlpha(0.6),
+                      "&:hover": { color: "text.primary", bgcolor: whiteAlpha(0.04) },
                     }}
                   >
                     {t("profileManagement.avatar.remove")}
@@ -270,7 +273,7 @@ export function ProfileFormDialog({
               {avatarError && (
                 <Typography
                   variant="caption"
-                  sx={{ color: "rgba(252, 165, 165, 0.95)", mt: 0.25 }}
+                  sx={{ color: alpha(errorColor.light, 0.95), mt: 0.25 }}
                 >
                   {avatarError}
                 </Typography>
@@ -312,7 +315,7 @@ export function ProfileFormDialog({
           {t("profileManagement.fields.isKidsHelp")}
         </FormHelperText>
 
-        <Divider sx={{ my: 3, borderColor: "rgba(255, 255, 255, 0.08)" }} />
+        <Divider sx={{ my: 3, borderColor: whiteAlpha(0.08) }} />
 
         <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
           {t("profileManagement.fields.libraries")}
@@ -355,7 +358,7 @@ export function ProfileFormDialog({
 
         {orphanIds.length > 0 && (
           <>
-            <Divider sx={{ my: 2, borderColor: "rgba(255, 255, 255, 0.08)" }} />
+            <Divider sx={{ my: 2, borderColor: whiteAlpha(0.08) }} />
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
               {t("profileManagement.fields.orphanLibraries")}
             </Typography>

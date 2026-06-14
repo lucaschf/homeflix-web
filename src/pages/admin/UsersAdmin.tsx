@@ -9,6 +9,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Plus, Trash2, Users as UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -38,6 +39,7 @@ import {
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { accentCoral, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 type RoleFilter = "all" | "admin" | "member";
@@ -98,7 +100,7 @@ export function UsersAdmin() {
                 width: 28,
                 height: 28,
                 borderRadius: 0.75,
-                bgcolor: "rgba(217,119,87,0.10)",
+                bgcolor: peachAlpha(0.10),
                 color: "primary.main",
                 display: "flex",
                 alignItems: "center",
@@ -172,7 +174,7 @@ export function UsersAdmin() {
                   setPendingDelete(u);
                   setDeleteError(null);
                 }}
-                sx={{ color: "#ff8a7a" }}
+                sx={{ color: accentCoral }}
               >
                 <Trash2 size={15} />
               </IconButton>
@@ -295,9 +297,9 @@ export function UsersAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,
@@ -419,9 +421,9 @@ function InviteUserDialog({ open, onClose, onSuccess }: InviteUserDialogProps) {
                 onChange={(e) => setRole(e.target.value as "admin" | "member")}
                 sx={{
                   fontSize: "0.875rem",
-                  bgcolor: "rgba(255,255,255,0.025)",
+                  bgcolor: whiteAlpha(0.025),
                   "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "rgba(255,255,255,0.08)",
+                    borderColor: whiteAlpha(0.08),
                   },
                 }}
               >

@@ -1,4 +1,5 @@
 import { Alert, Box, CircularProgress, Snackbar, Stack, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAdminSettings } from "../../api/hooks";
@@ -18,6 +19,7 @@ import {
   AdminPageHeader,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { status, whiteAlpha } from "../../theme/tokens";
 import { AvatarSettingsCard } from "./components/AvatarSettingsCard";
 import { IntroDetectionSettingsCard } from "./components/IntroDetectionSettingsCard";
 import { ScanDedupSettingsCard } from "./components/ScanDedupSettingsCard";
@@ -124,8 +126,8 @@ export function SettingsAdmin() {
         variant="outlined"
         sx={{
           mb: 3,
-          bgcolor: "rgba(255,255,255,0.015)",
-          borderColor: "rgba(255,255,255,0.08)",
+          bgcolor: whiteAlpha(0.015),
+          borderColor: whiteAlpha(0.08),
           color: "text.secondary",
           "& .MuiAlert-icon": { color: "primary.main" },
         }}
@@ -213,9 +215,9 @@ export function SettingsAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,

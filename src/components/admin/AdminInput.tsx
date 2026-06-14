@@ -1,4 +1,5 @@
 import { Box, TextField, type TextFieldProps, Typography } from "@mui/material";
+import { whiteAlpha } from "../../theme/tokens";
 
 type AdminInputProps = Omit<TextFieldProps, "label" | "variant"> & {
   label?: string;
@@ -47,12 +48,12 @@ export function AdminInput({
           sx: {
             fontSize: "0.875rem",
             fontFamily: mono ? "'JetBrains Mono', ui-monospace, monospace" : undefined,
-            bgcolor: "rgba(255,255,255,0.025)",
+            bgcolor: whiteAlpha(0.025),
             "& .MuiOutlinedInput-notchedOutline": {
-              borderColor: "rgba(255,255,255,0.08)",
+              borderColor: whiteAlpha(0.08),
             },
             "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderColor: "rgba(255,255,255,0.16)",
+              borderColor: whiteAlpha(0.16),
             },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: "primary.main",

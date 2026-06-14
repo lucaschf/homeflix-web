@@ -32,6 +32,7 @@ import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
+import { inkAlpha, panelScrim, scrim, whiteAlpha } from "../theme/tokens";
 
 type EpisodeView = "list" | "cards";
 
@@ -120,8 +121,8 @@ export function SeriesDetail() {
             />
           </Box>
         )}
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: "linear-gradient(to right, rgba(13,13,13,0.97) 0%, rgba(13,13,13,0.75) 50%, rgba(13,13,13,0.3) 100%)", md: "linear-gradient(to right, rgba(13,13,13,0.95) 0%, rgba(13,13,13,0.6) 40%, transparent 70%)" } }} />
-        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 35%, rgba(13,13,13,0.85) 45%, rgba(13,13,13,0.5) 58%, rgba(13,13,13,0.2) 72%, transparent 85%)", md: "linear-gradient(to top, rgba(13,13,13,1) 0%, rgba(13,13,13,1) 30%, rgba(13,13,13,0.85) 40%, rgba(13,13,13,0.5) 55%, rgba(13,13,13,0.15) 70%, transparent 80%)" } }} />
+        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: `linear-gradient(to right, ${panelScrim(0.97)} 0%, ${panelScrim(0.75)} 50%, ${panelScrim(0.3)} 100%)`, md: `linear-gradient(to right, ${panelScrim(0.95)} 0%, ${panelScrim(0.6)} 40%, transparent 70%)` } }} />
+        <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(1)} 35%, ${panelScrim(0.85)} 45%, ${panelScrim(0.5)} 58%, ${panelScrim(0.2)} 72%, transparent 85%)`, md: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(1)} 30%, ${panelScrim(0.85)} 40%, ${panelScrim(0.5)} 55%, ${panelScrim(0.15)} 70%, transparent 80%)` } }} />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
           {series.poster_path && !series.logo_path && (
@@ -137,7 +138,7 @@ export function SeriesDetail() {
                 aspectRatio: "2/3",
                 borderRadius: 2,
                 objectFit: "cover",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                boxShadow: `0 8px 24px ${scrim(0.6)}`,
               }}
             />
           )}
@@ -161,7 +162,7 @@ export function SeriesDetail() {
                 {t("common.seasons", { count: series.season_count })}
               </Typography>
               {series.genres.slice(0, 3).map((g) => (
-                <Chip key={g} label={g} size="small" sx={{ bgcolor: "rgba(255,255,255,0.1)", color: "text.secondary", height: 22, fontSize: "0.75rem" }} />
+                <Chip key={g} label={g} size="small" sx={{ bgcolor: whiteAlpha(0.1), color: "text.secondary", height: 22, fontSize: "0.75rem" }} />
               ))}
             </Box>
 
@@ -180,12 +181,12 @@ export function SeriesDetail() {
                   onClick={() => toggleWatchlist.mutate({ media_id: series.id, media_type: "series" })}
                   sx={{
                     color: inWatchlist ? "primary.main" : "text.secondary",
-                    border: inWatchlist ? "1px solid" : "1px solid rgba(255,255,255,0.2)",
+                    border: inWatchlist ? "1px solid" : `1px solid ${whiteAlpha(0.2)}`,
                     borderColor: inWatchlist ? "primary.main" : undefined,
                     borderRadius: 1.5,
                     width: 38,
                     height: 38,
-                    "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : "rgba(255,255,255,0.4)" },
+                    "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : whiteAlpha(0.4) },
                   }}
                 >
                   <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
@@ -198,8 +199,8 @@ export function SeriesDetail() {
                   onClick={() => setTrailerOpen(true)}
                   sx={{
                     color: "text.secondary",
-                    borderColor: "rgba(255,255,255,0.2)",
-                    "&:hover": { color: "text.primary", borderColor: "rgba(255,255,255,0.4)" },
+                    borderColor: whiteAlpha(0.2),
+                    "&:hover": { color: "text.primary", borderColor: whiteAlpha(0.4) },
                     height: 38,
                     fontSize: { xs: "0.8rem", md: "0.875rem" },
                   }}
@@ -286,8 +287,8 @@ export function SeriesDetail() {
                   sx={{
                     minWidth: 200,
                     color: "text.primary",
-                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.15)" },
-                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.3)" },
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: whiteAlpha(0.15) },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: whiteAlpha(0.3) },
                   }}
                 >
                   {series.seasons.map((s, idx) => (
@@ -485,7 +486,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
         p: 1.5,
         borderRadius: 2,
         cursor: isAvailable ? "pointer" : "default",
-        "&:hover": isAvailable ? { bgcolor: "rgba(255,255,255,0.04)" } : {},
+        "&:hover": isAvailable ? { bgcolor: whiteAlpha(0.04) } : {},
         "&:hover .ep-play": isAvailable ? { opacity: 1 } : {},
       }}
     >
@@ -501,7 +502,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
           {(episode.thumbnail_path || seriesPoster) ? (
             <Box component="img" src={episode.thumbnail_path ?? seriesPoster!} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
           ) : (
-            <Box sx={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)" }} />
+            <Box sx={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${neutral[800]} 0%, ${neutral[700]} 100%)` }} />
           )}
         </Box>
 
@@ -514,7 +515,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: "rgba(0,0,0,0.4)",
+              bgcolor: scrim(0.4),
               opacity: 0,
               transition: "opacity 200ms",
             }}
@@ -529,8 +530,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
               sx={{
                 position: "absolute",
                 inset: 0,
-                background:
-                  "repeating-linear-gradient(135deg, transparent 0 8px, rgba(255,255,255,0.04) 8px 9px)",
+                background: `repeating-linear-gradient(135deg, transparent 0 8px, ${whiteAlpha(0.04)} 8px 9px)`,
                 pointerEvents: "none",
               }}
             />
@@ -544,14 +544,14 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
                 gap: 0.4,
                 px: 0.7,
                 py: 0.3,
-                bgcolor: "rgba(0,0,0,0.7)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                bgcolor: scrim(0.7),
+                border: `1px solid ${whiteAlpha(0.12)}`,
                 borderRadius: 0.75,
                 fontFamily: "'JetBrains Mono', ui-monospace, monospace",
                 fontSize: "0.55rem",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "rgba(245,241,235,0.85)",
+                color: inkAlpha(0.85),
               }}
             >
               <Box component="span" aria-hidden sx={{ fontSize: "0.65rem", lineHeight: 1 }}>
@@ -572,7 +572,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
               left: 0,
               right: 0,
               height: 3,
-              bgcolor: "rgba(255,255,255,0.2)",
+              bgcolor: whiteAlpha(0.2),
               "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
             }}
           />
@@ -595,12 +595,12 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
           </Typography>
           {langs.audio.length > 0 && (
             <Tooltip title={`${t("detail.audio")}: ${langs.audio.map(formatLanguage).join(", ")}`} arrow>
-              <Chip label={langs.audio.map((l) => l.toUpperCase()).join(" · ")} size="small" sx={{ height: 16, fontSize: "0.55rem", bgcolor: "rgba(255,255,255,0.08)", color: "text.secondary" }} />
+              <Chip label={langs.audio.map((l) => l.toUpperCase()).join(" · ")} size="small" sx={{ height: 16, fontSize: "0.55rem", bgcolor: whiteAlpha(0.08), color: "text.secondary" }} />
             </Tooltip>
           )}
           {langs.subtitle.length > 0 && (
             <Tooltip title={`${t("detail.subtitles")}: ${langs.subtitle.map(formatLanguage).join(", ")}`} arrow>
-              <Chip label={`CC ${langs.subtitle.length}`} size="small" sx={{ height: 16, fontSize: "0.55rem", bgcolor: "rgba(255,255,255,0.08)", color: "text.secondary" }} />
+              <Chip label={`CC ${langs.subtitle.length}`} size="small" sx={{ height: 16, fontSize: "0.55rem", bgcolor: whiteAlpha(0.08), color: "text.secondary" }} />
             </Tooltip>
           )}
         </Box>

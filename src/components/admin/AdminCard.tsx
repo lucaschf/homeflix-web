@@ -1,6 +1,7 @@
 import { Box, Stack, Typography } from "@mui/material";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { whiteAlpha } from "../../theme/tokens";
 
 interface AdminCardProps {
   children: ReactNode;
@@ -18,8 +19,8 @@ export function AdminCard({ children, padding = 22, sx }: AdminCardProps) {
   return (
     <Box
       sx={{
-        bgcolor: "rgba(255,255,255,0.015)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        bgcolor: whiteAlpha(0.015),
+        border: `1px solid ${whiteAlpha(0.08)}`,
         borderRadius: 1,
         padding: `${padding}px`,
         ...sx,

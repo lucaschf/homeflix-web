@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Button } from "@mui/material";
+import { peachAlpha, panelScrim } from "../../theme/tokens";
 
 interface PrimaryButtonProps {
   children: ReactNode;
@@ -51,8 +52,8 @@ export function PrimaryButton({
           transform: "translateY(-1px)",
         },
         "&:disabled": {
-          bgcolor: "rgba(217, 119, 87, 0.4)",
-          color: "rgba(13, 13, 13, 0.6)",
+          bgcolor: peachAlpha(0.4),
+          color: panelScrim(0.6),
         },
       }}
     >

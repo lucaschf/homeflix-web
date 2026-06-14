@@ -21,6 +21,8 @@ import {
 } from "../api/hooks";
 import type { CollectionPart } from "../api/types";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { inkAlpha, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { neutral } from "../theme/colors";
 
 /**
  * Collection Detail page — opens when the user clicks the "Parte
@@ -376,8 +378,7 @@ function CollectionHero({
           sx={{
             position: "absolute",
             inset: 0,
-            background:
-              "linear-gradient(180deg, rgba(10,10,10,0.35) 0%, rgba(10,10,10,0.15) 30%, rgba(10,10,10,0.7) 75%, #0D0D0D 100%)",
+            background: `linear-gradient(180deg, rgba(10,10,10,0.35) 0%, rgba(10,10,10,0.15) 30%, rgba(10,10,10,0.7) 75%, ${neutral[950]} 100%)`,
           }}
         />
 
@@ -443,7 +444,7 @@ function CollectionHero({
                   mt: { xs: 1.5, md: 2.5 },
                   fontSize: { xs: "0.8125rem", md: "0.9375rem" },
                   lineHeight: { xs: 1.5, md: 1.6 },
-                  color: "rgba(245,241,235,0.78)",
+                  color: inkAlpha(0.78),
                   maxWidth: { xs: "100%", md: 760 },
                 }}
               >
@@ -572,19 +573,19 @@ function CollectionHero({
               whiteSpace: "nowrap",
               color: isCollectionInList ? "primary.main" : "text.primary",
               borderColor: isCollectionInList
-                ? "rgba(217,119,87,0.35)"
+                ? peachAlpha(0.35)
                 : "divider",
               bgcolor: isCollectionInList
-                ? "rgba(217,119,87,0.08)"
-                : "rgba(255,255,255,0.06)",
+                ? peachAlpha(0.08)
+                : whiteAlpha(0.06),
               "&.Mui-disabled": {
                 color: isCollectionInList ? "primary.main" : "text.secondary",
                 borderColor: isCollectionInList
-                  ? "rgba(217,119,87,0.35)"
+                  ? peachAlpha(0.35)
                   : "divider",
                 bgcolor: isCollectionInList
-                  ? "rgba(217,119,87,0.08)"
-                  : "rgba(255,255,255,0.04)",
+                  ? peachAlpha(0.08)
+                  : whiteAlpha(0.04),
               },
             }}
           >
@@ -728,7 +729,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
         transition: "background-color 160ms ease",
         "&:hover": missing
           ? undefined
-          : { bgcolor: "rgba(255,255,255,0.015)" },
+          : { bgcolor: whiteAlpha(0.015) },
         "&:focus-visible": missing
           ? undefined
           : {
@@ -753,7 +754,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
             height: { xs: 26, md: 32 },
             borderRadius: "50%",
             border: missing
-              ? "1px dashed rgba(255,255,255,0.18)"
+              ? `1px dashed ${whiteAlpha(0.18)}`
               : "1px solid",
             borderColor: missing ? "transparent" : "divider",
             display: "flex",
@@ -762,7 +763,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
             fontFamily: "'JetBrains Mono', ui-monospace, monospace",
             fontSize: { xs: "0.625rem", md: "0.75rem" },
             fontWeight: 600,
-            color: missing ? "rgba(245,241,235,0.35)" : "text.secondary",
+            color: missing ? inkAlpha(0.35) : "text.secondary",
             flexShrink: 0,
             zIndex: 2,
             bgcolor: "background.default",
@@ -791,7 +792,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
           position: "relative",
           border: "1px solid",
           borderColor: "divider",
-          bgcolor: missing ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.05)",
+          bgcolor: missing ? whiteAlpha(0.03) : whiteAlpha(0.05),
           filter: missing ? "grayscale(1)" : "none",
         }}
       >
@@ -820,7 +821,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
               fontWeight: 700,
               fontSize: "0.75rem",
               textAlign: "center",
-              color: missing ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.85)",
+              color: missing ? whiteAlpha(0.35) : whiteAlpha(0.85),
               letterSpacing: "0.05em",
               textTransform: "uppercase",
             }}
@@ -834,8 +835,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
               sx={{
                 position: "absolute",
                 inset: 0,
-                background:
-                  "repeating-linear-gradient(135deg, transparent 0 8px, rgba(255,255,255,0.025) 8px 9px)",
+                background: `repeating-linear-gradient(135deg, transparent 0 8px, ${whiteAlpha(0.025)} 8px 9px)`,
                 pointerEvents: "none",
               }}
             />
@@ -851,14 +851,14 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                 gap: 0.5,
                 px: { xs: 0.625, md: 0.85 },
                 py: { xs: 0.375, md: 0.4 },
-                bgcolor: "rgba(0,0,0,0.65)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                bgcolor: scrim(0.65),
+                border: `1px solid ${whiteAlpha(0.1)}`,
                 borderRadius: 0.75,
                 fontFamily: "'JetBrains Mono', ui-monospace, monospace",
                 fontSize: { xs: "0.46875rem", md: "0.5625rem" },
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
-                color: "rgba(245,241,235,0.7)",
+                color: inkAlpha(0.7),
               }}
             >
               <Box
@@ -909,7 +909,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                 fontWeight: 600,
                 letterSpacing: { xs: "-0.01em", md: "-0.015em" },
                 lineHeight: { xs: 1.2, md: 1.15 },
-                color: missing ? "rgba(245,241,235,0.65)" : "text.primary",
+                color: missing ? inkAlpha(0.65) : "text.primary",
               }}
             >
               {part.title}
@@ -938,8 +938,8 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                 px: { xs: 0.75, md: 1 },
                 py: { xs: 0.25, md: 0.4 },
                 mb: { xs: 0.75, md: 0 },
-                bgcolor: "rgba(217,119,87,0.08)",
-                border: "1px solid rgba(217,119,87,0.25)",
+                bgcolor: peachAlpha(0.08),
+                border: `1px solid ${peachAlpha(0.25)}`,
                 borderRadius: 0.5,
                 fontFamily: "'JetBrains Mono', ui-monospace, monospace",
                 fontSize: { xs: "0.5rem", md: "0.5625rem" },
@@ -1007,8 +1007,8 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                 fontSize: { xs: "0.71875rem", md: "0.8125rem" },
                 lineHeight: { xs: 1.5, md: 1.65 },
                 color: missing
-                  ? "rgba(245,241,235,0.5)"
-                  : "rgba(245,241,235,0.78)",
+                  ? inkAlpha(0.5)
+                  : inkAlpha(0.78),
                 maxWidth: 640,
                 display: "-webkit-box",
                 WebkitLineClamp: { xs: 3, md: 4 },
@@ -1042,13 +1042,13 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                   px: { xs: 1.375, md: 1.75 },
                   py: { xs: 0.625, md: 0.75 },
                   ...(requestedDisplay && {
-                    bgcolor: "rgba(217,119,87,0.12)",
-                    borderColor: "rgba(217,119,87,0.35)",
+                    bgcolor: peachAlpha(0.12),
+                    borderColor: peachAlpha(0.35),
                     color: "primary.main",
                     "&.Mui-disabled": {
-                      bgcolor: "rgba(217,119,87,0.12)",
+                      bgcolor: peachAlpha(0.12),
                       color: "primary.main",
-                      borderColor: "rgba(217,119,87,0.35)",
+                      borderColor: peachAlpha(0.35),
                     },
                   }),
                 }}
@@ -1070,10 +1070,10 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                   px: 1.5,
                   py: 0.75,
                   color: notifyDisplay ? "primary.main" : "text.secondary",
-                  borderColor: notifyDisplay ? "rgba(217,119,87,0.35)" : "divider",
+                  borderColor: notifyDisplay ? peachAlpha(0.35) : "divider",
                   "&.Mui-disabled": {
                     color: notifyDisplay ? "primary.main" : "text.secondary",
-                    borderColor: notifyDisplay ? "rgba(217,119,87,0.35)" : "divider",
+                    borderColor: notifyDisplay ? peachAlpha(0.35) : "divider",
                   },
                 }}
               >

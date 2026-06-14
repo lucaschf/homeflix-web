@@ -9,9 +9,11 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { status, whiteAlpha } from "../../theme/tokens";
 import { AdminButton } from "./AdminButton";
 import { AdminEmptyState } from "./AdminEmptyState";
 
@@ -55,8 +57,8 @@ const ROW_HEIGHT: Record<TableDensity, number> = {
   comfortable: 72,
   compact: 52,
 };
-const HEADER_BG = "rgba(255,255,255,0.02)";
-const HAIRLINE = "1px solid rgba(255,255,255,0.08)";
+const HEADER_BG = whiteAlpha(0.02);
+const HAIRLINE = `1px solid ${whiteAlpha(0.08)}`;
 const PAD_X = 24;
 
 /**
@@ -110,7 +112,7 @@ export function AdminTable<T>({
   return (
     <TableContainer
       sx={{
-        bgcolor: "rgba(255,255,255,0.015)",
+        bgcolor: whiteAlpha(0.015),
         border: HAIRLINE,
         borderRadius: 1,
         overflow: "hidden",
@@ -154,7 +156,7 @@ export function AdminTable<T>({
                 cursor: onRowClick ? "pointer" : "default",
                 "&:not(:last-of-type) td": { borderBottom: HAIRLINE },
                 "&:hover": onRowClick
-                  ? { bgcolor: "rgba(255,255,255,0.03)" }
+                  ? { bgcolor: whiteAlpha(0.03) }
                   : {},
               }}
             >
@@ -198,7 +200,7 @@ function TableLoadingState<T>({
   return (
     <TableContainer
       sx={{
-        bgcolor: "rgba(255,255,255,0.015)",
+        bgcolor: whiteAlpha(0.015),
         border: HAIRLINE,
         borderRadius: 1,
         overflow: "hidden",
@@ -275,10 +277,10 @@ function TableErrorState({
         gap: 2,
         py: 2.5,
         px: 2.5,
-        bgcolor: "rgba(220,80,70,0.06)",
-        border: "1px solid rgba(220,80,70,0.25)",
+        bgcolor: alpha(status.err.base, 0.06),
+        border: `1px solid ${alpha(status.err.base, 0.25)}`,
         borderRadius: 1,
-        color: "#ff8a7a",
+        color: status.err.fg,
       }}
     >
       <AlertTriangle size={20} aria-hidden />

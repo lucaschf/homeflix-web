@@ -1,5 +1,6 @@
 import { Box, Dialog, IconButton } from "@mui/material";
 import { X } from "lucide-react";
+import { scrim } from "../theme/tokens";
 
 interface TrailerDialogProps {
   open: boolean;
@@ -59,8 +60,8 @@ export function TrailerDialog({ open, onClose, url }: TrailerDialogProps) {
           right: 8,
           zIndex: 1,
           color: "overlayText.primary",
-          bgcolor: "rgba(0,0,0,0.5)",
-          "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+          bgcolor: scrim(0.5),
+          "&:hover": { bgcolor: scrim(0.7) },
         }}
       >
         <X size={20} />

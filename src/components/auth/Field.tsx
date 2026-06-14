@@ -1,5 +1,6 @@
 import { useId, useState, type ChangeEvent, type ReactNode } from "react";
 import { Box, Typography } from "@mui/material";
+import { inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
 
 interface FieldProps {
   label: string;
@@ -45,7 +46,7 @@ export function Field({
   const [focused, setFocused] = useState(false);
   const id = useId();
 
-  const borderColor = focused ? "rgba(217, 119, 87, 0.5)" : "rgba(255, 255, 255, 0.08)";
+  const borderColor = focused ? peachAlpha(0.5) : whiteAlpha(0.08);
 
   return (
     <Box component="label" htmlFor={id} sx={{ display: "block" }}>
@@ -64,13 +65,13 @@ export function Field({
         sx={{
           display: "flex",
           alignItems: "center",
-          bgcolor: "rgba(255, 255, 255, 0.03)",
+          bgcolor: whiteAlpha(0.03),
           border: `1px solid ${borderColor}`,
           borderRadius: 2,
           px: 2,
           py: 1.25,
           transition: "border-color 160ms ease, box-shadow 160ms ease",
-          boxShadow: focused ? "0 0 0 3px rgba(217, 119, 87, 0.08)" : "none",
+          boxShadow: focused ? `0 0 0 3px ${peachAlpha(0.08)}` : "none",
         }}
       >
         <Box
@@ -95,7 +96,7 @@ export function Field({
             fontFamily: "inherit",
             fontSize: 15,
             letterSpacing: "-0.005em",
-            "&::placeholder": { color: "rgba(245, 241, 235, 0.3)" },
+            "&::placeholder": { color: inkAlpha(0.3) },
             "&:disabled": { cursor: "not-allowed", opacity: 0.6 },
           }}
         />

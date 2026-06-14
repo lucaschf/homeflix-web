@@ -17,6 +17,7 @@ import {
   ToolbarSearch,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { peachAlpha, whiteAlpha } from "../../theme/tokens";
 
 type IntroFilter = "all" | "unmarked" | "low_confidence" | "manual";
 
@@ -86,7 +87,7 @@ export function IntroPicker() {
         }}
       >
         <AdminCard sx={{ p: 0, display: "flex", flexDirection: "column", maxHeight: "calc(100vh - 240px)" }}>
-          <Box sx={{ p: 2, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          <Box sx={{ p: 2, borderBottom: `1px solid ${whiteAlpha(0.06)}` }}>
             <ToolbarSearch
               value={searchInput}
               onChange={setSearchInput}
@@ -130,7 +131,7 @@ export function IntroPicker() {
                         py: 1.25,
                         px: 2,
                         bgcolor: isActive
-                          ? "rgba(217,119,87,0.10)"
+                          ? peachAlpha(0.10)
                           : "transparent",
                         borderLeft: "2px solid",
                         borderColor: isActive ? "primary.main" : "transparent",
@@ -141,8 +142,8 @@ export function IntroPicker() {
                         transition: "background-color 120ms ease",
                         "&:hover": {
                           bgcolor: isActive
-                            ? "rgba(217,119,87,0.14)"
-                            : "rgba(255,255,255,0.04)",
+                            ? peachAlpha(0.14)
+                            : whiteAlpha(0.04),
                         },
                       }}
                     >
@@ -165,7 +166,7 @@ export function IntroPicker() {
               </Stack>
             )}
             {hasNextPage && (
-              <Box sx={{ p: 1.5, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              <Box sx={{ p: 1.5, borderTop: `1px solid ${whiteAlpha(0.06)}` }}>
                 <AdminButton
                   variant="ghost"
                   onClick={() => fetchNextPage()}
@@ -319,7 +320,7 @@ function EpisodeRow({ seriesId, seasonNumber, episode }: EpisodeRowProps) {
         py: 1,
         borderRadius: 1,
         transition: "background-color 120ms ease",
-        "&:hover": { bgcolor: "rgba(255,255,255,0.04)" },
+        "&:hover": { bgcolor: whiteAlpha(0.04) },
       }}
     >
       <Typography variant="metaMono" sx={{ width: 56, color: "text.secondary" }}>

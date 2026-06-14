@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
+import { whiteAlpha } from "../theme/tokens";
 
 export type QualityChipKind = "premium" | "neutral" | "low";
 export type QualityChipSize = "sm" | "md";
@@ -23,12 +24,12 @@ export function QualityChip({ label, kind = "neutral", size = "md" }: QualityChi
     },
     neutral: {
       color: theme.palette.text.primary,
-      border: "1px solid rgba(255,255,255,0.12)",
+      border: `1px solid ${whiteAlpha(0.12)}`,
       backgroundColor: "transparent",
     },
     low: {
       color: theme.palette.text.secondary,
-      border: "1px solid rgba(255,255,255,0.1)",
+      border: `1px solid ${whiteAlpha(0.1)}`,
       backgroundColor: "transparent",
       opacity: 0.7,
     },

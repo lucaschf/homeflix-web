@@ -1,4 +1,6 @@
 import { Dialog, type DialogProps } from "@mui/material";
+import { neutral } from "../../theme/colors";
+import { whiteAlpha } from "../../theme/tokens";
 
 /**
  * Shared MUI ``Dialog`` wrapper that pins the admin modal chrome —
@@ -21,9 +23,9 @@ export function AdminDialog({ PaperProps, ...rest }: DialogProps) {
         ...paperRest,
         sx: [
           {
-            bgcolor: "#0d0d0d",
+            bgcolor: neutral[950],
             backgroundImage: "none",
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: `1px solid ${whiteAlpha(0.08)}`,
             borderRadius: 1.5,
           },
           ...(Array.isArray(paperSx) ? paperSx : paperSx ? [paperSx] : []),

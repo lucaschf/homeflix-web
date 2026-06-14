@@ -10,7 +10,8 @@ import {
 import { Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SeriesDetail } from "../api/types";
-import { peach } from "../theme/colors";
+import { neutral, peach } from "../theme/colors";
+import { panelScrim, scrim, whiteAlpha } from "../theme/tokens";
 import { formatDuration } from "../utils/duration";
 
 interface EpisodeDrawerProps {
@@ -61,7 +62,7 @@ export function EpisodeDrawer({
         sx={{
           position: "absolute",
           inset: 0,
-          bgcolor: "rgba(0,0,0,0.5)",
+          bgcolor: scrim(0.5),
           zIndex: 19,
         }}
       />
@@ -78,19 +79,19 @@ export function EpisodeDrawer({
           right: 0,
           bottom: 0,
           width: { xs: "85%", sm: 380, md: 400 },
-          bgcolor: "rgba(13,13,13,0.95)",
+          bgcolor: panelScrim(0.95),
           backdropFilter: "blur(12px)",
           zIndex: 20,
           display: "flex",
           flexDirection: "column",
-          borderLeft: "1px solid rgba(255,255,255,0.08)",
+          borderLeft: `1px solid ${whiteAlpha(0.08)}`,
           outline: "none",
         }}
         onClick={(e) => e.stopPropagation()}
         onWheel={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1.5, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1.5, borderBottom: `1px solid ${whiteAlpha(0.08)}` }}>
           <Typography variant="subtitle1" fontWeight={700} color="overlayText.primary" sx={{ fontSize: "0.95rem" }}>
             {series.title}
           </Typography>
@@ -109,7 +110,7 @@ export function EpisodeDrawer({
             sx={{
               minHeight: 36,
               px: 1,
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
+              borderBottom: `1px solid ${whiteAlpha(0.08)}`,
               "& .MuiTab-root": { color: "text.secondary", textTransform: "none", minHeight: 36, py: 0, fontSize: "0.8rem" },
               "& .Mui-selected": { color: "primary.main" },
               "& .MuiTabs-indicator": { bgcolor: "primary.main" },
@@ -144,18 +145,18 @@ export function EpisodeDrawer({
                   bgcolor: isCurrent ? "rgba(232,146,111,0.12)" : "transparent",
                   borderLeft: isCurrent ? "3px solid" : "3px solid transparent",
                   borderColor: isCurrent ? "primary.main" : "transparent",
-                  "&:hover": { bgcolor: isCurrent ? "rgba(232,146,111,0.16)" : "rgba(255,255,255,0.04)" },
+                  "&:hover": { bgcolor: isCurrent ? "rgba(232,146,111,0.16)" : whiteAlpha(0.04) },
                 }}
               >
                 {/* Thumbnail */}
-                <Box sx={{ width: 100, flexShrink: 0, aspectRatio: "16/9", borderRadius: 1, overflow: "hidden", bgcolor: "rgba(255,255,255,0.05)", position: "relative" }}>
+                <Box sx={{ width: 100, flexShrink: 0, aspectRatio: "16/9", borderRadius: 1, overflow: "hidden", bgcolor: whiteAlpha(0.05), position: "relative" }}>
                   {(ep.thumbnail_path || series.poster_path) ? (
                     <Box component="img" src={ep.thumbnail_path ?? series.poster_path!} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
                   ) : (
-                    <Box sx={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)" }} />
+                    <Box sx={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${neutral[800]} 0%, ${neutral[700]} 100%)` }} />
                   )}
                   {isCurrent && (
-                    <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.5)" }}>
+                    <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: scrim(0.5) }}>
                       <Play size={20} color={peach.main} fill={peach.main} />
                     </Box>
                   )}
@@ -169,7 +170,7 @@ export function EpisodeDrawer({
                         left: 0,
                         right: 0,
                         height: 2,
-                        bgcolor: "rgba(255,255,255,0.2)",
+                        bgcolor: whiteAlpha(0.2),
                         "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
                       }}
                     />

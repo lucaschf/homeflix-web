@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
 import { Logo } from "../Logo";
+import { peachAlpha } from "../../theme/tokens";
 
 /**
  * The 56×56 peach-tinted square that sits above the login title in
@@ -14,8 +15,8 @@ export function MarkBadge({ size = 56 }: { size?: number }) {
         width: size,
         height: size,
         borderRadius: 1.5,
-        bgcolor: "rgba(217, 119, 87, 0.08)",
-        border: "1px solid rgba(217, 119, 87, 0.25)",
+        bgcolor: peachAlpha(0.08),
+        border: `1px solid ${peachAlpha(0.25)}`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

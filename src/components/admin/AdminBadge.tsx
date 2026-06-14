@@ -1,5 +1,8 @@
 import { Box } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import type { ReactNode } from "react";
+import { peach } from "../../theme/colors";
+import { peachAlpha, status, whiteAlpha, inkAlpha } from "../../theme/tokens";
 
 export type BadgeTone = "neutral" | "peach" | "ok" | "warn" | "err" | "info";
 
@@ -11,34 +14,34 @@ interface AdminBadgeProps {
 
 const TONE_STYLES: Record<BadgeTone, { bg: string; fg: string; bd: string }> = {
   neutral: {
-    bg: "rgba(255,255,255,0.05)",
-    fg: "rgba(245,241,235,0.7)",
-    bd: "rgba(255,255,255,0.08)",
+    bg: whiteAlpha(0.05),
+    fg: inkAlpha(0.7),
+    bd: whiteAlpha(0.08),
   },
   peach: {
-    bg: "rgba(217,119,87,0.10)",
-    fg: "#D97757",
-    bd: "rgba(217,119,87,0.30)",
+    bg: peachAlpha(0.1),
+    fg: peach.main,
+    bd: peachAlpha(0.3),
   },
   ok: {
-    bg: "rgba(80,180,120,0.08)",
-    fg: "#7adf9a",
-    bd: "rgba(80,180,120,0.30)",
+    bg: alpha(status.ok.base, 0.08),
+    fg: status.ok.fg,
+    bd: alpha(status.ok.base, 0.3),
   },
   warn: {
-    bg: "rgba(240,180,80,0.08)",
-    fg: "#f5c46a",
-    bd: "rgba(240,180,80,0.30)",
+    bg: alpha(status.warn.base, 0.08),
+    fg: status.warn.fg,
+    bd: alpha(status.warn.base, 0.3),
   },
   err: {
-    bg: "rgba(220,80,70,0.08)",
-    fg: "#ff8a7a",
-    bd: "rgba(220,80,70,0.30)",
+    bg: alpha(status.err.base, 0.08),
+    fg: status.err.fg,
+    bd: alpha(status.err.base, 0.3),
   },
   info: {
-    bg: "rgba(100,150,220,0.08)",
-    fg: "#8ab4f0",
-    bd: "rgba(100,150,220,0.28)",
+    bg: alpha(status.info.base, 0.08),
+    fg: status.info.fg,
+    bd: alpha(status.info.base, 0.28),
   },
 };
 

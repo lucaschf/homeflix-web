@@ -2,6 +2,7 @@ import { Box, IconButton, Tooltip, Typography, alpha, useTheme } from "@mui/mate
 import { PanelLeft, PanelLeftClose } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "../../api/auth";
+import { whiteAlpha } from "../../theme/tokens";
 
 interface AdminTopbarProps {
   collapsed: boolean;
@@ -29,7 +30,7 @@ export function AdminTopbar({ collapsed, onToggleCollapsed }: AdminTopbarProps) 
         alignItems: "center",
         justifyContent: "space-between",
         px: { xs: 2, md: 3 },
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        borderBottom: `1px solid ${whiteAlpha(0.08)}`,
         bgcolor: "background.default",
       }}
     >
@@ -65,7 +66,7 @@ function UserChip({ email, role }: { email: string; role: string }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "rgba(255,255,255,0.85)",
+          color: whiteAlpha(0.85),
           fontFamily: "serif",
           fontSize: "0.75rem",
         }}

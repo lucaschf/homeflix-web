@@ -1,5 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import type { ReactNode } from "react";
+import { whiteAlpha } from "../../theme/tokens";
 
 interface AdminFormSectionProps {
   title: ReactNode;
@@ -30,7 +31,7 @@ export function AdminFormSection({ title, helper, children }: AdminFormSectionPr
         columnGap: 4,
         rowGap: 1.5,
         py: 3,
-        borderTop: "1px solid rgba(255,255,255,0.06)",
+        borderTop: `1px solid ${whiteAlpha(0.06)}`,
         "&:first-of-type": { borderTop: "none", pt: 1 },
       }}
     >

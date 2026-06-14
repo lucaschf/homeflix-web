@@ -12,6 +12,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import Hls from "hls.js";
 import { ArrowLeft, MapPin, Save, Trash2, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +32,7 @@ import {
   AdminPageHeader,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { accentGold, inkAlpha, status, whiteAlpha } from "../../theme/tokens";
 
 function formatHms(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "00:00:00";
@@ -510,7 +512,7 @@ function EditorForm({
           {t("admin.intros.bulkConfirmTitle")}
         </DialogTitle>
         <DialogContent sx={{ px: 3, pb: 1 }}>
-          <Typography variant="body2" sx={{ color: "rgba(245,241,235,0.72)" }}>
+          <Typography variant="body2" sx={{ color: inkAlpha(0.72) }}>
             {pendingBulk === "season"
               ? t("admin.intros.bulkConfirmSeason", {
                   count: eligibleInSeason.length,
@@ -560,9 +562,9 @@ function EditorForm({
             sx={{
               bgcolor:
                 toast.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,
@@ -604,7 +606,7 @@ function TimelineOverlay({
       sx={{
         position: "relative",
         height: 12,
-        bgcolor: "rgba(255,255,255,0.06)",
+        bgcolor: whiteAlpha(0.06),
         borderRadius: 1,
         overflow: "hidden",
       }}
@@ -627,7 +629,7 @@ function TimelineOverlay({
           bottom: 0,
           left: `${playheadPct}%`,
           width: 2,
-          bgcolor: "#f5c46a",
+          bgcolor: accentGold,
         }}
       />
     </Box>

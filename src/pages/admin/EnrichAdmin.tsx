@@ -7,6 +7,7 @@ import {
   Switch,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Play, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,6 +23,13 @@ import {
   AdminTablePagination,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import {
+  accentGold,
+  goldAlpha,
+  inkAlpha,
+  status,
+  whiteAlpha,
+} from "../../theme/tokens";
 import { formatElapsed, useElapsedSeconds } from "./components/elapsed";
 import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
 
@@ -96,7 +104,7 @@ export function EnrichAdmin() {
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      bgcolor: "#f5c46a",
+                      bgcolor: accentGold,
                       mr: 0.75,
                       display: "inline-block",
                     }}
@@ -177,8 +185,8 @@ export function EnrichAdmin() {
         {isInflight && inflightRun && (
           <AdminCard
             sx={{
-              borderColor: "rgba(245,196,106,0.30)",
-              bgcolor: "rgba(245,196,106,0.04)",
+              borderColor: goldAlpha(0.30),
+              bgcolor: goldAlpha(0.04),
             }}
           >
             <Stack direction="row" alignItems="center" spacing={2}>
@@ -187,8 +195,8 @@ export function EnrichAdmin() {
                   width: 36,
                   height: 36,
                   borderRadius: "50%",
-                  bgcolor: "rgba(245,196,106,0.10)",
-                  border: "1px solid rgba(245,196,106,0.30)",
+                  bgcolor: goldAlpha(0.10),
+                  border: `1px solid ${goldAlpha(0.30)}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -200,15 +208,15 @@ export function EnrichAdmin() {
                   },
                 }}
               >
-                <Sparkles size={16} color="#f5c46a" aria-hidden />
+                <Sparkles size={16} color={accentGold} aria-hidden />
               </Box>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="body2" sx={{ color: "#f5c46a", fontWeight: 500 }}>
+                <Typography variant="body2" sx={{ color: accentGold, fontWeight: 500 }}>
                   {t("admin.enrich.inflight.title")}
                 </Typography>
                 <Typography
                   variant="metaMono"
-                  sx={{ display: "block", mt: 0.5, color: "rgba(245,241,235,0.6)" }}
+                  sx={{ display: "block", mt: 0.5, color: inkAlpha(0.6) }}
                 >
                   {t("admin.enrich.inflight.details", {
                     elapsed: formatElapsed(elapsed),
@@ -267,9 +275,9 @@ export function EnrichAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,

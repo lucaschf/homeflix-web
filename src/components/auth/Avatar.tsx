@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Box } from "@mui/material";
+import { whiteAlpha, peachAlpha } from "../../theme/tokens";
 
 interface AvatarProps {
   /** 1-3 character initials rendered at 36% of size. */
@@ -80,12 +81,12 @@ export function Avatar({
         fontFamily: "'Space Grotesk', 'Inter', system-ui, sans-serif",
         fontWeight: 600,
         fontSize: size * 0.36,
-        color: "rgba(255, 255, 255, 0.92)",
+        color: whiteAlpha(0.92),
         letterSpacing: "-0.02em",
         textTransform: "uppercase",
-        border: ring ? "2px solid" : "1px solid rgba(255, 255, 255, 0.08)",
+        border: ring ? "2px solid" : `1px solid ${whiteAlpha(0.08)}`,
         borderColor: ring ? "primary.main" : undefined,
-        boxShadow: ring ? "0 0 0 4px rgba(217, 119, 87, 0.15)" : "none",
+        boxShadow: ring ? `0 0 0 4px ${peachAlpha(0.15)}` : "none",
         filter: dim ? "brightness(0.55) saturate(0.7)" : "none",
         transition: "all 200ms ease",
         flexShrink: 0,

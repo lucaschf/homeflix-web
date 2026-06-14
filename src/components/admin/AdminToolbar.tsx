@@ -1,6 +1,7 @@
 import { Box, InputAdornment, MenuItem, Select, TextField } from "@mui/material";
 import { Check, Search } from "lucide-react";
 import type { ReactNode } from "react";
+import { peachAlpha, whiteAlpha } from "../../theme/tokens";
 
 interface AdminToolbarProps {
   children: ReactNode;
@@ -60,13 +61,13 @@ export function ToolbarSearch({
         ),
         sx: {
           fontSize: "0.8125rem",
-          bgcolor: "rgba(255,255,255,0.025)",
+          bgcolor: whiteAlpha(0.025),
           minWidth: 240,
           "& .MuiOutlinedInput-notchedOutline": {
-            borderColor: "rgba(255,255,255,0.08)",
+            borderColor: whiteAlpha(0.08),
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
-            borderColor: "rgba(255,255,255,0.16)",
+            borderColor: whiteAlpha(0.16),
           },
         },
       }}
@@ -119,10 +120,10 @@ export function FilterChip<V extends string | number>({
       }}
       sx={{
         fontSize: "0.8125rem",
-        bgcolor: active ? "rgba(217,119,87,0.10)" : "rgba(255,255,255,0.025)",
+        bgcolor: active ? peachAlpha(0.1) : whiteAlpha(0.025),
         borderRadius: 999,
         ".MuiOutlinedInput-notchedOutline": {
-          borderColor: active ? "rgba(217,119,87,0.30)" : "rgba(255,255,255,0.08)",
+          borderColor: active ? peachAlpha(0.3) : whiteAlpha(0.08),
         },
         ".MuiSelect-select": { py: 0.6, pr: "32px !important", pl: 1.5 },
       }}

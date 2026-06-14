@@ -1,4 +1,5 @@
 import { Alert, Stack } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { UserCircle } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -6,6 +7,7 @@ import { ApiError } from "../../../api/client";
 import { useUpdateAdminSetting } from "../../../api/hooks";
 import type { AdminSettingDetail, AvatarSettings } from "../../../api/types";
 import { AdminFormSection, AdminInput } from "../../../components/admin";
+import { accentGold, status } from "../../../theme/tokens";
 import { SettingsCardShell } from "./SettingsCardShell";
 
 interface Props {
@@ -95,10 +97,10 @@ export function AvatarSettingsCard({ detail, onSuccess, onError }: Props) {
           variant="outlined"
           sx={{
             mb: 2,
-            bgcolor: "rgba(240,180,80,0.04)",
-            borderColor: "rgba(240,180,80,0.30)",
+            bgcolor: alpha(status.warn.base, 0.04),
+            borderColor: alpha(status.warn.base, 0.30),
             color: "text.primary",
-            "& .MuiAlert-icon": { color: "#f5c46a" },
+            "& .MuiAlert-icon": { color: accentGold },
           }}
         >
           {t("admin.settings.avatar.subdirMigrationWarning")}

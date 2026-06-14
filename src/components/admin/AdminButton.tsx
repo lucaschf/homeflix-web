@@ -1,5 +1,7 @@
 import { Button, type ButtonProps } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import type { ReactNode } from "react";
+import { status, whiteAlpha } from "../../theme/tokens";
 
 type AdminButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -42,25 +44,25 @@ export function AdminButton({
         color: "text.secondary",
         border: 1,
         borderColor: "transparent",
-        "&:hover": { bgcolor: "rgba(255,255,255,0.04)", color: "text.primary" },
+        "&:hover": { bgcolor: whiteAlpha(0.04), color: "text.primary" },
       } as const;
     }
     if (variant === "danger") {
       return {
-        bgcolor: "rgba(220,80,70,0.08)",
-        color: "#ff8a7a",
+        bgcolor: alpha(status.err.base, 0.08),
+        color: status.err.fg,
         border: 1,
-        borderColor: "rgba(220,80,70,0.35)",
-        "&:hover": { bgcolor: "rgba(220,80,70,0.14)" },
+        borderColor: alpha(status.err.base, 0.35),
+        "&:hover": { bgcolor: alpha(status.err.base, 0.14) },
       } as const;
     }
     // secondary
     return {
-      bgcolor: "rgba(255,255,255,0.04)",
+      bgcolor: whiteAlpha(0.04),
       color: "text.primary",
       border: 1,
-      borderColor: "rgba(255,255,255,0.08)",
-      "&:hover": { bgcolor: "rgba(255,255,255,0.07)" },
+      borderColor: whiteAlpha(0.08),
+      "&:hover": { bgcolor: whiteAlpha(0.07) },
     } as const;
   })();
 

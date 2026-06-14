@@ -10,8 +10,11 @@ import {
   DialogTitle,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { Pencil, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { whiteAlpha, peachAlpha } from "../theme/tokens";
+import { error } from "../theme/colors";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   useCreateProfile,
@@ -184,7 +187,7 @@ export function ManageProfiles() {
             letterSpacing: "-0.02em",
             lineHeight: 1.1,
             textAlign: "center",
-            color: "rgba(255, 255, 255, 0.95)",
+            color: whiteAlpha(0.95),
           }}
         >
           {t("profileManagement.manageTitle")}
@@ -225,15 +228,15 @@ export function ManageProfiles() {
             width: "100%",
             maxWidth: 480,
             py: 1.5,
-            borderColor: "rgba(255, 255, 255, 0.15)",
+            borderColor: whiteAlpha(0.15),
             color: "text.primary",
             textTransform: "none",
             fontSize: 14,
             fontWeight: 500,
             letterSpacing: "0.02em",
             "&:hover": {
-              borderColor: "rgba(255, 255, 255, 0.3)",
-              bgcolor: "rgba(255, 255, 255, 0.04)",
+              borderColor: whiteAlpha(0.3),
+              bgcolor: whiteAlpha(0.04),
             },
           }}
         >
@@ -274,9 +277,9 @@ export function ManageProfiles() {
                 mt: 2,
                 p: 1.5,
                 borderRadius: 1,
-                bgcolor: "rgba(248, 113, 113, 0.08)",
-                border: "1px solid rgba(248, 113, 113, 0.25)",
-                color: "rgba(252, 165, 165, 0.95)",
+                bgcolor: alpha(error.main, 0.08),
+                border: `1px solid ${alpha(error.main, 0.25)}`,
+                color: alpha(error.light, 0.95),
                 fontSize: 13,
               }}
             >
@@ -362,7 +365,7 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
             height: 32,
             borderRadius: "50%",
             bgcolor: "background.default",
-            border: "1px solid rgba(255, 255, 255, 0.15)",
+            border: `1px solid ${whiteAlpha(0.15)}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -379,8 +382,8 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
           fontWeight: 500,
           letterSpacing: "-0.005em",
           color: hover && !disabled
-            ? "rgba(255, 255, 255, 0.95)"
-            : "rgba(255, 255, 255, 0.6)",
+            ? whiteAlpha(0.95)
+            : whiteAlpha(0.6),
           transition: "color 200ms ease",
         }}
       >
@@ -435,12 +438,12 @@ function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
           height: 120,
           borderRadius: `${Math.round(120 * 0.16)}px`,
           border: `1.5px solid ${
-            hover && !disabled ? "rgba(217, 119, 87, 0.6)" : "rgba(255, 255, 255, 0.2)"
+            hover && !disabled ? peachAlpha(0.6) : whiteAlpha(0.2)
           }`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: hover && !disabled ? "primary.main" : "rgba(255, 255, 255, 0.5)",
+          color: hover && !disabled ? "primary.main" : whiteAlpha(0.5),
           transition: "all 200ms ease",
         }}
       >
@@ -452,8 +455,8 @@ function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
           fontWeight: 500,
           letterSpacing: "-0.005em",
           color: hover && !disabled
-            ? "rgba(255, 255, 255, 0.95)"
-            : "rgba(255, 255, 255, 0.6)",
+            ? whiteAlpha(0.95)
+            : whiteAlpha(0.6),
           transition: "color 200ms ease",
         }}
       >

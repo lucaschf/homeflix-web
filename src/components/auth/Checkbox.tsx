@@ -1,5 +1,7 @@
 import { useId, type ChangeEvent } from "react";
 import { Box } from "@mui/material";
+import { whiteAlpha, inkAlpha, peachAlpha } from "../../theme/tokens";
+import { neutral } from "../../theme/colors";
 
 interface CheckboxProps {
   checked: boolean;
@@ -26,7 +28,7 @@ export function Checkbox({ checked, onChange, label, disabled = false }: Checkbo
         cursor: disabled ? "not-allowed" : "pointer",
         userSelect: "none",
         fontSize: 13,
-        color: "rgba(245, 241, 235, 0.78)",
+        color: inkAlpha(0.78),
         opacity: disabled ? 0.6 : 1,
       }}
     >
@@ -37,7 +39,7 @@ export function Checkbox({ checked, onChange, label, disabled = false }: Checkbo
           width: 16,
           height: 16,
           borderRadius: "3px",
-          border: `1px solid ${checked ? "rgba(217, 119, 87, 1)" : "rgba(255, 255, 255, 0.25)"}`,
+          border: `1px solid ${checked ? peachAlpha(1) : whiteAlpha(0.25)}`,
           bgcolor: checked ? "primary.main" : "transparent",
           display: "inline-flex",
           alignItems: "center",
@@ -50,7 +52,7 @@ export function Checkbox({ checked, onChange, label, disabled = false }: Checkbo
           <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
             <path
               d="M2 5 L4.2 7 L8 3"
-              stroke="#0D0D0D"
+              stroke={neutral[950]}
               strokeWidth={1.8}
               strokeLinecap="round"
               strokeLinejoin="round"

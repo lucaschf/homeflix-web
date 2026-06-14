@@ -43,6 +43,7 @@ import {
   type ScrubFrame,
 } from "../hooks/useScrubThumbnails";
 import { neutral, peach } from "../theme/colors";
+import { scrim, whiteAlpha } from "../theme/tokens";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -234,8 +235,8 @@ function ScrubPreview({
         // stays correct regardless of CSS scaling.
         backgroundSize: "auto",
         borderRadius: 1,
-        border: "1px solid rgba(255,255,255,0.2)",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+        border: `1px solid ${whiteAlpha(0.2)}`,
+        boxShadow: `0 4px 12px ${scrim(0.5)}`,
       }}
     />
   ) : null;
@@ -267,7 +268,7 @@ function ScrubPreview({
         variant="overlayTimestamp"
         sx={{
           color: "overlayText.primary",
-          bgcolor: "rgba(0,0,0,0.7)",
+          bgcolor: scrim(0.7),
           px: 0.75,
           py: 0.25,
           borderRadius: 0.5,
@@ -1478,7 +1479,7 @@ export function Player() {
             alignItems: "center",
             justifyContent: "center",
             gap: 2,
-            bgcolor: hlsReady ? "transparent" : "rgba(0,0,0,0.7)",
+            bgcolor: hlsReady ? "transparent" : scrim(0.7),
             zIndex: 1,
             pointerEvents: "none",
           }}
@@ -1506,7 +1507,7 @@ export function Player() {
             alignItems: "center",
             gap: 0.5,
             color: "overlayText.primary",
-            bgcolor: "rgba(0,0,0,0.5)",
+            bgcolor: scrim(0.5),
             borderRadius: "50%",
             width: 80,
             height: 80,
@@ -1543,7 +1544,7 @@ export function Player() {
         }}
       >
         {/* Top Bar */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, p: { xs: 1, md: 2 }, background: "linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, p: { xs: 1, md: 2 }, background: `linear-gradient(to bottom, ${scrim(0.7)}, transparent)` }}>
           <IconButton onClick={() => navigate(-1)} sx={{ color: "overlayText.primary" }}>
             <ChevronLeft size={28} />
           </IconButton>
@@ -1625,7 +1626,7 @@ export function Player() {
         </Box>
 
         {/* Bottom Controls */}
-        <Box sx={{ px: { xs: 1.5, md: 5 }, pb: { xs: 1.5, md: 3 }, pt: 6, background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)" }}>
+        <Box sx={{ px: { xs: 1.5, md: 5 }, pb: { xs: 1.5, md: 3 }, pt: 6, background: `linear-gradient(to top, ${scrim(0.8)}, transparent)` }}>
           {/* Title and remaining time above seek bar */}
           <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mb: 0.75, gap: 2 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1692,8 +1693,8 @@ export function Player() {
                 },
                 "& .MuiSlider-rail": {
                   background: displayDuration > 0
-                    ? `linear-gradient(to right, rgba(255,255,255,0.35) ${(bufferedEnd / displayDuration) * 100}%, rgba(255,255,255,0.15) ${(bufferedEnd / displayDuration) * 100}%)`
-                    : "rgba(255,255,255,0.15)",
+                    ? `linear-gradient(to right, ${whiteAlpha(0.35)} ${(bufferedEnd / displayDuration) * 100}%, ${whiteAlpha(0.15)} ${(bufferedEnd / displayDuration) * 100}%)`
+                    : whiteAlpha(0.15),
                   opacity: 1,
                 },
               }}
@@ -1738,7 +1739,7 @@ export function Player() {
                 mx: 1,
                 display: { xs: "none", md: "block" },
                 "& .MuiSlider-thumb": { width: 12, height: 12 },
-                "& .MuiSlider-rail": { bgcolor: "rgba(255,255,255,0.3)" },
+                "& .MuiSlider-rail": { bgcolor: whiteAlpha(0.3) },
               }}
             />
 
@@ -1814,7 +1815,7 @@ export function Player() {
             display: "flex",
             alignItems: "center",
             gap: 1.5,
-            bgcolor: "rgba(0,0,0,0.85)",
+            bgcolor: scrim(0.85),
             backdropFilter: "blur(8px)",
             borderRadius: 2,
             p: { xs: 1.5, md: 2 },
@@ -1835,8 +1836,8 @@ export function Player() {
             onClick={cancelNextEpisode}
             sx={{
               color: "text.secondary",
-              borderColor: "rgba(255,255,255,0.3)",
-              "&:hover": { borderColor: "rgba(255,255,255,0.5)" },
+              borderColor: whiteAlpha(0.3),
+              "&:hover": { borderColor: whiteAlpha(0.5) },
               minWidth: 0,
               px: 1.5,
             }}
@@ -1862,7 +1863,7 @@ export function Player() {
                 content: '""',
                 position: "absolute",
                 inset: 0,
-                bgcolor: "rgba(255,255,255,0.2)",
+                bgcolor: whiteAlpha(0.2),
                 transformOrigin: "left",
                 transform: `scaleX(${1 - (nextEpCountdown ?? 10) / 10})`,
                 transition: "transform 1s linear",

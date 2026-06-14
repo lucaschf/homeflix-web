@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useEpisodeScrubFrame } from "../hooks/useEpisodeScrubFrame";
 import type { EpisodeOutput } from "../api/types";
 import { neutral } from "../theme/colors";
+import { inkAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { formatDuration } from "../utils/duration";
 
 interface EpisodeCardProps {
@@ -135,7 +136,7 @@ export function EpisodeCard({
               sx={{
                 width: "100%",
                 height: "100%",
-                background: "linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)",
+                background: `linear-gradient(135deg, ${neutral[800]} 0%, ${neutral[700]} 100%)`,
               }}
             />
           )}
@@ -156,7 +157,7 @@ export function EpisodeCard({
             px: 0.75,
             py: 0.25,
             borderRadius: 1,
-            bgcolor: "rgba(0,0,0,0.65)",
+            bgcolor: scrim(0.65),
             color: "common.white",
             fontSize: "0.7rem",
             fontWeight: 600,
@@ -174,7 +175,7 @@ export function EpisodeCard({
               px: 0.75,
               py: 0.25,
               borderRadius: 1,
-              bgcolor: "rgba(0,0,0,0.65)",
+              bgcolor: scrim(0.65),
               color: "common.white",
               fontSize: "0.7rem",
               fontWeight: 500,
@@ -194,7 +195,7 @@ export function EpisodeCard({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: "rgba(0,0,0,0.4)",
+              bgcolor: scrim(0.4),
               opacity: 0,
               transition: "opacity 200ms",
             }}
@@ -222,8 +223,7 @@ export function EpisodeCard({
               sx={{
                 position: "absolute",
                 inset: 0,
-                background:
-                  "repeating-linear-gradient(135deg, transparent 0 8px, rgba(255,255,255,0.04) 8px 9px)",
+                background: `repeating-linear-gradient(135deg, transparent 0 8px, ${whiteAlpha(0.04)} 8px 9px)`,
                 pointerEvents: "none",
               }}
             />
@@ -237,14 +237,14 @@ export function EpisodeCard({
                 gap: 0.5,
                 px: 0.85,
                 py: 0.4,
-                bgcolor: "rgba(0,0,0,0.7)",
-                border: "1px solid rgba(255,255,255,0.12)",
+                bgcolor: scrim(0.7),
+                border: `1px solid ${whiteAlpha(0.12)}`,
                 borderRadius: 0.75,
                 fontFamily: "'JetBrains Mono', ui-monospace, monospace",
                 fontSize: "0.6rem",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "rgba(245,241,235,0.85)",
+                color: inkAlpha(0.85),
               }}
             >
               <Box component="span" aria-hidden sx={{ fontSize: "0.7rem", lineHeight: 1 }}>
@@ -265,7 +265,7 @@ export function EpisodeCard({
               left: 0,
               right: 0,
               height: 3,
-              bgcolor: "rgba(255,255,255,0.2)",
+              bgcolor: whiteAlpha(0.2),
               "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
             }}
           />

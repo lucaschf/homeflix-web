@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
 import { neutral } from "../theme/colors";
+import { whiteAlpha, scrim } from "../theme/tokens";
 
 interface MediaCardProps {
   title: string;
@@ -104,7 +105,7 @@ export function MediaCard({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: "linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%)",
+              background: `linear-gradient(135deg, ${neutral[800]} 0%, ${neutral[700]} 100%)`,
             }}
           >
             <Typography variant="body2" color="text.secondary">
@@ -126,10 +127,10 @@ export function MediaCard({
               top: 4,
               right: 4,
               zIndex: 2,
-              bgcolor: "rgba(0,0,0,0.6)",
+              bgcolor: scrim(0.6),
               color: "#fff",
               p: 0.5,
-              "&:hover": { bgcolor: "rgba(0,0,0,0.85)" },
+              "&:hover": { bgcolor: scrim(0.85) },
             }}
           >
             <X size={14} />
@@ -146,7 +147,7 @@ export function MediaCard({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              bgcolor: "rgba(0,0,0,0.4)",
+              bgcolor: scrim(0.4),
               opacity: 0,
               transition: "opacity 200ms ease",
             }}
@@ -177,7 +178,7 @@ export function MediaCard({
                   bottom: 8,
                   left: 8,
                   zIndex: 3,
-                  bgcolor: "rgba(0,0,0,0.7)",
+                  bgcolor: scrim(0.7),
                   borderRadius: 0.75,
                   px: 0.75,
                   py: 0.25,
@@ -201,7 +202,7 @@ export function MediaCard({
                 right: 0,
                 height: 4,
                 zIndex: 2,
-                bgcolor: "rgba(255,255,255,0.2)",
+                bgcolor: whiteAlpha(0.2),
                 "& .MuiLinearProgress-bar": { bgcolor: "primary.main" },
               }}
             />
@@ -284,7 +285,7 @@ function InfoOverlay({
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
-          background: "linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 50%, rgba(0,0,0,0.35) 100%)",
+          background: `linear-gradient(0deg, ${scrim(0.95)} 0%, ${scrim(0.8)} 50%, ${scrim(0.35)} 100%)`,
           opacity: 0,
           transition: "opacity 250ms ease",
           zIndex: 1,

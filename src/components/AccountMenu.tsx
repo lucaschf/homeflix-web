@@ -12,6 +12,7 @@ import { LogOut, Settings as SettingsIcon, UserCog, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useLogout, useProfiles } from "../api/auth";
+import { peachAlpha, whiteAlpha } from "../theme/tokens";
 import { Avatar } from "./auth/Avatar";
 import { initialsForName, toneForProfile } from "./auth/avatarUtils";
 
@@ -107,7 +108,7 @@ export function AccountMenu() {
         aria-expanded={anchor !== null}
         sx={{
           color: "text.primary",
-          "&:hover": { bgcolor: "rgba(255, 255, 255, 0.04)" },
+          "&:hover": { bgcolor: whiteAlpha(0.04) },
           p: 0.25,
         }}
       >
@@ -125,8 +126,8 @@ export function AccountMenu() {
               width: 28,
               height: 28,
               borderRadius: "50%",
-              bgcolor: "rgba(217, 119, 87, 0.12)",
-              border: "1px solid rgba(217, 119, 87, 0.4)",
+              bgcolor: peachAlpha(0.12),
+              border: `1px solid ${peachAlpha(0.4)}`,
               color: "primary.light",
               display: "flex",
               alignItems: "center",
@@ -152,7 +153,7 @@ export function AccountMenu() {
               mt: 1,
               minWidth: 220,
               bgcolor: "background.paper",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              border: `1px solid ${whiteAlpha(0.08)}`,
             },
           },
         }}
@@ -182,7 +183,7 @@ export function AccountMenu() {
             {currentUser.email}
           </Typography>
         </Box>
-        <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
+        <Divider sx={{ borderColor: whiteAlpha(0.08) }} />
 
         {canSwitchProfile && (
           <MenuItem onClick={handleSwitchProfile}>
@@ -207,7 +208,7 @@ export function AccountMenu() {
           {t("nav.settings")}
         </MenuItem>
 
-        <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
+        <Divider sx={{ borderColor: whiteAlpha(0.08) }} />
 
         <MenuItem
           onClick={handleLogout}

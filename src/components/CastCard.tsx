@@ -1,6 +1,7 @@
 import { Avatar, Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { CastMemberOutput } from "../api/types";
+import { whiteAlpha } from "../theme/tokens";
 
 interface CastCardProps {
   member: CastMemberOutput;
@@ -94,7 +95,7 @@ export function CastCard({ member }: CastCardProps) {
           width: { xs: 80, md: 96 },
           height: { xs: 80, md: 96 },
           mb: 1.25,
-          bgcolor: "rgba(255,255,255,0.08)",
+          bgcolor: whiteAlpha(0.08),
           fontSize: { xs: "1.25rem", md: "1.4rem" },
           fontWeight: 600,
           transition: "box-shadow 150ms ease",

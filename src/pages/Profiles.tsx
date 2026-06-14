@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Alert, Box, Button, CircularProgress, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
+import { whiteAlpha, inkAlpha } from "../theme/tokens";
+import { error as errorPalette } from "../theme/colors";
 import { useNavigate } from "react-router-dom";
 import { useLogout, useProfiles, useSwitchProfile } from "../api/auth";
 import {
@@ -147,7 +150,7 @@ export function Profiles() {
                 letterSpacing: "-0.02em",
                 lineHeight: 1.1,
                 textAlign: "center",
-                color: "rgba(255, 255, 255, 0.95)",
+                color: whiteAlpha(0.95),
               }}
             >
               {t("auth.picker.headline")}
@@ -160,9 +163,9 @@ export function Profiles() {
                   width: "100%",
                   maxWidth: 640,
                   mb: 3,
-                  bgcolor: "rgba(248, 113, 113, 0.08)",
-                  color: "rgba(252, 165, 165, 0.95)",
-                  border: "1px solid rgba(248, 113, 113, 0.25)",
+                  bgcolor: alpha(errorPalette.main, 0.08),
+                  color: alpha(errorPalette.light, 0.95),
+                  border: `1px solid ${alpha(errorPalette.main, 0.25)}`,
                 }}
               >
                 {error}
@@ -226,8 +229,8 @@ export function Profiles() {
                         fontWeight: 500,
                         letterSpacing: "-0.005em",
                         color: isActive
-                          ? "rgba(255, 255, 255, 0.95)"
-                          : "rgba(255, 255, 255, 0.6)",
+                          ? whiteAlpha(0.95)
+                          : whiteAlpha(0.6),
                         transition: "color 200ms ease",
                       }}
                     >
@@ -250,15 +253,15 @@ export function Profiles() {
               sx={{
                 px: 4,
                 py: 1.25,
-                borderColor: "rgba(255, 255, 255, 0.15)",
+                borderColor: whiteAlpha(0.15),
                 color: "text.primary",
                 textTransform: "none",
                 fontSize: 14,
                 fontWeight: 500,
                 letterSpacing: "0.02em",
                 "&:hover": {
-                  borderColor: "rgba(255, 255, 255, 0.3)",
-                  bgcolor: "rgba(255, 255, 255, 0.04)",
+                  borderColor: whiteAlpha(0.3),
+                  bgcolor: whiteAlpha(0.04),
                 },
               }}
             >
@@ -287,7 +290,7 @@ function EmptyProfileState() {
       >
         {t("auth.picker.emptyTitle")}
       </Typography>
-      <Typography sx={{ fontSize: 14, lineHeight: 1.55, color: "rgba(245, 241, 235, 0.55)" }}>
+      <Typography sx={{ fontSize: 14, lineHeight: 1.55, color: inkAlpha(0.55) }}>
         {t("auth.picker.emptyBody")}
       </Typography>
     </Box>

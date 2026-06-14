@@ -7,6 +7,7 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import {
   ArrowLeft,
   Baby,
@@ -37,6 +38,7 @@ import {
   AdminPageHeader,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { status, whiteAlpha } from "../../theme/tokens";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 type Role = "admin" | "member";
@@ -196,7 +198,7 @@ export function UserDetailAdmin() {
                 disabled={isSelf || updateRole.isPending}
                 sx={{
                   fontSize: "0.875rem",
-                  bgcolor: "rgba(255,255,255,0.025)",
+                  bgcolor: whiteAlpha(0.025),
                   maxWidth: 220,
                 }}
               >
@@ -284,9 +286,9 @@ export function UserDetailAdmin() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
-                  : "rgba(220,80,70,0.18)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,
@@ -314,9 +316,9 @@ function ProfileRow({ profile }: { profile: AdminProfileSummary }) {
         gap: 1.5,
         py: 1.25,
         px: 1.5,
-        border: "1px solid rgba(255,255,255,0.06)",
+        border: `1px solid ${whiteAlpha(0.06)}`,
         borderRadius: 1,
-        bgcolor: "rgba(255,255,255,0.015)",
+        bgcolor: whiteAlpha(0.015),
       }}
     >
       <Box
@@ -324,7 +326,7 @@ function ProfileRow({ profile }: { profile: AdminProfileSummary }) {
           width: 32,
           height: 32,
           borderRadius: 1,
-          bgcolor: "rgba(255,255,255,0.04)",
+          bgcolor: whiteAlpha(0.04),
           color: "text.secondary",
           display: "flex",
           alignItems: "center",

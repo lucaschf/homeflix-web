@@ -11,6 +11,7 @@ import {
   AdminCard,
   AdminCardHeader,
 } from "../../../components/admin";
+import { whiteAlpha } from "../../../theme/tokens";
 
 interface SettingsCardShellProps {
   /** Section title (already localised). */
@@ -96,7 +97,7 @@ export function SettingsCardShell({
         alignItems={{ sm: "center" }}
         justifyContent="space-between"
         spacing={1.5}
-        sx={{ mt: 3, pt: 2.25, borderTop: "1px solid rgba(255,255,255,0.06)" }}
+        sx={{ mt: 3, pt: 2.25, borderTop: `1px solid ${whiteAlpha(0.06)}` }}
       >
         <Box sx={{ minWidth: 0 }}>
           {lastEdited && (

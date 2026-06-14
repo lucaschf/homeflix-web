@@ -20,6 +20,8 @@ import {
 import { Link as RouterLink, useLocation, useMatch } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMoviesNeedingReview } from "../../api/hooks";
+import { neutral, peach } from "../../theme/colors";
+import { inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
 import { Logo } from "../Logo";
 
 interface SidebarItem {
@@ -126,8 +128,8 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        bgcolor: "#0d0d0d",
-        borderRight: "1px solid rgba(255,255,255,0.08)",
+        bgcolor: neutral[950],
+        borderRight: `1px solid ${whiteAlpha(0.08)}`,
       }}
     >
       <BrandRow collapsed={collapsed} />
@@ -161,7 +163,7 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
                   height: "1px",
                   mx: 2,
                   my: 1,
-                  bgcolor: "rgba(255,255,255,0.08)",
+                  bgcolor: whiteAlpha(0.08),
                 }}
               />
             )}
@@ -187,7 +189,7 @@ function BrandRow({ collapsed }: { collapsed: boolean }) {
         alignItems: "center",
         gap: 1.5,
         px: 4,
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        borderBottom: `1px solid ${whiteAlpha(0.08)}`,
         textDecoration: "none",
         color: "text.primary",
         height: 86,
@@ -252,8 +254,8 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
         py: 1.5,
         px: collapsed ? 0 : 4,
         justifyContent: collapsed ? "center" : "flex-start",
-        bgcolor: isActive ? "rgba(217,119,87,0.07)" : "transparent",
-        color: isActive ? "text.primary" : "rgba(245,241,235,0.7)",
+        bgcolor: isActive ? peachAlpha(0.07) : "transparent",
+        color: isActive ? "text.primary" : inkAlpha(0.7),
         fontSize: "0.9375rem",
         fontWeight: isActive ? 500 : 400,
         textDecoration: "none",
@@ -261,7 +263,7 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
         transition: "background-color 120ms ease, color 120ms ease",
         "&:hover": isActive
           ? {}
-          : { bgcolor: "rgba(255,255,255,0.03)", color: "text.primary" },
+          : { bgcolor: whiteAlpha(0.03), color: "text.primary" },
       }}
     >
       {isActive && (
@@ -280,7 +282,7 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
       )}
       <Icon
         size={24}
-        color={isActive ? "#D97757" : "currentColor"}
+        color={isActive ? peach.main : "currentColor"}
         aria-hidden
       />
       {!collapsed && <Box sx={{ flex: 1 }}>{label}</Box>}
@@ -294,7 +296,7 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
             py: 0.375,
             px: 1,
             borderRadius: 0.5,
-            bgcolor: "rgba(217,119,87,0.15)",
+            bgcolor: peachAlpha(0.15),
             color: "primary.main",
           }}
         >
@@ -327,12 +329,12 @@ function BackToAppRow({ collapsed }: { collapsed: boolean }) {
         gap: 1.75,
         py: 2,
         px: collapsed ? 0 : 4,
-        borderTop: "1px solid rgba(255,255,255,0.08)",
+        borderTop: `1px solid ${whiteAlpha(0.08)}`,
         color: "text.secondary",
         textDecoration: "none",
         fontSize: "0.875rem",
         flexShrink: 0,
-        "&:hover": { color: "text.primary", bgcolor: "rgba(255,255,255,0.03)" },
+        "&:hover": { color: "text.primary", bgcolor: whiteAlpha(0.03) },
       }}
     >
       <ArrowLeft size={21} aria-hidden />

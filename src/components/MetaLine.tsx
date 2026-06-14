@@ -1,4 +1,5 @@
 import { Box, Typography } from "@mui/material";
+import { inkAlpha, whiteAlpha } from "../theme/tokens";
 import { ContentRatingBadge } from "./ContentRatingBadge";
 
 interface MetaLineProps {
@@ -25,7 +26,7 @@ export function MetaLine({ contentRating, year, duration, genres }: MetaLineProp
         gap: 1.25,
         mb: 1.5,
         flexWrap: "wrap",
-        color: "rgba(245,241,235,0.78)",
+        color: inkAlpha(0.78),
         fontSize: { xs: "0.8125rem", md: "0.875rem" },
       }}
     >
@@ -48,7 +49,7 @@ export function MetaLine({ contentRating, year, duration, genres }: MetaLineProp
           sx={{
             fontSize: "0.6875rem",
             padding: "2px 8px",
-            border: "1px solid rgba(255,255,255,0.2)",
+            border: `1px solid ${whiteAlpha(0.2)}`,
             borderRadius: "12px",
             color: "inherit",
             lineHeight: 1.4,

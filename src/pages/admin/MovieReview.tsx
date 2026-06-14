@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Box, Snackbar, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { AlertCircle, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,6 +21,7 @@ import {
 import { PromoteToSeriesConfirmDialog } from "../../components/admin/PromoteToSeriesConfirmDialog";
 import { TmdbSuggestionsDialog } from "../../components/admin/TmdbSuggestionsDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { status, whiteAlpha } from "../../theme/tokens";
 
 type Snack = { message: string; severity: "success" | "error" | "warning" } | null;
 
@@ -248,11 +250,11 @@ export function MovieReview() {
             sx={{
               bgcolor:
                 snack.severity === "success"
-                  ? "rgba(80,180,120,0.15)"
+                  ? alpha(status.ok.base, 0.15)
                   : snack.severity === "error"
-                    ? "rgba(220,80,70,0.18)"
-                    : "rgba(240,180,80,0.15)",
-              border: "1px solid rgba(255,255,255,0.08)",
+                    ? alpha(status.err.base, 0.18)
+                    : alpha(status.warn.base, 0.15),
+              border: `1px solid ${whiteAlpha(0.08)}`,
               color: "text.primary",
               borderRadius: 1,
               px: 2,
