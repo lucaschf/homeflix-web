@@ -1851,6 +1851,7 @@ export function Player() {
               "&:hover": { borderColor: whiteAlpha(0.5) },
               minWidth: 0,
               px: 1.5,
+              py: 1.2,
             }}
           >
             {t("player.cancel")}
@@ -1863,6 +1864,10 @@ export function Player() {
             sx={{
               minWidth: 0,
               px: 1.5,
+              py: 1.2,
+              bgcolor: whiteAlpha(1),
+              color: neutral[900],
+              "&:hover": { bgcolor: whiteAlpha(0.85) },
               position: "relative",
               overflow: "hidden",
               zIndex: 0,
@@ -1870,11 +1875,13 @@ export function Player() {
               // state so it stays in sync even if the browser
               // throttles the tab (background). The `transition`
               // smooths each 1-second step instead of jumping.
+              // A dark scrim so the fill stays visible on the
+              // white button face.
               "&::before": {
                 content: '""',
                 position: "absolute",
                 inset: 0,
-                bgcolor: whiteAlpha(0.2),
+                bgcolor: scrim(0.15),
                 transformOrigin: "left",
                 transform: `scaleX(${1 - (nextEpCountdown ?? 10) / 10})`,
                 transition: "transform 1s linear",
