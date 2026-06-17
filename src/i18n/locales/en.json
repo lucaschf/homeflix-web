@@ -1115,6 +1115,10 @@
     "intros": {
       "title": "Intro Markers",
       "subtitle": "Manually adjust intro start/end while auto-detection is unreliable.",
+      "tabs": {
+        "manage": "Manage",
+        "runs": "Detections"
+      },
       "redetect": "Re-detect",
       "redetectHint": "Requeue this season for automatic intro detection",
       "redetectConfirmTitle": "Re-detect intros for this season?",

@@ -1114,6 +1114,10 @@
     "intros": {
       "title": "Marcadores de abertura",
       "subtitle": "Ajuste manualmente o início e o fim da abertura enquanto a detecção automática não está confiável.",
+      "tabs": {
+        "manage": "Gerenciar",
+        "runs": "Detecções"
+      },
       "redetect": "Re-detectar",
       "redetectHint": "Recolocar esta temporada na fila de detecção automática de abertura",
       "redetectConfirmTitle": "Re-detectar aberturas desta temporada?",

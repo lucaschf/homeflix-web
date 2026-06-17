@@ -35,6 +35,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { inkAlpha, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { IntroTabs } from "./components/IntroTabs";
 
 type IntroFilter = "all" | "unmarked" | "low_confidence" | "manual";
 
@@ -93,6 +94,7 @@ export function IntroPicker() {
         breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.intros")]}
         title={t("admin.intros.title")}
         subtitle={t("admin.intros.subtitle")}
+        toolbar={<IntroTabs />}
       />
 
       <Box

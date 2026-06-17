@@ -135,7 +135,7 @@ function App() {
                   <Route path="/admin/catalog/series" element={<SeriesAdmin />} />
                   <Route path="/admin/requests" element={<CatalogRequestsAdmin />} />
                   <Route path="/admin/intros" element={<IntroPicker />} />
-                  <Route path="/admin/intro-runs" element={<IntroDetectionRunsAdmin />} />
+                  <Route path="/admin/intros/runs" element={<IntroDetectionRunsAdmin />} />
                   <Route
                     path="/admin/intros/:seriesId/:season/:episode"
                     element={<IntroEditor />}

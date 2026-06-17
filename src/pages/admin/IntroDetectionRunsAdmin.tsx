@@ -15,6 +15,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { inkAlpha, whiteAlpha } from "../../theme/tokens";
+import { IntroTabs } from "./components/IntroTabs";
 
 const ALGORITHM_LABELS: Record<string, string> = {
   frame_hash: "Frame hash",
@@ -66,9 +67,10 @@ export function IntroDetectionRunsAdmin() {
   return (
     <>
       <AdminPageHeader
-        breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.introRuns")]}
+        breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.intros")]}
         title={t("admin.introRuns.title")}
         subtitle={t("admin.introRuns.subtitle")}
+        toolbar={<IntroTabs />}
       />
 
       <AdminCard>
