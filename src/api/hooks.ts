@@ -20,6 +20,8 @@ import type {
   BulkMarkDistinctPayload,
   ResolveAdminConflictPayload,
   ResolveAdminConflictResponse,
+  AdminIntroDetectionRun,
+  AdminIntroDetectionRunsResponse,
   AdminOverviewStats,
   AdminOverviewStatsResponse,
   AdminScanRun,
@@ -516,6 +518,43 @@ export function useRecentlyAddedSeries(limit = 20) {
       return resp.data;
     },
   });
+}
+
+/**
+ * Offset-paginated history of intro-detection runs (audit log).
+ *
+ * One row per season the detection job processed; each row carries
+ * counts plus the per-episode detail (confidence + whether persisted)
+ * so the admin can see why a tick dropped markers.
+ */
+export function useIntroDetectionRuns(
+  filters: { seasonId?: string; seriesId?: string } = {},
+  options: { pageSize?: number } = {},
+) {
+  const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
+  const { seasonId, seriesId } = filters;
+  const filterKey = `${seasonId ?? "all"}|${seriesId ?? "all"}|${pageSize}`;
+  const query = useInfiniteQuery({
+    queryKey: ["admin", "intro-detection-runs", filterKey],
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
+      const params = new URLSearchParams();
+      if (seasonId) params.set("season_id", seasonId);
+      if (seriesId) params.set("series_id", seriesId);
+      params.set("limit", String(pageSize));
+      params.set("offset", String(pageParam));
+      const resp = await api.get<AdminIntroDetectionRunsResponse>(
+        `/admin/intro-detection/runs?${params.toString()}`,
+      );
+      return {
+        data: resp.data,
+        nextOffset: resp.data.length === pageSize ? pageParam + pageSize : null,
+      };
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+  });
+
+  return usePagedInfiniteQuery<AdminIntroDetectionRun>(query, filterKey);
 }
 
 /**

@@ -28,6 +28,7 @@ import { EnrichAdmin } from "./pages/admin/EnrichAdmin";
 import { HealthAdmin } from "./pages/admin/HealthAdmin";
 import { HlsCacheAdmin } from "./pages/admin/HlsCacheAdmin";
 import { ConflictsAdmin } from "./pages/admin/ConflictsAdmin";
+import { IntroDetectionRunsAdmin } from "./pages/admin/IntroDetectionRunsAdmin";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
 import { LibrariesAdmin } from "./pages/admin/LibrariesAdmin";
@@ -134,6 +135,7 @@ function App() {
                   <Route path="/admin/catalog/series" element={<SeriesAdmin />} />
                   <Route path="/admin/requests" element={<CatalogRequestsAdmin />} />
                   <Route path="/admin/intros" element={<IntroPicker />} />
+                  <Route path="/admin/intro-runs" element={<IntroDetectionRunsAdmin />} />
                   <Route
                     path="/admin/intros/:seriesId/:season/:episode"
                     element={<IntroEditor />}

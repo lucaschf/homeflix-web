@@ -253,6 +253,7 @@
       "scan": "Scan",
       "enrich": "Enrich",
       "intros": "Intros",
+      "introRuns": "Detection runs",
       "requests": "Catalog requests",
       "conflicts": "Conflicts",
       "users": "Users",
@@ -1086,6 +1087,29 @@
         "enrichFailed": "Could not start re-enrichment.",
         "deleteSuccess": "“{{title}}” was removed from the catalog.",
         "deleteFailed": "Could not delete this item."
+      }
+    },
+    "introRuns": {
+      "title": "Intro Detection",
+      "subtitle": "Per-season detection runs — counts and per-episode confidence, including markers dropped below the floor.",
+      "history": {
+        "title": "Run history",
+        "subtitle": "Newest first. Expand a run to see each episode's confidence and whether it was saved."
+      },
+      "loading": "Loading runs…",
+      "error": "Could not load detection runs.",
+      "empty": "No detection runs yet.",
+      "seasonLabel": "Season {{number}}",
+      "unknownSeries": "Unknown series",
+      "counts": "detected {{detected}} · saved {{persisted}}",
+      "minConfidence": "floor {{value}}%",
+      "persisted": "saved",
+      "dropped": "dropped",
+      "noEpisodes": "No episodes were detected on this run.",
+      "outcome": {
+        "COMPLETED": "Completed",
+        "INSUFFICIENT_EPISODES": "Insufficient",
+        "FAILED": "Failed"
       }
     },
     "intros": {

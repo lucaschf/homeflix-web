@@ -253,6 +253,7 @@
       "scan": "Scan",
       "enrich": "Enriquecer",
       "intros": "Aberturas",
+      "introRuns": "Detecções",
       "requests": "Solicitações",
       "users": "Usuários",
       "hls": "HLS cache",
@@ -1085,6 +1086,29 @@
         "enrichFailed": "Não foi possível iniciar o re-enriquecimento.",
         "deleteSuccess": "“{{title}}” foi removido do catálogo.",
         "deleteFailed": "Não foi possível excluir este item."
+      }
+    },
+    "introRuns": {
+      "title": "Detecção de abertura",
+      "subtitle": "Execuções por temporada — contagens e confiança por episódio, incluindo markers descartados abaixo do piso.",
+      "history": {
+        "title": "Histórico de execuções",
+        "subtitle": "Mais recentes primeiro. Expanda uma execução para ver a confiança de cada episódio e se foi salvo."
+      },
+      "loading": "Carregando execuções…",
+      "error": "Não foi possível carregar as execuções.",
+      "empty": "Nenhuma execução de detecção ainda.",
+      "seasonLabel": "Temporada {{number}}",
+      "unknownSeries": "Série desconhecida",
+      "counts": "detectados {{detected}} · salvos {{persisted}}",
+      "minConfidence": "piso {{value}}%",
+      "persisted": "salvo",
+      "dropped": "descartado",
+      "noEpisodes": "Nenhum episódio detectado nesta execução.",
+      "outcome": {
+        "COMPLETED": "Concluído",
+        "INSUFFICIENT_EPISODES": "Insuficiente",
+        "FAILED": "Falhou"
       }
     },
     "intros": {

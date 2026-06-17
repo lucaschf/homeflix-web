@@ -8,6 +8,7 @@ import {
   GitMerge,
   HardDrive,
   Heart,
+  History,
   Inbox,
   Library,
   type LucideIcon,
@@ -101,6 +102,11 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
           to: "/admin/intros",
           icon: Music,
           matchPrefix: true,
+        },
+        {
+          labelKey: "admin.nav.introRuns",
+          to: "/admin/intro-runs",
+          icon: History,
         },
         { labelKey: "admin.nav.requests", to: "/admin/requests", icon: Inbox },
         {

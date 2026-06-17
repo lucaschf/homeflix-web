@@ -677,6 +677,39 @@ export interface AdminScanRun {
 export type AdminScanRunsResponse = ApiListResponse<AdminScanRun>;
 export type AdminScanRunResponse = ApiDetailResponse<AdminScanRun>;
 
+/** One episode's detection outcome within an intro-detection run. */
+export interface AdminEpisodeDetectionResult {
+  episode_id: string;
+  episode_number: number;
+  start_seconds: number;
+  end_seconds: number;
+  confidence: number;
+  /** ``false`` when dropped below the confidence floor. */
+  persisted: boolean;
+}
+
+/** One per-season intro-detection run (audit history row). */
+export interface AdminIntroDetectionRun {
+  id: string;
+  series_id: string;
+  series_title: string;
+  season_id: string;
+  season_number: number;
+  algorithm: string;
+  outcome: string;
+  ref_count: number;
+  analyzed_count: number;
+  detected_count: number;
+  persisted_count: number;
+  min_confidence: number;
+  error: string | null;
+  started_at: string;
+  finished_at: string;
+  episode_results: AdminEpisodeDetectionResult[];
+}
+
+export type AdminIntroDetectionRunsResponse = ApiListResponse<AdminIntroDetectionRun>;
+
 /** Body for ``POST /api/v1/admin/scans``. */
 export interface TriggerScanPayload {
   library_id: string;
