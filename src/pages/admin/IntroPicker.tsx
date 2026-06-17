@@ -1,15 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
-import { Pencil, Tv } from "lucide-react";
+import {
+  Box,
+  CircularProgress,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Snackbar,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import { Pencil, RefreshCw, Tv } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useListAllSeries, useSeriesDetail } from "../../api/hooks";
+import {
+  useListAllSeries,
+  useResetSeasonIntroDetection,
+  useSeriesDetail,
+} from "../../api/hooks";
 import type { EpisodeOutput, SeasonOutput, SeriesDetail } from "../../api/types";
 import {
   AdminBadge,
   AdminButton,
   AdminCard,
   AdminCardHeader,
+  AdminDialog,
   AdminEmptyState,
   AdminPageHeader,
   type BadgeTone,
@@ -17,7 +34,8 @@ import {
   ToolbarSearch,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { peachAlpha, whiteAlpha } from "../../theme/tokens";
+import { inkAlpha, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { IntroTabs } from "./components/IntroTabs";
 
 type IntroFilter = "all" | "unmarked" | "low_confidence" | "manual";
 
@@ -76,6 +94,7 @@ export function IntroPicker() {
         breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.intros")]}
         title={t("admin.intros.title")}
         subtitle={t("admin.intros.subtitle")}
+        toolbar={<IntroTabs />}
       />
 
       <Box
@@ -273,19 +292,62 @@ interface SeasonBlockProps {
 
 function SeasonBlock({ seriesId, season, visibleEpisodes }: SeasonBlockProps) {
   const { t } = useTranslation();
+  const reset = useResetSeasonIntroDetection();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [toast, setToast] = useState<{ severity: "success" | "error"; message: string } | null>(
+    null,
+  );
   const heading =
     season.season_number === 0
       ? t("admin.intros.specials")
       : t("admin.intros.season", { number: season.season_number });
+
+  const onConfirm = () => {
+    if (!season.id) return;
+    reset.mutate(
+      { seasonId: season.id, seriesId },
+      {
+        onSuccess: (res) => {
+          setConfirmOpen(false);
+          setToast({
+            severity: "success",
+            message: t("admin.intros.redetectQueued", {
+              count: res.data.markers_cleared,
+            }),
+          });
+        },
+        onError: () => {
+          setConfirmOpen(false);
+          setToast({ severity: "error", message: t("admin.intros.redetectFailed") });
+        },
+      },
+    );
+  };
+
   return (
     <Stack spacing={1}>
-      <Typography
-        variant="eyebrow"
-        component="div"
-        sx={{ color: "text.secondary" }}
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={1}
       >
-        {heading}
-      </Typography>
+        <Typography variant="eyebrow" component="div" sx={{ color: "text.secondary" }}>
+          {heading}
+        </Typography>
+        <Tooltip title={t("admin.intros.redetectHint")}>
+          <span>
+            <AdminButton
+              variant="ghost"
+              icon={<RefreshCw size={13} />}
+              onClick={() => setConfirmOpen(true)}
+              disabled={!season.id || reset.isPending}
+            >
+              {t("admin.intros.redetect")}
+            </AdminButton>
+          </span>
+        </Tooltip>
+      </Stack>
       <Stack spacing={0.25}>
         {visibleEpisodes.map((ep) => (
           <EpisodeRow
@@ -296,6 +358,72 @@ function SeasonBlock({ seriesId, season, visibleEpisodes }: SeasonBlockProps) {
           />
         ))}
       </Stack>
+
+      <AdminDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ px: 3, pt: 3, pb: 1.5 }}>
+          {t("admin.intros.redetectConfirmTitle")}
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, pb: 1 }}>
+          <Typography variant="body2" sx={{ color: inkAlpha(0.72) }}>
+            {t("admin.intros.redetectConfirm", { season: season.season_number })}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1.25 }}>
+          <AdminButton
+            variant="ghost"
+            onClick={() => setConfirmOpen(false)}
+            disabled={reset.isPending}
+          >
+            {t("admin.intros.cancel")}
+          </AdminButton>
+          <AdminButton
+            variant="primary"
+            onClick={onConfirm}
+            disabled={reset.isPending}
+            icon={
+              reset.isPending ? (
+                <CircularProgress size={12} sx={{ color: "inherit" }} />
+              ) : undefined
+            }
+          >
+            {reset.isPending
+              ? t("admin.intros.redetectInProgress")
+              : t("admin.intros.confirm")}
+          </AdminButton>
+        </DialogActions>
+      </AdminDialog>
+
+      <Snackbar
+        open={!!toast}
+        autoHideDuration={3000}
+        onClose={() => setToast(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        {toast ? (
+          <Box
+            sx={{
+              bgcolor:
+                toast.severity === "success"
+                  ? alpha(status.ok.base, 0.15)
+                  : alpha(status.err.base, 0.18),
+              border: `1px solid ${whiteAlpha(0.08)}`,
+              color: "text.primary",
+              borderRadius: 1,
+              px: 2,
+              py: 1.25,
+              fontSize: "0.875rem",
+              maxWidth: 480,
+            }}
+          >
+            {toast.message}
+          </Box>
+        ) : undefined}
+      </Snackbar>
     </Stack>
   );
 }

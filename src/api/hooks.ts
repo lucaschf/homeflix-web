@@ -20,6 +20,8 @@ import type {
   BulkMarkDistinctPayload,
   ResolveAdminConflictPayload,
   ResolveAdminConflictResponse,
+  AdminIntroDetectionRun,
+  AdminIntroDetectionRunsResponse,
   AdminOverviewStats,
   AdminOverviewStatsResponse,
   AdminScanRun,
@@ -519,6 +521,43 @@ export function useRecentlyAddedSeries(limit = 20) {
 }
 
 /**
+ * Offset-paginated history of intro-detection runs (audit log).
+ *
+ * One row per season the detection job processed; each row carries
+ * counts plus the per-episode detail (confidence + whether persisted)
+ * so the admin can see why a tick dropped markers.
+ */
+export function useIntroDetectionRuns(
+  filters: { seasonId?: string; seriesId?: string } = {},
+  options: { pageSize?: number } = {},
+) {
+  const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
+  const { seasonId, seriesId } = filters;
+  const filterKey = `${seasonId ?? "all"}|${seriesId ?? "all"}|${pageSize}`;
+  const query = useInfiniteQuery({
+    queryKey: ["admin", "intro-detection-runs", filterKey],
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
+      const params = new URLSearchParams();
+      if (seasonId) params.set("season_id", seasonId);
+      if (seriesId) params.set("series_id", seriesId);
+      params.set("limit", String(pageSize));
+      params.set("offset", String(pageParam));
+      const resp = await api.get<AdminIntroDetectionRunsResponse>(
+        `/admin/intro-detection/runs?${params.toString()}`,
+      );
+      return {
+        data: resp.data,
+        nextOffset: resp.data.length === pageSize ? pageParam + pageSize : null,
+      };
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+  });
+
+  return usePagedInfiniteQuery<AdminIntroDetectionRun>(query, filterKey);
+}
+
+/**
  * Cursor-paginated infinite query over the full series catalog.
  *
  * Powers the admin intro-editor picker, which needs a flat list of
@@ -665,6 +704,35 @@ export function useBulkSetEpisodeIntros() {
       };
     },
     onSettled: (_data, _err, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
+  });
+}
+
+interface ResetSeasonIntroVars {
+  seasonId: string;
+  seriesId: string;
+}
+
+interface ResetSeasonIntroResult {
+  markers_cleared: number;
+}
+
+/**
+ * Requeue one season for automatic intro detection: returns it to
+ * ``NOT_STARTED`` so the next job tick reprocesses it and clears its
+ * AUTO_DETECTED markers (MANUAL ones are kept). Used to re-run after
+ * switching the detection algorithm or re-tuning — a ``COMPLETED``
+ * season would otherwise never be picked up again.
+ */
+export function useResetSeasonIntroDetection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ seasonId }: ResetSeasonIntroVars) =>
+      api.post<ApiDetailResponse<ResetSeasonIntroResult>>(
+        `/series/seasons/${seasonId}/intro-detection/reset`,
+      ),
+    onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
     },
   });

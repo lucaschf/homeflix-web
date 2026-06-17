@@ -253,6 +253,7 @@
       "scan": "Scan",
       "enrich": "Enriquecer",
       "intros": "Aberturas",
+      "introRuns": "Detecções",
       "requests": "Solicitações",
       "users": "Usuários",
       "hls": "HLS cache",
@@ -674,6 +675,8 @@
         "minSixty": "Deve ser pelo menos 60.",
         "zeroToOne": "Deve estar entre 0.0 e 1.0.",
         "zeroTo32": "Deve estar entre 0 e 32.",
+        "zeroTo64": "Deve estar entre 0 e 64.",
+        "greaterThanZero": "Deve ser maior que 0.",
         "oneTo20": "Deve estar entre 1 e 20.",
         "sixtyFourTo1024": "Deve estar entre 64 e 1024.",
         "minLessThanMax": "Mínimo deve ser menor que o máximo."
@@ -685,6 +688,8 @@
         "seasons": "temporadas por tick",
         "threads": "threads",
         "hashes": "falhas consecutivas",
+        "frames": "falhas consecutivas",
+        "fps": "frames/s",
         "megabytes": "MB"
       },
       "scheduler": {
@@ -729,14 +734,26 @@
       },
       "introDetection": {
         "title": "Intro detection",
-        "subtitle": "Detector de aberturas de séries baseado em Chromaprint. Requer o binário fpcalc no PATH do servidor.",
+        "subtitle": "Detecta aberturas de séries para o player oferecer Pular Abertura. Escolha o algoritmo abaixo — ambos rodam no servidor (Chromaprint ainda exige o binário fpcalc no PATH).",
         "enabled": {
           "label": "Ativo",
           "helper": "Liga/desliga o loop de detecção. O master switch do scheduler também precisa estar ligado."
         },
+        "algorithm": {
+          "label": "Algoritmo",
+          "helper": "Frame-hash (vídeo) acha a abertura mesmo com cold-open de duração variável, mas decodifica vídeo. Chromaprint (áudio) é mais leve, mas cego a aberturas cujo áudio varia.",
+          "options": {
+            "chromaprint": {
+              "label": "Chromaprint (áudio)"
+            },
+            "frame_hash": {
+              "label": "Frame hash (vídeo)"
+            }
+          }
+        },
         "cadence": {
           "label": "Cadência",
-          "helper": "Cada temporada dispara ffmpeg + fpcalc por episódio; valores acima de 2 podem saturar o host em temporadas grandes."
+          "helper": "Cada temporada analisa todos os episódios; valores acima de 2 podem saturar o host em temporadas grandes."
         },
         "batchSize": {
           "label": "Batch size"
@@ -744,16 +761,20 @@
         "interval": {
           "label": "Intervalo"
         },
-        "audioWindow": {
-          "label": "Janela de áudio",
-          "helper": "Áudio inicial analisado por episódio. 600 s cobre os tamanhos típicos de cold-open + abertura; reduzir acelera ao custo de perder aberturas tardias."
+        "analysisWindow": {
+          "label": "Janela de análise",
+          "helper": "Mídia inicial analisada por episódio. 600 s cobre cold-opens longos mais a vinheta; reduzir acelera ao custo de perder aberturas tardias."
         },
-        "matching": {
-          "label": "Matching",
-          "helper": "Confiança + distância de Hamming por hash + tolerância de falhas consecutivas. Ajuste com cautela — calibrado contra detecções reais."
+        "confidence": {
+          "label": "Confiança",
+          "helper": "Fração mínima de episódios pares que precisam concordar antes de gravar um marker."
         },
         "minConfidence": {
           "label": "Confiança mínima"
+        },
+        "chromaprint": {
+          "label": "Calibração Chromaprint",
+          "helper": "Calibração do detector de áudio. Ajuste com cautela — calibrado contra detecções reais."
         },
         "maxHashHamming": {
           "label": "Hamming máx por hash"
@@ -761,9 +782,25 @@
         "toleranceHashes": {
           "label": "Tolerância"
         },
+        "frameHash": {
+          "label": "Calibração Frame-hash",
+          "helper": "Calibração do detector de vídeo. Distância de hash mais estrita = menos falsos positivos; calibrado contra detecções reais."
+        },
+        "hashDistanceThreshold": {
+          "label": "Distância de hash"
+        },
+        "frameSampleFps": {
+          "label": "Frames por segundo"
+        },
+        "matchToleranceFrames": {
+          "label": "Tolerância"
+        },
+        "maxGapSeconds": {
+          "label": "Gap máx"
+        },
         "bounds": {
           "label": "Limites de duração",
-          "helper": "Detecções fora dessa faixa são descartadas (curto demais = stinger, longo demais = underscore vazando após o título)."
+          "helper": "Detecções fora dessa faixa são descartadas (curto demais = stinger, longo demais = conteúdo compartilhado vazando após o título)."
         },
         "minIntroSeconds": {
           "label": "Mín"
@@ -1051,9 +1088,43 @@
         "deleteFailed": "Não foi possível excluir este item."
       }
     },
+    "introRuns": {
+      "title": "Detecção de abertura",
+      "subtitle": "Execuções por temporada — contagens e confiança por episódio, incluindo markers descartados abaixo do piso.",
+      "history": {
+        "title": "Histórico de execuções",
+        "subtitle": "Mais recentes primeiro. Expanda uma execução para ver a confiança de cada episódio e se foi salvo."
+      },
+      "loading": "Carregando execuções…",
+      "error": "Não foi possível carregar as execuções.",
+      "empty": "Nenhuma execução de detecção ainda.",
+      "seasonLabel": "Temporada {{number}}",
+      "unknownSeries": "Série desconhecida",
+      "counts": "detectados {{detected}} · salvos {{persisted}}",
+      "minConfidence": "piso {{value}}%",
+      "persisted": "salvo",
+      "dropped": "descartado",
+      "noEpisodes": "Nenhum episódio detectado nesta execução.",
+      "outcome": {
+        "COMPLETED": "Concluído",
+        "INSUFFICIENT_EPISODES": "Insuficiente",
+        "FAILED": "Falhou"
+      }
+    },
     "intros": {
       "title": "Marcadores de abertura",
-      "subtitle": "Ajuste manualmente o início e o fim da abertura enquanto a detecção automática não está confiável.",
+      "subtitle": "Revise e ajuste as aberturas por episódio — marcadores manuais têm prioridade e não são sobrescritos pela detecção automática.",
+      "tabs": {
+        "manage": "Gerenciar",
+        "runs": "Detecções"
+      },
+      "redetect": "Re-detectar",
+      "redetectHint": "Recolocar esta temporada na fila de detecção automática de abertura",
+      "redetectConfirmTitle": "Re-detectar aberturas desta temporada?",
+      "redetectConfirm": "A temporada {{season}} será reanalisada no próximo tick de detecção. Os markers automáticos são limpos; os manuais são mantidos. O job de detecção precisa estar ativo para rodar.",
+      "redetectInProgress": "Recolocando na fila…",
+      "redetectQueued": "Temporada na fila para detecção ({{count}} markers automáticos limpos).",
+      "redetectFailed": "Não foi possível recolocar a temporada na fila. Tente novamente.",
       "searchSeries": "Buscar série",
       "noSeries": "Nenhuma série na biblioteca ainda.",
       "noResults": "Nenhuma série encontrada.",
