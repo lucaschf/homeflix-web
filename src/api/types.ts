@@ -529,17 +529,43 @@ export interface ThumbnailBackfillSettings {
   subdir: string;
 }
 
-/** Intro detection bucket — Chromaprint detector calibration. */
-export interface IntroDetectionSettings {
-  enabled: boolean;
-  batch_size: number;
-  interval_minutes: number;
-  audio_window_seconds: number;
-  min_confidence: number;
+/**
+ * Which intro detector the job runs.
+ *
+ * - ``chromaprint`` — audio-fingerprint cross-correlation (fpcalc).
+ *   Lightweight, but blind to intros whose audio theme varies.
+ * - ``frame_hash`` — video frame perceptual-hashing with full-offset
+ *   matching. Heavier (decodes video) but recovers title sequences
+ *   regardless of a variable-length cold open.
+ */
+export type IntroDetectionAlgorithm = "chromaprint" | "frame_hash";
+
+/** Chromaprint (audio) detector calibration. */
+export interface ChromaprintTuning {
   max_hash_hamming: number;
   tolerance_hashes: number;
+}
+
+/** Frame-hash (video) detector calibration. */
+export interface FrameHashTuning {
+  hash_distance_threshold: number;
+  frame_sample_fps: number;
+  match_tolerance_frames: number;
+  max_gap_seconds: number;
+}
+
+/** Intro detection bucket — detector selection + per-algorithm tuning. */
+export interface IntroDetectionSettings {
+  enabled: boolean;
+  algorithm: IntroDetectionAlgorithm;
+  batch_size: number;
+  interval_minutes: number;
+  analysis_window_seconds: number;
+  min_confidence: number;
   min_intro_seconds: number;
   max_intro_seconds: number;
+  chromaprint: ChromaprintTuning;
+  frame_hash: FrameHashTuning;
 }
 
 /**

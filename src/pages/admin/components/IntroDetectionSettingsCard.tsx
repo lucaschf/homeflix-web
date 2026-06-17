@@ -4,9 +4,15 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "../../../api/client";
 import { useUpdateAdminSetting } from "../../../api/hooks";
-import type { AdminSettingDetail, IntroDetectionSettings } from "../../../api/types";
-import { AdminFormSection, AdminInput } from "../../../components/admin";
+import type {
+  AdminSettingDetail,
+  IntroDetectionAlgorithm,
+  IntroDetectionSettings,
+} from "../../../api/types";
+import { AdminFormSection, AdminInput, AdminSelect } from "../../../components/admin";
 import { SettingsCardShell } from "./SettingsCardShell";
+
+const ALGORITHM_OPTIONS: IntroDetectionAlgorithm[] = ["frame_hash", "chromaprint"];
 
 interface Props {
   detail: AdminSettingDetail & { value: IntroDetectionSettings };
@@ -15,77 +21,111 @@ interface Props {
 }
 
 /**
- * Intro detection bucket — Chromaprint detector calibration. The
- * cross-field invariant ``min_intro_seconds < max_intro_seconds`` is
- * checked on the backend's Pydantic ``model_validator`` and surfaced
- * here as a save-time error; we additionally guard locally so the
- * Save button stays disabled while the form is in an invalid state.
+ * Intro detection bucket — detector selection + per-algorithm tuning.
+ *
+ * The active ``algorithm`` decides which tuning section is shown; both
+ * the chromaprint and frame_hash buckets are always sent on save so the
+ * inactive detector keeps its persisted calibration. The cross-field
+ * invariant ``min_intro_seconds < max_intro_seconds`` is enforced on the
+ * backend and guarded locally so Save stays disabled while invalid.
  */
 export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props) {
   const { t } = useTranslation();
   const update = useUpdateAdminSetting<IntroDetectionSettings>();
 
-  const [enabled, setEnabled] = useState(detail.value.enabled);
-  const [batchSize, setBatchSize] = useState(detail.value.batch_size);
-  const [intervalMinutes, setIntervalMinutes] = useState(detail.value.interval_minutes);
-  const [audioWindowSeconds, setAudioWindowSeconds] = useState(
-    detail.value.audio_window_seconds,
-  );
-  const [minConfidence, setMinConfidence] = useState(detail.value.min_confidence);
-  const [maxHashHamming, setMaxHashHamming] = useState(detail.value.max_hash_hamming);
-  const [toleranceHashes, setToleranceHashes] = useState(detail.value.tolerance_hashes);
-  const [minIntroSeconds, setMinIntroSeconds] = useState(detail.value.min_intro_seconds);
-  const [maxIntroSeconds, setMaxIntroSeconds] = useState(detail.value.max_intro_seconds);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
   // Lazy init only; the parent remounts via ``key`` when
   // ``updated_at`` changes, so we never need a re-hydrate effect.
+  const [enabled, setEnabled] = useState(detail.value.enabled);
+  const [algorithm, setAlgorithm] = useState<IntroDetectionAlgorithm>(detail.value.algorithm);
+  const [batchSize, setBatchSize] = useState(detail.value.batch_size);
+  const [intervalMinutes, setIntervalMinutes] = useState(detail.value.interval_minutes);
+  const [analysisWindowSeconds, setAnalysisWindowSeconds] = useState(
+    detail.value.analysis_window_seconds,
+  );
+  const [minConfidence, setMinConfidence] = useState(detail.value.min_confidence);
+  const [minIntroSeconds, setMinIntroSeconds] = useState(detail.value.min_intro_seconds);
+  const [maxIntroSeconds, setMaxIntroSeconds] = useState(detail.value.max_intro_seconds);
+  // Chromaprint tuning
+  const [maxHashHamming, setMaxHashHamming] = useState(detail.value.chromaprint.max_hash_hamming);
+  const [toleranceHashes, setToleranceHashes] = useState(
+    detail.value.chromaprint.tolerance_hashes,
+  );
+  // Frame-hash tuning
+  const [hashDistance, setHashDistance] = useState(
+    detail.value.frame_hash.hash_distance_threshold,
+  );
+  const [frameSampleFps, setFrameSampleFps] = useState(detail.value.frame_hash.frame_sample_fps);
+  const [matchToleranceFrames, setMatchToleranceFrames] = useState(
+    detail.value.frame_hash.match_tolerance_frames,
+  );
+  const [maxGapSeconds, setMaxGapSeconds] = useState(detail.value.frame_hash.max_gap_seconds);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const dirty =
     enabled !== detail.value.enabled ||
+    algorithm !== detail.value.algorithm ||
     batchSize !== detail.value.batch_size ||
     intervalMinutes !== detail.value.interval_minutes ||
-    audioWindowSeconds !== detail.value.audio_window_seconds ||
+    analysisWindowSeconds !== detail.value.analysis_window_seconds ||
     minConfidence !== detail.value.min_confidence ||
-    maxHashHamming !== detail.value.max_hash_hamming ||
-    toleranceHashes !== detail.value.tolerance_hashes ||
     minIntroSeconds !== detail.value.min_intro_seconds ||
-    maxIntroSeconds !== detail.value.max_intro_seconds;
+    maxIntroSeconds !== detail.value.max_intro_seconds ||
+    maxHashHamming !== detail.value.chromaprint.max_hash_hamming ||
+    toleranceHashes !== detail.value.chromaprint.tolerance_hashes ||
+    hashDistance !== detail.value.frame_hash.hash_distance_threshold ||
+    frameSampleFps !== detail.value.frame_hash.frame_sample_fps ||
+    matchToleranceFrames !== detail.value.frame_hash.match_tolerance_frames ||
+    maxGapSeconds !== detail.value.frame_hash.max_gap_seconds;
 
   const batchValid = Number.isFinite(batchSize) && batchSize >= 1;
   const intervalValid = Number.isFinite(intervalMinutes) && intervalMinutes >= 1;
-  const audioWindowValid =
-    Number.isFinite(audioWindowSeconds) && audioWindowSeconds >= 60;
+  const windowValid = Number.isFinite(analysisWindowSeconds) && analysisWindowSeconds >= 60;
   const confidenceValid =
     Number.isFinite(minConfidence) && minConfidence >= 0 && minConfidence <= 1;
-  const hammingValid =
-    Number.isFinite(maxHashHamming) && maxHashHamming >= 0 && maxHashHamming <= 32;
-  const toleranceValid = Number.isFinite(toleranceHashes) && toleranceHashes >= 0;
   const minIntroValid = Number.isFinite(minIntroSeconds) && minIntroSeconds >= 0;
   const maxIntroValid = Number.isFinite(maxIntroSeconds) && maxIntroSeconds >= 10;
   const boundsValid = minIntroSeconds < maxIntroSeconds;
+  const hammingValid =
+    Number.isFinite(maxHashHamming) && maxHashHamming >= 0 && maxHashHamming <= 32;
+  const toleranceValid = Number.isFinite(toleranceHashes) && toleranceHashes >= 0;
+  const hashDistanceValid =
+    Number.isFinite(hashDistance) && hashDistance >= 0 && hashDistance <= 64;
+  const fpsValid = Number.isFinite(frameSampleFps) && frameSampleFps > 0;
+  const frameToleranceValid =
+    Number.isFinite(matchToleranceFrames) && matchToleranceFrames >= 0;
+  const gapValid = Number.isFinite(maxGapSeconds) && maxGapSeconds >= 0;
+
   const canSave =
     dirty &&
     batchValid &&
     intervalValid &&
-    audioWindowValid &&
+    windowValid &&
     confidenceValid &&
-    hammingValid &&
-    toleranceValid &&
     minIntroValid &&
     maxIntroValid &&
-    boundsValid;
+    boundsValid &&
+    hammingValid &&
+    toleranceValid &&
+    hashDistanceValid &&
+    fpsValid &&
+    frameToleranceValid &&
+    gapValid;
 
   const onReset = () => {
     setEnabled(detail.value.enabled);
+    setAlgorithm(detail.value.algorithm);
     setBatchSize(detail.value.batch_size);
     setIntervalMinutes(detail.value.interval_minutes);
-    setAudioWindowSeconds(detail.value.audio_window_seconds);
+    setAnalysisWindowSeconds(detail.value.analysis_window_seconds);
     setMinConfidence(detail.value.min_confidence);
-    setMaxHashHamming(detail.value.max_hash_hamming);
-    setToleranceHashes(detail.value.tolerance_hashes);
     setMinIntroSeconds(detail.value.min_intro_seconds);
     setMaxIntroSeconds(detail.value.max_intro_seconds);
+    setMaxHashHamming(detail.value.chromaprint.max_hash_hamming);
+    setToleranceHashes(detail.value.chromaprint.tolerance_hashes);
+    setHashDistance(detail.value.frame_hash.hash_distance_threshold);
+    setFrameSampleFps(detail.value.frame_hash.frame_sample_fps);
+    setMatchToleranceFrames(detail.value.frame_hash.match_tolerance_frames);
+    setMaxGapSeconds(detail.value.frame_hash.max_gap_seconds);
     setErrorMessage(null);
   };
 
@@ -97,14 +137,23 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
         key: "intro_detection",
         payload: {
           enabled,
+          algorithm,
           batch_size: batchSize,
           interval_minutes: intervalMinutes,
-          audio_window_seconds: audioWindowSeconds,
+          analysis_window_seconds: analysisWindowSeconds,
           min_confidence: minConfidence,
-          max_hash_hamming: maxHashHamming,
-          tolerance_hashes: toleranceHashes,
           min_intro_seconds: minIntroSeconds,
           max_intro_seconds: maxIntroSeconds,
+          chromaprint: {
+            max_hash_hamming: maxHashHamming,
+            tolerance_hashes: toleranceHashes,
+          },
+          frame_hash: {
+            hash_distance_threshold: hashDistance,
+            frame_sample_fps: frameSampleFps,
+            match_tolerance_frames: matchToleranceFrames,
+            max_gap_seconds: maxGapSeconds,
+          },
         },
       });
       onSuccess(t("admin.settings.introDetection.snack.saved"));
@@ -150,6 +199,23 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
       </AdminFormSection>
 
       <AdminFormSection
+        title={t("admin.settings.introDetection.algorithm.label")}
+        helper={t("admin.settings.introDetection.algorithm.helper")}
+      >
+        <Stack sx={{ maxWidth: 320 }}>
+          <AdminSelect<IntroDetectionAlgorithm>
+            value={algorithm}
+            onChange={(e) => setAlgorithm(e.target.value as IntroDetectionAlgorithm)}
+            options={ALGORITHM_OPTIONS.map((value) => ({
+              value,
+              label: t(`admin.settings.introDetection.algorithm.options.${value}.label`),
+            }))}
+            fullWidth
+          />
+        </Stack>
+      </AdminFormSection>
+
+      <AdminFormSection
         title={t("admin.settings.introDetection.cadence.label")}
         helper={t("admin.settings.introDetection.cadence.helper")}
       >
@@ -186,18 +252,18 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
       </AdminFormSection>
 
       <AdminFormSection
-        title={t("admin.settings.introDetection.audioWindow.label")}
-        helper={t("admin.settings.introDetection.audioWindow.helper")}
+        title={t("admin.settings.introDetection.analysisWindow.label")}
+        helper={t("admin.settings.introDetection.analysisWindow.helper")}
       >
         <Stack sx={{ maxWidth: 240 }}>
           <AdminInput
             type="number"
             inputProps={{ min: 60, step: 30 }}
-            value={audioWindowSeconds}
-            onChange={(e) => setAudioWindowSeconds(Number(e.target.value))}
-            error={!audioWindowValid}
+            value={analysisWindowSeconds}
+            onChange={(e) => setAnalysisWindowSeconds(Number(e.target.value))}
+            error={!windowValid}
             helperText={
-              !audioWindowValid
+              !windowValid
                 ? t("admin.settings.errors.minSixty")
                 : t("admin.settings.units.seconds")
             }
@@ -206,10 +272,10 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
       </AdminFormSection>
 
       <AdminFormSection
-        title={t("admin.settings.introDetection.matching.label")}
-        helper={t("admin.settings.introDetection.matching.helper")}
+        title={t("admin.settings.introDetection.confidence.label")}
+        helper={t("admin.settings.introDetection.confidence.helper")}
       >
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ maxWidth: 720 }}>
+        <Stack sx={{ maxWidth: 240 }}>
           <AdminInput
             label={t("admin.settings.introDetection.minConfidence.label")}
             type="number"
@@ -220,36 +286,109 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
             helperText={
               !confidenceValid ? t("admin.settings.errors.zeroToOne") : "0.0 – 1.0"
             }
-            sx={{ flex: 1 }}
-          />
-          <AdminInput
-            label={t("admin.settings.introDetection.maxHashHamming.label")}
-            type="number"
-            inputProps={{ min: 0, max: 32, step: 1 }}
-            value={maxHashHamming}
-            onChange={(e) => setMaxHashHamming(Number(e.target.value))}
-            error={!hammingValid}
-            helperText={
-              !hammingValid ? t("admin.settings.errors.zeroTo32") : "0 – 32"
-            }
-            sx={{ flex: 1 }}
-          />
-          <AdminInput
-            label={t("admin.settings.introDetection.toleranceHashes.label")}
-            type="number"
-            inputProps={{ min: 0, step: 1 }}
-            value={toleranceHashes}
-            onChange={(e) => setToleranceHashes(Number(e.target.value))}
-            error={!toleranceValid}
-            helperText={
-              !toleranceValid
-                ? t("admin.settings.errors.minZero")
-                : t("admin.settings.units.hashes")
-            }
-            sx={{ flex: 1 }}
           />
         </Stack>
       </AdminFormSection>
+
+      {algorithm === "chromaprint" ? (
+        <AdminFormSection
+          title={t("admin.settings.introDetection.chromaprint.label")}
+          helper={t("admin.settings.introDetection.chromaprint.helper")}
+        >
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ maxWidth: 520 }}>
+            <AdminInput
+              label={t("admin.settings.introDetection.maxHashHamming.label")}
+              type="number"
+              inputProps={{ min: 0, max: 32, step: 1 }}
+              value={maxHashHamming}
+              onChange={(e) => setMaxHashHamming(Number(e.target.value))}
+              error={!hammingValid}
+              helperText={!hammingValid ? t("admin.settings.errors.zeroTo32") : "0 – 32"}
+              sx={{ flex: 1 }}
+            />
+            <AdminInput
+              label={t("admin.settings.introDetection.toleranceHashes.label")}
+              type="number"
+              inputProps={{ min: 0, step: 1 }}
+              value={toleranceHashes}
+              onChange={(e) => setToleranceHashes(Number(e.target.value))}
+              error={!toleranceValid}
+              helperText={
+                !toleranceValid
+                  ? t("admin.settings.errors.minZero")
+                  : t("admin.settings.units.hashes")
+              }
+              sx={{ flex: 1 }}
+            />
+          </Stack>
+        </AdminFormSection>
+      ) : (
+        <AdminFormSection
+          title={t("admin.settings.introDetection.frameHash.label")}
+          helper={t("admin.settings.introDetection.frameHash.helper")}
+        >
+          <Stack spacing={2} sx={{ maxWidth: 720 }}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <AdminInput
+                label={t("admin.settings.introDetection.hashDistanceThreshold.label")}
+                type="number"
+                inputProps={{ min: 0, max: 64, step: 1 }}
+                value={hashDistance}
+                onChange={(e) => setHashDistance(Number(e.target.value))}
+                error={!hashDistanceValid}
+                helperText={
+                  !hashDistanceValid ? t("admin.settings.errors.zeroTo64") : "0 – 64"
+                }
+                sx={{ flex: 1 }}
+              />
+              <AdminInput
+                label={t("admin.settings.introDetection.frameSampleFps.label")}
+                type="number"
+                inputProps={{ min: 0.5, step: 0.5 }}
+                value={frameSampleFps}
+                onChange={(e) => setFrameSampleFps(Number(e.target.value))}
+                error={!fpsValid}
+                helperText={
+                  !fpsValid
+                    ? t("admin.settings.errors.greaterThanZero")
+                    : t("admin.settings.units.fps")
+                }
+                sx={{ flex: 1 }}
+              />
+            </Stack>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <AdminInput
+                label={t("admin.settings.introDetection.matchToleranceFrames.label")}
+                type="number"
+                inputProps={{ min: 0, step: 1 }}
+                value={matchToleranceFrames}
+                onChange={(e) => setMatchToleranceFrames(Number(e.target.value))}
+                error={!frameToleranceValid}
+                helperText={
+                  !frameToleranceValid
+                    ? t("admin.settings.errors.minZero")
+                    : t("admin.settings.units.frames")
+                }
+                sx={{ flex: 1 }}
+              />
+              <AdminInput
+                label={t("admin.settings.introDetection.maxGapSeconds.label")}
+                type="number"
+                inputProps={{ min: 0, step: 1 }}
+                value={maxGapSeconds}
+                onChange={(e) => setMaxGapSeconds(Number(e.target.value))}
+                error={!gapValid}
+                helperText={
+                  !gapValid
+                    ? t("admin.settings.errors.minZero")
+                    : t("admin.settings.units.seconds")
+                }
+                sx={{ flex: 1 }}
+              />
+            </Stack>
+          </Stack>
+        </AdminFormSection>
+      )}
 
       <AdminFormSection
         title={t("admin.settings.introDetection.bounds.label")}

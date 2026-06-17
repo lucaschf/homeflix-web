@@ -675,6 +675,8 @@
         "minSixty": "Must be at least 60.",
         "zeroToOne": "Must be between 0.0 and 1.0.",
         "zeroTo32": "Must be between 0 and 32.",
+        "zeroTo64": "Must be between 0 and 64.",
+        "greaterThanZero": "Must be greater than 0.",
         "oneTo20": "Must be between 1 and 20.",
         "sixtyFourTo1024": "Must be between 64 and 1024.",
         "minLessThanMax": "Min must be less than max."
@@ -686,6 +688,8 @@
         "seasons": "seasons per tick",
         "threads": "threads",
         "hashes": "consecutive misses",
+        "frames": "consecutive misses",
+        "fps": "frames/sec",
         "megabytes": "MB"
       },
       "scheduler": {
@@ -730,14 +734,26 @@
       },
       "introDetection": {
         "title": "Intro detection",
-        "subtitle": "Chromaprint-based detector for series intros. Requires the fpcalc binary on PATH on the server.",
+        "subtitle": "Detects series intros so the player can offer Skip Intro. Pick the algorithm below — both run on the server (Chromaprint also needs the fpcalc binary on PATH).",
         "enabled": {
           "label": "Enabled",
           "helper": "Toggle the detection loop. The scheduler master switch must also be on for this to tick."
         },
+        "algorithm": {
+          "label": "Algorithm",
+          "helper": "Frame-hash (video) recovers intros regardless of a variable-length cold open, but decodes video. Chromaprint (audio) is lighter but blind to intros whose audio theme varies.",
+          "options": {
+            "chromaprint": {
+              "label": "Chromaprint (audio)"
+            },
+            "frame_hash": {
+              "label": "Frame hash (video)"
+            }
+          }
+        },
         "cadence": {
           "label": "Cadence",
-          "helper": "Each season triggers ffmpeg + fpcalc per episode, so values above 2 can saturate the host on large seasons."
+          "helper": "Each season analyses every episode, so values above 2 can saturate the host on large seasons."
         },
         "batchSize": {
           "label": "Batch size"
@@ -745,16 +761,20 @@
         "interval": {
           "label": "Interval"
         },
-        "audioWindow": {
-          "label": "Audio window",
-          "helper": "Leading audio analysed per episode. 600 s covers all common cold-open + intro lengths; trim lower to speed up at the cost of missing late intros."
+        "analysisWindow": {
+          "label": "Analysis window",
+          "helper": "Leading media analysed per episode. 600 s covers long cold-opens plus the title sequence; trim lower to speed up at the cost of missing late intros."
         },
-        "matching": {
-          "label": "Matching",
-          "helper": "Confidence + per-hash Hamming distance + consecutive-miss tolerance. Tune cautiously — these settings were calibrated against real-world detections."
+        "confidence": {
+          "label": "Confidence",
+          "helper": "Minimum share of peer episodes that must agree before a marker is persisted."
         },
         "minConfidence": {
           "label": "Min confidence"
+        },
+        "chromaprint": {
+          "label": "Chromaprint tuning",
+          "helper": "Audio-detector calibration. Tune cautiously — calibrated against real-world detections."
         },
         "maxHashHamming": {
           "label": "Max hash hamming"
@@ -762,9 +782,25 @@
         "toleranceHashes": {
           "label": "Tolerance"
         },
+        "frameHash": {
+          "label": "Frame-hash tuning",
+          "helper": "Video-detector calibration. A stricter hash distance means fewer false matches; calibrated against real-world detections."
+        },
+        "hashDistanceThreshold": {
+          "label": "Hash distance"
+        },
+        "frameSampleFps": {
+          "label": "Frames per second"
+        },
+        "matchToleranceFrames": {
+          "label": "Tolerance"
+        },
+        "maxGapSeconds": {
+          "label": "Max gap"
+        },
         "bounds": {
           "label": "Length bounds",
-          "helper": "Detections outside this range are dropped (too short = stinger, too long = shared underscore bleeding past the title)."
+          "helper": "Detections outside this range are dropped (too short = stinger, too long = shared footage bleeding past the title)."
         },
         "minIntroSeconds": {
           "label": "Min length"
@@ -1055,6 +1091,13 @@
     "intros": {
       "title": "Intro Markers",
       "subtitle": "Manually adjust intro start/end while auto-detection is unreliable.",
+      "redetect": "Re-detect",
+      "redetectHint": "Requeue this season for automatic intro detection",
+      "redetectConfirmTitle": "Re-detect intros for this season?",
+      "redetectConfirm": "Season {{season}} will be re-analysed on the next detection tick. Auto-detected markers are cleared; manual ones are kept. The detection job must be enabled for this to run.",
+      "redetectInProgress": "Requeuing…",
+      "redetectQueued": "Season requeued for detection ({{count}} auto markers cleared).",
+      "redetectFailed": "Could not requeue the season. Try again.",
       "searchSeries": "Search series",
       "noSeries": "No series in the library yet.",
       "noResults": "No series match your search.",

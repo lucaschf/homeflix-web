@@ -670,6 +670,35 @@ export function useBulkSetEpisodeIntros() {
   });
 }
 
+interface ResetSeasonIntroVars {
+  seasonId: string;
+  seriesId: string;
+}
+
+interface ResetSeasonIntroResult {
+  markers_cleared: number;
+}
+
+/**
+ * Requeue one season for automatic intro detection: returns it to
+ * ``NOT_STARTED`` so the next job tick reprocesses it and clears its
+ * AUTO_DETECTED markers (MANUAL ones are kept). Used to re-run after
+ * switching the detection algorithm or re-tuning — a ``COMPLETED``
+ * season would otherwise never be picked up again.
+ */
+export function useResetSeasonIntroDetection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ seasonId }: ResetSeasonIntroVars) =>
+      api.post<ApiDetailResponse<ResetSeasonIntroResult>>(
+        `/series/seasons/${seasonId}/intro-detection/reset`,
+      ),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
+  });
+}
+
 export function useHealth() {
   return useQuery({
     queryKey: ["health"],
