@@ -1798,7 +1798,15 @@ export function Player() {
               size="small"
               onClick={skipIntro}
               startIcon={<SkipForward size={14} />}
-              sx={{ minWidth: 140, px: 2.5 }}
+              sx={{
+                minWidth: 140,
+                px: 2.5,
+                py: 1.2,
+                mb: 1,
+                bgcolor: whiteAlpha(1),
+                color: neutral[900],
+                "&:hover": { bgcolor: whiteAlpha(0.85) },
+              }}
             >
               {t("player.skipIntro")}
             </Button>
