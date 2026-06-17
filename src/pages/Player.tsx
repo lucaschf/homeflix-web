@@ -1791,6 +1791,9 @@ export function Player() {
               bottom: { xs: 80, md: 120 },
               right: { xs: 12, md: 40 },
               zIndex: 10,
+              opacity: showControls ? 1 : 0,
+              transition: "opacity 300ms",
+              pointerEvents: showControls ? "auto" : "none",
             }}
           >
             <Button
