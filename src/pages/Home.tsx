@@ -95,11 +95,38 @@ export function Home() {
       />
 
       <Box sx={{ mt: -10, position: "relative", zIndex: 1 }}>
-        {/* Continue Watching: skeleton while pending so the row
-            below it (Recently Added / first genre) doesn't shift
+        {/* Recently Added: skeleton while pending so the row
+            below it (Continue Watching / first genre) doesn't shift
             up by ~250px when the data lands. Empty resolved
             response stays hidden — no point reserving a row for
             zero items. */}
+        {recentlyAdded === undefined ? (
+          <CarouselSkeleton title={t("home.recentlyAdded")} />
+        ) : recentlyAdded.length > 0 ? (
+          <MediaCarousel title={t("home.recentlyAdded")}>
+            {recentlyAdded.map((item) => (
+              <MediaCard
+                key={`${item.type}:${item.id}`}
+                title={item.title}
+                imageUrl={item.poster_path ?? undefined}
+                year={item.year}
+                synopsis={item.synopsis ?? undefined}
+                mediaId={item.id}
+                mediaType={item.type}
+                onPlay={
+                  item.type === "movie"
+                    ? () => navigate(`/play/movie/${item.id}`)
+                    : undefined
+                }
+                onClick={() =>
+                  navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)
+                }
+              />
+            ))}
+          </MediaCarousel>
+        ) : null}
+
+        {/* Continue Watching — same loading-state treatment. */}
         {continueWatching === undefined ? (
           <CarouselSkeleton title={t("home.continueWatching")} variant="landscape" />
         ) : continueWatching.length > 0 ? (
@@ -138,33 +165,6 @@ export function Home() {
                     navigate(`/play/episode/${item.series_id}/${item.season_number}/${item.episode_number}`);
                   }
                 }}
-              />
-            ))}
-          </MediaCarousel>
-        ) : null}
-
-        {/* Recently Added — same loading-state treatment. */}
-        {recentlyAdded === undefined ? (
-          <CarouselSkeleton title={t("home.recentlyAdded")} />
-        ) : recentlyAdded.length > 0 ? (
-          <MediaCarousel title={t("home.recentlyAdded")}>
-            {recentlyAdded.map((item) => (
-              <MediaCard
-                key={`${item.type}:${item.id}`}
-                title={item.title}
-                imageUrl={item.poster_path ?? undefined}
-                year={item.year}
-                synopsis={item.synopsis ?? undefined}
-                mediaId={item.id}
-                mediaType={item.type}
-                onPlay={
-                  item.type === "movie"
-                    ? () => navigate(`/play/movie/${item.id}`)
-                    : undefined
-                }
-                onClick={() =>
-                  navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)
-                }
               />
             ))}
           </MediaCarousel>
