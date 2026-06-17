@@ -1113,7 +1113,7 @@
     },
     "intros": {
       "title": "Marcadores de abertura",
-      "subtitle": "Ajuste manualmente o início e o fim da abertura enquanto a detecção automática não está confiável.",
+      "subtitle": "Revise e ajuste as aberturas por episódio — marcadores manuais têm prioridade e não são sobrescritos pela detecção automática.",
       "tabs": {
         "manage": "Gerenciar",
         "runs": "Detecções"

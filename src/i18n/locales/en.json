@@ -1114,7 +1114,7 @@
     },
     "intros": {
       "title": "Intro Markers",
-      "subtitle": "Manually adjust intro start/end while auto-detection is unreliable.",
+      "subtitle": "Review and fine-tune intros per episode — manual markers take precedence and are never overwritten by auto-detection.",
       "tabs": {
         "manage": "Manage",
         "runs": "Detections"
