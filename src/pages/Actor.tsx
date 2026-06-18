@@ -5,8 +5,6 @@ import {
   MenuItem,
   Select,
   Typography,
-  useMediaQuery,
-  useTheme,
   type SelectChangeEvent,
 } from "@mui/material";
 import type { TFunction } from "i18next";
@@ -359,11 +357,6 @@ interface FilmographySectionProps {
 }
 
 function FilmographySection({ movies, sort, onSortChange, t, onPlay, onOpen }: FilmographySectionProps) {
-  const theme = useTheme();
-  // On phone widths the intrinsic 140px cards leave a visible gap on
-  // the right of every row. Switching to a 2-col grid + fullWidth
-  // cards on xs makes each row span the available width cleanly.
-  const isXs = useMediaQuery(theme.breakpoints.down("sm"));
   const handleSort = (e: SelectChangeEvent) => onSortChange(e.target.value as SortKey);
 
   return (
@@ -441,15 +434,19 @@ function FilmographySection({ movies, sort, onSortChange, t, onPlay, onOpen }: F
 
       <Box
         sx={{
-          // xs: tight 2-col grid with full-width cards so the row
-          //     fills the screen with no trailing gap.
-          // sm+: flex wrap with the intrinsic ``MediaCard`` sizes
-          //      (200 / 240 / 280) used by the Home / Browse / Series
-          //      carousels — left-aligned so the row anchors with the
-          //      section heading above.
-          display: { xs: "grid", sm: "flex" },
-          gridTemplateColumns: { xs: "repeat(2, 1fr)" },
-          flexWrap: { sm: "wrap" },
+          // Responsive ``auto-fill`` grid: the columns stretch (``1fr``)
+          // to fill the row, so full rows never leave a trailing gap on
+          // the right. The ``minmax`` floors roughly preserve the
+          // intrinsic ``MediaCard`` sizes (200 / 240 / 280) used by the
+          // Home / Browse / Series carousels. Cards are full-width so
+          // each fills its grid cell.
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "repeat(2, 1fr)",
+            sm: "repeat(auto-fill, minmax(180px, 1fr))",
+            md: "repeat(auto-fill, minmax(200px, 1fr))",
+            lg: "repeat(auto-fill, minmax(240px, 1fr))",
+          },
           gap: { xs: 1.5, sm: 2, md: 2.25 },
         }}
       >
@@ -463,7 +460,7 @@ function FilmographySection({ movies, sort, onSortChange, t, onPlay, onOpen }: F
             variant="poster"
             mediaId={movie.id}
             mediaType="movie"
-            fullWidth={isXs}
+            fullWidth
             onPlay={() => onPlay(movie.id)}
             onClick={() => onOpen(movie.id)}
           />
