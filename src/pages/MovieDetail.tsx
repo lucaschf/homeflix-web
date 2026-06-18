@@ -403,7 +403,7 @@ export function MovieDetail() {
           maxWidth: 1600,
         }}
       >
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2.25 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2.25, height: "100%" }}>
           {movie.tagline && (
             <Typography
               variant="body1"
@@ -441,6 +441,7 @@ export function MovieDetail() {
               {movie.synopsis}
             </Typography>
           )}
+          {movie.collection && <CollectionChip collection={movie.collection} />}
           {(synopsisOverflows ||
             (isMobile ? detailRows.length > 0 : detailRows.length > DETAILS_VISIBLE_COLLAPSED)) && (
             <Typography
@@ -449,13 +450,18 @@ export function MovieDetail() {
               sx={{
                 color: "primary.main",
                 cursor: "pointer",
+                // ``mt: auto`` pins the toggle to the bottom of this
+                // (stretched) column so it sits vertically below the
+                // taller technical-details column beside it, instead of
+                // floating up next to the synopsis. On mobile the
+                // column isn't stretched, so it just trails the content.
+                mt: { md: "auto" },
                 "&:hover": { opacity: 0.8 },
               }}
             >
               {expanded ? `← ${t("detail.lessDetails")}` : `${t("detail.moreDetails")} →`}
             </Typography>
           )}
-          {movie.collection && <CollectionChip collection={movie.collection} />}
         </Box>
 
         {(() => {
