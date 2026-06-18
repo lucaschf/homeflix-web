@@ -44,28 +44,43 @@ export function TrailerDialog({ open, onClose, url }: TrailerDialogProps) {
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth={false}
       fullWidth
       slotProps={{
         paper: {
-          sx: { bgcolor: "common.black", overflow: "hidden", borderRadius: 2 },
+          sx: {
+            bgcolor: "common.black",
+            overflow: "hidden",
+            borderRadius: 2,
+            width: { xs: "95vw", md: "90vw" },
+            maxWidth: 1200,
+          },
         },
       }}
     >
-      <IconButton
-        onClick={onClose}
+      {/* Header bar with the close button kept above the video so it
+          never overlaps the YouTube player's own top-right controls
+          (settings / captions / mute). Mirrors TMDB's trailer modal. */}
+      <Box
         sx={{
-          position: "absolute",
-          top: 8,
-          right: 8,
-          zIndex: 1,
-          color: "overlayText.primary",
-          bgcolor: scrim(0.5),
-          "&:hover": { bgcolor: scrim(0.7) },
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          px: 1,
+          py: 0.5,
+          bgcolor: "common.black",
         }}
       >
-        <X size={20} />
-      </IconButton>
+        <IconButton
+          onClick={onClose}
+          sx={{
+            color: "overlayText.primary",
+            "&:hover": { bgcolor: scrim(0.7) },
+          }}
+        >
+          <X size={20} />
+        </IconButton>
+      </Box>
       <Box sx={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
         <Box
           component="iframe"
