@@ -13,7 +13,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import { Pencil, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { whiteAlpha, peachAlpha } from "../theme/tokens";
+import { whiteAlpha, inkAlpha, peachAlpha } from "../theme/tokens";
 import { error } from "../theme/colors";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -187,7 +187,7 @@ export function ManageProfiles() {
             letterSpacing: "-0.02em",
             lineHeight: 1.1,
             textAlign: "center",
-            color: whiteAlpha(0.95),
+            color: inkAlpha(0.92),
           }}
         >
           {t("profileManagement.manageTitle")}
@@ -382,8 +382,8 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
           fontWeight: 500,
           letterSpacing: "-0.005em",
           color: hover && !disabled
-            ? whiteAlpha(0.95)
-            : whiteAlpha(0.6),
+            ? inkAlpha(0.92)
+            : inkAlpha(0.6),
           transition: "color 200ms ease",
         }}
       >
@@ -455,8 +455,8 @@ function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
           fontWeight: 500,
           letterSpacing: "-0.005em",
           color: hover && !disabled
-            ? whiteAlpha(0.95)
-            : whiteAlpha(0.6),
+            ? inkAlpha(0.92)
+            : inkAlpha(0.6),
           transition: "color 200ms ease",
         }}
       >

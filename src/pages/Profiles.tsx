@@ -150,7 +150,7 @@ export function Profiles() {
                 letterSpacing: "-0.02em",
                 lineHeight: 1.1,
                 textAlign: "center",
-                color: whiteAlpha(0.95),
+                color: inkAlpha(0.92),
               }}
             >
               {t("auth.picker.headline")}
