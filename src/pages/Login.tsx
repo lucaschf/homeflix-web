@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Alert, Box, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { inkAlpha } from "../theme/tokens";
 import { error as errorPalette } from "../theme/colors";
 import { useNavigate } from "react-router-dom";
@@ -11,7 +11,6 @@ import {
   AuthShell,
   Checkbox,
   Field,
-  MarkBadge,
   PrimaryButton,
 } from "../components/auth";
 import { Logo } from "../components/Logo";
@@ -112,7 +111,7 @@ export function Login() {
             alignItems: "center",
           }}
         >
-          <MarkBadge />
+          <Logo size={52} />
 
           <Typography
             variant="h1"
@@ -126,7 +125,12 @@ export function Login() {
               textAlign: "center",
             }}
           >
-            {t("auth.login.title")}
+            <Trans
+              i18nKey="auth.login.title"
+              components={{
+                flix: <Box component="span" sx={{ color: "primary.main" }} />,
+              }}
+            />
           </Typography>
 
           <Typography

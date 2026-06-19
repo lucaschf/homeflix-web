@@ -37,7 +37,7 @@
   },
   "auth": {
     "login": {
-      "title": "Entrar no HomeFlix",
+      "title": "Entrar no Home<flix>Flix</flix>",
       "subtitle": "Use as credenciais do administrador para acessar sua biblioteca privada.",
       "emailLabel": "Email",
       "passwordLabel": "Senha",

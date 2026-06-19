@@ -37,7 +37,7 @@
   },
   "auth": {
     "login": {
-      "title": "Sign in to HomeFlix",
+      "title": "Sign in to Home<flix>Flix</flix>",
       "subtitle": "Use the admin credentials to access your private library.",
       "emailLabel": "Email",
       "passwordLabel": "Password",
