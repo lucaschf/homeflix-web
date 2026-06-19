@@ -89,7 +89,7 @@ export function Login() {
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: { xs: 3, sm: 4.5 }, py: 3.5 }}>
         <Logo size={22} />
         <Typography sx={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
-          HomeFlix
+          Home<Box component="span" sx={{ color: "primary.main" }}>Flix</Box>
         </Typography>
       </Box>
 
