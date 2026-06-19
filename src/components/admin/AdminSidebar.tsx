@@ -205,7 +205,7 @@ function BrandRow({ collapsed }: { collapsed: boolean }) {
         flexShrink: 0,
       }}
     >
-      <Box sx={{ display: "flex", flexShrink: 0, color: "primary.main" }}>
+      <Box sx={{ display: "flex", flexShrink: 0, color: "text.primary" }}>
         <Logo size={34} />
       </Box>
       {!collapsed && (
@@ -219,7 +219,7 @@ function BrandRow({ collapsed }: { collapsed: boolean }) {
               letterSpacing: "-0.01em",
             }}
           >
-            HomeFlix
+            Home<Box component="span" sx={{ color: "primary.main" }}>Flix</Box>
           </Box>
           <Box
             component="span"
