@@ -111,7 +111,7 @@ export function Login() {
             alignItems: "center",
           }}
         >
-          <Logo size={52} />
+          <Logo size={64} />
 
           <Typography
             variant="h1"
