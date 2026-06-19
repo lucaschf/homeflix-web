@@ -80,8 +80,12 @@ declare module "@mui/material/Typography" {
   }
 }
 
-const OVERLAY_TEXT_PRIMARY = "#FFFFFF";
-const OVERLAY_TEXT_SECONDARY = "rgba(255, 255, 255, 0.7)";
+// Warm matte off-white (``--fg``) to match the body text, instead of pure
+// white which glares. Kept solid (no alpha) because this paints over video
+// frames that can be bright — letting the frame bleed through would hurt
+// legibility. The secondary tier uses the same warm tone at 70%.
+const OVERLAY_TEXT_PRIMARY = "#F5F1EB";
+const OVERLAY_TEXT_SECONDARY = inkAlpha(0.7);
 
 // Build a throwaway default theme just to read the canonical breakpoint
 // helper. The breakpoint media query string then tracks any future change to
