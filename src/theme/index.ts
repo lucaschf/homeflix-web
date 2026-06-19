@@ -1,5 +1,6 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 import { error, info, neutral, peach, success, warning } from "./colors";
+import { inkAlpha } from "./tokens";
 import React from "react";
 
 // -- Overlay token namespace ---------------------------------------------------
@@ -103,7 +104,12 @@ const themeOptions: ThemeOptions = {
           paper: neutral[900],
         },
         text: {
-          primary: neutral[50],
+          // Warm off-white from the design handoff (``--fg`` = #F5F1EB) at 92%
+          // opacity instead of the near-pure ``neutral[50]`` (#FAFAFA), which
+          // glares against the dark surfaces. The slight transparency lets the
+          // dark background bleed through for a softer / more matte read that's
+          // easier on the eyes for long sessions.
+          primary: inkAlpha(0.92),
           // ``#8A857E`` matches the admin design's ``--muted`` token
           // — a warmer / slightly darker tone than ``neutral[400]``
           // that the spec uses for every "muted" surface: eyebrows,
