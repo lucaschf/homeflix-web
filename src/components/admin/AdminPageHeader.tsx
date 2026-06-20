@@ -2,11 +2,19 @@ import { Box, Typography } from "@mui/material";
 import { ChevronRight } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { Link as RouterLink } from "react-router-dom";
 import { inkAlpha } from "../../theme/tokens";
 import { HypothesisChip } from "./HypothesisChip";
 
+/**
+ * One breadcrumb segment. A plain string renders as static text (group
+ * labels, the current page); ``{ label, to }`` renders as a navigable
+ * link to a parent route.
+ */
+export type BreadcrumbSegment = ReactNode | { label: ReactNode; to: string };
+
 interface AdminPageHeaderProps {
-  breadcrumb?: ReactNode[];
+  breadcrumb?: BreadcrumbSegment[];
   title: ReactNode;
   subtitle?: ReactNode;
   /** Surfaces a peach "Hipótese · …" chip next to the title for
@@ -39,9 +47,12 @@ export function AdminPageHeader({
   // Always prepend "Admin" as the breadcrumb root so every admin
   // page anchors at the same starting point. Consumers pass only
   // the segments below "Admin" (e.g. ``[Catalog, Movies]``) and
-  // the component injects the root + chevrons.
-  const fullBreadcrumb: ReactNode[] | undefined =
-    breadcrumb && breadcrumb.length > 0 ? [t("admin.title"), ...breadcrumb] : undefined;
+  // the component injects the root + chevrons. The root links back
+  // to the overview.
+  const fullBreadcrumb: BreadcrumbSegment[] | undefined =
+    breadcrumb && breadcrumb.length > 0
+      ? [{ label: t("admin.title"), to: "/admin" }, ...breadcrumb]
+      : undefined;
 
   return (
     <Box component="header" sx={{ mb: 3.5 }}>
@@ -56,22 +67,47 @@ export function AdminPageHeader({
             mb: 1.5,
           }}
         >
-          {fullBreadcrumb.map((segment, i) => (
-            <Fragment key={i}>
-              {i > 0 && <ChevronRight size={14} aria-hidden />}
-              <Box
-                component="span"
-                sx={{
-                  color:
-                    i === fullBreadcrumb.length - 1
-                      ? inkAlpha(0.7)
-                      : "inherit",
-                }}
-              >
-                {segment}
-              </Box>
-            </Fragment>
-          ))}
+          {fullBreadcrumb.map((segment, i) => {
+            const isLast = i === fullBreadcrumb.length - 1;
+            const linkable =
+              segment != null &&
+              typeof segment === "object" &&
+              "to" in segment &&
+              "label" in segment;
+            const label = linkable ? segment.label : segment;
+            // The current page (last crumb) is never a link, even when a
+            // target is supplied.
+            if (linkable && !isLast) {
+              return (
+                <Fragment key={i}>
+                  {i > 0 && <ChevronRight size={14} aria-hidden />}
+                  <Box
+                    component={RouterLink}
+                    to={segment.to}
+                    sx={{
+                      color: "inherit",
+                      textDecoration: "none",
+                      transition: "color 120ms ease",
+                      "&:hover": { color: inkAlpha(0.85) },
+                    }}
+                  >
+                    {label}
+                  </Box>
+                </Fragment>
+              );
+            }
+            return (
+              <Fragment key={i}>
+                {i > 0 && <ChevronRight size={14} aria-hidden />}
+                <Box
+                  component="span"
+                  sx={{ color: isLast ? inkAlpha(0.7) : "inherit" }}
+                >
+                  {label}
+                </Box>
+              </Fragment>
+            );
+          })}
         </Typography>
       )}
       <Box

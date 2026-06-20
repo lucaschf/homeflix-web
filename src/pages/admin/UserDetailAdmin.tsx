@@ -132,7 +132,11 @@ export function UserDetailAdmin() {
   return (
     <>
       <AdminPageHeader
-        breadcrumb={[t("admin.nav.group.identity"), t("admin.nav.users"), data.email]}
+        breadcrumb={[
+          t("admin.nav.group.identity"),
+          { label: t("admin.nav.users"), to: "/admin/users" },
+          data.email,
+        ]}
         title={data.email}
         subtitle={t("admin.users.detail.subtitle")}
         primaryCTA={

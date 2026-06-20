@@ -227,7 +227,7 @@ export function LibraryDetailAdmin() {
       <AdminPageHeader
         breadcrumb={[
           t("admin.nav.group.catalog"),
-          t("admin.nav.libraries"),
+          { label: t("admin.nav.libraries"), to: "/admin/libraries" },
           isCreate ? t("admin.libraries.detail.createBreadcrumb") : (detail.data?.name ?? ""),
         ]}
         title={isCreate ? t("admin.libraries.detail.createTitle") : (detail.data?.name ?? "")}

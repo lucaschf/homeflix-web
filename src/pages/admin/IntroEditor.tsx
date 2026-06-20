@@ -79,7 +79,7 @@ export function IntroEditor() {
       <AdminPageHeader
         breadcrumb={[
           t("admin.nav.group.catalog"),
-          t("admin.nav.intros"),
+          { label: t("admin.nav.intros"), to: "/admin/intros" },
           t("admin.intros.editorTitle"),
         ]}
         title={episode?.title ?? t("admin.intros.editorTitle")}
