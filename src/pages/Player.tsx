@@ -298,12 +298,6 @@ const FORWARD_SEEK_SECONDS = 30;
 // Must mirror ``_RESUME_BUCKET_SECONDS`` on the backend so a saved
 // position lands in the same on-disk cache the next session.
 const RESUME_BUCKET_SECONDS = 300;
-// How many source-time seconds the requested seek target may sit
-// ahead of the currently buffered tail before we remount the HLS
-// session at a fresh bucket. ``hls.js`` can chase a few segments
-// forward inside the current bucket without help; beyond this we
-// just spawn a new ffmpeg at the right offset.
-const FAR_SEEK_REMOUNT_THRESHOLD = 30;
 // Source-time floor below which we never bother with a non-zero
 // bucket. Resumes inside the first minute are indistinguishable
 // from a fresh play and avoid burning a separate cache bucket.
@@ -962,7 +956,19 @@ export function Player() {
     // typically under one bucket length, so the clamp against
     // ``video.duration`` exists only to protect against a save that
     // landed a few tenths of a second past the manifest's tail.
-    if (savedProgress && savedProgress.status !== "completed") {
+    //
+    // Skip the position write when a user-initiated seek is in flight
+    // (``pendingBucketSeekRef`` set by ``seekTo``). Both this effect and
+    // the pending-seek applier fire on the same post-remount ``hlsReady``
+    // flip; without this guard the saved position would clobber the seek
+    // target — e.g. clicking Skip Intro during the cold-start window,
+    // before the first restore had run, snapped the playhead backwards.
+    // Audio/subtitle restoration below still runs.
+    if (
+      savedProgress &&
+      savedProgress.status !== "completed" &&
+      pendingBucketSeekRef.current === null
+    ) {
       const saved = Math.max(0, Math.floor(savedProgress.position_seconds));
       const bucketLocal = Math.max(0, saved - bucketStart);
       const upperBound = Number.isFinite(video.duration)
@@ -1138,13 +1144,23 @@ export function Player() {
     }
   }, [nextEpisode, navigate, params.seriesId, seriesDetailPath]);
 
-  // Source-time seek with bucket-aware fallback. When the requested
-  // ``displaySourceTime`` sits before the current bucket or further
-  // ahead than the encoded tail can reasonably catch, we remount the
-  // HLS session at a fresh bucket; otherwise we just nudge
-  // ``video.currentTime`` natively. The ``pendingBucketSeekRef`` is
-  // picked up by the dedicated effect on the next ``hlsReady`` so the
-  // playhead lands at the right spot once the new manifest is live.
+  // Source-time seek. A native ``video.currentTime`` nudge is used only
+  // when the target is already reachable inside the current manifest —
+  // i.e. behind the buffered tail. Anything else (a seek before the
+  // current bucket, or a forward jump past what's been transcoded, like
+  // Skip Intro on a still-encoding file) remounts a fresh ffmpeg
+  // anchored AT the target second.
+  //
+  // Why not a native forward seek: the transcode is a live/event HLS
+  // playlist (no ``#EXT-X-ENDLIST``), so the browser clamps any seek
+  // past the live edge and, once the encoder catches up, abandons the
+  // pending seek and drops back — exactly the "waited for processing
+  // then jumped back" symptom. Mounting a new encode at the target
+  // makes its first segment the destination, so playback starts there
+  // with no out-of-range seek. This relies on the backend honouring the
+  // exact ``?start=`` second (it keys the cache bucket and the ffmpeg
+  // ``-ss`` by it). ``pendingBucketSeekRef`` is applied by the
+  // dedicated effect on the next ``hlsReady`` once the manifest is live.
   const seekTo = useCallback(
     (displaySourceTime: number) => {
       const video = videoRef.current;
@@ -1155,13 +1171,9 @@ export function Player() {
       const bufferedEndLocal =
         video.buffered.length > 0 ? video.buffered.end(video.buffered.length - 1) : 0;
       const needsRemount =
-        bucketLocalTarget < 0
-        || bucketLocalTarget > bufferedEndLocal + FAR_SEEK_REMOUNT_THRESHOLD;
+        bucketLocalTarget < 0 || bucketLocalTarget > bufferedEndLocal;
       if (needsRemount) {
-        const newBucket =
-          target < RESUME_BUCKET_FLOOR_SECONDS
-            ? 0
-            : Math.floor(target / RESUME_BUCKET_SECONDS) * RESUME_BUCKET_SECONDS;
+        const newBucket = target < RESUME_BUCKET_FLOOR_SECONDS ? 0 : Math.floor(target);
         pendingBucketSeekRef.current = Math.max(0, target - newBucket);
         setBucketStart(newBucket);
         setCurrentTime(target);
