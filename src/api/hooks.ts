@@ -70,6 +70,10 @@ import type {
   HlsCacheStats,
   HlsCacheStatsResponse,
   IntroMarkerOutput,
+  JobRunRecord,
+  JobRunsResponse,
+  JobsOverview,
+  JobsOverviewResponse,
   LibrariesResponse,
   Library,
   LibraryResponse,
@@ -591,6 +595,54 @@ export function useIntroDetectionRuns(
   });
 
   return usePagedInfiniteQuery<AdminIntroDetectionRun>(query, filterKey);
+}
+
+/**
+ * Background-jobs dashboard overview: every scheduler job with its live
+ * schedule (next run) merged with its last recorded execution and a
+ * "running now" flag. Polled so the next-run countdown and running state
+ * stay fresh while the page is open.
+ */
+export function useJobs() {
+  return useQuery({
+    queryKey: ["admin", "jobs"],
+    queryFn: async (): Promise<JobsOverview> => {
+      const resp = await api.get<JobsOverviewResponse>("/admin/jobs");
+      return resp.data;
+    },
+    refetchInterval: 10_000,
+  });
+}
+
+/**
+ * Offset-paginated job execution history, newest-first, optionally
+ * narrowed to one ``jobId``. Mirrors ``useIntroDetectionRuns``.
+ */
+export function useJobRuns(
+  filters: { jobId?: string } = {},
+  options: { pageSize?: number } = {},
+) {
+  const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
+  const { jobId } = filters;
+  const filterKey = `${jobId ?? "all"}|${pageSize}`;
+  const query = useInfiniteQuery({
+    queryKey: ["admin", "job-runs", filterKey],
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
+      const params = new URLSearchParams();
+      if (jobId) params.set("job_id", jobId);
+      params.set("limit", String(pageSize));
+      params.set("offset", String(pageParam));
+      const resp = await api.get<JobRunsResponse>(`/admin/jobs/runs?${params.toString()}`);
+      return {
+        data: resp.data,
+        nextOffset: resp.data.length === pageSize ? pageParam + pageSize : null,
+      };
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+  });
+
+  return usePagedInfiniteQuery<JobRunRecord>(query, filterKey);
 }
 
 /**

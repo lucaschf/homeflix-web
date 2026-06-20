@@ -31,6 +31,7 @@ import { ConflictsAdmin } from "./pages/admin/ConflictsAdmin";
 import { CreditsStatusAdmin } from "./pages/admin/CreditsStatusAdmin";
 import { IntroDetectionRunsAdmin } from "./pages/admin/IntroDetectionRunsAdmin";
 import { IntroPicker } from "./pages/admin/IntroPicker";
+import { JobsAdmin } from "./pages/admin/JobsAdmin";
 import { IntroEditor } from "./pages/admin/IntroEditor";
 import { LibrariesAdmin } from "./pages/admin/LibrariesAdmin";
 import { LibraryDetailAdmin } from "./pages/admin/LibraryDetailAdmin";
@@ -160,6 +161,7 @@ function App() {
                   <Route path="/admin/users/:id" element={<UserDetailAdmin />} />
                   <Route path="/admin/scan" element={<ScanAdmin />} />
                   <Route path="/admin/enrich" element={<EnrichAdmin />} />
+                  <Route path="/admin/system/jobs" element={<JobsAdmin />} />
                   <Route path="/admin/system/hls-cache" element={<HlsCacheAdmin />} />
                   <Route path="/admin/system/health" element={<HealthAdmin />} />
                   <Route path="/admin/system/settings" element={<SettingsAdmin />} />

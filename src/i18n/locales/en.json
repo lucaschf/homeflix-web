@@ -264,6 +264,7 @@
       "requests": "Catalog requests",
       "conflicts": "Conflicts",
       "users": "Users",
+      "jobs": "Jobs",
       "hls": "HLS cache",
       "health": "Health",
       "settings": "Settings",
@@ -1134,6 +1135,36 @@
         "enrichFailed": "Could not start re-enrichment.",
         "deleteSuccess": "“{{title}}” was removed from the catalog.",
         "deleteFailed": "Could not delete this item."
+      }
+    },
+    "jobs": {
+      "title": "Background Jobs",
+      "subtitle": "Every scheduled job: when it runs next, how its last run went, and what's running right now.",
+      "schedulerRunning": "Scheduler running",
+      "schedulerStopped": "Scheduler stopped",
+      "loading": "Loading jobs…",
+      "error": "Could not load jobs.",
+      "empty": "No jobs registered.",
+      "running": "Running",
+      "neverRan": "Never ran",
+      "notScheduled": "Not scheduled",
+      "nextRun": "next {{when}}",
+      "noNextRun": "no next run",
+      "lastRun": "last {{when}}",
+      "overview": {
+        "title": "Jobs",
+        "subtitle": "Live schedule and the most recent run of each background job."
+      },
+      "history": {
+        "title": "Run history",
+        "subtitle": "Newest first, across every job.",
+        "empty": "No job runs recorded yet."
+      },
+      "status": {
+        "running": "Running",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "interrupted": "Interrupted"
       }
     },
     "introRuns": {
