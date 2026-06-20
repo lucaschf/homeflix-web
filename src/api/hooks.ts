@@ -63,6 +63,7 @@ import type {
   EnrichResponse,
   FeaturedItem,
   FeaturedResponse,
+  FileTracks,
   Genre,
   GenresResponse,
   HealthResponse,
@@ -184,6 +185,39 @@ export function useGenres(options: CatalogQueryOptions = {}) {
       const resp = await api.get<GenresResponse>("/catalog/genres", params);
       return resp.data;
     },
+  });
+}
+
+/**
+ * Per-file audio + subtitle tracks for the player, including the
+ * structured ``version`` that differentiates same-language tracks
+ * (dub studio, channel layout, or ordinal). The player matches these
+ * to its hls.js renditions and composes localized display labels.
+ *
+ * Disabled until the relevant ids are known. The response is returned
+ * raw by the backend (no ``{data}`` envelope), so it is consumed
+ * directly. Track metadata is immutable per file, so it is cached
+ * indefinitely.
+ */
+export function useFileTracks(params: {
+  isMovie: boolean;
+  movieId?: string;
+  seriesId?: string;
+  season?: string | number;
+  episode?: string | number;
+}) {
+  const { isMovie, movieId, seriesId, season, episode } = params;
+  const path = isMovie
+    ? `/stream/movie/${movieId}/tracks`
+    : `/stream/episode/${seriesId}/${season}/${episode}/tracks`;
+  const enabled = isMovie
+    ? Boolean(movieId)
+    : Boolean(seriesId && season != null && episode != null);
+  return useQuery({
+    queryKey: ["fileTracks", path],
+    queryFn: () => api.get<FileTracks>(path),
+    enabled,
+    staleTime: Infinity,
   });
 }
 

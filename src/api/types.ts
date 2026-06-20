@@ -40,6 +40,50 @@ export interface SubtitleTrackOutput {
   is_external: boolean;
 }
 
+/**
+ * Structured differentiator for tracks that share a language, returned
+ * by the ``/tracks`` endpoint. ``studio`` / ``channel_layout`` carry a
+ * ready-to-show value; ``ordinal`` and ``sdh`` are localized client-side.
+ */
+export interface FileTrackVersion {
+  kind: "studio" | "channel_layout" | "ordinal" | "sdh";
+  value: string;
+}
+
+/** One audio track from the per-file ``/tracks`` endpoint. */
+export interface FileAudioTrack {
+  index: number;
+  language: string;
+  codec: string;
+  channels: number;
+  channel_layout: string;
+  title: string | null;
+  version: FileTrackVersion | null;
+  is_default: boolean;
+}
+
+/** One subtitle track from the per-file ``/tracks`` endpoint. */
+export interface FileSubtitleTrack {
+  index: number;
+  language: string;
+  format: string;
+  title: string | null;
+  version: FileTrackVersion | null;
+  is_default: boolean;
+  is_forced: boolean;
+  is_external: boolean;
+  is_image_based: boolean;
+}
+
+/**
+ * Response of ``GET /stream/{movie|episode}/.../tracks``. Returned raw
+ * (not wrapped in the ``{data}`` envelope), so consume it directly.
+ */
+export interface FileTracks {
+  audio_tracks: FileAudioTrack[];
+  subtitle_tracks: FileSubtitleTrack[];
+}
+
 export interface MediaFileOutput {
   file_path: string;
   file_size: number;

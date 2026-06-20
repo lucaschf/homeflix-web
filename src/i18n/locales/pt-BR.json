@@ -230,6 +230,8 @@
     "subtitles": "Legendas",
     "audio": "Audio",
     "off": "Desligado",
+    "version": "Versão {{n}}",
+    "sdh": "SDH",
     "normal": "Normal",
     "nextEpisode": "Proximo Episodio",
     "nextEpisodeIn": "Proximo episodio em {{seconds}}s",
