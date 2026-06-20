@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { Box, Snackbar, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { AlertCircle, Search } from "lucide-react";
+import { Check, ScanLine, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { usePagedList, useRelinkSeries, useSeriesNeedingReview } from "../../api/hooks";
 import type { NeedsReviewSeries, TmdbSuggestion } from "../../api/types";
 import {
   AdminButton,
-  AdminEmptyState,
   AdminPageHeader,
   AdminTable,
   AdminTablePagination,
+  FancyEmpty,
   type AdminTableColumn,
 } from "../../components/admin";
 import { SeriesTmdbSuggestionsDialog } from "../../components/admin/SeriesTmdbSuggestionsDialog";
+import { ReviewTabs } from "./components/ReviewTabs";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { status, whiteAlpha } from "../../theme/tokens";
 
@@ -21,6 +23,7 @@ type Snack = { message: string; severity: "success" | "error" | "warning" } | nu
 
 export function SeriesReview() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   useDocumentTitle(t("admin.seriesReviews.title"));
 
   const { data: series, isLoading, isError, refetch } = useSeriesNeedingReview();
@@ -114,9 +117,10 @@ export function SeriesReview() {
   return (
     <>
       <AdminPageHeader
-        breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.seriesReview")]}
+        breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.review")]}
         title={t("admin.seriesReviews.title")}
         subtitle={t("admin.seriesReviews.subtitle")}
+        toolbar={<ReviewTabs />}
       />
 
       <AdminTable
@@ -127,10 +131,21 @@ export function SeriesReview() {
         error={isError ? t("admin.seriesReviews.loadError") : undefined}
         onRetry={() => void refetch()}
         emptyState={
-          <AdminEmptyState
-            icon={AlertCircle}
+          <FancyEmpty
+            icon={Check}
+            motif="cards"
             title={t("admin.seriesReviews.empty")}
             body={t("admin.seriesReviews.emptyHint")}
+            badge={t("admin.seriesReviews.emptyBadge")}
+            primary={
+              <AdminButton
+                variant="primary"
+                icon={<ScanLine size={14} />}
+                onClick={() => navigate("/admin/scan")}
+              >
+                {t("admin.seriesReviews.emptyCta")}
+              </AdminButton>
+            }
           />
         }
       />

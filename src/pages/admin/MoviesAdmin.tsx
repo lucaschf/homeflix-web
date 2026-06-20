@@ -1,6 +1,6 @@
 import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Eye, Sparkles, Trash2 } from "lucide-react";
+import { Eye, Film, ScanLine, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
@@ -15,12 +15,13 @@ import type { MovieSummary } from "../../api/types";
 import { ApiError } from "../../api/client";
 import {
   AdminBadge,
+  AdminButton,
   AdminConfirmDialog,
-  AdminEmptyState,
   AdminPageHeader,
   AdminTable,
   AdminTablePagination,
   AdminToolbar,
+  FancyEmpty,
   FilterChip,
   ToolbarSearch,
   type AdminTableColumn,
@@ -313,9 +314,20 @@ export function MoviesAdmin() {
         error={isError ? t("admin.catalog.errorLoading") : undefined}
         onRetry={() => void refetch()}
         emptyState={
-          <AdminEmptyState
+          <FancyEmpty
+            icon={Film}
+            motif="cards"
             title={t("admin.catalog.movies.emptyTitle")}
             body={t("admin.catalog.movies.emptyBody")}
+            primary={
+              <AdminButton
+                variant="primary"
+                icon={<ScanLine size={14} />}
+                onClick={() => navigate("/admin/scan")}
+              >
+                {t("admin.catalog.movies.emptyCta")}
+              </AdminButton>
+            }
           />
         }
       />

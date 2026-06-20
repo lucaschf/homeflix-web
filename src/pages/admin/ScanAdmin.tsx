@@ -20,9 +20,9 @@ import {
   AdminButton,
   AdminCard,
   AdminCardHeader,
-  AdminEmptyState,
   AdminPageHeader,
   AdminTablePagination,
+  FancyEmpty,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
@@ -304,8 +304,10 @@ export function ScanAdmin() {
               {t("admin.scan.trigger.librariesError")}
             </Typography>
           ) : libraries.data.length === 0 ? (
-            <AdminEmptyState
+            <FancyEmpty
               icon={ScanLine}
+              motif="orbit"
+              framed={false}
               title={t("admin.scan.trigger.noLibrariesTitle")}
               body={t("admin.scan.trigger.noLibrariesBody")}
             />

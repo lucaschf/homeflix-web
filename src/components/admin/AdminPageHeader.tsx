@@ -106,7 +106,6 @@ export function AdminPageHeader({
               sx={{
                 mt: 1,
                 color: inkAlpha(0.55),
-                maxWidth: 720,
               }}
             >
               {subtitle}

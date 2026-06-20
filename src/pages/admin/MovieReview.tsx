@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Box, Snackbar, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { AlertCircle, Search } from "lucide-react";
+import { Check, ScanLine, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import {
   useMoviesNeedingReview,
   usePagedList,
@@ -12,13 +13,14 @@ import {
 import type { NeedsReviewMovie, TmdbSuggestion } from "../../api/types";
 import {
   AdminButton,
-  AdminEmptyState,
   AdminPageHeader,
   AdminTable,
   AdminTablePagination,
+  FancyEmpty,
   type AdminTableColumn,
 } from "../../components/admin";
 import { PromoteToSeriesConfirmDialog } from "../../components/admin/PromoteToSeriesConfirmDialog";
+import { ReviewTabs } from "./components/ReviewTabs";
 import { TmdbSuggestionsDialog } from "../../components/admin/TmdbSuggestionsDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { status, whiteAlpha } from "../../theme/tokens";
@@ -27,6 +29,7 @@ type Snack = { message: string; severity: "success" | "error" | "warning" } | nu
 
 export function MovieReview() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   useDocumentTitle(t("admin.reviews.title"));
 
   const { data: movies, isLoading, isError, refetch } = useMoviesNeedingReview();
@@ -187,6 +190,7 @@ export function MovieReview() {
         breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.review")]}
         title={t("admin.reviews.title")}
         subtitle={t("admin.reviews.subtitle")}
+        toolbar={<ReviewTabs />}
       />
 
       <AdminTable
@@ -197,10 +201,21 @@ export function MovieReview() {
         error={isError ? t("admin.reviews.loadError") : undefined}
         onRetry={() => void refetch()}
         emptyState={
-          <AdminEmptyState
-            icon={AlertCircle}
+          <FancyEmpty
+            icon={Check}
+            motif="cards"
             title={t("admin.reviews.empty")}
             body={t("admin.reviews.emptyHint")}
+            badge={t("admin.reviews.emptyBadge")}
+            primary={
+              <AdminButton
+                variant="primary"
+                icon={<ScanLine size={14} />}
+                onClick={() => navigate("/admin/scan")}
+              >
+                {t("admin.reviews.emptyCta")}
+              </AdminButton>
+            }
           />
         }
       />

@@ -1,8 +1,6 @@
-import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation } from "react-router-dom";
-import { peach } from "../../../theme/colors";
-import { inkAlpha, whiteAlpha } from "../../../theme/tokens";
+import { useLocation } from "react-router-dom";
+import { AdminTabs } from "../../../components/admin";
 
 const RUNS_PATH = "/admin/intros/runs";
 
@@ -24,38 +22,13 @@ export function IntroTabs() {
   const onRuns = pathname.startsWith(RUNS_PATH);
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        gap: 0.5,
-        borderBottom: `1px solid ${whiteAlpha(0.08)}`,
-      }}
-    >
-      {TABS.map((tab) => {
-        const active = tab.to === RUNS_PATH ? onRuns : !onRuns;
-        return (
-          <Box
-            key={tab.to}
-            component={Link}
-            to={tab.to}
-            sx={{
-              px: 1.75,
-              py: 1,
-              fontSize: "0.8125rem",
-              fontWeight: 500,
-              color: active ? peach.main : inkAlpha(0.65),
-              textDecoration: "none",
-              borderBottom: "2px solid",
-              borderColor: active ? peach.main : "transparent",
-              marginBottom: "-1px",
-              transition: "color 120ms ease, border-color 120ms ease",
-              "&:hover": { color: active ? peach.main : "text.primary" },
-            }}
-          >
-            {t(tab.labelKey)}
-          </Box>
-        );
-      })}
-    </Box>
+    <AdminTabs
+      tabs={TABS.map((tab) => ({
+        key: tab.to,
+        label: t(tab.labelKey),
+        to: tab.to,
+        active: tab.to === RUNS_PATH ? onRuns : !onRuns,
+      }))}
+    />
   );
 }

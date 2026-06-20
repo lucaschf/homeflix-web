@@ -47,6 +47,8 @@ import {
   AdminCard,
   AdminConfirmDialog,
   AdminPageHeader,
+  AdminTabs,
+  FancyEmpty,
 } from "../../components/admin";
 import { AdminDialog } from "../../components/admin/AdminDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -197,40 +199,32 @@ export function ConflictsAdmin() {
         breadcrumb={[t("admin.nav.group.catalog"), t("admin.nav.conflicts")]}
         title={t("admin.conflicts.title")}
         subtitle={t("admin.conflicts.subtitle")}
+        primaryCTA={
+          <AdminButton
+            variant="secondary"
+            icon={<RefreshCw size={14} />}
+            onClick={() => {
+              setSweepError(null);
+              setSweepConfirmOpen(true);
+            }}
+            disabled={sweep.isPending}
+          >
+            {sweep.isPending
+              ? t("admin.conflicts.sweep.running")
+              : t("admin.conflicts.sweep.button")}
+          </AdminButton>
+        }
+        toolbar={
+          <AdminTabs
+            tabs={TAB_DEFINITIONS.map((def) => ({
+              key: def.key,
+              label: t(def.labelKey),
+              active: activeTab === def.key,
+              onClick: () => changeTab(def.key),
+            }))}
+          />
+        }
       />
-
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{ mb: 2.5 }}
-        alignItems="center"
-        justifyContent="space-between"
-      >
-        <Stack direction="row" spacing={1}>
-          {TAB_DEFINITIONS.map((def) => (
-            <AdminButton
-              key={def.key}
-              variant={activeTab === def.key ? "primary" : "ghost"}
-              onClick={() => changeTab(def.key)}
-            >
-              {t(def.labelKey)}
-            </AdminButton>
-          ))}
-        </Stack>
-        <AdminButton
-          variant="secondary"
-          icon={<RefreshCw size={14} />}
-          onClick={() => {
-            setSweepError(null);
-            setSweepConfirmOpen(true);
-          }}
-          disabled={sweep.isPending}
-        >
-          {sweep.isPending
-            ? t("admin.conflicts.sweep.running")
-            : t("admin.conflicts.sweep.button")}
-        </AdminButton>
-      </Stack>
 
       {!isAuditView && selectedIds.size > 0 && (
         <Stack
@@ -286,25 +280,20 @@ export function ConflictsAdmin() {
           </Stack>
         </AdminCard>
       ) : paged.items.length === 0 ? (
-        <AdminCard>
-          <Stack alignItems="center" spacing={1} sx={{ py: 6 }}>
-            <ShieldCheck size={28} color={inkAlpha(0.4)} />
-            <Typography variant="body1" sx={{ color: inkAlpha(0.85) }}>
-              {t(
-                isAuditView
-                  ? "admin.conflicts.empty.auditTitle"
-                  : "admin.conflicts.empty.title",
-              )}
-            </Typography>
-            <Typography variant="body2" sx={{ color: inkAlpha(0.55) }}>
-              {t(
-                isAuditView
-                  ? "admin.conflicts.empty.auditSubtitle"
-                  : "admin.conflicts.empty.subtitle",
-              )}
-            </Typography>
-          </Stack>
-        </AdminCard>
+        <FancyEmpty
+          icon={ShieldCheck}
+          motif="orbit"
+          title={t(
+            isAuditView
+              ? "admin.conflicts.empty.auditTitle"
+              : "admin.conflicts.empty.title",
+          )}
+          body={t(
+            isAuditView
+              ? "admin.conflicts.empty.auditSubtitle"
+              : "admin.conflicts.empty.subtitle",
+          )}
+        />
       ) : (
         <Stack spacing={2.5}>
           {paged.items.map((conflict) => (

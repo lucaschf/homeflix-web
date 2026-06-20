@@ -11,6 +11,7 @@ export { AdminCard, AdminCardHeader } from "./AdminCard";
 export { AdminConfirmDialog } from "./AdminConfirmDialog";
 export { AdminDialog } from "./AdminDialog";
 export { AdminEmptyState } from "./AdminEmptyState";
+export { FancyEmpty, type EmptyMotif } from "./FancyEmpty";
 export { CreditsMarkerEditor } from "./CreditsMarkerEditor";
 export { AdminFormSection } from "./AdminFormSection";
 export { AdminInput } from "./AdminInput";
@@ -23,6 +24,7 @@ export {
   type AdminTableColumn,
   type TableDensity,
 } from "./AdminTable";
+export { AdminTabs, type AdminTab } from "./AdminTabs";
 export { AdminTablePagination } from "./AdminTablePagination";
 export { AdminToolbar, FilterChip, ToolbarSearch } from "./AdminToolbar";
 export { AdminTopbar } from "./AdminTopbar";

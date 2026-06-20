@@ -8,9 +8,9 @@ import {
   AdminBadge,
   AdminCard,
   AdminCardHeader,
-  AdminEmptyState,
   AdminPageHeader,
   AdminTablePagination,
+  FancyEmpty,
   type BadgeTone,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -73,44 +73,46 @@ export function IntroDetectionRunsAdmin() {
         toolbar={<IntroTabs />}
       />
 
-      <AdminCard>
-        <AdminCardHeader
-          icon={History}
-          title={t("admin.introRuns.history.title")}
-          subtitle={t("admin.introRuns.history.subtitle")}
-        />
-
-        {runs.isLoading ? (
-          <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-            {t("admin.introRuns.loading")}
-          </Typography>
-        ) : runs.isError ? (
-          <Typography variant="body2" color="error" sx={{ py: 2 }}>
-            {t("admin.introRuns.error")}
-          </Typography>
-        ) : runs.items.length === 0 ? (
-          <AdminEmptyState icon={History} title={t("admin.introRuns.empty")} />
-        ) : (
-          <Stack spacing={0.5}>
-            {runs.items.map((run) => (
-              <RunRow key={run.id} run={run} locale={i18n.language} />
-            ))}
-          </Stack>
-        )}
-
-        {(runs.items.length > 0 || runs.canGoPrevious) && (
-          <AdminTablePagination
-            pageNumber={runs.pageNumber}
-            canGoNext={runs.canGoNext}
-            canGoPrevious={runs.canGoPrevious}
-            onNext={runs.goNext}
-            onPrevious={runs.goPrevious}
-            isFetching={runs.isFetching}
-            pageSize={pageSize}
-            onPageSizeChange={setPageSize}
+      {!runs.isLoading && !runs.isError && runs.items.length === 0 && !runs.canGoPrevious ? (
+        <FancyEmpty icon={History} motif="rows" title={t("admin.introRuns.empty")} />
+      ) : (
+        <AdminCard>
+          <AdminCardHeader
+            icon={History}
+            title={t("admin.introRuns.history.title")}
+            subtitle={t("admin.introRuns.history.subtitle")}
           />
-        )}
-      </AdminCard>
+
+          {runs.isLoading ? (
+            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+              {t("admin.introRuns.loading")}
+            </Typography>
+          ) : runs.isError ? (
+            <Typography variant="body2" color="error" sx={{ py: 2 }}>
+              {t("admin.introRuns.error")}
+            </Typography>
+          ) : (
+            <Stack spacing={0.5}>
+              {runs.items.map((run) => (
+                <RunRow key={run.id} run={run} locale={i18n.language} />
+              ))}
+            </Stack>
+          )}
+
+          {(runs.items.length > 0 || runs.canGoPrevious) && (
+            <AdminTablePagination
+              pageNumber={runs.pageNumber}
+              canGoNext={runs.canGoNext}
+              canGoPrevious={runs.canGoPrevious}
+              onNext={runs.goNext}
+              onPrevious={runs.goPrevious}
+              isFetching={runs.isFetching}
+              pageSize={pageSize}
+              onPageSizeChange={setPageSize}
+            />
+          )}
+        </AdminCard>
+      )}
     </>
   );
 }

@@ -1073,13 +1073,15 @@
         "title": "Filmes",
         "subtitle": "Todos os filmes que seu perfil pode ver. Filtre, re-enriqueça ou remova daqui.",
         "emptyTitle": "Nenhum filme bate com seus filtros",
-        "emptyBody": "Afrouxe os filtros ou faça um scan da biblioteca para adicionar títulos."
+        "emptyBody": "Afrouxe os filtros ou faça um scan da biblioteca para adicionar títulos.",
+        "emptyCta": "Ir para Scan"
       },
       "series": {
         "title": "Séries",
         "subtitle": "Todas as séries que seu perfil pode ver. Filtre, re-enriqueça ou remova daqui.",
         "emptyTitle": "Nenhuma série bate com seus filtros",
-        "emptyBody": "Afrouxe os filtros ou faça um scan da biblioteca para adicionar títulos."
+        "emptyBody": "Afrouxe os filtros ou faça um scan da biblioteca para adicionar títulos.",
+        "emptyCta": "Ir para Scan"
       },
       "col": {
         "title": "Título",
@@ -1279,6 +1281,8 @@
       "subtitle": "Filmes que o enriquecimento não conseguiu casar com o TMDB. Escolha a entrada certa abaixo e o catálogo atualiza automaticamente.",
       "empty": "Nada para revisar.",
       "emptyHint": "Novas entradas aparecem aqui sempre que uma tentativa de enriquecimento não acha match no TMDB.",
+      "emptyBadge": "Fila zerada",
+      "emptyCta": "Rodar um scan",
       "loadError": "Não foi possível carregar a fila de revisão.",
       "retry": "Tentar novamente",
       "findOnTmdb": "Buscar no TMDB",
@@ -1330,6 +1334,8 @@
       "subtitle": "Séries que o enriquecimento não casou no TMDB, mais as marcadas como erradas. Escolha o item correto abaixo e o catálogo é atualizado automaticamente.",
       "empty": "Nada para revisar.",
       "emptyHint": "Novos itens aparecem aqui sempre que um enriquecimento de série não encontra correspondência no TMDB ou um admin marca uma como errada.",
+      "emptyBadge": "Fila zerada",
+      "emptyCta": "Rodar um scan",
       "loadError": "Não foi possível carregar a fila de revisão.",
       "findOnTmdb": "Buscar no TMDB",
       "table": {

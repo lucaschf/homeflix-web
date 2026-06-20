@@ -1,6 +1,6 @@
 import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Eye, Sparkles, Trash2 } from "lucide-react";
+import { Eye, ScanLine, Sparkles, Trash2, Tv } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
@@ -14,12 +14,13 @@ import {
 import type { SeriesSummary } from "../../api/types";
 import { ApiError } from "../../api/client";
 import {
+  AdminButton,
   AdminConfirmDialog,
-  AdminEmptyState,
   AdminPageHeader,
   AdminTable,
   AdminTablePagination,
   AdminToolbar,
+  FancyEmpty,
   FilterChip,
   ToolbarSearch,
   type AdminTableColumn,
@@ -316,9 +317,20 @@ export function SeriesAdmin() {
         error={isError ? t("admin.catalog.errorLoading") : undefined}
         onRetry={() => void refetch()}
         emptyState={
-          <AdminEmptyState
+          <FancyEmpty
+            icon={Tv}
+            motif="cards"
             title={t("admin.catalog.series.emptyTitle")}
             body={t("admin.catalog.series.emptyBody")}
+            primary={
+              <AdminButton
+                variant="primary"
+                icon={<ScanLine size={14} />}
+                onClick={() => navigate("/admin/scan")}
+              >
+                {t("admin.catalog.series.emptyCta")}
+              </AdminButton>
+            }
           />
         }
       />

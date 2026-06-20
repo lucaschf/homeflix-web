@@ -27,9 +27,9 @@ import {
   AdminCard,
   AdminCardHeader,
   AdminDialog,
-  AdminEmptyState,
   AdminPageHeader,
   type BadgeTone,
+  FancyEmpty,
   FilterChip,
   ToolbarSearch,
 } from "../../components/admin";
@@ -198,31 +198,21 @@ export function IntroPicker() {
           </Box>
         </AdminCard>
 
-        <AdminCard
-          sx={{
-            maxHeight: "calc(100vh - 240px)",
-            overflowY: "auto",
-            ...(!seriesDetail && {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: 360,
-            }),
-          }}
-        >
-          {seriesDetail ? (
+        {seriesDetail ? (
+          <AdminCard sx={{ maxHeight: "calc(100vh - 240px)", overflowY: "auto" }}>
             <SeriesEpisodes
               detail={seriesDetail}
               filter={filter}
               onFilterChange={setFilter}
             />
-          ) : (
-            <AdminEmptyState
-              icon={Tv}
-              title={t("admin.intros.selectSeriesHint")}
-            />
-          )}
-        </AdminCard>
+          </AdminCard>
+        ) : (
+          <FancyEmpty
+            icon={Tv}
+            motif="cards"
+            title={t("admin.intros.selectSeriesHint")}
+          />
+        )}
       </Box>
     </>
   );

@@ -1,5 +1,5 @@
 import { Box, Tooltip, Typography } from "@mui/material";
-import { Inbox } from "lucide-react";
+import { ScanLine, Sparkles } from "lucide-react";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -9,8 +9,8 @@ import type {
 } from "../../../api/types";
 import {
   AdminBadge,
-  AdminEmptyState,
   AdminTable,
+  FancyEmpty,
   type AdminTableColumn,
   type BadgeTone,
 } from "../../../components/admin";
@@ -180,8 +180,9 @@ export function ScanRunHistoryTable({
       error={isError ? t("admin.history.errorLoading") : undefined}
       onRetry={onRetry}
       emptyState={
-        <AdminEmptyState
-          icon={Inbox}
+        <FancyEmpty
+          icon={kind === "scan" ? ScanLine : Sparkles}
+          motif="rows"
           title={
             kind === "scan"
               ? t("admin.scan.history.emptyTitle")

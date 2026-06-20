@@ -28,13 +28,13 @@ import {
   AdminButton,
   AdminConfirmDialog,
   AdminDialog,
-  AdminEmptyState,
   AdminFormSection,
   AdminInput,
   AdminPageHeader,
   AdminTable,
   AdminTablePagination,
   AdminToolbar,
+  FancyEmpty,
   FilterChip,
   type AdminTableColumn,
 } from "../../components/admin";
@@ -225,11 +225,12 @@ export function UsersAdmin() {
         onRetry={() => void refetch()}
         onRowClick={(u) => navigate(`/admin/users/${u.id}`)}
         emptyState={
-          <AdminEmptyState
+          <FancyEmpty
             icon={UsersIcon}
+            motif="orbit"
             title={t("admin.users.emptyTitle")}
             body={t("admin.users.emptyBody")}
-            cta={
+            primary={
               <AdminButton
                 variant="primary"
                 icon={<Plus size={15} />}

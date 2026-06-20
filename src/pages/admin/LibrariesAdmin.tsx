@@ -11,9 +11,9 @@ import {
   AdminBadge,
   AdminButton,
   AdminConfirmDialog,
-  AdminEmptyState,
   AdminPageHeader,
   AdminTable,
+  FancyEmpty,
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -235,11 +235,12 @@ export function LibrariesAdmin() {
         onRetry={() => void refetch()}
         onRowClick={(lib) => navigate(`/admin/libraries/${lib.id}`)}
         emptyState={
-          <AdminEmptyState
+          <FancyEmpty
             icon={LibraryIcon}
+            motif="orbit"
             title={t("admin.libraries.emptyTitle")}
             body={t("admin.libraries.emptyBody")}
-            cta={
+            primary={
               <AdminButton
                 variant="primary"
                 icon={<Plus size={15} />}

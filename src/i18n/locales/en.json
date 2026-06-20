@@ -1074,13 +1074,15 @@
         "title": "Movies",
         "subtitle": "Every movie your profile can see. Filter, re-enrich or remove items here.",
         "emptyTitle": "No movies match your filters",
-        "emptyBody": "Loosen the filters or scan a library to add titles."
+        "emptyBody": "Loosen the filters or scan a library to add titles.",
+        "emptyCta": "Go to Scan"
       },
       "series": {
         "title": "Series",
         "subtitle": "Every series your profile can see. Filter, re-enrich or remove items here.",
         "emptyTitle": "No series match your filters",
-        "emptyBody": "Loosen the filters or scan a library to add titles."
+        "emptyBody": "Loosen the filters or scan a library to add titles.",
+        "emptyCta": "Go to Scan"
       },
       "col": {
         "title": "Title",
@@ -1280,6 +1282,8 @@
       "subtitle": "Movies the enricher couldn't match against TMDB. Pick the right entry below and the catalog refreshes automatically.",
       "empty": "Nothing to review.",
       "emptyHint": "New entries land here whenever an enrichment attempt can't find a TMDB match.",
+      "emptyBadge": "Queue clear",
+      "emptyCta": "Run a scan",
       "loadError": "Could not load the review queue.",
       "retry": "Retry",
       "findOnTmdb": "Find on TMDB",
@@ -1331,6 +1335,8 @@
       "subtitle": "Series the enricher couldn't match against TMDB, plus any flagged as wrong. Pick the right entry below and the catalog refreshes automatically.",
       "empty": "Nothing to review.",
       "emptyHint": "New entries land here whenever a series enrichment can't find a TMDB match or an admin flags one as wrong.",
+      "emptyBadge": "Queue clear",
+      "emptyCta": "Run a scan",
       "loadError": "Could not load the review queue.",
       "findOnTmdb": "Find on TMDB",
       "table": {

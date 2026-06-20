@@ -143,14 +143,18 @@ function App() {
                   />
                   <Route path="/admin/credits" element={<CreditsStatusAdmin />} />
                   <Route path="/admin/catalog/review" element={<MovieReview />} />
-                  <Route path="/admin/catalog/series-review" element={<SeriesReview />} />
+                  <Route path="/admin/catalog/review/series" element={<SeriesReview />} />
                   <Route path="/admin/catalog/conflicts" element={<ConflictsAdmin />} />
-                  {/* Legacy redirect — bookmarks / open tabs landing
-                      on the old movie-review path get folded into the
-                      new catalog/review namespace. */}
+                  {/* Legacy redirects — bookmarks / open tabs landing on
+                      the old movie- and series-review paths get folded
+                      into the unified catalog/review namespace. */}
                   <Route
                     path="/admin/movies/review"
                     element={<Navigate to="/admin/catalog/review" replace />}
+                  />
+                  <Route
+                    path="/admin/catalog/series-review"
+                    element={<Navigate to="/admin/catalog/review/series" replace />}
                   />
                   <Route path="/admin/users" element={<UsersAdmin />} />
                   <Route path="/admin/users/:id" element={<UserDetailAdmin />} />

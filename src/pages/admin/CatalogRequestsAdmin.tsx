@@ -13,10 +13,10 @@ import { ApiError } from "../../api/client";
 import {
   AdminBadge,
   AdminConfirmDialog,
-  AdminEmptyState,
   AdminPageHeader,
   AdminTable,
   AdminTablePagination,
+  FancyEmpty,
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
@@ -213,8 +213,9 @@ export function CatalogRequestsAdmin() {
         error={isError ? t("admin.requests.errorLoading") : undefined}
         onRetry={() => void refetch()}
         emptyState={
-          <AdminEmptyState
+          <FancyEmpty
             icon={Inbox}
+            motif="orbit"
             title={t("admin.requests.emptyTitle")}
             body={t("admin.requests.emptyBody")}
           />
