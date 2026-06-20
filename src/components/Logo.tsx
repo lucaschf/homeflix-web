@@ -30,8 +30,10 @@ export function Logo({
       aria-label={title}
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect x="36" y="98" width="128" height="78" rx="10" fill={fg} />
-      <path d="M 28 106 L 100 50 L 172 106 Z" fill={fg} />
+      <path
+        d="M 100 50 L 172 106 L 164 106 L 164 166 Q 164 176 154 176 L 46 176 Q 36 176 36 166 L 36 106 L 28 106 Z"
+        fill={fg}
+      />
       <path d="M 130 86 L 130 36 L 168 60 Z" fill={accentColor} />
       {!simplified && (
         <>

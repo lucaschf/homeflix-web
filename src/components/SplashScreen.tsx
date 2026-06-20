@@ -17,8 +17,7 @@ interface SplashScreenProps {
  * The choreography mirrors the design handoff's general intro spec
  * (handoff README §"Animated Intro Specs"):
  *
- *   0–25%     walls slide up from the bottom of the silhouette
- *   25–45%    roof scales from its apex
+ *   0–25%     the house silhouette rises from the bottom
  *   45–60%    peach chimney pops up over the roof
  *   55–80%    "HomeFlix" wordmark slides in from the left + fades up
  *   80–100%   hold, then a single fade-out covers the handoff
@@ -71,10 +70,6 @@ export function SplashScreen({ onDone, holdMs = 2200, exitMs = 360 }: SplashScre
           "0%": { transform: "scaleY(0)", transformOrigin: "bottom" },
           "100%": { transform: "scaleY(1)", transformOrigin: "bottom" },
         },
-        "@keyframes splashRoofIn": {
-          "0%": { transform: "scale(0)", transformOrigin: "100px 50px", opacity: 0 },
-          "100%": { transform: "scale(1)", transformOrigin: "100px 50px", opacity: 1 },
-        },
         "@keyframes splashChimneyPop": {
           "0%": { transform: "translateY(20px) scale(0.6)", opacity: 0 },
           "60%": { transform: "translateY(-2px) scale(1.05)", opacity: 1 },
@@ -98,24 +93,13 @@ export function SplashScreen({ onDone, holdMs = 2200, exitMs = 360 }: SplashScre
         // doesn't read as a tiny floating glyph on a 1080p+ screen.
         sx={{ width: { xs: 160, sm: 200, md: 220 }, height: { xs: 160, sm: 200, md: 220 } }}
       >
-        {/* House body — slides up from the floor */}
-        <rect
-          x="36"
-          y="98"
-          width="128"
-          height="78"
-          rx="10"
-          fill={fg}
-          style={{
-            animation: "splashWallsUp 360ms cubic-bezier(0.22, 1, 0.36, 1) 0ms both",
-          }}
-        />
-        {/* Roof — scales in from the apex once the walls land */}
+        {/* House (roof + body as one shape so there's no seam line
+            where they meet) — rises up from the floor */}
         <path
-          d="M 28 106 L 100 50 L 172 106 Z"
+          d="M 100 50 L 172 106 L 164 106 L 164 166 Q 164 176 154 176 L 46 176 Q 36 176 36 166 L 36 106 L 28 106 Z"
           fill={fg}
           style={{
-            animation: "splashRoofIn 320ms cubic-bezier(0.22, 1, 0.36, 1) 280ms both",
+            animation: "splashWallsUp 420ms cubic-bezier(0.22, 1, 0.36, 1) 0ms both",
           }}
         />
         {/* Chimney = peach play arrow — pops up after the roof seats */}
