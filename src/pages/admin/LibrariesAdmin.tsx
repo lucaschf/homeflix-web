@@ -18,6 +18,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { accentCoral, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 
@@ -168,7 +169,7 @@ export function LibrariesAdmin() {
         width: "140px",
         muted: true,
         render: (lib) =>
-          lib.last_scan_at ? new Date(lib.last_scan_at).toLocaleDateString() : "—",
+          lib.last_scan_at ? parseServerDate(lib.last_scan_at).toLocaleDateString() : "—",
       },
       {
         id: "actions",

@@ -21,6 +21,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
+import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 
@@ -172,7 +173,7 @@ export function CatalogRequestsAdmin() {
       label: t("admin.requests.col.requestedAt"),
       width: "140px",
       muted: true,
-      render: (r) => new Date(r.requested_at).toLocaleDateString(),
+      render: (r) => parseServerDate(r.requested_at).toLocaleDateString(),
     },
     {
       id: "actions",

@@ -19,6 +19,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { inkAlpha, peachAlpha, status as statusTone, whiteAlpha } from "../../theme/tokens";
+import { parseServerTime } from "../../utils/datetime";
 
 type TFn = (key: string, vars?: Record<string, unknown>) => string;
 
@@ -45,7 +46,7 @@ function formatLastScanValue(
 ): string {
   if (!scan) return t("admin.overview.lastScan.never");
   const reference = scan.finished_at ?? scan.started_at;
-  const diffMs = Date.now() - new Date(reference).getTime();
+  const diffMs = Date.now() - parseServerTime(reference);
   const seconds = Math.round(diffMs / 1000);
   const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
   if (Math.abs(seconds) < 60) return rtf.format(-seconds, "second");

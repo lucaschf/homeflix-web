@@ -40,6 +40,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { accentCoral, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 type RoleFilter = "all" | "admin" | "member";
@@ -157,7 +158,7 @@ export function UsersAdmin() {
         label: t("admin.users.col.created"),
         width: "140px",
         muted: true,
-        render: (u) => new Date(u.created_at).toLocaleDateString(),
+        render: (u) => parseServerDate(u.created_at).toLocaleDateString(),
       },
       {
         id: "actions",

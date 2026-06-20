@@ -53,6 +53,7 @@ import {
 import { AdminDialog } from "../../components/admin/AdminDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { inkAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { parseServerDate } from "../../utils/datetime";
 
 const KB = 1024;
 const MB = KB * 1024;
@@ -412,13 +413,13 @@ function ConflictRow({
 }) {
   const { t, i18n } = useTranslation();
   const detected = useMemo(
-    () => new Date(conflict.detected_at).toLocaleString(i18n.language),
+    () => parseServerDate(conflict.detected_at).toLocaleString(i18n.language),
     [conflict.detected_at, i18n.language],
   );
   const resolvedAt = useMemo(
     () =>
       conflict.resolved_at
-        ? new Date(conflict.resolved_at).toLocaleString(i18n.language)
+        ? parseServerDate(conflict.resolved_at).toLocaleString(i18n.language)
         : null,
     [conflict.resolved_at, i18n.language],
   );

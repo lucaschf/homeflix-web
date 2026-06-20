@@ -34,6 +34,7 @@ import {
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { buildLanguageOptions } from "../../i18n/languageOptions";
 import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
+import { parseServerDate } from "../../utils/datetime";
 
 type LibraryType = "movies" | "series";
 type SubtitleMode = "always" | "foreign" | "forced" | "none";
@@ -214,7 +215,7 @@ export function LibraryDetailAdmin() {
       ? `${detail.data.id} · ${
           detail.data.last_scan_at
             ? t("admin.libraries.detail.lastScan", {
-                date: new Date(detail.data.last_scan_at).toLocaleDateString(),
+                date: parseServerDate(detail.data.last_scan_at).toLocaleDateString(),
               })
             : t("admin.libraries.detail.neverScanned")
         }`

@@ -15,6 +15,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { inkAlpha, whiteAlpha } from "../../theme/tokens";
+import { parseServerDate } from "../../utils/datetime";
 import { IntroTabs } from "./components/IntroTabs";
 
 const ALGORITHM_LABELS: Record<string, string> = {
@@ -34,7 +35,7 @@ function outcomeTone(outcome: string): BadgeTone {
 }
 
 function formatWhen(iso: string, locale: string): string {
-  const d = new Date(iso);
+  const d = parseServerDate(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString(locale, {
     month: "short",

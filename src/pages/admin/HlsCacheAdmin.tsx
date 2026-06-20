@@ -17,6 +17,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
+import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 
@@ -49,7 +50,7 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
   const percent = Math.round(ratio * 100);
   const tone = toneForOccupancy(ratio);
   const lastCleared = stats.last_cleared_at
-    ? new Date(stats.last_cleared_at).toLocaleString()
+    ? parseServerDate(stats.last_cleared_at).toLocaleString()
     : null;
 
   return (

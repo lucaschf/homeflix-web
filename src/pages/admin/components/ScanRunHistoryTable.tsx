@@ -14,6 +14,7 @@ import {
   type AdminTableColumn,
   type BadgeTone,
 } from "../../../components/admin";
+import { parseServerDate, parseServerTime } from "../../../utils/datetime";
 
 const STATUS_TONE: Record<AdminScanRunStatus, BadgeTone> = {
   running: "info",
@@ -24,7 +25,7 @@ const STATUS_TONE: Record<AdminScanRunStatus, BadgeTone> = {
 
 function formatDuration(started: string, finished: string | null): string {
   if (!finished) return "—";
-  const ms = new Date(finished).getTime() - new Date(started).getTime();
+  const ms = parseServerTime(finished) - parseServerTime(started);
   if (ms < 1000) return "<1s";
   const seconds = Math.floor(ms / 1000);
   if (seconds < 60) return `${seconds}s`;
@@ -88,7 +89,7 @@ export function ScanRunHistoryTable({
         render: (r) => (
           <Box>
             <Typography variant="body2">
-              {new Date(r.started_at).toLocaleString()}
+              {parseServerDate(r.started_at).toLocaleString()}
             </Typography>
             <Typography
               variant="caption"

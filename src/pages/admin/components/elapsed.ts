@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { parseServerTime } from "../../../utils/datetime";
 
 /**
  * Live-updating "elapsed seconds" counter for the in-flight banner
@@ -19,7 +20,7 @@ export function useElapsedSeconds(startIso: string | undefined): number {
   }, [startIso]);
 
   if (!startIso) return 0;
-  return Math.max(0, Math.floor((now - new Date(startIso).getTime()) / 1000));
+  return Math.max(0, Math.floor((now - parseServerTime(startIso)) / 1000));
 }
 
 /**

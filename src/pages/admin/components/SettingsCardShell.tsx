@@ -12,6 +12,7 @@ import {
   AdminCardHeader,
 } from "../../../components/admin";
 import { whiteAlpha } from "../../../theme/tokens";
+import { parseServerDate } from "../../../utils/datetime";
 
 interface SettingsCardShellProps {
   /** Section title (already localised). */
@@ -75,7 +76,7 @@ export function SettingsCardShell({
   const lastEdited = useMemo(() => {
     if (!updatedAt) return null;
     try {
-      return new Date(updatedAt).toLocaleString(i18n.language);
+      return parseServerDate(updatedAt).toLocaleString(i18n.language);
     } catch {
       return updatedAt;
     }
