@@ -206,6 +206,7 @@ export interface MovieDetail {
   needs_enrichment_review: boolean;
   created_at: string;
   updated_at: string;
+  credits: CreditsMarkerOutput | null;
 }
 
 export interface IntroMarkerOutput {
@@ -214,6 +215,36 @@ export interface IntroMarkerOutput {
   source: "AUTO_DETECTED" | "MANUAL";
   confidence: number | null;
   detected_at: string;
+}
+
+/** End-credits onset marker (credits run to the file end, so start only). */
+export interface CreditsMarkerOutput {
+  start_seconds: number;
+  source: "AUTO_DETECTED" | "MANUAL";
+  confidence: number | null;
+  detected_at: string;
+}
+
+/** One title's credits-detection status (admin observability). */
+export interface CreditsStatusItem {
+  media_id: string;
+  media_type: "movie" | "episode";
+  title: string;
+  state: string;
+  start_seconds: number | null;
+  source: "AUTO_DETECTED" | "MANUAL" | null;
+  confidence: number | null;
+  /** Episode context for deep-linking the editor; null for movies. */
+  series_id: string | null;
+  season_number: number | null;
+  episode_number: number | null;
+}
+
+/** A page of credits-status rows + the unfiltered per-state counts. */
+export interface CreditsStatusData {
+  items: CreditsStatusItem[];
+  total: number;
+  counts: Record<string, number>;
 }
 
 export interface EpisodeOutput {
@@ -231,6 +262,7 @@ export interface EpisodeOutput {
   scrub_preview_path: string | null;
   air_date: string | null;
   intro: IntroMarkerOutput | null;
+  credits: CreditsMarkerOutput | null;
   progress_percentage: number | null;
   position_seconds: number | null;
   watch_status: string | null;
@@ -503,6 +535,7 @@ export type AdminSettingKey =
   | "scheduler"
   | "thumbnail_backfill"
   | "intro_detection"
+  | "credits_detection"
   | "streaming"
   | "avatar"
   | "scan_dedup";
@@ -569,6 +602,23 @@ export interface IntroDetectionSettings {
 }
 
 /**
+ * Credits detection bucket — per-file combined detector (edge + motion).
+ * Unlike intro detection there is no algorithm selection: one detector
+ * runs both signals and keeps the latest-onset candidate.
+ */
+export interface CreditsDetectionSettings {
+  enabled: boolean;
+  batch_size: number;
+  interval_minutes: number;
+  analysis_window_seconds: number;
+  frame_sample_fps: number;
+  min_confidence: number;
+  min_credits_seconds: number;
+  edge_rel_factor: number;
+  motion_rel_factor: number;
+}
+
+/**
  * Video encoder selection for the transcode + sprite paths.
  *
  * - ``auto`` — probe for a working NVENC encoder and use it, else
@@ -625,6 +675,7 @@ export type AdminSettingsValue =
   | SchedulerSettings
   | ThumbnailBackfillSettings
   | IntroDetectionSettings
+  | CreditsDetectionSettings
   | StreamingSettings
   | AvatarSettings
   | ScanDedupSettings;

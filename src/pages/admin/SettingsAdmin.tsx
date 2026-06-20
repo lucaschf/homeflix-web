@@ -7,6 +7,7 @@ import type {
   AdminSettingDetail,
   AdminSettingKey,
   AvatarSettings,
+  CreditsDetectionSettings,
   IntroDetectionSettings,
   ScanDedupSettings,
   SchedulerSettings,
@@ -21,6 +22,7 @@ import {
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { status, whiteAlpha } from "../../theme/tokens";
 import { AvatarSettingsCard } from "./components/AvatarSettingsCard";
+import { CreditsDetectionSettingsCard } from "./components/CreditsDetectionSettingsCard";
 import { IntroDetectionSettingsCard } from "./components/IntroDetectionSettingsCard";
 import { ScanDedupSettingsCard } from "./components/ScanDedupSettingsCard";
 import { SchedulerSettingsCard } from "./components/SchedulerSettingsCard";
@@ -109,6 +111,7 @@ export function SettingsAdmin() {
   const scheduler = detailFor(data, "scheduler");
   const thumbnailBackfill = detailFor(data, "thumbnail_backfill");
   const introDetection = detailFor(data, "intro_detection");
+  const creditsDetection = detailFor(data, "credits_detection");
   const streaming = detailFor(data, "streaming");
   const avatar = detailFor(data, "avatar");
   const scanDedup = detailFor(data, "scan_dedup");
@@ -164,6 +167,17 @@ export function SettingsAdmin() {
             detail={{
               ...introDetection,
               value: introDetection.value as IntroDetectionSettings,
+            }}
+            onSuccess={notifySuccess}
+            onError={notifyError}
+          />
+        )}
+        {creditsDetection && (
+          <CreditsDetectionSettingsCard
+            key={creditsDetection.updated_at ?? "default"}
+            detail={{
+              ...creditsDetection,
+              value: creditsDetection.value as CreditsDetectionSettings,
             }}
             onSuccess={notifySuccess}
             onError={notifyError}

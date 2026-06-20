@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import Hls from "hls.js";
-import { ArrowLeft, MapPin, Save, Trash2, Zap } from "lucide-react";
+import { ArrowLeft, MapPin, Save, ScrollText, Trash2, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -30,6 +30,7 @@ import {
   AdminDialog,
   AdminInput,
   AdminPageHeader,
+  CreditsMarkerEditor,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { accentGold, inkAlpha, status, whiteAlpha } from "../../theme/tokens";
@@ -141,6 +142,7 @@ function EditorForm({
   const episodeId = episode.id;
   const duration = episode.duration_seconds;
 
+  const [creditsOpen, setCreditsOpen] = useState(false);
   const [startSeconds, setStartSeconds] = useState<number>(episode.intro?.start_seconds ?? 0);
   const [endSeconds, setEndSeconds] = useState<number>(episode.intro?.end_seconds ?? 0);
   const [autoAdvance, setAutoAdvance] = useState(true);
@@ -445,6 +447,14 @@ function EditorForm({
               >
                 {t("admin.intros.clear")}
               </AdminButton>
+              <AdminButton
+                variant="secondary"
+                icon={<ScrollText size={14} />}
+                onClick={() => setCreditsOpen(true)}
+                disabled={!episodeId}
+              >
+                {t("admin.credits.editButton")}
+              </AdminButton>
               <Typography
                 variant="metaMono"
                 color="text.secondary"
@@ -501,6 +511,19 @@ function EditorForm({
           </Stack>
         </AdminCard>
       </Stack>
+
+      {creditsOpen && episodeId && (
+        <CreditsMarkerEditor
+          open
+          onClose={() => setCreditsOpen(false)}
+          mediaId={episodeId}
+          mediaTitle={episode.title}
+          durationSeconds={duration}
+          marker={episode.credits}
+          seriesId={seriesId}
+          suggestedSeconds={currentTime}
+        />
+      )}
 
       <AdminDialog
         open={pendingBulk !== null}

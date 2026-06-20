@@ -403,6 +403,8 @@ export function Player() {
 
   const episodeDuration = currentEpisode?.duration_seconds ?? 0;
   const currentIntro = currentEpisode?.intro ?? null;
+  // End-credits onset — episode marker for series, movie marker for films.
+  const currentCredits = isMovie ? (movieData?.credits ?? null) : (currentEpisode?.credits ?? null);
 
   // Compute next episode for auto-advance
   const nextEpisode = useMemo(() => {
@@ -554,6 +556,12 @@ export function Player() {
   const [playing, setPlaying] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
   const [nextEpCountdown, setNextEpCountdown] = useState<number | null>(null);
+  // Netflix-style post-credits overlay for movies (series reuse the
+  // next-episode overlay instead).
+  const [movieCreditsActive, setMovieCreditsActive] = useState(false);
+  // Fires the credits trigger at most once per playback; reset when the
+  // media changes.
+  const creditsHandledRef = useRef(false);
   const [episodeDrawerOpen, setEpisodeDrawerOpen] = useState(false);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1118,7 +1126,10 @@ export function Player() {
   const seriesDetailPath = params.seriesId ? `/series/${params.seriesId}` : "/";
 
   const goToNextEpisode = useCallback(() => {
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
     setNextEpCountdown(null);
     if (nextEpisode) {
       navigate(`/play/episode/${params.seriesId}/${nextEpisode.season}/${nextEpisode.episode}`, { replace: true });
@@ -1168,11 +1179,79 @@ export function Player() {
   }, [currentIntro, seekTo]);
 
   const cancelNextEpisode = useCallback(() => {
-    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
     setNextEpCountdown(null);
   }, []);
 
-  // Start countdown when episode ends
+  // Start the "next episode in 10s" countdown. Idempotent — bails when a
+  // countdown is already running, so the credits trigger and the native
+  // ``ended`` event can both call it without double-starting the timer.
+  const startNextEpisodeCountdown = useCallback(() => {
+    if (!nextEpisode || countdownTimerRef.current) return;
+    setNextEpCountdown(10);
+    countdownTimerRef.current = setInterval(() => {
+      setNextEpCountdown((prev) => {
+        if (prev === null || prev <= 1) {
+          if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [nextEpisode]);
+
+  // Mark the title watched by saving progress at (near) its full
+  // duration so the backend's completion threshold flips it to
+  // ``completed``. Used when the credits trigger fires.
+  const markWatched = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !mediaId || !displayDuration) return;
+    saveProgressRef.current({
+      media_id: mediaId,
+      media_type: mediaType,
+      position_seconds: Math.floor(displayDuration),
+      duration_seconds: Math.floor(displayDuration),
+      audio_track: hlsRef.current?.audioTrack,
+      subtitle_track: hlsRef.current?.subtitleTrack,
+    });
+  }, [mediaId, mediaType, displayDuration]);
+
+  // Reset the one-shot credits guard + movie overlay whenever the media
+  // changes (next episode, different movie).
+  useEffect(() => {
+    creditsHandledRef.current = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMovieCreditsActive(false);
+  }, [mediaId]);
+
+  // Credits trigger: once playback passes the detected credits onset,
+  // mark the title watched and — for series — start the auto-next
+  // countdown (the existing next-episode overlay renders it); for movies
+  // surface the Netflix-style post-credits overlay. Fires once per
+  // playback (``creditsHandledRef``). When there is no credits marker
+  // this never runs and the native ``ended`` event remains the fallback.
+  useEffect(() => {
+    if (!currentCredits || creditsHandledRef.current) return;
+    if (currentTime < currentCredits.start_seconds) return;
+    creditsHandledRef.current = true;
+    markWatched();
+    if (isMovie) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMovieCreditsActive(true);
+    } else {
+      startNextEpisodeCountdown();
+    }
+  }, [currentTime, currentCredits, isMovie, markWatched, startNextEpisodeCountdown]);
+
+  // Start countdown when episode ends (fallback when no credits marker
+  // fired, or when the credits countdown was cancelled). ``start...``
+  // bails if a countdown is already running.
   useEffect(() => {
     const video = videoRef.current;
     if (!video || isMovie) return;
@@ -1183,21 +1262,12 @@ export function Player() {
         navigate(seriesDetailPath, { replace: true });
         return;
       }
-      setNextEpCountdown(10);
-      countdownTimerRef.current = setInterval(() => {
-        setNextEpCountdown((prev) => {
-          if (prev === null || prev <= 1) {
-            if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      startNextEpisodeCountdown();
     };
 
     video.addEventListener("ended", onEnded);
     return () => video.removeEventListener("ended", onEnded);
-  }, [isMovie, nextEpisode, navigate, saveCurrentProgress, seriesDetailPath]);
+  }, [isMovie, nextEpisode, navigate, saveCurrentProgress, seriesDetailPath, startNextEpisodeCountdown]);
 
   // Navigate when countdown reaches 0. The state-in-effect lint is
   // unavoidable here: `goToNextEpisode` calls `navigate(...)` AND
@@ -1890,6 +1960,69 @@ export function Player() {
             }}
           >
             {t("player.nextEpisode")}
+          </Button>
+        </Box>
+      )}
+
+      {/* Movie post-credits overlay (Netflix-style) — once the credits
+          roll the movie is marked watched; offer to head back or keep
+          watching. Dismissible so the user can sit through the credits. */}
+      {isMovie && movieCreditsActive && (
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: { xs: 80, md: 120 },
+            right: { xs: 16, md: 48 },
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            bgcolor: scrim(0.85),
+            backdropFilter: "blur(8px)",
+            borderRadius: 2,
+            p: { xs: 1.5, md: 2 },
+            zIndex: 10,
+            opacity: showControls ? 1 : 0,
+            transition: "opacity 300ms",
+            pointerEvents: showControls ? "auto" : "none",
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+              {t("player.creditsRolling")}
+            </Typography>
+            <Typography variant="body2" color="overlayText.primary" fontWeight={600} noWrap>
+              {t("player.markedWatched")}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setMovieCreditsActive(false)}
+            sx={{
+              color: "text.secondary",
+              borderColor: whiteAlpha(0.3),
+              "&:hover": { borderColor: whiteAlpha(0.5) },
+              minWidth: 0,
+              px: 1.5,
+              py: 1.2,
+            }}
+          >
+            {t("player.dismiss")}
+          </Button>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={() => navigate(`/movie/${params.movieId}`, { replace: true })}
+            sx={{
+              minWidth: 0,
+              px: 1.5,
+              py: 1.2,
+              bgcolor: whiteAlpha(1),
+              color: neutral[900],
+              "&:hover": { bgcolor: whiteAlpha(0.85) },
+            }}
+          >
+            {t("player.backToMovie")}
           </Button>
         </Box>
       )}
