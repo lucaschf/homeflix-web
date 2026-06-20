@@ -239,7 +239,11 @@
     "preparing": "Preparing video…",
     "episodes": "Episodes",
     "notAvailable": "not available",
-    "skipIntro": "Skip Intro"
+    "skipIntro": "Skip Intro",
+    "creditsRolling": "Credits",
+    "markedWatched": "Marked as watched",
+    "dismiss": "Dismiss",
+    "backToMovie": "Back to movie"
   },
   "admin": {
     "title": "Admin",
@@ -254,6 +258,7 @@
       "enrich": "Enrich",
       "intros": "Intros",
       "introRuns": "Detection runs",
+      "credits": "Credits",
       "requests": "Catalog requests",
       "conflicts": "Conflicts",
       "users": "Users",
@@ -678,6 +683,8 @@
         "zeroTo32": "Must be between 0 and 32.",
         "zeroTo64": "Must be between 0 and 64.",
         "greaterThanZero": "Must be greater than 0.",
+        "greaterThanOne": "Must be greater than 1.",
+        "betweenZeroOne": "Must be between 0.0 and 1.0 (exclusive).",
         "oneTo20": "Must be between 1 and 20.",
         "sixtyFourTo1024": "Must be between 64 and 1024.",
         "minLessThanMax": "Min must be less than max."
@@ -687,6 +694,7 @@
         "seconds": "seconds",
         "items": "items per tick",
         "seasons": "seasons per tick",
+        "files": "files per tick",
         "threads": "threads",
         "hashes": "consecutive misses",
         "frames": "consecutive misses",
@@ -811,6 +819,41 @@
         },
         "snack": {
           "saved": "Intro detection settings saved."
+        }
+      },
+      "creditsDetection": {
+        "title": "Credits detection",
+        "subtitle": "Per-file end-credits detection (mark-watched, auto-next, skip). Combines edge/text density and low-motion signals — best-effort and content-dependent; correct misses with the manual editor.",
+        "enabled": {
+          "label": "Enabled",
+          "helper": "Run the periodic per-file credits-detection job. Requires ffmpeg + ffprobe on the host."
+        },
+        "cadence": {
+          "label": "Cadence",
+          "helper": "How many files each tick analyses and how often the job runs."
+        },
+        "batchSize": { "label": "Batch size" },
+        "interval": { "label": "Interval" },
+        "sampling": {
+          "label": "Sampling",
+          "helper": "How much of each file's trailing window to analyse, and how densely to sample it."
+        },
+        "analysisWindow": { "label": "Analysis window" },
+        "frameSampleFps": { "label": "Frame sample rate" },
+        "confidence": {
+          "label": "Confidence & minimum length",
+          "helper": "Minimum detector confidence before a marker is saved, and the shortest run that counts as credits."
+        },
+        "minConfidence": { "label": "Min confidence" },
+        "minCreditsSeconds": { "label": "Min credits length" },
+        "thresholds": {
+          "label": "Signal thresholds",
+          "helper": "Edge factor (× the window median above which a frame is text-heavy) and motion factor (fraction of the median below which a frame is low-activity)."
+        },
+        "edgeRelFactor": { "label": "Edge factor" },
+        "motionRelFactor": { "label": "Motion factor" },
+        "snack": {
+          "saved": "Credits detection settings saved."
         }
       },
       "streaming": {
@@ -1110,6 +1153,60 @@
         "COMPLETED": "Completed",
         "INSUFFICIENT_EPISODES": "Insufficient",
         "FAILED": "Failed"
+      }
+    },
+    "credits": {
+      "editButton": "Edit credits",
+      "source": {
+        "auto": "Auto",
+        "manual": "Manual"
+      },
+      "status": {
+        "title": "Credits detection",
+        "subtitle": "Which titles have had their end-credits detected. Click a row to open its editor and fix a miss.",
+        "totalLabel": "{{count}} total",
+        "allStates": "All states",
+        "loadError": "Could not load credits status.",
+        "type": {
+          "label": "Type",
+          "movie": "Movies",
+          "episode": "Episodes"
+        },
+        "columns": {
+          "title": "Title",
+          "state": "State",
+          "onset": "Onset",
+          "source": "Source",
+          "confidence": "Confidence"
+        },
+        "states": {
+          "NOT_STARTED": "Not started",
+          "IN_PROGRESS": "In progress",
+          "COMPLETED": "Detected",
+          "NO_CREDITS_FOUND": "No credits found",
+          "FAILED": "Failed",
+          "DISABLED": "Disabled"
+        }
+      },
+      "editor": {
+        "title": "Credits marker",
+        "current": "Current",
+        "none": "No marker",
+        "onsetLabel": "Credits start (seconds)",
+        "useCurrentTime": "Use current time ({{time}})",
+        "redetect": "Re-detect",
+        "clear": "Clear",
+        "cancel": "Cancel",
+        "save": "Save",
+        "errors": {
+          "range": "Must be between 0 and the title duration."
+        },
+        "snack": {
+          "saved": "Credits marker saved.",
+          "cleared": "Credits marker cleared.",
+          "requeued": "Requeued for credits detection.",
+          "failed": "Could not update the credits marker."
+        }
       }
     },
     "intros": {

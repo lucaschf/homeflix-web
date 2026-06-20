@@ -11,6 +11,7 @@ export { AdminCard, AdminCardHeader } from "./AdminCard";
 export { AdminConfirmDialog } from "./AdminConfirmDialog";
 export { AdminDialog } from "./AdminDialog";
 export { AdminEmptyState } from "./AdminEmptyState";
+export { CreditsMarkerEditor } from "./CreditsMarkerEditor";
 export { AdminFormSection } from "./AdminFormSection";
 export { AdminInput } from "./AdminInput";
 export { AdminLayout } from "./AdminLayout";

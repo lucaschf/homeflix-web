@@ -239,7 +239,11 @@
     "preparing": "Preparando vídeo…",
     "episodes": "Episódios",
     "notAvailable": "indisponível",
-    "skipIntro": "Pular abertura"
+    "skipIntro": "Pular abertura",
+    "creditsRolling": "Créditos",
+    "markedWatched": "Marcado como assistido",
+    "dismiss": "Dispensar",
+    "backToMovie": "Voltar ao filme"
   },
   "admin": {
     "title": "Admin",
@@ -254,6 +258,7 @@
       "enrich": "Enriquecer",
       "intros": "Aberturas",
       "introRuns": "Detecções",
+      "credits": "Créditos",
       "requests": "Solicitações",
       "users": "Usuários",
       "hls": "HLS cache",
@@ -677,6 +682,8 @@
         "zeroTo32": "Deve estar entre 0 e 32.",
         "zeroTo64": "Deve estar entre 0 e 64.",
         "greaterThanZero": "Deve ser maior que 0.",
+        "greaterThanOne": "Deve ser maior que 1.",
+        "betweenZeroOne": "Deve estar entre 0.0 e 1.0 (exclusivo).",
         "oneTo20": "Deve estar entre 1 e 20.",
         "sixtyFourTo1024": "Deve estar entre 64 e 1024.",
         "minLessThanMax": "Mínimo deve ser menor que o máximo."
@@ -686,6 +693,7 @@
         "seconds": "segundos",
         "items": "itens por tick",
         "seasons": "temporadas por tick",
+        "files": "arquivos por tick",
         "threads": "threads",
         "hashes": "falhas consecutivas",
         "frames": "falhas consecutivas",
@@ -810,6 +818,41 @@
         },
         "snack": {
           "saved": "Configurações de intro detection salvas."
+        }
+      },
+      "creditsDetection": {
+        "title": "Detecção de créditos",
+        "subtitle": "Detecção de créditos finais por arquivo (marcar assistido, próximo automático, pular). Combina densidade de borda/texto e baixo movimento — best-effort e dependente do conteúdo; corrija erros no editor manual.",
+        "enabled": {
+          "label": "Ativado",
+          "helper": "Roda o job periódico de detecção de créditos por arquivo. Requer ffmpeg + ffprobe no host."
+        },
+        "cadence": {
+          "label": "Cadência",
+          "helper": "Quantos arquivos cada tick analisa e com que frequência o job roda."
+        },
+        "batchSize": { "label": "Tamanho do lote" },
+        "interval": { "label": "Intervalo" },
+        "sampling": {
+          "label": "Amostragem",
+          "helper": "Quanto da janela final de cada arquivo analisar, e com que densidade amostrar."
+        },
+        "analysisWindow": { "label": "Janela de análise" },
+        "frameSampleFps": { "label": "Taxa de amostragem" },
+        "confidence": {
+          "label": "Confiança e duração mínima",
+          "helper": "Confiança mínima do detector antes de salvar um marcador, e o menor trecho que conta como créditos."
+        },
+        "minConfidence": { "label": "Confiança mín." },
+        "minCreditsSeconds": { "label": "Duração mín. dos créditos" },
+        "thresholds": {
+          "label": "Limiares de sinal",
+          "helper": "Fator de borda (× a mediana da janela acima da qual o frame é cheio de texto) e fator de movimento (fração da mediana abaixo da qual o frame é de baixa atividade)."
+        },
+        "edgeRelFactor": { "label": "Fator de borda" },
+        "motionRelFactor": { "label": "Fator de movimento" },
+        "snack": {
+          "saved": "Configurações de detecção de créditos salvas."
         }
       },
       "streaming": {
@@ -1109,6 +1152,60 @@
         "COMPLETED": "Concluído",
         "INSUFFICIENT_EPISODES": "Insuficiente",
         "FAILED": "Falhou"
+      }
+    },
+    "credits": {
+      "editButton": "Editar créditos",
+      "source": {
+        "auto": "Auto",
+        "manual": "Manual"
+      },
+      "status": {
+        "title": "Detecção de créditos",
+        "subtitle": "Quais títulos já tiveram os créditos finais detectados. Clique numa linha para abrir o editor e corrigir um erro.",
+        "totalLabel": "{{count}} no total",
+        "allStates": "Todos os estados",
+        "loadError": "Não foi possível carregar o status dos créditos.",
+        "type": {
+          "label": "Tipo",
+          "movie": "Filmes",
+          "episode": "Episódios"
+        },
+        "columns": {
+          "title": "Título",
+          "state": "Estado",
+          "onset": "Início",
+          "source": "Origem",
+          "confidence": "Confiança"
+        },
+        "states": {
+          "NOT_STARTED": "Não iniciado",
+          "IN_PROGRESS": "Em andamento",
+          "COMPLETED": "Detectado",
+          "NO_CREDITS_FOUND": "Sem créditos",
+          "FAILED": "Falhou",
+          "DISABLED": "Desativado"
+        }
+      },
+      "editor": {
+        "title": "Marcador de créditos",
+        "current": "Atual",
+        "none": "Sem marcador",
+        "onsetLabel": "Início dos créditos (segundos)",
+        "useCurrentTime": "Usar tempo atual ({{time}})",
+        "redetect": "Re-detectar",
+        "clear": "Limpar",
+        "cancel": "Cancelar",
+        "save": "Salvar",
+        "errors": {
+          "range": "Deve estar entre 0 e a duração do título."
+        },
+        "snack": {
+          "saved": "Marcador de créditos salvo.",
+          "cleared": "Marcador de créditos removido.",
+          "requeued": "Reenfileirado para detecção de créditos.",
+          "failed": "Não foi possível atualizar o marcador de créditos."
+        }
       }
     },
     "intros": {

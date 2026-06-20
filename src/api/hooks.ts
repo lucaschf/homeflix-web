@@ -53,6 +53,8 @@ import type {
   ContinueWatchingItem,
   ContinueWatchingResponse,
   CreateAdminUserPayload,
+  CreditsMarkerOutput,
+  CreditsStatusData,
   CustomListDetailResponse,
   CustomListItemOutput,
   CustomListItemsResponse,
@@ -734,6 +736,126 @@ export function useResetSeasonIntroDetection() {
       ),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
+  });
+}
+
+// ── Credits markers (admin) ─────────────────────────────
+//
+// Credits apply to BOTH movies and episodes, so these hooks are
+// media-agnostic: the caller passes the target ``mediaId`` (mov_/epi_)
+// plus whichever cache key to refresh — ``movieId`` for a movie,
+// ``seriesId`` for an episode (its credits live inside the series
+// detail). The endpoints are admin-prefixed and media-centric.
+
+interface CreditsCacheVars {
+  /** Movie id to invalidate (when the target is a movie). */
+  movieId?: string;
+  /** Series id to invalidate (when the target is an episode). */
+  seriesId?: string;
+}
+
+function invalidateCreditsCaches(
+  queryClient: ReturnType<typeof useQueryClient>,
+  vars: CreditsCacheVars,
+): void {
+  if (vars.movieId) {
+    // Prefix match invalidates every cached language of the movie.
+    queryClient.invalidateQueries({ queryKey: ["movie", vars.movieId] });
+  }
+  if (vars.seriesId) {
+    queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+  }
+}
+
+interface SetCreditsMarkerVars extends CreditsCacheVars {
+  /** External media id (mov_xxx or epi_xxx) — target of the PUT. */
+  mediaId: string;
+  start_seconds: number;
+}
+
+/**
+ * Persist a manual credits marker on a movie or episode. Backend
+ * stamps ``source = MANUAL`` and moves the title to ``COMPLETED`` so
+ * the auto-detection job skips it thereafter.
+ */
+export function useSetCreditsMarker() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ mediaId, start_seconds }: SetCreditsMarkerVars) =>
+      api.put<ApiDetailResponse<CreditsMarkerOutput>>(`/admin/media/${mediaId}/credits`, {
+        start_seconds,
+      }),
+    onSuccess: (_, vars) => invalidateCreditsCaches(queryClient, vars),
+  });
+}
+
+interface ClearCreditsMarkerVars extends CreditsCacheVars {
+  mediaId: string;
+}
+
+/**
+ * Remove the credits marker from a movie/episode. The title stays
+ * ``COMPLETED`` (no marker) so the job does not re-add one — use the
+ * reset hook to re-run detection instead.
+ */
+export function useClearCreditsMarker() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ mediaId }: ClearCreditsMarkerVars) =>
+      api.del(`/admin/media/${mediaId}/credits`),
+    onSuccess: (_, vars) => invalidateCreditsCaches(queryClient, vars),
+  });
+}
+
+interface ResetCreditsDetectionVars extends CreditsCacheVars {
+  mediaId: string;
+}
+
+interface ResetCreditsDetectionResult {
+  marker_cleared: boolean;
+}
+
+/**
+ * Requeue one movie/episode for automatic credits detection: returns
+ * it to ``NOT_STARTED`` so the next job tick reprocesses it, clearing
+ * an AUTO_DETECTED marker (MANUAL ones are kept).
+ */
+export function useResetCreditsDetection() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ mediaId }: ResetCreditsDetectionVars) =>
+      api.post<ApiDetailResponse<ResetCreditsDetectionResult>>(
+        `/admin/media/${mediaId}/credits-detection/reset`,
+      ),
+    onSuccess: (_, vars) => invalidateCreditsCaches(queryClient, vars),
+  });
+}
+
+interface CreditsStatusParams {
+  mediaType: "movie" | "episode";
+  state: string | null;
+  limit: number;
+  offset: number;
+}
+
+/**
+ * Admin observability: titles by credits-detection state (one media
+ * type per call) + the unfiltered per-state counts for the filter chips.
+ */
+export function useCreditsStatus({ mediaType, state, limit, offset }: CreditsStatusParams) {
+  return useQuery({
+    queryKey: ["admin", "credits-status", mediaType, state ?? "all", limit, offset],
+    queryFn: async () => {
+      const qs = new URLSearchParams();
+      qs.set("media_type", mediaType);
+      if (state) qs.set("state", state);
+      qs.set("limit", String(limit));
+      qs.set("offset", String(offset));
+      const resp = await api.get<ApiDetailResponse<CreditsStatusData>>(
+        `/admin/credits/status?${qs.toString()}`,
+      );
+      return resp.data;
     },
   });
 }
@@ -2023,6 +2145,7 @@ const ADMIN_SETTINGS_SLUG: Record<AdminSettingKey, string> = {
   scheduler: "scheduler",
   thumbnail_backfill: "thumbnail-backfill",
   intro_detection: "intro-detection",
+  credits_detection: "credits-detection",
   streaming: "streaming",
   avatar: "avatar",
   scan_dedup: "scan-dedup",

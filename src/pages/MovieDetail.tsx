@@ -11,7 +11,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Bookmark, Play, RefreshCw, Clapperboard, Flag } from "lucide-react";
+import { Bookmark, Play, RefreshCw, Clapperboard, Flag, ScrollText } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -24,6 +24,7 @@ import {
   useToggleWatchlist,
 } from "../api/hooks";
 import { useCurrentUser } from "../api/auth";
+import { CreditsMarkerEditor } from "../components/admin";
 import { CastCard } from "../components/CastCard";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
@@ -56,6 +57,7 @@ export function MovieDetail() {
   const [flagSnack, setFlagSnack] = useState<
     { message: string; severity: "success" | "error" } | null
   >(null);
+  const [creditsOpen, setCreditsOpen] = useState(false);
   const { data: inWatchlist } = useIsInWatchlist(movieId!);
   const toggleWatchlist = useToggleWatchlist();
   const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
@@ -374,10 +376,41 @@ export function MovieDetail() {
                   );
                 })()
               )}
+              {isAdmin && (
+                <Tooltip title={t("admin.credits.editButton")} arrow>
+                  <IconButton
+                    onClick={() => setCreditsOpen(true)}
+                    sx={{
+                      color: movie.credits ? status.warn.fg : "text.primary",
+                      bgcolor: whiteAlpha(0.08),
+                      border: `1px solid ${whiteAlpha(0.12)}`,
+                      borderRadius: 1,
+                      width: 46,
+                      height: 46,
+                      "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
+                    }}
+                  >
+                    <ScrollText size={18} />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
           </Box>
         </Box>
       </Box>
+
+      {isAdmin && creditsOpen && (
+        <CreditsMarkerEditor
+          open
+          onClose={() => setCreditsOpen(false)}
+          mediaId={movie.id}
+          mediaTitle={movie.title}
+          durationSeconds={movie.duration_seconds}
+          marker={movie.credits}
+          movieId={movie.id}
+          onNotify={(message, severity) => setFlagSnack({ message, severity })}
+        />
+      )}
 
       {/* Body — two-column 1.4fr / 1fr on md+, stacked on mobile.
         Left: synopsis + "Mais detalhes" toggle. Right: eyebrow-

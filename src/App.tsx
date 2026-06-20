@@ -28,6 +28,7 @@ import { EnrichAdmin } from "./pages/admin/EnrichAdmin";
 import { HealthAdmin } from "./pages/admin/HealthAdmin";
 import { HlsCacheAdmin } from "./pages/admin/HlsCacheAdmin";
 import { ConflictsAdmin } from "./pages/admin/ConflictsAdmin";
+import { CreditsStatusAdmin } from "./pages/admin/CreditsStatusAdmin";
 import { IntroDetectionRunsAdmin } from "./pages/admin/IntroDetectionRunsAdmin";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { IntroEditor } from "./pages/admin/IntroEditor";
@@ -140,6 +141,7 @@ function App() {
                     path="/admin/intros/:seriesId/:season/:episode"
                     element={<IntroEditor />}
                   />
+                  <Route path="/admin/credits" element={<CreditsStatusAdmin />} />
                   <Route path="/admin/catalog/review" element={<MovieReview />} />
                   <Route path="/admin/catalog/series-review" element={<SeriesReview />} />
                   <Route path="/admin/catalog/conflicts" element={<ConflictsAdmin />} />
