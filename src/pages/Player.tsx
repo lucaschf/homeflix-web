@@ -30,7 +30,14 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMovie, useProgress, useSaveProgress, useSeriesDetail } from "../api/hooks";
+import {
+  useFileTracks,
+  useMovie,
+  useProgress,
+  useSaveProgress,
+  useSeriesDetail,
+} from "../api/hooks";
+import type { FileAudioTrack, FileSubtitleTrack, FileTrackVersion } from "../api/types";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeDrawer } from "../components/EpisodeDrawer";
 import {
@@ -59,12 +66,17 @@ interface HlsAudioTrack {
   id: number;
   name: string;
   lang: string;
+  /** Rendition playlist URL — carries the ``audio_{index}`` ordinal we
+   * join to the backend ``/tracks`` payload. */
+  url?: string;
 }
 
 interface HlsSubtitleTrack {
   id: number;
   name: string;
   lang: string;
+  /** Rendition playlist URL — carries the ``sub_{index}`` ordinal. */
+  url?: string;
 }
 
 /**
@@ -107,6 +119,37 @@ function normalizeLang(tag: string | null | undefined): string {
   if (!tag) return "";
   const head = tag.toLowerCase().split(/[-_\s]/)[0] ?? "";
   return ISO_ALIASES[head] ?? head;
+}
+
+/**
+ * Parse the rendition ordinal from an hls.js media-playlist URL —
+ * e.g. ``.../audio_2/playlist.m3u8`` → ``2``. This is the backend's
+ * per-file track ``index``, so it joins an hls.js rendition to its
+ * ``/tracks`` entry.
+ */
+function renditionIndex(url: string | undefined, prefix: "audio" | "sub"): number | null {
+  if (!url) return null;
+  const match = url.match(new RegExp(`${prefix}_(\\d+)/`));
+  return match ? Number(match[1]) : null;
+}
+
+/**
+ * Localized language name for a track code (e.g. ``pt`` → "Português"
+ * / "Portuguese"), falling back to the uppercased code when ``Intl``
+ * has no name for it. Returns ``""`` for an empty/unknown code.
+ */
+function localizedLanguage(code: string, locale: string): string {
+  const norm = normalizeLang(code);
+  if (!norm) return "";
+  try {
+    const name = new Intl.DisplayNames([locale], { type: "language" }).of(norm);
+    if (name && name.toLowerCase() !== norm) {
+      return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+  } catch {
+    // Intl doesn't recognise the code — fall through to the raw code.
+  }
+  return norm.toUpperCase();
 }
 
 /**
@@ -331,7 +374,7 @@ function readPersistedMuted(): boolean {
 }
 
 export function Player() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const params = useParams<{
     movieId?: string;
@@ -349,6 +392,16 @@ export function Player() {
 
   const { data: movieData, isLoading: movieLoading } = useMovie(params.movieId ?? "");
   const { data: seriesData, isLoading: seriesLoading } = useSeriesDetail(params.seriesId ?? "");
+
+  // Per-file track metadata (language + structured dub/version label).
+  // Joined to the hls.js renditions below to build localized menu labels.
+  const { data: fileTracks } = useFileTracks({
+    isMovie,
+    movieId: params.movieId,
+    seriesId: params.seriesId,
+    season: params.season,
+    episode: params.episode,
+  });
   const { data: savedProgress, isPending: progressPending } = useProgress(mediaId);
   const mediaLoading = isMovie ? movieLoading : seriesLoading;
 
@@ -620,6 +673,61 @@ export function Player() {
   const [subtitleTracks, setSubtitleTracks] = useState<HlsSubtitleTrack[]>([]);
   const [currentSubtitleTrack, setCurrentSubtitleTrack] = useState(-1);
 
+  // Compose the menu label for each hls.js rendition from the backend
+  // ``/tracks`` metadata: localized language + a structured version
+  // (dub studio, channel layout, ordinal, or SDH). The join is by the
+  // ``audio_{index}`` / ``sub_{index}`` ordinal parsed from the
+  // rendition URL, falling back to a same-language match, then to the
+  // cleaned raw name while ``/tracks`` is still loading.
+  const versionSuffix = useCallback(
+    (version: FileTrackVersion | null | undefined): string | null => {
+      if (!version) return null;
+      switch (version.kind) {
+        case "ordinal":
+          return t("player.version", { n: version.value });
+        case "sdh":
+          return t("player.sdh");
+        default:
+          return version.value;
+      }
+    },
+    [t],
+  );
+
+  const audioTrackItems = useMemo(() => {
+    const byIndex = new Map<number, FileAudioTrack>();
+    fileTracks?.audio_tracks.forEach((a) => byIndex.set(a.index, a));
+    return audioTracks.map((track) => {
+      const idx = renditionIndex(track.url, "audio");
+      const ft =
+        (idx != null ? byIndex.get(idx) : undefined) ??
+        fileTracks?.audio_tracks.find(
+          (a) => normalizeLang(a.language) === normalizeLang(track.lang),
+        );
+      const base = localizedLanguage(ft?.language ?? track.lang, i18n.language);
+      if (!base) return { ...track, label: track.name };
+      const suffix = versionSuffix(ft?.version);
+      return { ...track, label: suffix ? `${base} · ${suffix}` : base };
+    });
+  }, [audioTracks, fileTracks, i18n.language, versionSuffix]);
+
+  const subtitleTrackItems = useMemo(() => {
+    const byIndex = new Map<number, FileSubtitleTrack>();
+    fileTracks?.subtitle_tracks.forEach((s) => byIndex.set(s.index, s));
+    return subtitleTracks.map((track) => {
+      const idx = renditionIndex(track.url, "sub");
+      const ft =
+        (idx != null ? byIndex.get(idx) : undefined) ??
+        fileTracks?.subtitle_tracks.find(
+          (s) => normalizeLang(s.language) === normalizeLang(track.lang),
+        );
+      const base = localizedLanguage(ft?.language ?? track.lang, i18n.language);
+      if (!base) return { ...track, label: track.name };
+      const suffix = versionSuffix(ft?.version);
+      return { ...track, label: suffix ? `${base} · ${suffix}` : base };
+    });
+  }, [subtitleTracks, fileTracks, i18n.language, versionSuffix]);
+
   // Use metadata duration as authoritative source (movie or episode).
   // The backend's HLS bucket covers the full source now, so the <video>
   // element's own ``duration`` matches the API metadata once loaded —
@@ -818,6 +926,7 @@ export function Player() {
           id: t.id,
           name: cleanTrackName(t.name || t.lang || `Track ${t.id}`),
           lang: t.lang || "",
+          url: t.url,
         }));
         setAudioTracks(tracks);
         setCurrentAudioTrack(hls.audioTrack);
@@ -834,6 +943,7 @@ export function Player() {
           id: t.id,
           name: t.name || t.lang || `Subtitle ${t.id}`,
           lang: t.lang || "",
+          url: t.url,
         }));
         setSubtitleTracks(tracks);
         setCurrentSubtitleTrack(hls.subtitleTrack);
@@ -2112,10 +2222,10 @@ export function Player() {
         container={containerEl}
         slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
       >
-        {audioTracks.map((track) => (
+        {audioTrackItems.map((track) => (
           <MenuItem key={track.id} onClick={() => changeAudioTrack(track.id)}>
             {currentAudioTrack === track.id && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
-            <ListItemText inset={currentAudioTrack !== track.id} primary={track.name} />
+            <ListItemText inset={currentAudioTrack !== track.id} primary={track.label} />
           </MenuItem>
         ))}
       </Menu>
@@ -2134,10 +2244,10 @@ export function Player() {
           {currentSubtitleTrack === -1 && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
           <ListItemText inset={currentSubtitleTrack !== -1} primary={t("player.off")} />
         </MenuItem>
-        {subtitleTracks.map((track) => (
+        {subtitleTrackItems.map((track) => (
           <MenuItem key={track.id} onClick={() => changeSubtitleTrack(track.id)}>
             {currentSubtitleTrack === track.id && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
-            <ListItemText inset={currentSubtitleTrack !== track.id} primary={track.name} />
+            <ListItemText inset={currentSubtitleTrack !== track.id} primary={track.label} />
           </MenuItem>
         ))}
       </Menu>

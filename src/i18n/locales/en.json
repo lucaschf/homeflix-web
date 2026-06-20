@@ -230,6 +230,8 @@
     "subtitles": "Subtitles",
     "audio": "Audio",
     "off": "Off",
+    "version": "Version {{n}}",
+    "sdh": "SDH",
     "normal": "Normal",
     "nextEpisode": "Next Episode",
     "nextEpisodeIn": "Next episode in {{seconds}}s",
