@@ -805,6 +805,36 @@ export interface AdminIntroDetectionRun {
 
 export type AdminIntroDetectionRunsResponse = ApiListResponse<AdminIntroDetectionRun>;
 
+/** One recorded execution of a background scheduler job. */
+export interface JobRunRecord {
+  id: string;
+  job_id: string;
+  status: string;
+  started_at: string;
+  finished_at: string | null;
+  duration_ms: number | null;
+  error: string | null;
+}
+
+/** A job on the dashboard: live schedule + its last execution. */
+export interface JobSummary {
+  job_id: string;
+  scheduled: boolean;
+  schedule: string | null;
+  next_run_at: string | null;
+  running: boolean;
+  last_run: JobRunRecord | null;
+}
+
+/** Payload of ``GET /api/v1/admin/jobs``. */
+export interface JobsOverview {
+  scheduler_running: boolean;
+  jobs: JobSummary[];
+}
+
+export type JobsOverviewResponse = ApiDetailResponse<JobsOverview>;
+export type JobRunsResponse = ApiListResponse<JobRunRecord>;
+
 /** Body for ``POST /api/v1/admin/scans``. */
 export interface TriggerScanPayload {
   library_id: string;

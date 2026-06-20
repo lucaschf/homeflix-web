@@ -9,6 +9,7 @@ import {
   Heart,
   Inbox,
   Library,
+  ListChecks,
   type LucideIcon,
   Music,
   ScanLine,
@@ -120,6 +121,7 @@ export function AdminSidebar({ collapsed }: AdminSidebarProps) {
     {
       labelKey: "admin.nav.group.system",
       items: [
+        { labelKey: "admin.nav.jobs", to: "/admin/system/jobs", icon: ListChecks },
         { labelKey: "admin.nav.hls", to: "/admin/system/hls-cache", icon: HardDrive },
         { labelKey: "admin.nav.health", to: "/admin/system/health", icon: Heart },
         {

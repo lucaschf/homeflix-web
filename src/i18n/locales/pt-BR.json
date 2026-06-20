@@ -263,6 +263,7 @@
       "credits": "Créditos",
       "requests": "Solicitações",
       "users": "Usuários",
+      "jobs": "Jobs",
       "hls": "HLS cache",
       "health": "Saúde",
       "settings": "Configurações",
@@ -1133,6 +1134,36 @@
         "enrichFailed": "Não foi possível iniciar o re-enriquecimento.",
         "deleteSuccess": "“{{title}}” foi removido do catálogo.",
         "deleteFailed": "Não foi possível excluir este item."
+      }
+    },
+    "jobs": {
+      "title": "Jobs em segundo plano",
+      "subtitle": "Cada job agendado: quando roda de novo, como foi a última execução e o que está rodando agora.",
+      "schedulerRunning": "Scheduler ativo",
+      "schedulerStopped": "Scheduler parado",
+      "loading": "Carregando jobs…",
+      "error": "Não foi possível carregar os jobs.",
+      "empty": "Nenhum job registrado.",
+      "running": "Rodando",
+      "neverRan": "Nunca rodou",
+      "notScheduled": "Não agendado",
+      "nextRun": "próx. {{when}}",
+      "noNextRun": "sem próxima execução",
+      "lastRun": "última {{when}}",
+      "overview": {
+        "title": "Jobs",
+        "subtitle": "Agenda ao vivo e a execução mais recente de cada job."
+      },
+      "history": {
+        "title": "Histórico de execuções",
+        "subtitle": "Mais recentes primeiro, de todos os jobs.",
+        "empty": "Nenhuma execução registrada ainda."
+      },
+      "status": {
+        "running": "Rodando",
+        "succeeded": "Sucesso",
+        "failed": "Falhou",
+        "interrupted": "Interrompido"
       }
     },
     "introRuns": {
