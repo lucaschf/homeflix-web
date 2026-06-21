@@ -831,8 +831,11 @@ export function Player() {
 
   // Source-time is inside the intro window. Derived (not state) so it
   // re-evaluates each render; the effect below only reacts to the
-  // boolean flipping, not to every ``currentTime`` tick.
+  // boolean flipping, not to every ``currentTime`` tick. Gated on
+  // ``hlsReady`` so an intro that starts at t=0 doesn't surface the
+  // button during cold start — it appears once playback actually begins.
   const introActive =
+    hlsReady &&
     !!currentIntro &&
     currentTime >= currentIntro.start_seconds &&
     currentTime < currentIntro.end_seconds;
