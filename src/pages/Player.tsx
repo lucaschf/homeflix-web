@@ -1283,11 +1283,26 @@ export function Player() {
       const needsRemount =
         bucketLocalTarget < 0 || bucketLocalTarget > bufferedEndLocal;
       if (needsRemount) {
-        const newBucket = target < RESUME_BUCKET_FLOOR_SECONDS ? 0 : Math.floor(target);
-        pendingBucketSeekRef.current = Math.max(0, target - newBucket);
-        setBucketStart(newBucket);
-        setCurrentTime(target);
-        return;
+        const flooredBucket = target < RESUME_BUCKET_FLOOR_SECONDS ? 0 : Math.floor(target);
+        // If the floored bucket is the one we're already playing, a
+        // ``setBucketStart`` would be a no-op: the manifest never
+        // remounts, the ``pendingBucketSeekRef`` below never applies, and
+        // the playhead silently stays put (the "Skip Intro doesn't skip /
+        // jumps back" bug). This happens for a forward seek past the
+        // transcoded edge that still lands in the current bucket — e.g.
+        // skipping an intro that ends under ``RESUME_BUCKET_FLOOR_SECONDS``
+        // on a cold start (bucketStart 0). Anchor a fresh encode at the
+        // exact target second instead so the backend re-runs ffmpeg there.
+        const newBucket = flooredBucket === bucketStart ? Math.floor(target) : flooredBucket;
+        if (newBucket !== bucketStart) {
+          pendingBucketSeekRef.current = Math.max(0, target - newBucket);
+          setBucketStart(newBucket);
+          setCurrentTime(target);
+          return;
+        }
+        // Remount is genuinely impossible (already anchored at this exact
+        // second) — fall through to a native seek; the segment is normally
+        // already produced this close to the bucket origin.
       }
       video.currentTime = bucketLocalTarget;
       setCurrentTime(target);
