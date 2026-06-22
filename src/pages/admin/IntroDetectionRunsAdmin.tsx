@@ -1,5 +1,6 @@
 import { Box, Collapse, Stack, Typography } from "@mui/material";
-import { ChevronDown, ChevronRight, History } from "lucide-react";
+import { alpha } from "@mui/material/styles";
+import { Check, ChevronRight, History, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useIntroDetectionRuns } from "../../api/hooks";
@@ -14,7 +15,7 @@ import {
   type BadgeTone,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { inkAlpha, whiteAlpha } from "../../theme/tokens";
+import { inkAlpha, scrim, status, whiteAlpha } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 import { IntroTabs } from "./components/IntroTabs";
 
@@ -45,18 +46,11 @@ function formatWhen(iso: string, locale: string): string {
   });
 }
 
-function formatSeconds(seconds: number): string {
-  const total = Math.round(seconds);
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
 /**
  * Admin Intro Detection runs — append-only audit history of the
  * detection job. Each row expands to a per-episode breakdown showing
- * the detected span, confidence, and whether the marker was persisted
- * (or dropped below the confidence floor). Answers "it detected but
+ * the detected confidence and whether the marker was persisted (or
+ * dropped below the confidence floor). Answers "it detected but
  * nothing showed up".
  */
 export function IntroDetectionRunsAdmin() {
@@ -77,40 +71,49 @@ export function IntroDetectionRunsAdmin() {
       {!runs.isLoading && !runs.isError && runs.items.length === 0 && !runs.canGoPrevious ? (
         <FancyEmpty icon={History} motif="rows" title={t("admin.introRuns.empty")} />
       ) : (
-        <AdminCard>
-          <AdminCardHeader
-            icon={History}
-            title={t("admin.introRuns.history.title")}
-            subtitle={t("admin.introRuns.history.subtitle")}
-          />
+        <AdminCard padding={0}>
+          <Box sx={{ px: 2.75, py: 2, borderBottom: `1px solid ${whiteAlpha(0.08)}` }}>
+            <AdminCardHeader
+              icon={History}
+              title={t("admin.introRuns.history.title")}
+              subtitle={t("admin.introRuns.history.subtitle")}
+            />
+          </Box>
 
           {runs.isLoading ? (
-            <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ p: 2.75 }}>
               {t("admin.introRuns.loading")}
             </Typography>
           ) : runs.isError ? (
-            <Typography variant="body2" color="error" sx={{ py: 2 }}>
+            <Typography variant="body2" color="error" sx={{ p: 2.75 }}>
               {t("admin.introRuns.error")}
             </Typography>
           ) : (
-            <Stack spacing={0.5}>
-              {runs.items.map((run) => (
-                <RunRow key={run.id} run={run} locale={i18n.language} />
+            <Box>
+              {runs.items.map((run, i) => (
+                <RunRow
+                  key={run.id}
+                  run={run}
+                  locale={i18n.language}
+                  last={i === runs.items.length - 1}
+                />
               ))}
-            </Stack>
+            </Box>
           )}
 
           {(runs.items.length > 0 || runs.canGoPrevious) && (
-            <AdminTablePagination
-              pageNumber={runs.pageNumber}
-              canGoNext={runs.canGoNext}
-              canGoPrevious={runs.canGoPrevious}
-              onNext={runs.goNext}
-              onPrevious={runs.goPrevious}
-              isFetching={runs.isFetching}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
-            />
+            <Box sx={{ px: 1.75, borderTop: `1px solid ${whiteAlpha(0.08)}` }}>
+              <AdminTablePagination
+                pageNumber={runs.pageNumber}
+                canGoNext={runs.canGoNext}
+                canGoPrevious={runs.canGoPrevious}
+                onNext={runs.goNext}
+                onPrevious={runs.goPrevious}
+                isFetching={runs.isFetching}
+                pageSize={pageSize}
+                onPageSizeChange={setPageSize}
+              />
+            </Box>
           )}
         </AdminCard>
       )}
@@ -118,19 +121,22 @@ export function IntroDetectionRunsAdmin() {
   );
 }
 
-function RunRow({ run, locale }: { run: AdminIntroDetectionRun; locale: string }) {
+function RunRow({
+  run,
+  locale,
+  last,
+}: {
+  run: AdminIntroDetectionRun;
+  locale: string;
+  last: boolean;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const algorithm = ALGORITHM_LABELS[run.algorithm] ?? run.algorithm;
+  const floorPct = Math.round(run.min_confidence * 100);
 
   return (
-    <Box
-      sx={{
-        border: `1px solid ${whiteAlpha(0.06)}`,
-        borderRadius: 1,
-        overflow: "hidden",
-      }}
-    >
+    <Box sx={{ borderBottom: last && !open ? "none" : `1px solid ${whiteAlpha(0.045)}` }}>
       <Box
         component="button"
         type="button"
@@ -139,25 +145,33 @@ function RunRow({ run, locale }: { run: AdminIntroDetectionRun; locale: string }
           width: "100%",
           display: "flex",
           alignItems: "center",
-          gap: 1.5,
-          px: 1.5,
-          py: 1.25,
-          bgcolor: "transparent",
+          gap: 1.75,
+          px: 2.75,
+          height: 60,
+          bgcolor: open ? whiteAlpha(0.022) : "transparent",
           border: "none",
           color: "text.primary",
           fontFamily: "inherit",
           textAlign: "left",
           cursor: "pointer",
-          transition: "background-color 120ms ease",
-          "&:hover": { bgcolor: whiteAlpha(0.04) },
+          transition: "background-color 100ms ease",
+          "&:hover": { bgcolor: whiteAlpha(0.022) },
         }}
       >
-        {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-        <Stack sx={{ minWidth: 140, flexShrink: 1, gap: 0.1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }} noWrap>
+        <ChevronRight
+          size={15}
+          style={{
+            flexShrink: 0,
+            color: inkAlpha(0.45),
+            transform: open ? "rotate(90deg)" : "none",
+            transition: "transform 160ms ease",
+          }}
+        />
+        <Stack sx={{ width: 188, flexShrink: 0, minWidth: 0, gap: 0.1 }}>
+          <Typography variant="body2" sx={{ fontSize: "1rem", fontWeight: 600 }} noWrap>
             {run.series_title || t("admin.introRuns.unknownSeries")}
           </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          <Typography variant="caption" sx={{ fontSize: "0.875rem", color: "text.secondary" }}>
             {t("admin.introRuns.seasonLabel", { number: run.season_number })}
           </Typography>
         </Stack>
@@ -165,71 +179,117 @@ function RunRow({ run, locale }: { run: AdminIntroDetectionRun; locale: string }
         <AdminBadge tone={outcomeTone(run.outcome)}>
           {t(`admin.introRuns.outcome.${run.outcome}`, { defaultValue: run.outcome })}
         </AdminBadge>
-        <Typography variant="metaMono" sx={{ color: inkAlpha(0.7) }}>
+        <Typography
+          variant="metaMono"
+          noWrap
+          sx={{ fontSize: "0.875rem", color: inkAlpha(0.7), flex: 1, minWidth: 0 }}
+        >
           {t("admin.introRuns.counts", {
             detected: run.detected_count,
             persisted: run.persisted_count,
-          })}
+          })}{" "}
+          · {t("admin.introRuns.minConfidence", { value: floorPct })}
         </Typography>
-        <Typography variant="metaMono" sx={{ color: inkAlpha(0.6) }}>
-          {t("admin.introRuns.minConfidence", {
-            value: Math.round(run.min_confidence * 100),
-          })}
-        </Typography>
-        <Typography
-          variant="metaMono"
-          sx={{ color: "text.secondary", ml: "auto" }}
-        >
+        <Typography variant="metaMono" sx={{ fontSize: "0.875rem", color: "text.secondary", flexShrink: 0 }}>
           {formatWhen(run.finished_at, locale)}
         </Typography>
       </Box>
 
       <Collapse in={open} unmountOnExit>
-        <Box sx={{ px: 1.5, py: 1, borderTop: `1px solid ${whiteAlpha(0.06)}` }}>
+        <Box sx={{ pl: 6.375, pr: 2.75, pb: 2.5, pt: 0.5, bgcolor: scrim(0.18) }}>
           {run.error ? (
-            <Typography variant="body2" color="error">
+            <Typography variant="body2" color="error" sx={{ py: 1.5 }}>
               {run.error}
             </Typography>
           ) : run.episode_results.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="text.secondary" sx={{ py: 1.5 }}>
               {t("admin.introRuns.noEpisodes")}
             </Typography>
           ) : (
-            <Stack spacing={0.25}>
-              {run.episode_results.map((ep) => (
-                <Box
-                  key={ep.episode_id}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    px: 1,
-                    py: 0.5,
-                  }}
-                >
-                  <Typography
-                    variant="metaMono"
-                    sx={{ width: 48, color: "text.secondary" }}
-                  >
-                    {t("detail.episode", { number: ep.episode_number })}
-                  </Typography>
-                  <Typography variant="metaMono" sx={{ width: 120 }}>
-                    {formatSeconds(ep.start_seconds)} → {formatSeconds(ep.end_seconds)}
-                  </Typography>
-                  <Typography
-                    variant="metaMono"
-                    sx={{ width: 56, color: inkAlpha(0.7) }}
-                  >
-                    {Math.round(ep.confidence * 100)}%
-                  </Typography>
-                  <AdminBadge tone={ep.persisted ? "ok" : "warn"}>
-                    {ep.persisted
-                      ? t("admin.introRuns.persisted")
-                      : t("admin.introRuns.dropped")}
-                  </AdminBadge>
-                </Box>
-              ))}
-            </Stack>
+            <>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                sx={{ py: 1.5 }}
+              >
+                <Typography variant="eyebrow" sx={{ color: "text.secondary" }}>
+                  {t("admin.introRuns.analyzed", { count: run.analyzed_count })}
+                </Typography>
+                <Typography variant="eyebrow" sx={{ color: "text.secondary" }}>
+                  {t("admin.introRuns.confidenceFloor", { value: floorPct })}
+                </Typography>
+              </Stack>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(168px, 1fr))",
+                  gap: 1,
+                }}
+              >
+                {run.episode_results.map((ep) => {
+                  const confPct = Math.round(ep.confidence * 100);
+                  return (
+                    <Box
+                      key={ep.episode_id}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.25,
+                        px: 1.375,
+                        py: 1,
+                        borderRadius: 1.5,
+                        bgcolor: whiteAlpha(0.025),
+                        border: `1px solid ${
+                          ep.persisted ? alpha(status.ok.base, 0.22) : whiteAlpha(0.08)
+                        }`,
+                      }}
+                    >
+                      <Typography
+                        variant="metaMono"
+                        sx={{ fontSize: "0.875rem", width: 30, flexShrink: 0, color: "text.secondary" }}
+                      >
+                        {t("detail.episode", { number: ep.episode_number })}
+                      </Typography>
+                      <Box
+                        sx={{
+                          flex: 1,
+                          height: 4,
+                          bgcolor: whiteAlpha(0.07),
+                          borderRadius: 2,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: `${confPct}%`,
+                            height: "100%",
+                            bgcolor: ep.persisted ? status.ok.fg : inkAlpha(0.3),
+                            borderRadius: 2,
+                          }}
+                        />
+                      </Box>
+                      <Typography
+                        variant="metaMono"
+                        sx={{
+                          fontSize: "0.875rem",
+                          width: 38,
+                          flexShrink: 0,
+                          textAlign: "right",
+                          color: ep.persisted ? status.ok.fg : "text.secondary",
+                        }}
+                      >
+                        {confPct}%
+                      </Typography>
+                      {ep.persisted ? (
+                        <Check size={13} color={status.ok.fg} strokeWidth={2.4} style={{ flexShrink: 0 }} />
+                      ) : (
+                        <X size={12} color={inkAlpha(0.45)} style={{ flexShrink: 0 }} />
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </>
           )}
         </Box>
       </Collapse>

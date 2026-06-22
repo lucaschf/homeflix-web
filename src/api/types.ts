@@ -335,6 +335,9 @@ export interface SeriesSummary {
   backdrop_path: string | null;
   season_count: number;
   total_episodes: number;
+  // Episodes with an intro marker set (auto or manual). Drives the
+  // per-series "skip intro" coverage shown in the admin intro picker.
+  intro_marked_count: number;
   genres: string[];
   // Operator-facing metadata surfaced on the admin Catalog table.
   library_id: string;
