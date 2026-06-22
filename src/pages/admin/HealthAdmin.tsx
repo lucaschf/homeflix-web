@@ -10,7 +10,7 @@ import {
   type BadgeTone,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentCoral, whiteAlpha } from "../../theme/tokens";
+import { accentCoral, status as statusTone, whiteAlpha } from "../../theme/tokens";
 
 const HEALTH_TONE_BY_STATUS: Record<string, BadgeTone> = {
   healthy: "ok",
@@ -57,9 +57,9 @@ function HealthRow({ label, status }: { label: string; status: string }) {
             flexShrink: 0,
             bgcolor:
               tone === "ok"
-                ? "#7ec488"
+                ? statusTone.ok.fg
                 : tone === "warn"
-                  ? "#f3c266"
+                  ? statusTone.warn.fg
                   : tone === "err"
                     ? accentCoral
                     : whiteAlpha(0.4),

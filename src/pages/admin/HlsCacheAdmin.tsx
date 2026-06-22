@@ -81,8 +81,8 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
                   tone === "err"
                     ? accentCoral
                     : tone === "warn"
-                      ? "#f3c266"
-                      : "#7ec488",
+                      ? status.warn.fg
+                      : status.ok.fg,
               },
             }}
           />

@@ -11,7 +11,7 @@ import { Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { SeriesDetail } from "../api/types";
 import { neutral, peach } from "../theme/colors";
-import { panelScrim, scrim, whiteAlpha } from "../theme/tokens";
+import { panelScrim, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { formatDuration } from "../utils/duration";
 
 interface EpisodeDrawerProps {
@@ -142,10 +142,10 @@ export function EpisodeDrawer({
                   px: 2,
                   py: 1,
                   cursor: "pointer",
-                  bgcolor: isCurrent ? "rgba(232,146,111,0.12)" : "transparent",
+                  bgcolor: isCurrent ? peachAlpha(0.12) : "transparent",
                   borderLeft: isCurrent ? "3px solid" : "3px solid transparent",
                   borderColor: isCurrent ? "primary.main" : "transparent",
-                  "&:hover": { bgcolor: isCurrent ? "rgba(232,146,111,0.16)" : whiteAlpha(0.04) },
+                  "&:hover": { bgcolor: isCurrent ? peachAlpha(0.16) : whiteAlpha(0.04) },
                 }}
               >
                 {/* Thumbnail */}
@@ -182,7 +182,7 @@ export function EpisodeDrawer({
                   <Typography
                     variant="body2"
                     fontWeight={isCurrent ? 700 : 500}
-                    color={isCurrent ? "primary.main" : "#fff"}
+                    color={isCurrent ? "primary.main" : "common.white"}
                     noWrap
                     sx={{ fontSize: "0.8rem" }}
                   >

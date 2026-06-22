@@ -29,6 +29,9 @@ export const panelScrim = (o: number) => alpha(neutral[950], o);
 /** Peach `#D97757` at `o` — replaces `rgba(217,119,87,o)`. Primary-tinted fills and borders. */
 export const peachAlpha = (o: number) => alpha(peach.main, o);
 
+/** Frosted dark surface `#1C1C1C` at `o` — replaces `rgba(28,28,28,o)`. Translucent menu/popover panels (with `backdropFilter`) and raised hover surfaces. */
+export const menuScrim = (o: number) => alpha("#1C1C1C", o);
+
 // -- Admin status palette -----------------------------------------------------
 //
 // The admin surfaces share a status palette (see `AdminBadge`). Each tone has a

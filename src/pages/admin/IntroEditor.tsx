@@ -1011,7 +1011,7 @@ function ScrubHandle({ pos, onDown }: { pos: number; onDown: () => void }) {
           height: 26,
           borderRadius: "4px",
           bgcolor: peach.main,
-          border: "1px solid rgba(0,0,0,0.35)",
+          border: `1px solid ${scrim(0.35)}`,
         }}
       />
     </Box>

@@ -238,8 +238,8 @@ export function ConflictsAdmin() {
             px: 2,
             py: 1.25,
             borderRadius: 1,
-            bgcolor: "rgba(120,160,255,0.08)",
-            border: "1px solid rgba(120,160,255,0.2)",
+            bgcolor: alpha(status.info.base, 0.08),
+            border: `1px solid ${alpha(status.info.base, 0.2)}`,
           }}
         >
           <Typography variant="body2" sx={{ color: inkAlpha(0.85) }}>

@@ -50,7 +50,7 @@ import {
   type ScrubFrame,
 } from "../hooks/useScrubThumbnails";
 import { neutral, peach } from "../theme/colors";
-import { scrim, whiteAlpha } from "../theme/tokens";
+import { menuScrim, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -1857,7 +1857,7 @@ export function Player() {
                   sx={{
                     width: 72,
                     height: 72,
-                    bgcolor: "rgba(232,146,111,0.9)",
+                    bgcolor: peachAlpha(0.9),
                     color: "background.default",
                     pointerEvents: "none",
                   }}
@@ -2239,7 +2239,7 @@ export function Player() {
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "bottom", horizontal: "right" }}
         container={containerEl}
-        slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 220, borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: { bgcolor: menuScrim(0.95), backdropFilter: "blur(8px)", minWidth: 220, borderRadius: 2 } } }}
       >
         {settingsPanel === "main" && [
           ...(qualities.length > 0
@@ -2285,7 +2285,7 @@ export function Player() {
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "bottom", horizontal: "right" }}
         container={containerEl}
-        slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: { bgcolor: menuScrim(0.95), backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
       >
         {audioTrackItems.map((track) => (
           <MenuItem key={track.id} onClick={() => changeAudioTrack(track.id)}>
@@ -2303,7 +2303,7 @@ export function Player() {
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "bottom", horizontal: "right" }}
         container={containerEl}
-        slotProps={{ paper: { sx: { bgcolor: "rgba(28,28,28,0.95)", backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: { bgcolor: menuScrim(0.95), backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
       >
         <MenuItem onClick={() => changeSubtitleTrack(-1)}>
           {currentSubtitleTrack === -1 && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
