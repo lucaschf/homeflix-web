@@ -10,6 +10,10 @@ interface AdminBadgeProps {
   tone?: BadgeTone;
   icon?: ReactNode;
   children: ReactNode;
+  /** Optional style overrides merged onto the pill (e.g. a larger
+   *  ``fontSize`` for a specific surface). Left out of the tone
+   *  palette so callers can't redefine the six semantic colors. */
+  sx?: object;
 }
 
 const TONE_STYLES: Record<BadgeTone, { bg: string; fg: string; bd: string }> = {
@@ -56,7 +60,7 @@ const TONE_STYLES: Record<BadgeTone, { bg: string; fg: string; bd: string }> = {
  * spec's tone palette so consumers can't accidentally introduce a
  * seventh state.
  */
-export function AdminBadge({ tone = "neutral", icon, children }: AdminBadgeProps) {
+export function AdminBadge({ tone = "neutral", icon, children, sx }: AdminBadgeProps) {
   const t = TONE_STYLES[tone];
   return (
     <Box
@@ -77,6 +81,7 @@ export function AdminBadge({ tone = "neutral", icon, children }: AdminBadgeProps
         color: t.fg,
         fontWeight: 500,
         lineHeight: 1.2,
+        ...sx,
       }}
     >
       {icon}
