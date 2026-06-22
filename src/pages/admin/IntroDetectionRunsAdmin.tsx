@@ -1,6 +1,6 @@
 import { Box, Collapse, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Check, ChevronRight, History, X } from "lucide-react";
+import { Check, ChevronRight, Clock, History, X } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useIntroDetectionRuns } from "../../api/hooks";
@@ -8,13 +8,13 @@ import type { AdminIntroDetectionRun } from "../../api/types";
 import {
   AdminBadge,
   AdminCard,
-  AdminCardHeader,
   AdminPageHeader,
   AdminTablePagination,
   FancyEmpty,
   type BadgeTone,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
+import { peach } from "../../theme/colors";
 import { inkAlpha, scrim, status, whiteAlpha } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 import { IntroTabs } from "./components/IntroTabs";
@@ -73,11 +73,15 @@ export function IntroDetectionRunsAdmin() {
       ) : (
         <AdminCard padding={0}>
           <Box sx={{ px: 2.75, py: 2, borderBottom: `1px solid ${whiteAlpha(0.08)}` }}>
-            <AdminCardHeader
-              icon={History}
-              title={t("admin.introRuns.history.title")}
-              subtitle={t("admin.introRuns.history.subtitle")}
-            />
+            <Stack direction="row" alignItems="center" spacing={1.125}>
+              <Clock size={16} color={peach.main} style={{ flexShrink: 0 }} />
+              <Typography variant="h3" component="h3">
+                {t("admin.introRuns.history.title")}
+              </Typography>
+            </Stack>
+            <Typography variant="cardSubtitle" color="text.secondary" sx={{ mt: 0.5 }}>
+              {t("admin.introRuns.history.subtitle")}
+            </Typography>
           </Box>
 
           {runs.isLoading ? (
@@ -111,6 +115,7 @@ export function IntroDetectionRunsAdmin() {
                 onPrevious={runs.goPrevious}
                 isFetching={runs.isFetching}
                 pageSize={pageSize}
+                pageSizeOptions={[10, 25, 50]}
                 onPageSizeChange={setPageSize}
               />
             </Box>
@@ -182,13 +187,22 @@ function RunRow({
         <Typography
           variant="metaMono"
           noWrap
-          sx={{ fontSize: "0.875rem", color: inkAlpha(0.7), flex: 1, minWidth: 0 }}
+          sx={{ fontSize: "0.875rem", color: inkAlpha(0.55), flex: 1, minWidth: 0 }}
         >
-          {t("admin.introRuns.counts", {
-            detected: run.detected_count,
-            persisted: run.persisted_count,
-          })}{" "}
-          · {t("admin.introRuns.minConfidence", { value: floorPct })}
+          {t("admin.introRuns.countLabelDetected")}{" "}
+          <Box component="span" sx={{ color: "text.primary" }}>
+            {run.detected_count}
+          </Box>
+          {" · "}
+          {t("admin.introRuns.countLabelSaved")}{" "}
+          <Box
+            component="span"
+            sx={{ color: run.persisted_count > 0 ? status.ok.fg : inkAlpha(0.55) }}
+          >
+            {run.persisted_count}
+          </Box>
+          {" · "}
+          {t("admin.introRuns.minConfidence", { value: floorPct })}
         </Typography>
         <Typography variant="metaMono" sx={{ fontSize: "0.875rem", color: "text.secondary", flexShrink: 0 }}>
           {formatWhen(run.finished_at, locale)}

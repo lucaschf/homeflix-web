@@ -1179,6 +1179,8 @@
       "seasonLabel": "Temporada {{number}}",
       "unknownSeries": "Série desconhecida",
       "counts": "detectados {{detected}} · salvos {{persisted}}",
+      "countLabelDetected": "detectados",
+      "countLabelSaved": "salvos",
       "minConfidence": "piso {{value}}%",
       "analyzed_one": "{{count}} episódio analisado",
       "analyzed_other": "{{count}} episódios analisados",
