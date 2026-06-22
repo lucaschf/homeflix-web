@@ -6,6 +6,7 @@ import { inkAlpha } from "../theme/tokens";
 import { error as errorPalette } from "../theme/colors";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../api/client";
+import { MonoButton } from "../components/MonoButton";
 import { useLogin } from "../api/auth";
 import {
   AuthShell,
@@ -187,9 +188,7 @@ export function Login() {
               disabled={submitting}
               autoFocus={email.length > 0}
               rightSlot={
-                <Box
-                  component="button"
-                  type="button"
+                <MonoButton
                   onClick={() => setShowPassword((s) => !s)}
                   aria-pressed={showPassword}
                   aria-label={
@@ -197,23 +196,12 @@ export function Login() {
                       ? t("auth.login.hidePasswordAria")
                       : t("auth.login.showPasswordAria")
                   }
-                  sx={{
-                    background: "transparent",
-                    border: "none",
-                    color: "text.secondary",
-                    cursor: "pointer",
-                    fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
-                    fontSize: 10,
-                    fontWeight: 500,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    "&:hover": { color: "text.primary" },
-                  }}
+                  sx={{ fontSize: 10, fontWeight: 500 }}
                 >
                   {showPassword
                     ? t("auth.login.hidePassword")
                     : t("auth.login.showPassword")}
-                </Box>
+                </MonoButton>
               }
             />
 

@@ -1,4 +1,4 @@
-import { Box, ButtonBase, CircularProgress, Typography } from "@mui/material";
+import { Box, ButtonBase, CircularProgress, Link, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { AlertTriangle, ChevronRight, Film, HardDrive, ScanLine, Tv, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -236,23 +236,15 @@ function RecentlyFlaggedPanel({
         subtitle={t("admin.overview.recentlyFlagged.subtitle")}
         action={
           totalCount > 0 ? (
-            <Typography
+            <Link
               component="button"
               onClick={onSeeAll}
               variant="body2"
-              sx={{
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                color: "primary.main",
-                fontFamily: "inherit",
-                fontSize: "0.8125rem",
-                p: 0,
-                "&:hover": { textDecoration: "underline" },
-              }}
+              underline="hover"
+              sx={{ fontSize: "0.8125rem" }}
             >
               {t("admin.overview.recentlyFlagged.seeAll", { count: totalCount })}
-            </Typography>
+            </Link>
           ) : undefined
         }
       />

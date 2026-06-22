@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { Alert, Box, Button, CircularProgress, Typography } from "@mui/material";
+import { Alert, Box, Button, ButtonBase, CircularProgress, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { whiteAlpha, inkAlpha } from "../theme/tokens";
+import { MonoButton } from "../components/MonoButton";
 import { error as errorPalette } from "../theme/colors";
 import { useNavigate } from "react-router-dom";
 import { useLogout, useProfiles, useSwitchProfile } from "../api/auth";
@@ -102,25 +103,9 @@ export function Profiles() {
             HomeFlix
           </Typography>
         </Box>
-        <Box
-          component="button"
-          onClick={onLogout}
-          disabled={logout.isPending}
-          sx={{
-            background: "transparent",
-            border: "none",
-            color: "text.secondary",
-            cursor: "pointer",
-            fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
-            fontSize: 11,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            "&:hover:not(:disabled)": { color: "text.primary" },
-            "&:disabled": { opacity: 0.5, cursor: "not-allowed" },
-          }}
-        >
+        <MonoButton onClick={onLogout} disabled={logout.isPending}>
           {t("auth.picker.logoutShort")}
-        </Box>
+        </MonoButton>
       </Box>
 
       <Box
@@ -188,9 +173,8 @@ export function Profiles() {
                 const isActive = hoveredId === profile.id;
                 const disabled = switchProfile.isPending;
                 return (
-                  <Box
+                  <ButtonBase
                     key={profile.id}
-                    component="button"
                     type="button"
                     onMouseEnter={() => setHoveredId(profile.id)}
                     onMouseLeave={() => setHoveredId(null)}
@@ -200,9 +184,6 @@ export function Profiles() {
                     disabled={disabled}
                     aria-label={t("auth.picker.enterAs", { name: profile.name })}
                     sx={{
-                      background: "transparent",
-                      border: "none",
-                      cursor: disabled ? "not-allowed" : "pointer",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -211,8 +192,6 @@ export function Profiles() {
                       transform: isActive && !disabled ? "translateY(-3px)" : "none",
                       opacity: disabled ? 0.6 : 1,
                       color: "text.primary",
-                      fontFamily: "inherit",
-                      p: 0,
                     }}
                   >
                     <Avatar
@@ -236,7 +215,7 @@ export function Profiles() {
                     >
                       {profile.name}
                     </Typography>
-                  </Box>
+                  </ButtonBase>
                 );
               })}
             </Box>

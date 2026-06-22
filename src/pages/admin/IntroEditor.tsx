@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Box,
+  ButtonBase,
   Checkbox,
   CircularProgress,
   DialogActions,
@@ -736,8 +737,7 @@ interface TransportButtonProps {
 
 function TransportButton({ onClick, children, icon, iconEnd, primary, subtle }: TransportButtonProps) {
   return (
-    <Box
-      component="button"
+    <ButtonBase
       type="button"
       onClick={onClick}
       sx={{
@@ -747,7 +747,6 @@ function TransportButton({ onClick, children, icon, iconEnd, primary, subtle }: 
         px: subtle ? 1 : 1.625,
         py: 1,
         borderRadius: "6px",
-        cursor: "pointer",
         fontFamily: subtle ? "'JetBrains Mono', ui-monospace, monospace" : "inherit",
         fontSize: subtle ? "0.75rem" : "0.8125rem",
         fontWeight: primary ? 600 : 500,
@@ -761,7 +760,7 @@ function TransportButton({ onClick, children, icon, iconEnd, primary, subtle }: 
       {icon}
       {children}
       {iconEnd}
-    </Box>
+    </ButtonBase>
   );
 }
 
@@ -807,8 +806,7 @@ function TimeField({ label, value, disabled, onStep, onUseCurrent }: TimeFieldPr
             <Plus size={16} />
           </StepButton>
         </Stack>
-        <Box
-          component="button"
+        <ButtonBase
           type="button"
           onClick={onUseCurrent}
           disabled={disabled}
@@ -820,7 +818,6 @@ function TimeField({ label, value, disabled, onStep, onUseCurrent }: TimeFieldPr
             gap: 0.75,
             px: 1.5,
             borderRadius: "6px",
-            cursor: disabled ? "not-allowed" : "pointer",
             bgcolor: whiteAlpha(0.04),
             border: `1px solid ${whiteAlpha(0.08)}`,
             color: "text.primary",
@@ -834,7 +831,7 @@ function TimeField({ label, value, disabled, onStep, onUseCurrent }: TimeFieldPr
         >
           <MapPin size={13} />
           {t("admin.intros.useCurrentTime")}
-        </Box>
+        </ButtonBase>
       </Stack>
     </Box>
   );
@@ -850,20 +847,13 @@ function StepButton({
   children: React.ReactNode;
 }) {
   return (
-    <Box
-      component="button"
+    <ButtonBase
       type="button"
       onClick={onClick}
       disabled={disabled}
       sx={{
         width: 40,
         alignSelf: "stretch",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "transparent",
-        border: 0,
-        cursor: disabled ? "not-allowed" : "pointer",
         color: inkAlpha(0.6),
         opacity: disabled ? 0.4 : 1,
         transition: "background-color 120ms ease, color 120ms ease",
@@ -871,7 +861,7 @@ function StepButton({
       }}
     >
       {children}
-    </Box>
+    </ButtonBase>
   );
 }
 

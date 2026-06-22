@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, ButtonBase } from "@mui/material";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { peach } from "../../theme/colors";
@@ -63,9 +63,8 @@ export function AdminTabs({ tabs }: AdminTabsProps) {
         }
 
         return (
-          <Box
+          <ButtonBase
             key={tab.key}
-            component="button"
             type="button"
             role="tab"
             aria-selected={tab.active}
@@ -73,7 +72,7 @@ export function AdminTabs({ tabs }: AdminTabsProps) {
             sx={sx}
           >
             {tab.label}
-          </Box>
+          </ButtonBase>
         );
       })}
     </Box>
