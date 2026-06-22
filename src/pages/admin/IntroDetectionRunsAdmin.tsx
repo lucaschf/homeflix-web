@@ -1,4 +1,4 @@
-import { Box, Collapse, Stack, Typography } from "@mui/material";
+import { Box, ButtonBase, Collapse, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { Check, ChevronRight, Clock, History, X } from "lucide-react";
 import { useState } from "react";
@@ -142,23 +142,21 @@ function RunRow({
 
   return (
     <Box sx={{ borderBottom: last && !open ? "none" : `1px solid ${whiteAlpha(0.045)}` }}>
-      <Box
-        component="button"
+      <ButtonBase
         type="button"
         onClick={() => setOpen((v) => !v)}
         sx={{
           width: "100%",
           display: "flex",
+          justifyContent: "flex-start",
           alignItems: "center",
           gap: 1.75,
           px: 2.75,
           height: 60,
           bgcolor: open ? whiteAlpha(0.022) : "transparent",
-          border: "none",
           color: "text.primary",
           fontFamily: "inherit",
           textAlign: "left",
-          cursor: "pointer",
           transition: "background-color 100ms ease",
           "&:hover": { bgcolor: whiteAlpha(0.022) },
         }}
@@ -207,7 +205,7 @@ function RunRow({
         <Typography variant="metaMono" sx={{ fontSize: "0.875rem", color: "text.secondary", flexShrink: 0 }}>
           {formatWhen(run.finished_at, locale)}
         </Typography>
-      </Box>
+      </ButtonBase>
 
       <Collapse in={open} unmountOnExit>
         <Box sx={{ pl: 6.375, pr: 2.75, pb: 2.5, pt: 0.5, bgcolor: scrim(0.18) }}>

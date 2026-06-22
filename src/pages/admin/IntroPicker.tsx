@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Box,
+  ButtonBase,
   CircularProgress,
   DialogActions,
   DialogContent,
@@ -297,22 +298,16 @@ function SeriesSegmentedFilter({ value, onChange, counts }: SeriesSegmentedFilte
       {segments.map((seg) => {
         const on = value === seg.id;
         return (
-          <Box
+          <ButtonBase
             key={seg.id}
-            component="button"
             type="button"
             onClick={() => onChange(seg.id)}
             sx={{
               flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
               gap: 0.625,
               py: 0.75,
               px: 0.5,
               borderRadius: "6px",
-              border: 0,
-              cursor: "pointer",
               bgcolor: on ? peachAlpha(0.13) : "transparent",
               color: on ? peach.main : inkAlpha(0.55),
               fontFamily: "inherit",
@@ -333,7 +328,7 @@ function SeriesSegmentedFilter({ value, onChange, counts }: SeriesSegmentedFilte
             >
               {counts[seg.id]}
             </Box>
-          </Box>
+          </ButtonBase>
         );
       })}
     </Box>
@@ -351,8 +346,7 @@ function SeriesRailItem({ series, active, onSelect }: SeriesRailItemProps) {
   const markedCount = series.intro_marked_count ?? 0;
   const ratio = series.total_episodes > 0 ? markedCount / series.total_episodes : 0;
   return (
-    <Box
-      component="button"
+    <ButtonBase
       type="button"
       onClick={onSelect}
       sx={{
@@ -360,11 +354,9 @@ function SeriesRailItem({ series, active, onSelect }: SeriesRailItemProps) {
         width: "100%",
         display: "block",
         textAlign: "left",
-        cursor: "pointer",
         px: 2,
         py: 1.25,
         bgcolor: active ? peachAlpha(0.07) : "transparent",
-        border: 0,
         borderBottom: `1px solid ${whiteAlpha(0.04)}`,
         fontFamily: "inherit",
         transition: "background-color 120ms ease",
@@ -416,7 +408,7 @@ function SeriesRailItem({ series, active, onSelect }: SeriesRailItemProps) {
           {markedCount}/{series.total_episodes}
         </Typography>
       </Box>
-    </Box>
+    </ButtonBase>
   );
 }
 
@@ -573,22 +565,18 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
           {seasons.map((se) => {
             const on = se.season_number === activeSeason.season_number;
             return (
-              <Box
+              <ButtonBase
                 key={se.season_number}
-                component="button"
                 type="button"
                 onClick={() => {
                   setActiveSeasonNumber(se.season_number);
                   onFilterChange("all");
                 }}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
                   gap: 0.875,
                   height: CONTROL_HEIGHT,
                   px: 1.625,
                   borderRadius: "7px",
-                  cursor: "pointer",
                   bgcolor: on ? peachAlpha(0.12) : whiteAlpha(0.03),
                   border: `1px solid ${on ? peachAlpha(0.4) : whiteAlpha(0.08)}`,
                   color: on ? peach.main : inkAlpha(0.7),
@@ -610,7 +598,7 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
                 >
                   {t("common.episodes", { count: se.episodes.length })}
                 </Box>
-              </Box>
+              </ButtonBase>
             );
           })}
         </Stack>

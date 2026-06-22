@@ -1,5 +1,6 @@
 import {
   Box,
+  ButtonBase,
   CircularProgress,
   Snackbar,
   Stack,
@@ -337,9 +338,8 @@ export function ScanAdmin() {
                     const active = scanAll || selectedIds.includes(lib.id);
                     const disabled = isInflight || scanAll;
                     return (
-                      <Box
+                      <ButtonBase
                         key={lib.id}
-                        component="button"
                         type="button"
                         disabled={disabled}
                         onClick={() => toggleLibrary(lib.id)}
@@ -361,7 +361,6 @@ export function ScanAdmin() {
                           fontSize: "0.78125rem",
                           fontWeight: 500,
                           borderRadius: 999,
-                          cursor: disabled ? "not-allowed" : "pointer",
                           opacity: isInflight ? 0.5 : 1,
                           transition:
                             "background-color 140ms ease, border-color 140ms ease, color 140ms ease",
@@ -374,7 +373,7 @@ export function ScanAdmin() {
                       >
                         {active && <Check size={12} aria-hidden />}
                         {lib.name}
-                      </Box>
+                      </ButtonBase>
                     );
                   })}
                 </Box>

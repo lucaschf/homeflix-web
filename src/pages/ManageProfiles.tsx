@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Box,
   Button,
+  ButtonBase,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -322,8 +323,7 @@ interface ProfileTileProps {
 function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
   const [hover, setHover] = useState(false);
   return (
-    <Box
-      component="button"
+    <ButtonBase
       type="button"
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
@@ -332,15 +332,11 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
       onBlur={() => setHover(false)}
       disabled={disabled}
       sx={{
-        background: "transparent",
-        border: "none",
-        cursor: disabled ? "not-allowed" : "pointer",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         gap: 1.5,
         color: "text.primary",
-        fontFamily: "inherit",
         opacity: disabled ? 0.6 : 1,
         transform: hover && !disabled ? "translateY(-2px)" : "none",
         transition: "transform 200ms ease",
@@ -389,7 +385,7 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
       >
         {profile.name}
       </Typography>
-    </Box>
+    </ButtonBase>
   );
 }
 
@@ -406,8 +402,7 @@ function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
   const { t } = useTranslation();
   const [hover, setHover] = useState(false);
   return (
-    <Box
-      component="button"
+    <ButtonBase
       type="button"
       onClick={onClick}
       onMouseEnter={() => setHover(true)}
@@ -416,19 +411,14 @@ function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
       onBlur={() => setHover(false)}
       disabled={disabled}
       sx={{
-        background: "transparent",
-        border: "none",
-        cursor: disabled ? "not-allowed" : "pointer",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         gap: 1.5,
         color: "text.primary",
-        fontFamily: "inherit",
         opacity: disabled ? 0.6 : 1,
         transform: hover && !disabled ? "translateY(-3px)" : "none",
         transition: "transform 200ms ease",
-        p: 0,
       }}
       aria-label={t("profileManagement.addProfile")}
     >
@@ -462,6 +452,6 @@ function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
       >
         {t("profileManagement.addProfile")}
       </Typography>
-    </Box>
+    </ButtonBase>
   );
 }
