@@ -14,7 +14,22 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import Hls from "hls.js";
-import { ArrowLeft, MapPin, Save, ScrollText, Trash2, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  FastForward,
+  MapPin,
+  Minus,
+  Pause,
+  Play,
+  Plus,
+  Rewind,
+  Save,
+  ScrollText,
+  SkipBack,
+  SkipForward,
+  Trash2,
+  Zap,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -28,12 +43,12 @@ import {
   AdminButton,
   AdminCard,
   AdminDialog,
-  AdminInput,
   AdminPageHeader,
   CreditsMarkerEditor,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentGold, inkAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { peach } from "../../theme/colors";
+import { inkAlpha, peachAlpha, scrim, status, whiteAlpha } from "../../theme/tokens";
 
 function formatHms(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "00:00:00";
@@ -323,176 +338,278 @@ function EditorForm({
     );
   }, [episodeId, clearIntro, seriesId, t]);
 
-  const markStart = useCallback(() => {
-    setStartSeconds(Math.floor(currentTime));
-  }, [currentTime]);
+  // ── Transport (custom controls on top of the native ones) ──────────
+  const [playing, setPlaying] = useState(false);
 
-  const markEnd = useCallback(() => {
-    setEndSeconds(Math.floor(currentTime));
-  }, [currentTime]);
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("pause", onPause);
+    return () => {
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("pause", onPause);
+    };
+  }, []);
+
+  const seekTo = useCallback(
+    (target: number) => {
+      const video = videoRef.current;
+      const max = duration > 0 ? duration : target;
+      const clamped = Math.max(0, Math.min(max, target));
+      if (video) video.currentTime = clamped;
+      setCurrentTime(clamped);
+    },
+    [duration],
+  );
+
+  const togglePlay = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) void video.play();
+    else video.pause();
+  }, []);
 
   return (
     <>
-      <Stack spacing={2.5}>
-        <AdminCard>
-          {!episode.file_path ? (
-            <Alert severity="info">{t("admin.intros.noFile")}</Alert>
-          ) : (
-            <Box
-              sx={{
-                bgcolor: "black",
-                borderRadius: 1,
-                overflow: "hidden",
-                aspectRatio: "16 / 9",
-                width: "100%",
-                maxWidth: 960,
-                mx: "auto",
-              }}
-            >
-              <video
-                ref={videoRef}
-                controls
-                style={{ width: "100%", height: "100%", display: "block" }}
-              />
-            </Box>
-          )}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "minmax(0,1fr) 432px" },
+          gap: 2.5,
+          alignItems: "start",
+        }}
+      >
+        {/* ── Player + timeline ─────────────────────────── */}
+        <Stack spacing={2}>
+          <AdminCard>
+            {!episode.file_path ? (
+              <Alert severity="info">{t("admin.intros.noFile")}</Alert>
+            ) : (
+              <>
+                <Box
+                  sx={{
+                    bgcolor: "black",
+                    borderRadius: 1,
+                    overflow: "hidden",
+                    aspectRatio: "16 / 9",
+                    width: "100%",
+                  }}
+                >
+                  <video
+                    ref={videoRef}
+                    controls
+                    style={{ width: "100%", height: "100%", display: "block" }}
+                  />
+                </Box>
 
-          <Box sx={{ mt: 2.5 }}>
-            <TimelineOverlay
+                {/* Transport */}
+                <Stack
+                  direction="row"
+                  spacing={1}
+                  alignItems="center"
+                  flexWrap="wrap"
+                  sx={{ mt: 1.75, rowGap: 1 }}
+                >
+                  <TransportButton onClick={() => seekTo(currentTime - 5)} icon={<Rewind size={14} />}>
+                    5s
+                  </TransportButton>
+                  <TransportButton
+                    onClick={togglePlay}
+                    primary
+                    icon={playing ? <Pause size={14} /> : <Play size={14} />}
+                  >
+                    {playing ? t("admin.intros.pause") : t("admin.intros.play")}
+                  </TransportButton>
+                  <TransportButton onClick={() => seekTo(currentTime + 5)} iconEnd={<FastForward size={14} />}>
+                    5s
+                  </TransportButton>
+                  <Box sx={{ flex: 1, minWidth: 8 }} />
+                  <TransportButton onClick={() => seekTo(startSeconds)} icon={<SkipBack size={13} />} subtle>
+                    {t("admin.intros.goToStart")} {formatHms(startSeconds)}
+                  </TransportButton>
+                  <TransportButton onClick={() => seekTo(endSeconds)} iconEnd={<SkipForward size={13} />} subtle>
+                    {t("admin.intros.goToEnd")} {formatHms(endSeconds)}
+                  </TransportButton>
+                </Stack>
+              </>
+            )}
+          </AdminCard>
+
+          {/* Timeline scrubber */}
+          <AdminCard>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+              sx={{ mb: 1.5 }}
+            >
+              <Typography variant="eyebrow" sx={{ color: "text.secondary" }}>
+                {t("admin.intros.timeline")}
+              </Typography>
+              <Typography variant="metaMono" sx={{ color: "text.secondary" }}>
+                {formatHms(currentTime)} / {formatHms(duration)}
+              </Typography>
+            </Stack>
+            <TimelineScrubber
               duration={duration}
               currentTime={currentTime}
               startSeconds={startSeconds}
               endSeconds={endSeconds}
+              onSeek={seekTo}
+              onStartChange={(v) => setStartSeconds(clampInt(v, 0, endSeconds - 1))}
+              onEndChange={(v) =>
+                setEndSeconds(clampInt(v, startSeconds + 1, duration > 0 ? duration : v))
+              }
             />
-          </Box>
-        </AdminCard>
+            <Typography
+              variant="metaMono"
+              sx={{ display: "block", mt: 1.25, color: "text.secondary", textAlign: "right" }}
+            >
+              {t("admin.intros.timelineHint")}
+            </Typography>
+          </AdminCard>
+        </Stack>
 
-        <AdminCard>
-          <Stack spacing={2}>
+        {/* ── Control panel ─────────────────────────────── */}
+        <Stack spacing={2.5} sx={{ position: { lg: "sticky" }, top: 0 }}>
+          {/* Marker card */}
+          <AdminCard>
+            <Typography
+              variant="eyebrow"
+              component="div"
+              sx={{ color: "text.secondary", mb: 1.75 }}
+            >
+              {t("admin.intros.markerCardTitle")}
+            </Typography>
+            <Stack spacing={1.75}>
+              <TimeField
+                label={t("admin.intros.startLabel")}
+                value={startSeconds}
+                disabled={!episode.file_path}
+                onStep={(d) => setStartSeconds(clampInt(startSeconds + d, 0, endSeconds - 1))}
+                onUseCurrent={() =>
+                  setStartSeconds(clampInt(Math.floor(currentTime), 0, endSeconds - 1))
+                }
+              />
+              <TimeField
+                label={t("admin.intros.endLabel")}
+                value={endSeconds}
+                disabled={!episode.file_path}
+                onStep={(d) =>
+                  setEndSeconds(
+                    clampInt(endSeconds + d, startSeconds + 1, duration > 0 ? duration : endSeconds + d),
+                  )
+                }
+                onUseCurrent={() =>
+                  setEndSeconds(
+                    clampInt(
+                      Math.floor(currentTime),
+                      startSeconds + 1,
+                      duration > 0 ? duration : Math.floor(currentTime),
+                    ),
+                  )
+                }
+              />
+            </Stack>
+
+            {validationError && (
+              <Alert severity="error" sx={{ mt: 1.75 }}>
+                {validationError}
+              </Alert>
+            )}
+
+            {/* intro duration readout */}
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", sm: "1fr 260px" },
-                columnGap: 2,
-                rowGap: 2,
+                display: "flex",
                 alignItems: "center",
+                justifyContent: "space-between",
+                mt: 1.75,
+                px: 1.75,
+                py: 1.25,
+                borderRadius: 1,
+                bgcolor: peachAlpha(0.07),
+                border: `1px solid ${peachAlpha(0.2)}`,
               }}
             >
-              <AdminInput
-                label={t("admin.intros.startSeconds")}
-                mono
-                type="number"
-                value={startSeconds}
-                onChange={(e) =>
-                  setStartSeconds(Math.max(0, Number(e.target.value) || 0))
-                }
-                helperText={formatHms(startSeconds)}
-                inputProps={{ min: 0, step: 1 }}
-                fullWidth
-              />
-              <AdminButton
-                variant="secondary"
-                icon={<MapPin size={14} />}
-                onClick={markStart}
-                disabled={!episode.file_path}
-                fullWidth
+              <Typography variant="body2" sx={{ fontSize: "0.875rem", color: inkAlpha(0.7) }}>
+                {t("admin.intros.introDuration")}
+              </Typography>
+              <Typography
+                variant="metaMono"
+                sx={{ fontSize: "0.9375rem", fontWeight: 600, color: peach.main }}
               >
-                {t("admin.intros.markStart")}
-              </AdminButton>
-              <AdminInput
-                label={t("admin.intros.endSeconds")}
-                mono
-                type="number"
-                value={endSeconds}
-                onChange={(e) =>
-                  setEndSeconds(Math.max(0, Number(e.target.value) || 0))
-                }
-                helperText={formatHms(endSeconds)}
-                inputProps={{ min: 1, step: 1 }}
-                fullWidth
-              />
-              <AdminButton
-                variant="secondary"
-                icon={<MapPin size={14} />}
-                onClick={markEnd}
-                disabled={!episode.file_path}
-                fullWidth
-              >
-                {t("admin.intros.markEnd")}
-              </AdminButton>
+                {formatHms(Math.max(0, endSeconds - startSeconds))}
+              </Typography>
             </Box>
 
-            {validationError && <Alert severity="error">{validationError}</Alert>}
-
-            <Stack
-              direction="row"
-              spacing={1.5}
-              alignItems="center"
-              flexWrap="wrap"
-              sx={{ pt: 0.5 }}
-            >
+            {/* actions */}
+            <Stack spacing={1.25} sx={{ mt: 1.75 }}>
               <AdminButton
                 variant="primary"
-                icon={<Save size={14} />}
+                icon={<Save size={15} />}
                 onClick={handleSave}
                 disabled={!!validationError || setIntro.isPending || !episodeId}
+                fullWidth
               >
                 {t("admin.intros.save")}
               </AdminButton>
+              <Stack direction="row" spacing={1.25} justifyContent="space-between">
+                <AdminButton
+                  variant="danger"
+                  icon={<Trash2 size={13} />}
+                  onClick={handleClear}
+                  disabled={clearIntro.isPending || !episodeId || !episode.intro}
+                >
+                  {t("admin.intros.clear")}
+                </AdminButton>
+                <AdminButton
+                  variant="ghost"
+                  icon={<ScrollText size={13} />}
+                  onClick={() => setCreditsOpen(true)}
+                  disabled={!episodeId}
+                >
+                  {t("admin.credits.editButton")}
+                </AdminButton>
+              </Stack>
+            </Stack>
+          </AdminCard>
+
+          {/* Bulk apply card */}
+          <AdminCard>
+            <Typography
+              variant="eyebrow"
+              component="div"
+              sx={{ color: "text.secondary", mb: 0.75 }}
+            >
+              {t("admin.intros.bulkApplyTitle")}
+            </Typography>
+            <Typography variant="body2" sx={{ color: inkAlpha(0.5), mb: 1.75, lineHeight: 1.5 }}>
+              {t("admin.intros.bulkApplyDesc")}
+            </Typography>
+            <Stack spacing={1.25}>
               <AdminButton
-                variant="danger"
-                icon={<Trash2 size={14} />}
-                onClick={handleClear}
-                disabled={clearIntro.isPending || !episodeId || !episode.intro}
+                variant="secondary"
+                icon={<Zap size={14} />}
+                onClick={() => setPendingBulk("season")}
+                disabled={!!validationError || bulkSet.isPending || eligibleInSeason.length === 0}
+                fullWidth
               >
-                {t("admin.intros.clear")}
+                {t("admin.intros.applyToSeason")} ({eligibleInSeason.length})
               </AdminButton>
               <AdminButton
                 variant="secondary"
-                icon={<ScrollText size={14} />}
-                onClick={() => setCreditsOpen(true)}
-                disabled={!episodeId}
+                icon={<Zap size={14} />}
+                onClick={() => setPendingBulk("series")}
+                disabled={!!validationError || bulkSet.isPending || eligibleInSeries.length === 0}
+                fullWidth
               >
-                {t("admin.credits.editButton")}
+                {t("admin.intros.applyToSeries")} ({eligibleInSeries.length})
               </AdminButton>
-              <Typography
-                variant="metaMono"
-                color="text.secondary"
-                sx={{ alignSelf: "center", ml: "auto" }}
-              >
-                {t("admin.intros.currentTime")}: {formatHms(currentTime)}
-              </Typography>
             </Stack>
-          </Stack>
-        </AdminCard>
-
-        <AdminCard>
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1.5}
-            alignItems={{ sm: "center" }}
-            flexWrap="wrap"
-          >
-            <AdminButton
-              variant="secondary"
-              icon={<Zap size={14} />}
-              onClick={() => setPendingBulk("season")}
-              disabled={
-                !!validationError || bulkSet.isPending || eligibleInSeason.length === 0
-              }
-            >
-              {t("admin.intros.applyToSeason")} ({eligibleInSeason.length})
-            </AdminButton>
-            <AdminButton
-              variant="secondary"
-              icon={<Zap size={14} />}
-              onClick={() => setPendingBulk("series")}
-              disabled={
-                !!validationError || bulkSet.isPending || eligibleInSeries.length === 0
-              }
-            >
-              {t("admin.intros.applyToSeries")} ({eligibleInSeries.length})
-            </AdminButton>
             <FormControlLabel
               control={
                 <Checkbox
@@ -506,11 +623,11 @@ function EditorForm({
                   {t("admin.intros.autoAdvance")}
                 </Typography>
               }
-              sx={{ ml: { sm: 0 } }}
+              sx={{ mt: 1.25, ml: 0, alignItems: "flex-start" }}
             />
-          </Stack>
-        </AdminCard>
-      </Stack>
+          </AdminCard>
+        </Stack>
+      </Box>
 
       {creditsOpen && episodeId && (
         <CreditsMarkerEditor
@@ -604,55 +721,307 @@ function EditorForm({
   );
 }
 
-interface TimelineOverlayProps {
+function clampInt(value: number, min: number, max: number): number {
+  return Math.round(Math.max(min, Math.min(max, value)));
+}
+
+interface TransportButtonProps {
+  onClick: () => void;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  iconEnd?: React.ReactNode;
+  primary?: boolean;
+  subtle?: boolean;
+}
+
+function TransportButton({ onClick, children, icon, iconEnd, primary, subtle }: TransportButtonProps) {
+  return (
+    <Box
+      component="button"
+      type="button"
+      onClick={onClick}
+      sx={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 0.625,
+        px: subtle ? 1 : 1.625,
+        py: 1,
+        borderRadius: "6px",
+        cursor: "pointer",
+        fontFamily: subtle ? "'JetBrains Mono', ui-monospace, monospace" : "inherit",
+        fontSize: subtle ? "0.75rem" : "0.8125rem",
+        fontWeight: primary ? 600 : 500,
+        color: subtle ? "text.secondary" : "text.primary",
+        bgcolor: subtle ? "transparent" : primary ? whiteAlpha(0.08) : whiteAlpha(0.03),
+        border: `1px solid ${subtle ? "transparent" : whiteAlpha(0.08)}`,
+        transition: "background-color 120ms ease, color 120ms ease",
+        "&:hover": { bgcolor: whiteAlpha(subtle ? 0.04 : 0.1), color: "text.primary" },
+      }}
+    >
+      {icon}
+      {children}
+      {iconEnd}
+    </Box>
+  );
+}
+
+interface TimeFieldProps {
+  label: string;
+  value: number;
+  disabled?: boolean;
+  onStep: (delta: number) => void;
+  onUseCurrent: () => void;
+}
+
+function TimeField({ label, value, disabled, onStep, onUseCurrent }: TimeFieldProps) {
+  const { t } = useTranslation();
+  return (
+    <Box>
+      <Typography variant="eyebrow" component="label" sx={{ display: "block", color: "text.secondary", mb: 0.875 }}>
+        {label}
+      </Typography>
+      <Stack direction="row" spacing={1}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          sx={{
+            flex: 1,
+            bgcolor: whiteAlpha(0.03),
+            border: `1px solid ${whiteAlpha(0.08)}`,
+            borderRadius: "6px",
+            overflow: "hidden",
+          }}
+        >
+          <StepButton onClick={() => onStep(-1)} disabled={disabled}>
+            <Minus size={16} />
+          </StepButton>
+          <Box sx={{ flex: 1, textAlign: "center" }}>
+            <Typography variant="metaMono" sx={{ display: "block", fontSize: "1rem", fontWeight: 600 }}>
+              {formatHms(value)}
+            </Typography>
+            <Typography variant="metaMono" sx={{ display: "block", fontSize: "0.6875rem", color: "text.secondary" }}>
+              {Math.round(value)}s
+            </Typography>
+          </Box>
+          <StepButton onClick={() => onStep(1)} disabled={disabled}>
+            <Plus size={16} />
+          </StepButton>
+        </Stack>
+        <Box
+          component="button"
+          type="button"
+          onClick={onUseCurrent}
+          disabled={disabled}
+          title={t("admin.intros.useCurrentTime")}
+          sx={{
+            flexShrink: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 0.75,
+            px: 1.5,
+            borderRadius: "6px",
+            cursor: disabled ? "not-allowed" : "pointer",
+            bgcolor: whiteAlpha(0.04),
+            border: `1px solid ${whiteAlpha(0.08)}`,
+            color: "text.primary",
+            fontFamily: "inherit",
+            fontSize: "0.8125rem",
+            fontWeight: 500,
+            opacity: disabled ? 0.5 : 1,
+            transition: "background-color 120ms ease",
+            "&:hover": { bgcolor: disabled ? whiteAlpha(0.04) : whiteAlpha(0.08) },
+          }}
+        >
+          <MapPin size={13} />
+          {t("admin.intros.useCurrentTime")}
+        </Box>
+      </Stack>
+    </Box>
+  );
+}
+
+function StepButton({
+  onClick,
+  disabled,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Box
+      component="button"
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      sx={{
+        width: 40,
+        alignSelf: "stretch",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "transparent",
+        border: 0,
+        cursor: disabled ? "not-allowed" : "pointer",
+        color: inkAlpha(0.6),
+        opacity: disabled ? 0.4 : 1,
+        transition: "background-color 120ms ease, color 120ms ease",
+        "&:hover": { bgcolor: disabled ? "transparent" : whiteAlpha(0.05), color: "text.primary" },
+      }}
+    >
+      {children}
+    </Box>
+  );
+}
+
+interface TimelineScrubberProps {
   duration: number;
   currentTime: number;
   startSeconds: number;
   endSeconds: number;
+  onSeek: (t: number) => void;
+  onStartChange: (t: number) => void;
+  onEndChange: (t: number) => void;
 }
 
-function TimelineOverlay({
+function TimelineScrubber({
   duration,
   currentTime,
   startSeconds,
   endSeconds,
-}: TimelineOverlayProps) {
-  if (duration <= 0) return null;
-  const startPct = Math.min(100, Math.max(0, (startSeconds / duration) * 100));
-  const widthPct = Math.min(
-    100 - startPct,
-    Math.max(0, ((endSeconds - startSeconds) / duration) * 100),
+  onSeek,
+  onStartChange,
+  onEndChange,
+}: TimelineScrubberProps) {
+  const trackRef = useRef<HTMLDivElement | null>(null);
+  const [drag, setDrag] = useState<"start" | "end" | "seek" | null>(null);
+  const safeDuration = duration > 0 ? duration : 1;
+
+  const timeFromClientX = useCallback(
+    (clientX: number) => {
+      const el = trackRef.current;
+      if (!el) return 0;
+      const r = el.getBoundingClientRect();
+      return Math.max(0, Math.min(safeDuration, ((clientX - r.left) / r.width) * safeDuration));
+    },
+    [safeDuration],
   );
-  const playheadPct = Math.min(100, Math.max(0, (currentTime / duration) * 100));
+
+  useEffect(() => {
+    if (!drag) return;
+    const move = (e: PointerEvent) => {
+      const t = timeFromClientX(e.clientX);
+      if (drag === "start") onStartChange(t);
+      else if (drag === "end") onEndChange(t);
+      else onSeek(t);
+    };
+    const up = () => setDrag(null);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+  }, [drag, timeFromClientX, onStartChange, onEndChange, onSeek]);
+
+  const pStart = (Math.min(startSeconds, safeDuration) / safeDuration) * 100;
+  const pEnd = (Math.min(endSeconds, safeDuration) / safeDuration) * 100;
+  const pCur = (Math.min(currentTime, safeDuration) / safeDuration) * 100;
+
   return (
     <Box
+      ref={trackRef}
+      onPointerDown={(e) => {
+        onSeek(timeFromClientX(e.clientX));
+        setDrag("seek");
+      }}
       sx={{
         position: "relative",
-        height: 12,
-        bgcolor: whiteAlpha(0.06),
-        borderRadius: 1,
+        height: 60,
+        borderRadius: "7px",
         overflow: "hidden",
+        cursor: "pointer",
+        userSelect: "none",
+        bgcolor: whiteAlpha(0.04),
+        backgroundImage: `repeating-linear-gradient(90deg, ${whiteAlpha(0.03)} 0 1px, transparent 1px 40px)`,
       }}
     >
+      {/* dim outside the intro */}
+      <Box sx={{ position: "absolute", top: 0, bottom: 0, left: 0, width: `${pStart}%`, bgcolor: scrim(0.62) }} />
+      <Box sx={{ position: "absolute", top: 0, bottom: 0, right: 0, width: `${100 - pEnd}%`, bgcolor: scrim(0.62) }} />
+      {/* intro band */}
       <Box
         sx={{
           position: "absolute",
           top: 0,
           bottom: 0,
-          left: `${startPct}%`,
-          width: `${widthPct}%`,
-          bgcolor: "primary.main",
-          opacity: 0.7,
+          left: `${pStart}%`,
+          width: `${Math.max(0, pEnd - pStart)}%`,
+          border: `2px solid ${peach.main}`,
+          borderRadius: "4px",
+          bgcolor: peachAlpha(0.1),
         }}
       />
+      <ScrubHandle pos={pStart} onDown={() => setDrag("start")} />
+      <ScrubHandle pos={pEnd} onDown={() => setDrag("end")} />
+      {/* playhead */}
       <Box
         sx={{
           position: "absolute",
-          top: 0,
-          bottom: 0,
-          left: `${playheadPct}%`,
+          top: -4,
+          bottom: -4,
+          left: `${pCur}%`,
           width: 2,
-          bgcolor: accentGold,
+          bgcolor: inkAlpha(0.95),
+          pointerEvents: "none",
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: -5,
+            left: -4,
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            bgcolor: inkAlpha(0.95),
+          }}
+        />
+      </Box>
+    </Box>
+  );
+}
+
+function ScrubHandle({ pos, onDown }: { pos: number; onDown: () => void }) {
+  return (
+    <Box
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        onDown();
+      }}
+      sx={{
+        position: "absolute",
+        top: 0,
+        bottom: 0,
+        left: `${pos}%`,
+        width: 16,
+        transform: "translateX(-50%)",
+        cursor: "ew-resize",
+        zIndex: 3,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Box sx={{ position: "absolute", top: 0, bottom: 0, width: 3, bgcolor: peach.main }} />
+      <Box
+        sx={{
+          width: 12,
+          height: 26,
+          borderRadius: "4px",
+          bgcolor: peach.main,
+          border: "1px solid rgba(0,0,0,0.35)",
         }}
       />
     </Box>
