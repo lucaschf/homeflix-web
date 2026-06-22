@@ -1139,17 +1139,50 @@
     "jobs": {
       "title": "Jobs em segundo plano",
       "subtitle": "Cada job agendado: quando roda de novo, como foi a última execução e o que está rodando agora.",
-      "schedulerRunning": "Scheduler ativo",
-      "schedulerStopped": "Scheduler parado",
+      "refresh": "Atualizar",
       "loading": "Carregando jobs…",
       "error": "Não foi possível carregar os jobs.",
       "empty": "Nenhum job registrado.",
       "running": "Rodando",
       "neverRan": "Nunca rodou",
       "notScheduled": "Não agendado",
-      "nextRun": "próx. {{when}}",
       "noNextRun": "sem próxima execução",
-      "lastRun": "última {{when}}",
+      "runNow": "Rodar agora",
+      "runNowSuccess": "{{job}} disparado",
+      "runNowError": "Não foi possível disparar {{job}}",
+      "summary": {
+        "scheduler": "Scheduler",
+        "running": "Rodando",
+        "stopped": "Parado",
+        "tick": "Tick a cada minuto",
+        "idle": "Não iniciado",
+        "jobs": "Jobs agendados",
+        "neverRan_one": "{{count}} ainda não rodou",
+        "neverRan_other": "{{count}} ainda não rodaram",
+        "executions": "Execuções (24 h)",
+        "executionsSub": "Em todos os jobs",
+        "failures": "Falhas (24 h)",
+        "failuresClean": "Tudo limpo",
+        "failuresPresent_one": "{{count}} precisa de atenção",
+        "failuresPresent_other": "{{count}} precisam de atenção"
+      },
+      "cols": {
+        "job": "Job · agendamento",
+        "history": "Histórico",
+        "lastRun": "Última execução",
+        "next": "Próxima"
+      },
+      "strip": {
+        "empty": "sem execuções"
+      },
+      "schedule": {
+        "daily": "diário",
+        "everyDays": "a cada {{count}} dias",
+        "everyHours": "a cada {{count}} h",
+        "everyMinutes": "a cada {{count}} min",
+        "everySeconds": "a cada {{count}} s",
+        "hourly": "todo início de hora"
+      },
       "overview": {
         "title": "Jobs",
         "subtitle": "Agenda ao vivo e a execução mais recente de cada job."
@@ -1157,7 +1190,14 @@
       "history": {
         "title": "Histórico de execuções",
         "subtitle": "Mais recentes primeiro, de todos os jobs.",
-        "empty": "Nenhuma execução registrada ainda."
+        "empty": "Nenhuma execução registrada ainda.",
+        "cols": {
+          "job": "Job",
+          "status": "Status",
+          "duration": "Duração",
+          "detail": "Detalhe",
+          "when": "Quando"
+        }
       },
       "status": {
         "running": "Rodando",

@@ -646,6 +646,25 @@ export function useJobRuns(
 }
 
 /**
+ * Trigger a scheduled job to run immediately ("run now"). On success
+ * the job's recorded run shows up in the dashboard within a poll
+ * cycle, so we invalidate both the overview and the run history.
+ */
+export function useTriggerJob() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (jobId: string) =>
+      api.post<ApiDetailResponse<{ job_id: string; triggered: boolean }>>(
+        `/admin/jobs/${encodeURIComponent(jobId)}/run`,
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "jobs"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "job-runs"] });
+    },
+  });
+}
+
+/**
  * Cursor-paginated infinite query over the full series catalog.
  *
  * Powers the admin intro-editor picker, which needs a flat list of

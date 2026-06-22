@@ -827,12 +827,19 @@ export interface JobSummary {
   next_run_at: string | null;
   running: boolean;
   last_run: JobRunRecord | null;
+  /** Status codes of the newest runs, oldest-first, for the run-health
+   *  strip (the most recent outcome is the last element). */
+  recent_runs: string[];
 }
 
 /** Payload of ``GET /api/v1/admin/jobs``. */
 export interface JobsOverview {
   scheduler_running: boolean;
   jobs: JobSummary[];
+  /** Total runs started in the last 24 hours. */
+  executions_24h: number;
+  /** Runs that failed or were interrupted in the last 24 hours. */
+  failures_24h: number;
 }
 
 export type JobsOverviewResponse = ApiDetailResponse<JobsOverview>;

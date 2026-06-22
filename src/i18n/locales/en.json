@@ -1140,17 +1140,50 @@
     "jobs": {
       "title": "Background Jobs",
       "subtitle": "Every scheduled job: when it runs next, how its last run went, and what's running right now.",
-      "schedulerRunning": "Scheduler running",
-      "schedulerStopped": "Scheduler stopped",
+      "refresh": "Refresh",
       "loading": "Loading jobs…",
       "error": "Could not load jobs.",
       "empty": "No jobs registered.",
       "running": "Running",
       "neverRan": "Never ran",
       "notScheduled": "Not scheduled",
-      "nextRun": "next {{when}}",
       "noNextRun": "no next run",
-      "lastRun": "last {{when}}",
+      "runNow": "Run now",
+      "runNowSuccess": "{{job}} triggered",
+      "runNowError": "Couldn't trigger {{job}}",
+      "summary": {
+        "scheduler": "Scheduler",
+        "running": "Running",
+        "stopped": "Stopped",
+        "tick": "Ticks every minute",
+        "idle": "Not started",
+        "jobs": "Scheduled jobs",
+        "neverRan_one": "{{count}} hasn't run yet",
+        "neverRan_other": "{{count}} haven't run yet",
+        "executions": "Executions (24h)",
+        "executionsSub": "Across all jobs",
+        "failures": "Failures (24h)",
+        "failuresClean": "All clear",
+        "failuresPresent_one": "{{count}} needs attention",
+        "failuresPresent_other": "{{count}} need attention"
+      },
+      "cols": {
+        "job": "Job · schedule",
+        "history": "History",
+        "lastRun": "Last run",
+        "next": "Next"
+      },
+      "strip": {
+        "empty": "no runs"
+      },
+      "schedule": {
+        "daily": "daily",
+        "everyDays": "every {{count}} days",
+        "everyHours": "every {{count}} h",
+        "everyMinutes": "every {{count}} min",
+        "everySeconds": "every {{count}} s",
+        "hourly": "top of every hour"
+      },
       "overview": {
         "title": "Jobs",
         "subtitle": "Live schedule and the most recent run of each background job."
@@ -1158,7 +1191,14 @@
       "history": {
         "title": "Run history",
         "subtitle": "Newest first, across every job.",
-        "empty": "No job runs recorded yet."
+        "empty": "No job runs recorded yet.",
+        "cols": {
+          "job": "Job",
+          "status": "Status",
+          "duration": "Duration",
+          "detail": "Detail",
+          "when": "When"
+        }
       },
       "status": {
         "running": "Running",
