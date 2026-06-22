@@ -1180,6 +1180,8 @@
       "seasonLabel": "Season {{number}}",
       "unknownSeries": "Unknown series",
       "counts": "detected {{detected}} · saved {{persisted}}",
+      "countLabelDetected": "detected",
+      "countLabelSaved": "saved",
       "minConfidence": "floor {{value}}%",
       "analyzed_one": "{{count}} episode analysed",
       "analyzed_other": "{{count}} episodes analysed",
