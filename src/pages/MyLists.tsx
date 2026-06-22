@@ -33,6 +33,7 @@ import type { CustomListOutput } from "../api/types";
 import { MediaCard } from "../components/MediaCard";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
+import { menuScrim } from "../theme/tokens";
 
 const MAX_LISTS = 10;
 
@@ -230,7 +231,7 @@ function CustomListCard({
           justifyContent: "space-between",
           alignItems: "flex-start",
           transition: "background-color 200ms",
-          "&:hover": { bgcolor: "#1E1E1E" },
+          "&:hover": { bgcolor: menuScrim(1) },
         }}
       >
         <Box>

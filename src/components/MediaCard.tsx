@@ -128,7 +128,7 @@ export function MediaCard({
               right: 4,
               zIndex: 2,
               bgcolor: scrim(0.6),
-              color: "#fff",
+              color: "common.white",
               p: 0.5,
               "&:hover": { bgcolor: scrim(0.85) },
             }}

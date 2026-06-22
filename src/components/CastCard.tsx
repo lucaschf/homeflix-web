@@ -1,7 +1,7 @@
 import { Avatar, Box, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import type { CastMemberOutput } from "../api/types";
-import { whiteAlpha } from "../theme/tokens";
+import { peachAlpha, whiteAlpha } from "../theme/tokens";
 
 interface CastCardProps {
   member: CastMemberOutput;
@@ -83,7 +83,7 @@ export function CastCard({ member }: CastCardProps) {
         "&:focus-visible .cast-avatar": {
           // Subtle focus ring without an outline rectangle that would
           // clip awkwardly around a circular avatar.
-          boxShadow: "0 0 0 2px rgba(232,146,111,0.6)",
+          boxShadow: `0 0 0 2px ${peachAlpha(0.6)}`,
         },
       }}
     >

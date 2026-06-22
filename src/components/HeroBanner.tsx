@@ -3,6 +3,7 @@ import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
 import { Bookmark, Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
+import { neutral } from "../theme/colors";
 import { whiteAlpha, panelScrim } from "../theme/tokens";
 import { ContentRatingBadge } from "./ContentRatingBadge";
 import { TitleLogo } from "./TitleLogo";
@@ -124,7 +125,7 @@ export function HeroBanner({
           height: "75dvh",
           minHeight: 500,
           background:
-            `linear-gradient(180deg, rgba(20,20,20,1) 0%, ${panelScrim(1)} 70%, ${panelScrim(1)} 100%)`,
+            `linear-gradient(180deg, ${neutral[900]} 0%, ${panelScrim(1)} 70%, ${panelScrim(1)} 100%)`,
         }}
       />
     );
