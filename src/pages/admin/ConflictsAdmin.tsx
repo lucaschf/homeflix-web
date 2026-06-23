@@ -52,7 +52,7 @@ import {
 } from "../../components/admin";
 import { AdminDialog } from "../../components/admin/AdminDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { inkAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, inkAlpha, status, whiteAlpha } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 const KB = 1024;
@@ -614,7 +614,7 @@ function CandidatePane({
       </Typography>
       <Typography
         variant="caption"
-        sx={{ color: inkAlpha(0.55), fontFamily: "monospace" }}
+        sx={{ color: inkAlpha(0.55), fontFamily: fontFamily.mono }}
       >
         {candidate.media_id}
         {candidate.year ? ` · ${candidate.year}` : ""}
@@ -660,7 +660,7 @@ function CandidateFileRow({ file }: { file: AdminConflictCandidateFile }) {
         sx={{
           display: "block",
           color: inkAlpha(0.45),
-          fontFamily: "monospace",
+          fontFamily: fontFamily.mono,
           wordBreak: "break-all",
         }}
       >
@@ -913,7 +913,7 @@ function CandidateRadioLabel({
       </Typography>
       <Typography
         variant="caption"
-        sx={{ color: inkAlpha(0.55), fontFamily: "monospace" }}
+        sx={{ color: inkAlpha(0.55), fontFamily: fontFamily.mono }}
       >
         {candidate.media_id}
         {candidate.year ? ` · ${candidate.year}` : ""}
