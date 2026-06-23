@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
 import type { CollectionOutput } from "../api/types";
-import { inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
+import { fontSize, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 
 interface CollectionChipProps {
   collection: CollectionOutput;
@@ -25,7 +25,7 @@ export function CollectionChip({ collection }: CollectionChipProps) {
         bgcolor: whiteAlpha(0.04),
         border: `1px solid ${whiteAlpha(0.08)}`,
         borderRadius: "20px",
-        fontSize: "0.8125rem",
+        fontSize: fontSize.control,
         color: inkAlpha(0.85),
         lineHeight: 1.4,
         whiteSpace: "nowrap",
@@ -44,7 +44,7 @@ export function CollectionChip({ collection }: CollectionChipProps) {
         },
       }}
     >
-      <Box component="span" sx={{ fontSize: "0.8125rem", lineHeight: 1 }} aria-hidden>
+      <Box component="span" sx={{ fontSize: fontSize.control, lineHeight: 1 }} aria-hidden>
         📚
       </Box>
       <Box component="span">

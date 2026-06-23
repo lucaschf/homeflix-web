@@ -1,7 +1,7 @@
 import { Button, type ButtonProps } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import type { ReactNode } from "react";
-import { status, whiteAlpha } from "../../theme/tokens";
+import { fontSize, status, whiteAlpha } from "../../theme/tokens";
 
 type AdminButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -74,7 +74,7 @@ export function AdminButton({
       sx={{
         textTransform: "none",
         fontWeight: 500,
-        fontSize: "0.8125rem",
+        fontSize: fontSize.control,
         py: 0.875,
         px: 1.75,
         borderRadius: 0.625,

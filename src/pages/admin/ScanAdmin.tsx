@@ -29,6 +29,7 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
 import {
   accentGold,
+  fontSize,
   goldAlpha,
   inkAlpha,
   peachAlpha,
@@ -385,7 +386,7 @@ export function ScanAdmin() {
                     alignItems: "center",
                     gap: 1.25,
                     mt: 2.25,
-                    fontSize: "0.8125rem",
+                    fontSize: fontSize.control,
                     color: inkAlpha(0.75),
                     cursor: isInflight ? "not-allowed" : "pointer",
                     userSelect: "none",
