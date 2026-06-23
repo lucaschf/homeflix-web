@@ -49,7 +49,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
-import { fontSize, inkAlpha, peachAlpha, scrim, status, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, fontSize, inkAlpha, peachAlpha, scrim, status, whiteAlpha } from "../../theme/tokens";
 
 function formatHms(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "00:00:00";
@@ -747,7 +747,7 @@ function TransportButton({ onClick, children, icon, iconEnd, primary, subtle }: 
         px: subtle ? 1 : 1.625,
         py: 1,
         borderRadius: "6px",
-        fontFamily: subtle ? "'JetBrains Mono', ui-monospace, monospace" : "inherit",
+        fontFamily: subtle ? fontFamily.mono : "inherit",
         fontSize: subtle ? "0.75rem" : fontSize.control,
         fontWeight: primary ? 600 : 500,
         color: subtle ? "text.secondary" : "text.primary",

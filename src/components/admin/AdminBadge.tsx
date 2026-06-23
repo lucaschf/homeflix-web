@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import type { ReactNode } from "react";
 import { peach } from "../../theme/colors";
-import { peachAlpha, status, whiteAlpha, inkAlpha } from "../../theme/tokens";
+import { fontFamily, peachAlpha, status, whiteAlpha, inkAlpha } from "../../theme/tokens";
 
 export type BadgeTone = "neutral" | "peach" | "ok" | "warn" | "err" | "info";
 
@@ -74,7 +74,7 @@ export function AdminBadge({ tone = "neutral", icon, children, sx }: AdminBadgeP
         bgcolor: t.bg,
         border: `1px solid ${t.bd}`,
         borderRadius: 999,
-        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+        fontFamily: fontFamily.mono,
         fontSize: "0.625rem",
         letterSpacing: "0.10em",
         textTransform: "uppercase",

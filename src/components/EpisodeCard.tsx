@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useEpisodeScrubFrame } from "../hooks/useEpisodeScrubFrame";
 import type { EpisodeOutput } from "../api/types";
 import { neutral } from "../theme/colors";
-import { inkAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { fontFamily, inkAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { formatDuration } from "../utils/duration";
 
 interface EpisodeCardProps {
@@ -240,7 +240,7 @@ export function EpisodeCard({
                 bgcolor: scrim(0.7),
                 border: `1px solid ${whiteAlpha(0.12)}`,
                 borderRadius: 0.75,
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 fontSize: "0.6rem",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",

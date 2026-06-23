@@ -21,7 +21,7 @@ import {
 } from "../api/hooks";
 import type { CollectionPart } from "../api/types";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-import { fontSize, inkAlpha, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { fontFamily, fontSize, inkAlpha, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { neutral } from "../theme/colors";
 
 /**
@@ -258,7 +258,7 @@ export function Collection() {
             <Box
               component="span"
               sx={{
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 fontSize: { xs: "0.6875rem", md: "0.8125rem" },
                 color: "text.secondary",
                 fontWeight: 400,
@@ -271,7 +271,7 @@ export function Collection() {
             sx={{
               fontSize: { xs: "0.6875rem", md: "0.75rem" },
               color: "text.secondary",
-              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+              fontFamily: fontFamily.mono,
               letterSpacing: "0.04em",
               textTransform: "uppercase",
             }}
@@ -405,7 +405,7 @@ function CollectionHero({
           <Box sx={{ maxWidth: { xs: "100%", md: 820 } }}>
             <Box
               sx={{
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 fontSize: { xs: "0.625rem", md: "0.6875rem" },
                 letterSpacing: "0.18em",
                 textTransform: "uppercase",
@@ -610,7 +610,7 @@ function StatCell({ label, value, sub, tone = "default" }: StatCellProps) {
       <Box
         component="span"
         sx={{
-          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+          fontFamily: fontFamily.mono,
           fontSize: { xs: "0.5rem", md: "0.5625rem" },
           letterSpacing: { xs: "0.16em", md: "0.18em" },
           textTransform: "uppercase",
@@ -635,7 +635,7 @@ function StatCell({ label, value, sub, tone = "default" }: StatCellProps) {
           component="span"
           sx={{
             fontSize: { xs: "0.625rem", md: "0.6875rem" },
-            fontFamily: { xs: "'JetBrains Mono', ui-monospace, monospace", md: "inherit" },
+            fontFamily: { xs: fontFamily.mono, md: "inherit" },
             color: tone === "warn" ? "primary.main" : "text.secondary",
           }}
         >
@@ -760,7 +760,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            fontFamily: fontFamily.mono,
             fontSize: { xs: "0.625rem", md: "0.75rem" },
             fontWeight: 600,
             color: missing ? inkAlpha(0.35) : "text.secondary",
@@ -854,7 +854,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                 bgcolor: scrim(0.65),
                 border: `1px solid ${whiteAlpha(0.1)}`,
                 borderRadius: 0.75,
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 fontSize: { xs: "0.5rem", md: "0.5625rem" },
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
@@ -918,7 +918,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
               <Box
                 component="span"
                 sx={{
-                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  fontFamily: fontFamily.mono,
                   fontSize: { xs: "0.625rem", md: "0.6875rem" },
                   color: "text.secondary",
                 }}
@@ -941,7 +941,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                 bgcolor: peachAlpha(0.08),
                 border: `1px solid ${peachAlpha(0.25)}`,
                 borderRadius: 0.5,
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 fontSize: { xs: "0.5rem", md: "0.5625rem" },
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
@@ -994,7 +994,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
             </Box>
             <Box
               component="span"
-              sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+              sx={{ fontFamily: fontFamily.mono }}
             >
               {`${index + 1}º`}
             </Box>

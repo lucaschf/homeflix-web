@@ -1,6 +1,6 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 import { error, info, neutral, peach, success, warning } from "./colors";
-import { fontSize, inkAlpha } from "./tokens";
+import { fontFamily, fontSize, inkAlpha } from "./tokens";
 import React from "react";
 
 // -- Overlay token namespace ---------------------------------------------------
@@ -168,7 +168,7 @@ const themeOptions: ThemeOptions = {
     caption: { fontSize: "0.6875rem", fontWeight: 500, lineHeight: 1.4 },
     button: { textTransform: "none", fontWeight: 600 },
     eyebrow: {
-      fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
+      fontFamily: fontFamily.mono,
       fontSize: "0.6875rem",
       fontWeight: 500,
       lineHeight: 1.4,
@@ -209,7 +209,7 @@ const themeOptions: ThemeOptions = {
       lineHeight: 1.55,
     },
     breadcrumb: {
-      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      fontFamily: fontFamily.mono,
       fontSize: "0.8rem",
       letterSpacing: "0.1em",
       textTransform: "uppercase",
@@ -227,7 +227,7 @@ const themeOptions: ThemeOptions = {
       lineHeight: 1,
     },
     metaMono: {
-      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      fontFamily: fontFamily.mono,
       fontSize: "0.78125rem",
       lineHeight: 1.4,
     },

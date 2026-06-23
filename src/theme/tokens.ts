@@ -47,6 +47,17 @@ export const fontSize = {
   control: "0.8125rem",
 } as const;
 
+// -- Font-family stacks --------------------------------------------------------
+//
+// The canonical mono stack, declared once. Many components inlined a SHORTER
+// copy (`'JetBrains Mono', ui-monospace, monospace`) that dropped
+// `SFMono-Regular`; routing them through this token converges them on the full
+// stack the theme's `eyebrow` variant already uses.
+export const fontFamily = {
+  /** Monospace stack — JetBrains Mono with SF Mono / generic fallbacks. */
+  mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
+} as const;
+
 // -- Admin status palette -----------------------------------------------------
 //
 // The admin surfaces share a status palette (see `AdminBadge`). Each tone has a

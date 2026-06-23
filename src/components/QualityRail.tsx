@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import type { MediaFileOutput } from "../api/types";
 import { QualityChip, type QualityChipKind } from "./QualityChip";
+import { fontFamily } from "../theme/tokens";
 
 interface QualityRailProps {
   files: MediaFileOutput[];
@@ -71,7 +72,7 @@ export function QualityRail({ files, resolution, languages }: QualityRailProps) 
             ml: chips.length > 0 ? 0.5 : 0,
             color: "text.secondary",
             opacity: 0.6,
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            fontFamily: fontFamily.mono,
             fontSize: "0.6875rem",
           }}
         >

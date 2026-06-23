@@ -36,7 +36,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
-import { fontSize, inkAlpha, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, fontSize, inkAlpha, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
 import { IntroTabs } from "./components/IntroTabs";
 
 type IntroFilter = "all" | "marked" | "unmarked" | "auto" | "low_confidence" | "manual";
@@ -321,7 +321,7 @@ function SeriesSegmentedFilter({ value, onChange, counts }: SeriesSegmentedFilte
             <Box
               component="span"
               sx={{
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 fontSize: "0.6875rem",
                 color: on ? peach.main : "text.secondary",
               }}
@@ -591,7 +591,7 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
                 <Box
                   component="span"
                   sx={{
-                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    fontFamily: fontFamily.mono,
                     fontSize: "0.875rem",
                     color: on ? peach.main : "text.secondary",
                   }}

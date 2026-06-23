@@ -1,6 +1,7 @@
 import { Box, alpha, useTheme } from "@mui/material";
 import { Info } from "lucide-react";
 import type { ReactNode } from "react";
+import { fontFamily } from "../../theme/tokens";
 
 interface HypothesisChipProps {
   children: ReactNode;
@@ -28,7 +29,7 @@ export function HypothesisChip({ children }: HypothesisChipProps) {
         bgcolor: alpha(theme.palette.primary.main, 0.08),
         border: `1px solid ${alpha(theme.palette.primary.main, 0.25)}`,
         borderRadius: 999,
-        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+        fontFamily: fontFamily.mono,
         fontSize: "0.5625rem",
         letterSpacing: "0.14em",
         textTransform: "uppercase",

@@ -13,7 +13,7 @@ import { alpha } from "@mui/material/styles";
 import { AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { status, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, status, whiteAlpha } from "../../theme/tokens";
 import { AdminButton } from "./AdminButton";
 import { AdminEmptyState } from "./AdminEmptyState";
 
@@ -127,7 +127,7 @@ export function AdminTable<T>({
                 scope="col"
                 align={c.align ?? "left"}
                 sx={{
-                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  fontFamily: fontFamily.mono,
                   fontSize: "0.6875rem",
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
@@ -170,7 +170,7 @@ export function AdminTable<T>({
                     fontSize: "0.875rem",
                     color: c.muted ? "text.secondary" : "text.primary",
                     fontFamily: c.mono
-                      ? "'JetBrains Mono', ui-monospace, monospace"
+                      ? fontFamily.mono
                       : "inherit",
                     width: c.width,
                     whiteSpace: c.wrap ? "normal" : "nowrap",
@@ -214,7 +214,7 @@ function TableLoadingState<T>({
                 key={c.id}
                 scope="col"
                 sx={{
-                  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                  fontFamily: fontFamily.mono,
                   fontSize: "0.6875rem",
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",

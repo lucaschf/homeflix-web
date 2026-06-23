@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { peach } from "../../theme/colors";
 import { AdminBadge, type BadgeTone } from "./AdminBadge";
-import { inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
 
 export type EmptyMotif = "rows" | "cards" | "orbit";
 
@@ -153,7 +153,7 @@ export function FancyEmpty({
             <Box
               component="span"
               sx={{
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 fontSize: "10.5px",
                 letterSpacing: "0.12em",
                 textTransform: "uppercase",
