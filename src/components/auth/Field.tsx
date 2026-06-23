@@ -1,6 +1,6 @@
 import { useId, useState, type ChangeEvent, type ReactNode } from "react";
 import { Box, Typography } from "@mui/material";
-import { inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
+import { fontSize, inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
 
 interface FieldProps {
   label: string;
@@ -94,7 +94,7 @@ export function Field({
             outline: "none",
             color: "text.primary",
             fontFamily: "inherit",
-            fontSize: 15,
+            fontSize: fontSize.control,
             letterSpacing: "-0.005em",
             "&::placeholder": { color: inkAlpha(0.3) },
             "&:disabled": { cursor: "not-allowed", opacity: 0.6 },

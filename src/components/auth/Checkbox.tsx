@@ -27,7 +27,7 @@ export function Checkbox({ checked, onChange, label, disabled = false }: Checkbo
         gap: 1.25,
         cursor: disabled ? "not-allowed" : "pointer",
         userSelect: "none",
-        fontSize: 13,
+        fontSize: "0.6875rem",
         color: inkAlpha(0.78),
         opacity: disabled ? 0.6 : 1,
       }}
