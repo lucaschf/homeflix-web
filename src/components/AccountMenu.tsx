@@ -12,7 +12,7 @@ import { LogOut, Settings as SettingsIcon, UserCog, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser, useLogout, useProfiles } from "../api/auth";
-import { peachAlpha, whiteAlpha } from "../theme/tokens";
+import { fontSize, peachAlpha, whiteAlpha } from "../theme/tokens";
 import { Avatar } from "./auth/Avatar";
 import { initialsForName, toneForProfile } from "./auth/avatarUtils";
 
@@ -132,7 +132,7 @@ export function AccountMenu() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 11,
+              fontSize: fontSize.badge,
               fontWeight: 600,
               letterSpacing: "0.02em",
             }}
@@ -165,7 +165,7 @@ export function AccountMenu() {
             sx={{
               display: "block",
               color: "text.secondary",
-              fontSize: 11,
+              fontSize: fontSize.badge,
               letterSpacing: "0.04em",
               textTransform: "uppercase",
             }}
@@ -174,7 +174,7 @@ export function AccountMenu() {
           </Typography>
           <Typography
             sx={{
-              fontSize: 13,
+              fontSize: "0.6875rem",
               fontWeight: 500,
               color: "text.primary",
               wordBreak: "break-all",

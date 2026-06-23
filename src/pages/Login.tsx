@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Alert, Box, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useTranslation, Trans } from "react-i18next";
-import { inkAlpha } from "../theme/tokens";
+import { fontSize, inkAlpha } from "../theme/tokens";
 import { error as errorPalette } from "../theme/colors";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../api/client";
@@ -88,7 +88,7 @@ export function Login() {
       {/* Header logo */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: { xs: 3, sm: 4.5 }, py: 3.5 }}>
         <Logo size={22} />
-        <Typography sx={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
+        <Typography sx={{ fontSize: fontSize.control, fontWeight: 700, letterSpacing: "-0.01em" }}>
           Home<Box component="span" sx={{ color: "primary.main" }}>Flix</Box>
         </Typography>
       </Box>
@@ -119,7 +119,7 @@ export function Login() {
             sx={{
               mt: 3.5,
               mb: 1.25,
-              fontSize: { xs: 26, sm: 32 },
+              fontSize: { xs: "1.375rem", sm: "1.75rem" },
               fontWeight: 500,
               letterSpacing: "-0.025em",
               lineHeight: 1.1,
@@ -138,7 +138,7 @@ export function Login() {
             sx={{
               mt: 0,
               mb: 4.5,
-              fontSize: 14,
+              fontSize: "0.75rem",
               lineHeight: 1.55,
               color: inkAlpha(0.55),
               textAlign: "center",
@@ -196,7 +196,7 @@ export function Login() {
                       ? t("auth.login.hidePasswordAria")
                       : t("auth.login.showPasswordAria")
                   }
-                  sx={{ fontSize: 10, fontWeight: 500 }}
+                  sx={{ fontSize: fontSize.micro, fontWeight: 500 }}
                 >
                   {showPassword
                     ? t("auth.login.hidePassword")
@@ -235,7 +235,7 @@ export function Login() {
           display: "flex",
           justifyContent: "center",
           fontFamily: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
-          fontSize: 10,
+          fontSize: fontSize.micro,
           letterSpacing: "0.14em",
           textTransform: "uppercase",
           color: "text.secondary",

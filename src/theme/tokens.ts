@@ -45,6 +45,17 @@ export const fontSize = {
    * selects and menu items. Pair with `fontWeight: 500` (600 when active).
    */
   control: "0.8125rem",
+  /**
+   * Small UI badge / eyebrow label — ~11-12px at the 19px root. Sits just
+   * below the `caption` step (0.6875rem); used for notification meta, menu
+   * eyebrows, count chips and other dense secondary labels.
+   */
+  badge: "0.625rem",
+  /**
+   * Smallest UI label — ~10px. Notification count badge, footer eyebrow.
+   * Use sparingly; below this, text stops being comfortably legible.
+   */
+  micro: "0.5625rem",
 } as const;
 
 // -- Font-family stacks --------------------------------------------------------

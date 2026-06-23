@@ -190,7 +190,7 @@ export function ProfileFormDialog({
               bgcolor: alpha(errorColor.main, 0.08),
               border: `1px solid ${alpha(errorColor.main, 0.25)}`,
               color: alpha(errorColor.light, 0.95),
-              fontSize: 13,
+              fontSize: "0.6875rem",
             }}
           >
             {error}

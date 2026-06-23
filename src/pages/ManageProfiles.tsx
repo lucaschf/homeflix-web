@@ -14,7 +14,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import { Pencil, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { whiteAlpha, inkAlpha, peachAlpha } from "../theme/tokens";
+import { fontSize, whiteAlpha, inkAlpha, peachAlpha } from "../theme/tokens";
 import { error } from "../theme/colors";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -163,7 +163,7 @@ export function ManageProfiles() {
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Logo size={22} />
-          <Typography sx={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
+          <Typography sx={{ fontSize: fontSize.control, fontWeight: 700, letterSpacing: "-0.01em" }}>
             HomeFlix
           </Typography>
         </Box>
@@ -183,7 +183,7 @@ export function ManageProfiles() {
         <Typography
           variant="h1"
           sx={{
-            fontSize: { xs: 32, sm: 48 },
+            fontSize: { xs: "1.75rem", sm: "2.2rem" },
             fontWeight: 400,
             letterSpacing: "-0.02em",
             lineHeight: 1.1,
@@ -232,7 +232,7 @@ export function ManageProfiles() {
             borderColor: whiteAlpha(0.15),
             color: "text.primary",
             textTransform: "none",
-            fontSize: 14,
+            fontSize: "0.75rem",
             fontWeight: 500,
             letterSpacing: "0.02em",
             "&:hover": {
@@ -281,7 +281,7 @@ export function ManageProfiles() {
                 bgcolor: alpha(error.main, 0.08),
                 border: `1px solid ${alpha(error.main, 0.25)}`,
                 color: alpha(error.light, 0.95),
-                fontSize: 13,
+                fontSize: "0.6875rem",
               }}
             >
               {deleteError}
@@ -374,7 +374,7 @@ function ProfileTile({ profile, onClick, disabled = false }: ProfileTileProps) {
       </Box>
       <Typography
         sx={{
-          fontSize: 15,
+          fontSize: fontSize.control,
           fontWeight: 500,
           letterSpacing: "-0.005em",
           color: hover && !disabled
@@ -441,7 +441,7 @@ function NewProfileTile({ onClick, disabled = false }: NewProfileTileProps) {
       </Box>
       <Typography
         sx={{
-          fontSize: 15,
+          fontSize: fontSize.control,
           fontWeight: 500,
           letterSpacing: "-0.005em",
           color: hover && !disabled

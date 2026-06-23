@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Box, Button, ButtonBase, CircularProgress, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { whiteAlpha, inkAlpha } from "../theme/tokens";
+import { fontSize, whiteAlpha, inkAlpha } from "../theme/tokens";
 import { MonoButton } from "../components/MonoButton";
 import { error as errorPalette } from "../theme/colors";
 import { useNavigate } from "react-router-dom";
@@ -99,7 +99,7 @@ export function Profiles() {
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Logo size={22} />
-          <Typography sx={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
+          <Typography sx={{ fontSize: fontSize.control, fontWeight: 700, letterSpacing: "-0.01em" }}>
             HomeFlix
           </Typography>
         </Box>
@@ -130,7 +130,7 @@ export function Profiles() {
               variant="h1"
               sx={{
                 mb: { xs: 4, sm: 6 },
-                fontSize: { xs: 32, sm: 48 },
+                fontSize: { xs: "1.75rem", sm: "2.2rem" },
                 fontWeight: 400,
                 letterSpacing: "-0.02em",
                 lineHeight: 1.1,
@@ -204,7 +204,7 @@ export function Profiles() {
                     />
                     <Typography
                       sx={{
-                        fontSize: 15,
+                        fontSize: fontSize.control,
                         fontWeight: 500,
                         letterSpacing: "-0.005em",
                         color: isActive
@@ -235,7 +235,7 @@ export function Profiles() {
                 borderColor: whiteAlpha(0.15),
                 color: "text.primary",
                 textTransform: "none",
-                fontSize: 14,
+                fontSize: "0.75rem",
                 fontWeight: 500,
                 letterSpacing: "0.02em",
                 "&:hover": {
@@ -261,7 +261,7 @@ function EmptyProfileState() {
         variant="h1"
         sx={{
           mb: 1.5,
-          fontSize: { xs: 26, sm: 32 },
+          fontSize: { xs: "1.375rem", sm: "1.75rem" },
           fontWeight: 500,
           letterSpacing: "-0.025em",
           lineHeight: 1.1,
@@ -269,7 +269,7 @@ function EmptyProfileState() {
       >
         {t("auth.picker.emptyTitle")}
       </Typography>
-      <Typography sx={{ fontSize: 14, lineHeight: 1.55, color: inkAlpha(0.55) }}>
+      <Typography sx={{ fontSize: "0.75rem", lineHeight: 1.55, color: inkAlpha(0.55) }}>
         {t("auth.picker.emptyBody")}
       </Typography>
     </Box>

@@ -22,7 +22,7 @@ import {
 } from "../api/hooks";
 import { useNotificationsCrossTabSync } from "../api/notificationsChannel";
 import type { Notification, NotificationKind } from "../api/types";
-import { whiteAlpha, inkAlpha } from "../theme/tokens";
+import { fontSize, whiteAlpha, inkAlpha } from "../theme/tokens";
 import { formatRelativeTime } from "../utils/schedule";
 
 const DROPDOWN_WIDTH = 380;
@@ -191,7 +191,7 @@ export function NotificationBell() {
             "& .MuiBadge-badge": {
               minWidth: 16,
               height: 16,
-              fontSize: 10,
+              fontSize: fontSize.micro,
               fontWeight: 600,
               padding: "0 4px",
             },
@@ -232,7 +232,7 @@ export function NotificationBell() {
                 variant="caption"
                 sx={{
                   color: "text.secondary",
-                  fontSize: 11,
+                  fontSize: fontSize.badge,
                   letterSpacing: "0.04em",
                   textTransform: "uppercase",
                 }}
@@ -244,7 +244,7 @@ export function NotificationBell() {
                   variant="caption"
                   sx={{
                     color: "primary.light",
-                    fontSize: 11,
+                    fontSize: fontSize.badge,
                     fontWeight: 600,
                   }}
                 >
@@ -258,7 +258,7 @@ export function NotificationBell() {
               disabled={unreadCount === 0 || markAllRead.isPending}
               sx={{
                 color: "text.secondary",
-                fontSize: 11,
+                fontSize: fontSize.badge,
                 textTransform: "none",
                 px: 1,
                 minWidth: 0,
@@ -319,7 +319,7 @@ export function NotificationBell() {
                   sx={{
                     bgcolor: "background.paper",
                     color: "text.disabled",
-                    fontSize: 10,
+                    fontSize: fontSize.micro,
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
                     lineHeight: "20px",
@@ -374,7 +374,7 @@ export function NotificationBell() {
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography
                           sx={{
-                            fontSize: 13,
+                            fontSize: "0.6875rem",
                             fontWeight: notification.is_read ? 500 : 600,
                             color: "text.primary",
                             lineHeight: 1.3,
@@ -386,7 +386,7 @@ export function NotificationBell() {
                         {body && (
                           <Typography
                             sx={{
-                              fontSize: 12,
+                              fontSize: fontSize.badge,
                               color: "text.secondary",
                               mt: 0.25,
                               lineHeight: 1.4,
@@ -401,7 +401,7 @@ export function NotificationBell() {
                         )}
                         <Typography
                           sx={{
-                            fontSize: 11,
+                            fontSize: fontSize.badge,
                             color: "text.disabled",
                             mt: 0.5,
                             letterSpacing: "0.02em",
