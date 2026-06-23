@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { whiteAlpha, scrim } from "../../theme/tokens";
+import { fontFamily, whiteAlpha, scrim } from "../../theme/tokens";
 import { error as errorColor } from "../../theme/colors";
 import { useDeleteProfileAvatar, useUploadProfileAvatar } from "../../api/auth";
 import { ApiError } from "../../api/client";
@@ -374,7 +374,7 @@ export function ProfileFormDialog({
                     />
                   }
                   label={
-                    <Typography variant="body2" sx={{ fontFamily: "monospace", opacity: 0.7 }}>
+                    <Typography variant="body2" sx={{ fontFamily: fontFamily.mono, opacity: 0.7 }}>
                       {id}
                     </Typography>
                   }
