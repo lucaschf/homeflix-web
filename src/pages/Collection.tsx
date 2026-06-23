@@ -611,7 +611,7 @@ function StatCell({ label, value, sub, tone = "default" }: StatCellProps) {
         component="span"
         sx={{
           fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-          fontSize: { xs: "0.53125rem", md: "0.5625rem" },
+          fontSize: { xs: "0.5rem", md: "0.5625rem" },
           letterSpacing: { xs: "0.16em", md: "0.18em" },
           textTransform: "uppercase",
           color: "text.secondary",
@@ -634,7 +634,7 @@ function StatCell({ label, value, sub, tone = "default" }: StatCellProps) {
         <Box
           component="span"
           sx={{
-            fontSize: { xs: "0.59375rem", md: "0.6875rem" },
+            fontSize: { xs: "0.625rem", md: "0.6875rem" },
             fontFamily: { xs: "'JetBrains Mono', ui-monospace, monospace", md: "inherit" },
             color: tone === "warn" ? "primary.main" : "text.secondary",
           }}
@@ -855,7 +855,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
                 border: `1px solid ${whiteAlpha(0.1)}`,
                 borderRadius: 0.75,
                 fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-                fontSize: { xs: "0.46875rem", md: "0.5625rem" },
+                fontSize: { xs: "0.5rem", md: "0.5625rem" },
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",
                 color: inkAlpha(0.7),
@@ -967,7 +967,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
               display: "flex",
               gap: { xs: 0.875, md: 1.75 },
               alignItems: "center",
-              fontSize: { xs: "0.65625rem", md: "0.75rem" },
+              fontSize: { xs: "0.6875rem", md: "0.75rem" },
               color: "text.secondary",
               mb: { xs: 0.75, md: 1.5 },
               flexWrap: "wrap",
@@ -1004,7 +1004,7 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
             <Typography
               sx={{
                 margin: 0,
-                fontSize: { xs: "0.71875rem", md: "0.8125rem" },
+                fontSize: { xs: "0.6875rem", md: "0.8125rem" },
                 lineHeight: { xs: 1.5, md: 1.65 },
                 color: missing
                   ? inkAlpha(0.5)
