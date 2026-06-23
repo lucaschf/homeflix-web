@@ -23,7 +23,7 @@ import { Link as RouterLink, useLocation, useMatch } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useMoviesNeedingReview, useSeriesNeedingReview } from "../../api/hooks";
 import { neutral, peach } from "../../theme/colors";
-import { inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, inkAlpha, peachAlpha, whiteAlpha } from "../../theme/tokens";
 import { Logo } from "../Logo";
 
 interface SidebarItem {
@@ -227,7 +227,7 @@ function BrandRow({ collapsed }: { collapsed: boolean }) {
           <Box
             component="span"
             sx={{
-              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+              fontFamily: fontFamily.mono,
               fontSize: "0.625rem",
               letterSpacing: "0.18em",
               textTransform: "uppercase",
@@ -302,7 +302,7 @@ function SidebarRow({ item, collapsed }: { item: SidebarItem; collapsed: boolean
         <Box
           component="span"
           sx={{
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            fontFamily: fontFamily.mono,
             fontSize: "0.6875rem",
             fontWeight: 600,
             py: 0.375,

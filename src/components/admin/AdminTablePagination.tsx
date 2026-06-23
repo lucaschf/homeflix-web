@@ -1,7 +1,7 @@
 import { Box, MenuItem, Select, Stack, Typography } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { fontSize, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, fontSize, whiteAlpha } from "../../theme/tokens";
 import { AdminButton } from "./AdminButton";
 
 interface AdminTablePaginationProps {
@@ -75,7 +75,7 @@ export function AdminTablePagination({
               sx={{
                 fontSize: fontSize.control,
                 bgcolor: whiteAlpha(0.025),
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 "& .MuiSelect-select": { py: 0.5, pr: "28px !important", pl: 1.25 },
               }}
             >
@@ -91,7 +91,7 @@ export function AdminTablePagination({
           variant="body2"
           color="text.secondary"
           sx={{
-            fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            fontFamily: fontFamily.mono,
             fontSize: "0.78125rem",
           }}
         >

@@ -14,7 +14,7 @@ import { useMoviesByActor, usePerson } from "../api/hooks";
 import type { MovieSummary, PersonBio } from "../api/types";
 import { MediaCard } from "../components/MediaCard";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-import { inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
+import { fontFamily, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 
 type SortKey = "recent" | "oldest" | "title";
 
@@ -394,7 +394,7 @@ function FilmographySection({ movies, sort, onSortChange, t, onPlay, onOpen }: F
             component="span"
             sx={{
               ml: 1.5,
-              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+              fontFamily: fontFamily.mono,
               fontSize: "0.75rem",
               fontWeight: 400,
               color: "text.secondary",

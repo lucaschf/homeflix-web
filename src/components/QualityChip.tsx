@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { whiteAlpha } from "../theme/tokens";
+import { fontFamily, whiteAlpha } from "../theme/tokens";
 
 export type QualityChipKind = "premium" | "neutral" | "low";
 export type QualityChipSize = "sm" | "md";
@@ -41,7 +41,7 @@ export function QualityChip({ label, kind = "neutral", size = "md" }: QualityChi
       sx={{
         display: "inline-flex",
         alignItems: "center",
-        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+        fontFamily: fontFamily.mono,
         fontSize: isSm ? "0.5625rem" : "0.625rem",
         fontWeight: 600,
         letterSpacing: "0.04em",

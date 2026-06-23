@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
 import type { CollectionOutput } from "../api/types";
-import { fontSize, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
+import { fontFamily, fontSize, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 
 interface CollectionChipProps {
   collection: CollectionOutput;
@@ -57,7 +57,7 @@ export function CollectionChip({ collection }: CollectionChipProps) {
         component="span"
         sx={{
           color: "text.secondary",
-          fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+          fontFamily: fontFamily.mono,
           fontSize: "0.75rem",
         }}
       >

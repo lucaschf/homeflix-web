@@ -24,7 +24,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
-import { status as statusTokens, inkAlpha, whiteAlpha } from "../../theme/tokens";
+import { status as statusTokens, fontFamily, inkAlpha, whiteAlpha } from "../../theme/tokens";
 import {
   formatRelativeServerTime,
   parseServerDate,
@@ -350,7 +350,7 @@ function isOptimisticallyRunning(job: JobSummary, triggeredAt: number | undefine
 type TFn = (key: string, options?: Record<string, unknown>) => string;
 
 const HEADER_CELL = {
-  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+  fontFamily: fontFamily.mono,
   fontSize: "0.625rem",
   letterSpacing: "0.14em",
   textTransform: "uppercase" as const,

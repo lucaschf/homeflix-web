@@ -15,6 +15,7 @@ import {
   type BadgeTone,
 } from "../../../components/admin";
 import { parseServerDate, parseServerTime } from "../../../utils/datetime";
+import { fontFamily } from "../../../theme/tokens";
 
 const STATUS_TONE: Record<AdminScanRunStatus, BadgeTone> = {
   running: "info",
@@ -94,7 +95,7 @@ export function ScanRunHistoryTable({
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+              sx={{ fontFamily: fontFamily.mono }}
             >
               {r.id}
             </Typography>
@@ -156,7 +157,7 @@ export function ScanRunHistoryTable({
                   sx: {
                     whiteSpace: "pre-wrap",
                     maxWidth: 480,
-                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    fontFamily: fontFamily.mono,
                     fontSize: "0.6875rem",
                   },
                 },

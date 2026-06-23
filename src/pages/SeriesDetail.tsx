@@ -35,7 +35,7 @@ import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
-import { inkAlpha, panelScrim, scrim, status, whiteAlpha } from "../theme/tokens";
+import { fontFamily, inkAlpha, panelScrim, scrim, status, whiteAlpha } from "../theme/tokens";
 
 type EpisodeView = "list" | "cards";
 
@@ -634,7 +634,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
                 bgcolor: scrim(0.7),
                 border: `1px solid ${whiteAlpha(0.12)}`,
                 borderRadius: 0.75,
-                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontFamily: fontFamily.mono,
                 fontSize: "0.55rem",
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",

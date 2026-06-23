@@ -17,7 +17,7 @@ import {
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentCoral, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { accentCoral, fontFamily, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -99,7 +99,7 @@ export function LibrariesAdmin() {
             spacing={0.25}
             sx={{
               maxWidth: 360,
-              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+              fontFamily: fontFamily.mono,
               fontSize: "0.78125rem",
               color: "text.secondary",
             }}

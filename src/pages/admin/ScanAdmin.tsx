@@ -29,6 +29,7 @@ import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
 import {
   accentGold,
+  fontFamily,
   fontSize,
   goldAlpha,
   inkAlpha,
@@ -325,7 +326,7 @@ export function ScanAdmin() {
                   variant="eyebrow"
                   component="div"
                   sx={{
-                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    fontFamily: fontFamily.mono,
                     fontSize: "0.625rem",
                     letterSpacing: "0.14em",
                     color: "text.secondary",

@@ -6,7 +6,7 @@ import {
   Typography,
 } from "@mui/material";
 import type { ReactNode } from "react";
-import { whiteAlpha } from "../../theme/tokens";
+import { fontFamily, whiteAlpha } from "../../theme/tokens";
 
 interface AdminSelectOption<V> {
   value: V;
@@ -68,7 +68,7 @@ export function AdminSelect<V extends string | number>({
         sx={[
           {
             fontSize: "0.875rem",
-            fontFamily: mono ? "'JetBrains Mono', ui-monospace, monospace" : undefined,
+            fontFamily: mono ? fontFamily.mono : undefined,
             bgcolor: whiteAlpha(0.025),
             "& .MuiOutlinedInput-notchedOutline": {
               borderColor: whiteAlpha(0.08),
@@ -98,7 +98,7 @@ export function AdminSelect<V extends string | number>({
                   component="span"
                   sx={{
                     color: "text.secondary",
-                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    fontFamily: fontFamily.mono,
                     fontSize: "0.75rem",
                     flexShrink: 0,
                   }}
