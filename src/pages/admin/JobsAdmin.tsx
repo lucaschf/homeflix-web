@@ -424,8 +424,10 @@ function StatusDot({ status }: { status: string }) {
 }
 
 /** Recent outcomes as a row of coloured ticks (newest strongest). */
-function RunStrip({ runs, t }: { runs: string[]; t: TFn }) {
-  if (!runs.length) {
+function RunStrip({ runs, t }: { runs?: string[]; t: TFn }) {
+  // `runs` can be undefined when the backend predates the run-strip payload
+  // (recent_runs) — degrade to the empty state instead of crashing the page.
+  if (!runs?.length) {
     return (
       <Typography variant="metaMono" sx={{ color: inkAlpha(0.25) }}>
         {t("admin.jobs.strip.empty")}
