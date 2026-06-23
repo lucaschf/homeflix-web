@@ -36,7 +36,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
-import { inkAlpha, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { fontSize, inkAlpha, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
 import { IntroTabs } from "./components/IntroTabs";
 
 type IntroFilter = "all" | "marked" | "unmarked" | "auto" | "low_confidence" | "manual";
@@ -311,7 +311,7 @@ function SeriesSegmentedFilter({ value, onChange, counts }: SeriesSegmentedFilte
               bgcolor: on ? peachAlpha(0.13) : "transparent",
               color: on ? peach.main : inkAlpha(0.55),
               fontFamily: "inherit",
-              fontSize: "0.8125rem",
+              fontSize: fontSize.control,
               fontWeight: on ? 600 : 500,
               transition: "background-color 120ms ease, color 120ms ease",
               "&:hover": { color: on ? peach.main : "text.primary" },
@@ -737,7 +737,7 @@ function EpisodeFilterMenu({ value, options, onChange }: EpisodeFilterMenuProps)
               onChange(o.value);
               setAnchorEl(null);
             }}
-            sx={{ fontSize: "0.8125rem", gap: 1 }}
+            sx={{ fontSize: fontSize.control, gap: 1 }}
           >
             <Box sx={{ width: 16, display: "flex", flexShrink: 0 }}>
               {o.value === value && <Check size={14} color={peach.main} />}

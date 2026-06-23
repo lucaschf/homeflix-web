@@ -36,7 +36,7 @@ import { TrailerDialog } from "../components/TrailerDialog";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
-import { inkAlpha, panelScrim, peachAlpha, scrim, status, whiteAlpha } from "../theme/tokens";
+import { fontSize, inkAlpha, panelScrim, peachAlpha, scrim, status, whiteAlpha } from "../theme/tokens";
 import { neutral } from "../theme/colors";
 
 export function MovieDetail() {
@@ -309,7 +309,7 @@ export function MovieDetail() {
                     borderRadius: 1,
                     height: 46,
                     px: 2,
-                    fontSize: "0.8125rem",
+                    fontSize: fontSize.control,
                     fontWeight: 500,
                     "&:hover": {
                       bgcolor: whiteAlpha(0.12),
@@ -603,7 +603,7 @@ function MetaRow({ label, value }: { label: string; value: string }) {
   // wrapping to its right. Baseline-aligned so a multi-line value
   // anchors its first line to the label.
   return (
-    <Box sx={{ display: "flex", gap: 1.25, alignItems: "baseline", fontSize: "0.8125rem" }}>
+    <Box sx={{ display: "flex", gap: 1.25, alignItems: "baseline", fontSize: fontSize.control }}>
       <Box
         component="span"
         sx={{ flexShrink: 0, minWidth: 110, color: "text.secondary", fontSize: "0.75rem" }}

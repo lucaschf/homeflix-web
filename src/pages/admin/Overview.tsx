@@ -239,9 +239,8 @@ function RecentlyFlaggedPanel({
             <Link
               component="button"
               onClick={onSeeAll}
-              variant="body2"
+              variant="control"
               underline="hover"
-              sx={{ fontSize: "0.8125rem" }}
             >
               {t("admin.overview.recentlyFlagged.seeAll", { count: totalCount })}
             </Link>
@@ -500,10 +499,8 @@ function HealthRow({ label, status }: { label: string; status: string }) {
           }}
         />
         <Typography
-          variant="body2"
+          variant="control"
           sx={{
-            fontSize: "0.8125rem",
-            fontWeight: 500,
             textTransform: "capitalize",
             overflow: "hidden",
             textOverflow: "ellipsis",

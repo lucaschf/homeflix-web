@@ -2,7 +2,7 @@ import { Tab, Tabs } from "@mui/material";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { peach } from "../../theme/colors";
-import { inkAlpha, whiteAlpha } from "../../theme/tokens";
+import { fontSize, inkAlpha, whiteAlpha } from "../../theme/tokens";
 
 export interface AdminTab {
   /** Stable identity for the tab; also the selected ``value``. */
@@ -25,7 +25,7 @@ const tabSx = {
   px: 1.75,
   py: 1,
   fontFamily: "inherit",
-  fontSize: "0.8125rem",
+  fontSize: fontSize.control,
   fontWeight: 500,
   textTransform: "none",
   color: inkAlpha(0.65),

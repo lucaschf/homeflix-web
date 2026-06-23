@@ -32,6 +32,21 @@ export const peachAlpha = (o: number) => alpha(peach.main, o);
 /** Frosted dark surface `#1C1C1C` at `o` — replaces `rgba(28,28,28,o)`. Translucent menu/popover panels (with `backdropFilter`) and raised hover surfaces. */
 export const menuScrim = (o: number) => alpha("#1C1C1C", o);
 
+// -- Type-scale steps used outside the `typography` variants -------------------
+//
+// `sx`-level font sizes that recur as raw rem literals on components that are
+// NOT <Typography> (buttons, tabs, inputs, selects, menu items) — a typography
+// `variant` can't reach those. Centralized here so the literal lives in one
+// place; the `control` variant in the theme reads from the same constant.
+export const fontSize = {
+  /**
+   * Compact control / field text. Sits between `body2` (0.75rem) and
+   * `body1` (0.875rem) — the de-facto size for admin buttons, tabs, inputs,
+   * selects and menu items. Pair with `fontWeight: 500` (600 when active).
+   */
+  control: "0.8125rem",
+} as const;
+
 // -- Admin status palette -----------------------------------------------------
 //
 // The admin surfaces share a status palette (see `AdminBadge`). Each tone has a

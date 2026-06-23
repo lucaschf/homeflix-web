@@ -21,7 +21,7 @@ import {
 } from "../api/hooks";
 import type { CollectionPart } from "../api/types";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-import { inkAlpha, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { fontSize, inkAlpha, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { neutral } from "../theme/colors";
 
 /**
@@ -546,7 +546,7 @@ function CollectionHero({
             onClick={onPlayFirstAvailable}
             disabled={sagaComplete}
             sx={{
-              fontSize: "0.8125rem",
+              fontSize: fontSize.control,
               fontWeight: { xs: 700, md: 600 },
               px: { xs: 1.75, md: 2.25 },
               height: { xs: 44, md: 40 },
@@ -563,7 +563,7 @@ function CollectionHero({
             onClick={onAddCollectionToList}
             disabled={bulkAddPending || isCollectionInList}
             sx={{
-              fontSize: "0.8125rem",
+              fontSize: fontSize.control,
               fontWeight: 500,
               px: { xs: 1.75, md: 2 },
               height: { xs: 44, md: 40 },

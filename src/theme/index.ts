@@ -1,6 +1,6 @@
 import { createTheme, type ThemeOptions } from "@mui/material/styles";
 import { error, info, neutral, peach, success, warning } from "./colors";
-import { inkAlpha } from "./tokens";
+import { fontSize, inkAlpha } from "./tokens";
 import React from "react";
 
 // -- Overlay token namespace ---------------------------------------------------
@@ -50,6 +50,7 @@ declare module "@mui/material/styles" {
     cardSubtitle: React.CSSProperties;
     statValue: React.CSSProperties;
     metaMono: React.CSSProperties;
+    control: React.CSSProperties;
   }
   interface TypographyVariantsOptions {
     overlayTitle?: React.CSSProperties;
@@ -62,6 +63,7 @@ declare module "@mui/material/styles" {
     cardSubtitle?: React.CSSProperties;
     statValue?: React.CSSProperties;
     metaMono?: React.CSSProperties;
+    control?: React.CSSProperties;
   }
 }
 
@@ -77,6 +79,7 @@ declare module "@mui/material/Typography" {
     cardSubtitle: true;
     statValue: true;
     metaMono: true;
+    control: true;
   }
 }
 
@@ -228,6 +231,11 @@ const themeOptions: ThemeOptions = {
       fontSize: "0.78125rem",
       lineHeight: 1.4,
     },
+    control: {
+      fontSize: fontSize.control,
+      fontWeight: 500,
+      lineHeight: 1.4,
+    },
   },
   shape: {
     borderRadius: 8,
@@ -254,6 +262,7 @@ const themeOptions: ThemeOptions = {
           cardSubtitle: "p",
           statValue: "div",
           metaMono: "span",
+          control: "span",
         },
       },
     },

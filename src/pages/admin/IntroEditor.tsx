@@ -49,7 +49,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
-import { inkAlpha, peachAlpha, scrim, status, whiteAlpha } from "../../theme/tokens";
+import { fontSize, inkAlpha, peachAlpha, scrim, status, whiteAlpha } from "../../theme/tokens";
 
 function formatHms(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "00:00:00";
@@ -748,7 +748,7 @@ function TransportButton({ onClick, children, icon, iconEnd, primary, subtle }: 
         py: 1,
         borderRadius: "6px",
         fontFamily: subtle ? "'JetBrains Mono', ui-monospace, monospace" : "inherit",
-        fontSize: subtle ? "0.75rem" : "0.8125rem",
+        fontSize: subtle ? "0.75rem" : fontSize.control,
         fontWeight: primary ? 600 : 500,
         color: subtle ? "text.secondary" : "text.primary",
         bgcolor: subtle ? "transparent" : primary ? whiteAlpha(0.08) : whiteAlpha(0.03),
@@ -822,7 +822,7 @@ function TimeField({ label, value, disabled, onStep, onUseCurrent }: TimeFieldPr
             border: `1px solid ${whiteAlpha(0.08)}`,
             color: "text.primary",
             fontFamily: "inherit",
-            fontSize: "0.8125rem",
+            fontSize: fontSize.control,
             fontWeight: 500,
             opacity: disabled ? 0.5 : 1,
             transition: "background-color 120ms ease",
