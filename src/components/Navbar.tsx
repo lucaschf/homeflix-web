@@ -12,7 +12,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { Bookmark, Film, Home, Search, Tv, Wrench } from "lucide-react";
+import { Bookmark, CalendarClock, Film, Home, Search, Tv, Wrench } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../api/auth";
@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
   { to: "/", labelKey: "nav.home", icon: Home },
   { to: "/browse?type=movie", labelKey: "nav.movies", icon: Film },
   { to: "/browse?type=series", labelKey: "nav.series", icon: Tv },
+  { to: "/coming-soon", labelKey: "nav.comingSoon", icon: CalendarClock },
   {
     to: "/admin",
     labelKey: "nav.admin",

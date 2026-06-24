@@ -1457,6 +1457,8 @@ interface RequestCatalogVars {
    *  so the operator doesn't need to chase the tmdb id back to a
    *  human-readable label. */
   title?: string | null;
+  /** Poster URL snapshot, so the "Em breve" grid can render artwork. */
+  poster_url?: string | null;
   /** TMDB collection id this request originated from, when applicable. */
   collection_tmdb_id?: number | null;
   /** Subscribe to the arrival notification at the same time. */
@@ -1481,6 +1483,9 @@ export function useRequestCatalogInclusion() {
       return resp.data;
     },
     onSuccess: (req) => {
+      // A new request belongs on the "Em breve" feed — refresh it so the
+      // just-suggested title shows up without a manual reload.
+      queryClient.invalidateQueries({ queryKey: ["catalog-requests", "feed"] });
       // Refresh the Collection Detail card if the user is currently
       // looking at the franchise that surfaced the request.
       if (req.collection_tmdb_id != null) {
@@ -1555,6 +1560,59 @@ export function useSubscribeCatalogNotification() {
           queryKey: ["collection", req.collection_tmdb_id],
         });
       }
+    },
+  });
+}
+
+// ─── Coming Soon ("Em breve") ─────────────────────────────
+
+const COMING_SOON_KEY = ["catalog-requests", "feed"] as const;
+
+interface ComingSoonNotifyVars {
+  tmdb_id: number;
+  media_type: "movie" | "series";
+  title?: string | null;
+}
+
+/**
+ * Member "Em breve" feed — every pending catalog request the
+ * household is tracking, each annotated with its ``subscriber_count``
+ * and the caller's ``is_subscribed`` flag (backend
+ * ``GET /catalog-requests``).
+ */
+export function useComingSoon() {
+  return useQuery({
+    queryKey: COMING_SOON_KEY,
+    queryFn: async (): Promise<CatalogRequest[]> => {
+      const resp = await api.get<CatalogRequestsResponse>("/catalog-requests");
+      return resp.data;
+    },
+  });
+}
+
+/** Subscribe to a title's arrival ("Avisar quando chegar"). Refreshes the feed. */
+export function useComingSoonSubscribe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: ComingSoonNotifyVars) =>
+      api.post<CatalogRequestResponse>(`/catalog-requests/${vars.tmdb_id}/notify`, {
+        media_type: vars.media_type,
+        title: vars.title ?? null,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: COMING_SOON_KEY });
+    },
+  });
+}
+
+/** Turn the arrival notification off for the caller. Refreshes the feed. */
+export function useComingSoonUnsubscribe() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { tmdb_id: number; media_type: "movie" | "series" }) =>
+      api.del(`/catalog-requests/${vars.tmdb_id}/notify?media_type=${vars.media_type}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: COMING_SOON_KEY });
     },
   });
 }
