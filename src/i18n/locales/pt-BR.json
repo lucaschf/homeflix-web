@@ -352,9 +352,11 @@
       "nowPlaying": {
         "title": "Reproduzindo agora",
         "subtitle": "Sessões ativas no servidor neste momento",
-        "emptyTitle": "Sessões ao vivo em breve",
-        "emptyBody": "Quando o endpoint de now-playing chegar, os streams ativos aparecem aqui com progresso, modo de reprodução e banda em tempo real.",
-        "emptyBadge": "em breve",
+        "uplink": "{{mbps}} Mbps · uplink",
+        "unknownProfile": "Desconhecido",
+        "emptyTitle": "Ninguém assistindo agora",
+        "emptyBody": "Quando alguém der play, a sessão aparece aqui com progresso, modo de reprodução e banda em tempo real.",
+        "emptyBadge": "servidor ocioso",
         "emptyMeta": "0 streams"
       },
       "recentlyAdded": {
@@ -387,6 +389,8 @@
         "seriesSub": "Abrir catálogo",
         "review": "Para revisar",
         "lastScan": "Último scan",
+        "streaming": "Streaming",
+        "streamingSub": "{{mbps}} Mbps agora",
         "users": "Usuários",
         "usersSub": "Abrir usuários",
         "hlsCache": "HLS cache"
@@ -410,6 +414,8 @@
         "subtitle": "Filmes que o enriquecimento não conseguiu casar no TMDB. Abra a fila para religar ou promover.",
         "seeAll": "Ver todos ({{count}}) →",
         "empty": "Nada marcado — a fila está limpa.",
+        "emptyTitle": "Fila limpa",
+        "emptyBadge": "tudo casado",
         "reason": "Sem match no TMDB",
         "noFilePath": "sem arquivo no disco",
         "moreCount": "+{{count}} a mais na fila"

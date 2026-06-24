@@ -93,6 +93,8 @@ import type {
   Notification,
   NotificationResponse,
   NotificationsResponse,
+  NowPlayingData,
+  NowPlayingResponse,
   PersonBio,
   PersonBioResponse,
   PromoteMovieToSeriesInput,
@@ -2632,6 +2634,23 @@ export function useAdminOverviewStats() {
     // Cheap aggregate read — keep it fresh-ish without
     // hammering the backend on every focus change.
     staleTime: 30_000,
+  });
+}
+
+/**
+ * Live "now playing" sessions for the admin Overview. Polls every few
+ * seconds while the page is open; sessions age out server-side, so a
+ * missed beat self-heals on the next tick. An idle server returns an
+ * empty list (the expected resting state).
+ */
+export function useNowPlaying() {
+  return useQuery({
+    queryKey: ["admin", "now-playing"],
+    queryFn: async (): Promise<NowPlayingData> => {
+      const resp = await api.get<NowPlayingResponse>("/admin/now-playing");
+      return resp.data;
+    },
+    refetchInterval: 4000,
   });
 }
 
