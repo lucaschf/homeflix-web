@@ -3,14 +3,17 @@ import { alpha } from "@mui/material/styles";
 import {
   AlertTriangle,
   ArrowRight,
+  CheckCircle2,
   ChevronRight,
   Film,
   HardDrive,
+  Play,
   PlayCircle,
   ScanLine,
   Sparkles,
   Tv,
   Users,
+  Wifi,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -19,6 +22,7 @@ import {
   useAdminScanRuns,
   useLibraries,
   useMoviesNeedingReview,
+  useNowPlaying,
   useReadiness,
   useRecentlyAddedCatalog,
 } from "../../api/hooks";
@@ -27,6 +31,8 @@ import type {
   AdminScanRun,
   CatalogItem,
   NeedsReviewMovie,
+  NowPlayingData,
+  NowPlayingSession,
 } from "../../api/types";
 import {
   AdminBadge,
@@ -59,38 +65,6 @@ function formatBytesShort(bytes: number): string {
   if (bytes < MB) return `${(bytes / KB).toFixed(1)} KB`;
   if (bytes < GB) return `${(bytes / MB).toFixed(1)} MB`;
   return `${(bytes / GB).toFixed(2)} GB`;
-}
-
-/**
- * Project the last-scan card's headline value: either a
- * relative timestamp ("2h ago") or a dash when no scan has
- * ever run.
- */
-function formatLastScanValue(
-  scan: AdminOverviewStats["last_scan"],
-  locale: string,
-  t: TFn,
-): string {
-  if (!scan) return t("admin.overview.lastScan.never");
-  const reference = scan.finished_at ?? scan.started_at;
-  const diffMs = Date.now() - parseServerTime(reference);
-  const seconds = Math.round(diffMs / 1000);
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-  if (Math.abs(seconds) < 60) return rtf.format(-seconds, "second");
-  const minutes = Math.round(seconds / 60);
-  if (Math.abs(minutes) < 60) return rtf.format(-minutes, "minute");
-  const hours = Math.round(minutes / 60);
-  if (Math.abs(hours) < 24) return rtf.format(-hours, "hour");
-  return rtf.format(-Math.round(hours / 24), "day");
-}
-
-/**
- * Sub label for the last-scan card: status word when the row is
- * available, generic copy otherwise.
- */
-function formatLastScanSub(scan: AdminOverviewStats["last_scan"], t: TFn): string {
-  if (!scan) return t("admin.overview.lastScan.neverSub");
-  return t(`admin.overview.lastScan.status.${scan.status}`);
 }
 
 /**
@@ -140,12 +114,13 @@ function formatScanTimestamp(iso: string): string {
  * "coming soon" placeholder.
  */
 export function AdminOverview() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   useDocumentTitle(t("admin.overview.title"));
 
   const stats = useAdminOverviewStats();
   const reviewQueue = useMoviesNeedingReview();
+  const nowPlaying = useNowPlaying();
   const reviewCount = stats.data?.review_count ?? reviewQueue.data?.length ?? 0;
   const statsLoading = stats.isLoading;
 
@@ -213,12 +188,13 @@ export function AdminOverview() {
           onClick={() => navigate("/admin/catalog/review")}
         />
         <StatCard
-          label={t("admin.overview.stats.lastScan")}
-          value={formatLastScanValue(stats.data?.last_scan ?? null, i18n.language, t)}
-          sub={formatLastScanSub(stats.data?.last_scan ?? null, t)}
-          icon={ScanLine}
-          loading={statsLoading}
-          onClick={() => navigate("/admin/scan")}
+          label={t("admin.overview.stats.streaming")}
+          value={nowPlaying.data?.sessions.length ?? 0}
+          sub={t("admin.overview.stats.streamingSub", {
+            mbps: (nowPlaying.data?.total_mbps ?? 0).toFixed(1),
+          })}
+          icon={PlayCircle}
+          loading={nowPlaying.isLoading}
         />
         <StatCard
           label={t("admin.overview.stats.users")}
@@ -239,7 +215,7 @@ export function AdminOverview() {
       </Box>
 
       <Box sx={{ mb: 2 }}>
-        <NowPlayingPanel />
+        <NowPlayingPanel data={nowPlaying.data} loading={nowPlaying.isLoading} />
       </Box>
 
       <Box sx={{ mb: 2 }}>
@@ -251,7 +227,7 @@ export function AdminOverview() {
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1.1fr 1fr" },
           gap: 2,
-          alignItems: "start",
+          alignItems: "stretch",
           mb: 2,
         }}
       >
@@ -278,29 +254,243 @@ export function AdminOverview() {
   );
 }
 
+const SESSION_TONES = ["#5a2818", "#2a1850", "#18304a", "#1a4030", "#3a2a1a", "#2f3a4a"];
+
+function initialsFor(name: string | null): string {
+  if (!name) return "?";
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function avatarToneFor(name: string | null): string {
+  if (!name) return SESSION_TONES[0];
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return SESSION_TONES[hash % SESSION_TONES.length];
+}
+
+function formatClock(totalSeconds: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(s / 3600);
+  const minutes = Math.floor((s % 3600) / 60);
+  const seconds = s % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
+}
+
 /**
  * Live-sessions panel — the signature surface of the page, showing
- * what's playing on the server right now. The backing now-playing
- * endpoint doesn't exist yet, so this lands as a calm placeholder
- * (an idle server is the expected resting state, not an error).
+ * what's playing on the server right now (polled by ``useNowPlaying``).
+ * An idle server shows a calm empty state, the expected resting state.
  */
-function NowPlayingPanel() {
+function NowPlayingPanel({
+  data,
+  loading,
+}: {
+  data: NowPlayingData | undefined;
+  loading: boolean;
+}) {
   const { t } = useTranslation();
+  const sessions = data?.sessions ?? [];
+  const totalMbps = data?.total_mbps ?? 0;
+
   return (
     <AdminCard>
       <AdminCardHeader
         title={t("admin.overview.nowPlaying.title")}
         subtitle={t("admin.overview.nowPlaying.subtitle")}
+        action={
+          sessions.length > 0 ? (
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.75,
+                color: "primary.main",
+              }}
+            >
+              <Wifi size={14} aria-hidden />
+              <Typography variant="metaMono" sx={{ color: "text.secondary" }}>
+                {t("admin.overview.nowPlaying.uplink", { mbps: totalMbps.toFixed(1) })}
+              </Typography>
+            </Box>
+          ) : undefined
+        }
       />
-      <FancyEmpty
-        icon={PlayCircle}
-        title={t("admin.overview.nowPlaying.emptyTitle")}
-        body={t("admin.overview.nowPlaying.emptyBody")}
-        badge={t("admin.overview.nowPlaying.emptyBadge")}
-        badgeTone="warn"
-        meta={t("admin.overview.nowPlaying.emptyMeta")}
-      />
+
+      {loading && !data ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress size={20} color="primary" />
+        </Box>
+      ) : sessions.length === 0 ? (
+        <FancyEmpty
+          icon={PlayCircle}
+          title={t("admin.overview.nowPlaying.emptyTitle")}
+          body={t("admin.overview.nowPlaying.emptyBody")}
+          badge={t("admin.overview.nowPlaying.emptyBadge")}
+          badgeTone="ok"
+          meta={t("admin.overview.nowPlaying.emptyMeta")}
+        />
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          {sessions.map((session, index) => (
+            <SessionRow
+              key={`${session.media_id}-${session.profile_id}-${index}`}
+              session={session}
+              last={index === sessions.length - 1}
+            />
+          ))}
+        </Box>
+      )}
     </AdminCard>
+  );
+}
+
+function SessionRow({ session, last }: { session: NowPlayingSession; last: boolean }) {
+  const { t } = useTranslation();
+  const transcode = session.mode === "transcode";
+
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "40px 1fr", sm: "40px 1.3fr 1fr 150px" },
+        alignItems: "center",
+        gap: 2,
+        py: 1.5,
+        borderBottom: last ? "none" : `1px solid ${whiteAlpha(0.06)}`,
+      }}
+    >
+      <Box
+        sx={{
+          position: "relative",
+          width: 40,
+          height: 56,
+          borderRadius: "3px",
+          overflow: "hidden",
+          bgcolor: whiteAlpha(0.06),
+          flexShrink: 0,
+        }}
+      >
+        {session.poster_url && (
+          <Box
+            component="img"
+            src={session.poster_url}
+            alt=""
+            sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        )}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: scrim(0.25),
+          }}
+        >
+          <Play size={13} color="rgba(255,255,255,0.92)" aria-hidden />
+        </Box>
+      </Box>
+
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="body2" fontWeight={500} noWrap>
+          {session.title ?? "—"}
+        </Typography>
+        {session.meta && (
+          <Typography
+            variant="metaMono"
+            color="text.secondary"
+            noWrap
+            sx={{ display: "block", mt: 0.25 }}
+          >
+            {session.meta}
+          </Typography>
+        )}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.75 }}>
+          <Box
+            sx={{
+              width: 18,
+              height: 18,
+              borderRadius: "50%",
+              bgcolor: avatarToneFor(session.profile_name),
+              color: "#F5F1EB",
+              fontSize: "0.5rem",
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {initialsFor(session.profile_name)}
+          </Box>
+          <Typography variant="metaMono" sx={{ color: inkAlpha(0.7) }} noWrap>
+            {session.profile_name ?? t("admin.overview.nowPlaying.unknownProfile")}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box sx={{ minWidth: 0, display: { xs: "none", sm: "block" } }}>
+        <Box
+          sx={{
+            height: 4,
+            borderRadius: 999,
+            bgcolor: whiteAlpha(0.08),
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              width: `${session.pct}%`,
+              height: "100%",
+              borderRadius: 999,
+              bgcolor: transcode ? statusTone.warn.fg : "primary.main",
+              transition: "width 300ms ease",
+            }}
+          />
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 0.75 }}>
+          <Typography variant="metaMono" color="text.secondary">
+            {formatClock(session.position_seconds)}
+          </Typography>
+          <Typography variant="metaMono" color="text.secondary">
+            {session.duration_seconds ? formatClock(session.duration_seconds) : "—"}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          display: { xs: "none", sm: "flex" },
+          flexDirection: "column",
+          alignItems: "flex-end",
+          gap: 0.5,
+          minWidth: 0,
+        }}
+      >
+        {session.mode && (
+          <AdminBadge tone={transcode ? "warn" : "ok"}>{session.mode}</AdminBadge>
+        )}
+        <Typography variant="metaMono" sx={{ color: "primary.main" }}>
+          {session.mbps.toFixed(1)} Mbps
+        </Typography>
+        {session.device && (
+          <Typography
+            variant="metaMono"
+            color="text.secondary"
+            noWrap
+            sx={{ maxWidth: 150 }}
+          >
+            {session.device}
+          </Typography>
+        )}
+      </Box>
+    </Box>
   );
 }
 
@@ -445,7 +635,7 @@ function ScanActivityPanel({ onHistory }: { onHistory: () => void }) {
   const rows = scanRuns.items.slice(0, SCAN_ACTIVITY_LIMIT);
 
   return (
-    <AdminCard>
+    <AdminCard sx={{ minHeight: 360 }}>
       <AdminCardHeader
         title={t("admin.overview.scanActivity.title")}
         subtitle={t("admin.overview.scanActivity.subtitle")}
@@ -600,7 +790,7 @@ function RecentlyFlaggedPanel({
   const hasMore = totalCount > RECENTLY_FLAGGED_LIMIT;
 
   return (
-    <AdminCard>
+    <AdminCard sx={{ minHeight: 360 }}>
       <AdminCardHeader
         title={t("admin.overview.recentlyFlagged.title")}
         subtitle={t("admin.overview.recentlyFlagged.subtitle")}
@@ -623,11 +813,13 @@ function RecentlyFlaggedPanel({
           <CircularProgress size={20} color="primary" />
         </Box>
       ) : shown.length === 0 ? (
-        <Box sx={{ py: 5, textAlign: "center" }}>
-          <Typography variant="body2" color="text.secondary">
-            {t("admin.overview.recentlyFlagged.empty")}
-          </Typography>
-        </Box>
+        <FancyEmpty
+          icon={CheckCircle2}
+          title={t("admin.overview.recentlyFlagged.emptyTitle")}
+          body={t("admin.overview.recentlyFlagged.empty")}
+          badge={t("admin.overview.recentlyFlagged.emptyBadge")}
+          badgeTone="ok"
+        />
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {shown.map((movie) => (

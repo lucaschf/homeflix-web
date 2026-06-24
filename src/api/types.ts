@@ -795,6 +795,34 @@ export interface AdminScanRun {
 export type AdminScanRunsResponse = ApiListResponse<AdminScanRun>;
 export type AdminScanRunResponse = ApiDetailResponse<AdminScanRun>;
 
+/** One live HLS playback session on the admin "Reproduzindo agora" panel. */
+export interface NowPlayingSession {
+  profile_id: string | null;
+  profile_name: string | null;
+  media_id: string | null;
+  media_kind: string | null;
+  title: string | null;
+  year: number | null;
+  meta: string | null;
+  poster_url: string | null;
+  ip: string | null;
+  device: string | null;
+  /** ``"direct"`` / ``"transcode"`` once the backend stamps it; null for now. */
+  mode: string | null;
+  detail: string | null;
+  position_seconds: number;
+  duration_seconds: number | null;
+  pct: number;
+  mbps: number;
+}
+
+export interface NowPlayingData {
+  sessions: NowPlayingSession[];
+  total_mbps: number;
+}
+
+export type NowPlayingResponse = ApiDetailResponse<NowPlayingData>;
+
 /** One episode's detection outcome within an intro-detection run. */
 export interface AdminEpisodeDetectionResult {
   episode_id: string;
