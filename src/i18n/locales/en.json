@@ -1044,19 +1044,25 @@
       "col": {
         "title": "Title",
         "type": "Type",
-        "collection": "Collection",
-        "notify": "Notify",
+        "status": "Status",
+        "source": "Origin",
+        "subscribers": "Subscribers",
         "requestedAt": "Requested"
       },
       "mediaType": {
         "movie": "Movie",
         "series": "Series"
       },
-      "notify": {
-        "on": "On",
-        "off": "—"
+      "status": {
+        "pending": "Pending",
+        "fulfilled": "Available"
+      },
+      "source": {
+        "user": "User request",
+        "household": "Household-flagged"
       },
       "action": {
+        "include": "Mark as included",
         "dismiss": "Dismiss"
       },
       "dismiss": {
@@ -1067,9 +1073,19 @@
         "consequenceRecreatable": "Members can re-create the request later from the same TMDB title.",
         "confirm": "Dismiss"
       },
+      "include": {
+        "title": "Mark request tmdb/{{tmdbId}} as included?",
+        "body": "Confirms the title is now in the catalog. The request is fulfilled and drops off this queue.",
+        "consequenceNotify_one": "{{count}} subscriber will get the “now available” notification.",
+        "consequenceNotify_other": "{{count}} subscribers will get the “now available” notification.",
+        "consequenceArchive": "The request is archived automatically.",
+        "confirm": "Notify & archive"
+      },
       "snack": {
         "dismissSuccess": "Request tmdb/{{tmdbId}} dismissed.",
-        "dismissFailed": "Could not dismiss this request."
+        "dismissFailed": "Could not dismiss this request.",
+        "includeSuccess": "Request tmdb/{{tmdbId}} marked as included.",
+        "includeFailed": "Could not mark this request as included."
       }
     },
     "catalog": {
