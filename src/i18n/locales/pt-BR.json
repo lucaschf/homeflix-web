@@ -373,8 +373,8 @@
         "allLibraries": "Todas as libraries"
       },
       "diskUsage": {
-        "title": "Uso de disco por library",
-        "subtitle": "Tamanho do catálogo em disco, por library",
+        "title": "Uso de disco por biblioteca",
+        "subtitle": "Tamanho do catálogo em disco, por biblioteca",
         "total": "{{total}} de mídia",
         "emptyTitle": "Sem dados de disco",
         "emptyBody": "Nenhum tamanho de arquivo registrado ainda — rode um scan para popular.",
