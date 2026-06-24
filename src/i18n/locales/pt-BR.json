@@ -345,6 +345,38 @@
     "overview": {
       "title": "Visão geral",
       "subtitle": "Saúde do catálogo, filas operacionais e status do sistema em um olhar.",
+      "cta": {
+        "enrich": "Enriquecer",
+        "scan": "Rodar scan"
+      },
+      "nowPlaying": {
+        "title": "Reproduzindo agora",
+        "subtitle": "Sessões ativas no servidor neste momento",
+        "emptyTitle": "Sessões ao vivo em breve",
+        "emptyBody": "Quando o endpoint de now-playing chegar, os streams ativos aparecem aqui com progresso, modo de reprodução e banda em tempo real.",
+        "emptyBadge": "em breve",
+        "emptyMeta": "0 streams"
+      },
+      "recentlyAdded": {
+        "title": "Adicionados recentemente",
+        "subtitle": "Últimos títulos indexados pelo scanner",
+        "seeCatalog": "Ver catálogo",
+        "empty": "Nada indexado ainda."
+      },
+      "scanActivity": {
+        "title": "Scan activity",
+        "subtitle": "Últimos runs do scanner",
+        "history": "Histórico",
+        "empty": "Nenhum scan ainda.",
+        "allLibraries": "Todas as libraries"
+      },
+      "diskUsage": {
+        "title": "Uso de disco por library",
+        "subtitle": "Armazenamento em disco por library",
+        "emptyTitle": "Uso de disco em breve",
+        "emptyBody": "A agregação de tamanho por library ainda não é exposta pelo backend. Assim que o endpoint de storage chegar, suas libraries serão ranqueadas aqui.",
+        "emptyBadge": "em breve"
+      },
       "placeholder": "—",
       "placeholderSub": "Backend pendente",
       "reviewSub": "Ver fila",
