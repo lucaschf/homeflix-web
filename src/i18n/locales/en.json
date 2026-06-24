@@ -375,10 +375,11 @@
       },
       "diskUsage": {
         "title": "Disk usage by library",
-        "subtitle": "Per-library storage on disk",
-        "emptyTitle": "Disk usage coming soon",
-        "emptyBody": "Per-library size aggregation isn't exposed by the backend yet. It'll rank your libraries here once the storage endpoint ships.",
-        "emptyBadge": "coming soon"
+        "subtitle": "Catalog size on disk, per library",
+        "total": "{{total}} of media",
+        "emptyTitle": "No disk data",
+        "emptyBody": "No catalog file sizes recorded yet — run a scan to populate them.",
+        "emptyBadge": "empty"
       },
       "placeholder": "—",
       "placeholderSub": "Backend pending",

@@ -21,6 +21,7 @@ import {
   useAdminOverviewStats,
   useAdminScanRuns,
   useLibraries,
+  useLibraryUsage,
   useMoviesNeedingReview,
   useNowPlaying,
   useReadiness,
@@ -244,7 +245,7 @@ export function AdminOverview() {
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
           gap: 2,
-          alignItems: "start",
+          alignItems: "stretch",
         }}
       >
         <DiskUsagePanel />
@@ -635,7 +636,7 @@ function ScanActivityPanel({ onHistory }: { onHistory: () => void }) {
   const rows = scanRuns.items.slice(0, SCAN_ACTIVITY_LIMIT);
 
   return (
-    <AdminCard sx={{ minHeight: 360 }}>
+    <AdminCard>
       <AdminCardHeader
         title={t("admin.overview.scanActivity.title")}
         subtitle={t("admin.overview.scanActivity.subtitle")}
@@ -735,27 +736,120 @@ function ScanActivityRow({
   );
 }
 
+const LIB_BAR_COLORS = [
+  "primary.main",
+  peachAlpha(0.7),
+  statusTone.info.fg,
+  statusTone.ok.fg,
+  statusTone.warn.fg,
+];
+
+function formatTbOrGb(bytes: number): string {
+  const tb = bytes / 1024 ** 4;
+  if (tb >= 1) return `${tb.toFixed(2)} TB`;
+  return `${(bytes / 1024 ** 3).toFixed(0)} GB`;
+}
+
 /**
- * Per-library disk usage panel. The size aggregation isn't exposed
- * by the backend yet, so this lands as a placeholder until the
- * library-storage endpoint ships.
+ * Per-library catalog size, sorted largest-first. Sizes come from
+ * `useLibraryUsage` (summed primary-file bytes — catalog size, not a
+ * disk `du`); names are joined from `useLibraries`. Bar width is
+ * relative to the largest library, ranking them against each other.
  */
 function DiskUsagePanel() {
   const { t } = useTranslation();
+  const usage = useLibraryUsage();
+  const libraries = useLibraries();
+
+  const nameFor = (id: string) =>
+    libraries.data?.find((library) => library.id === id)?.name ?? id;
+  const entries = usage.data?.libraries ?? [];
+  const totalBytes = usage.data?.total_bytes ?? 0;
+  const maxBytes = entries.length > 0 ? entries[0].size_bytes : 0;
+
   return (
     <AdminCard>
       <AdminCardHeader
         title={t("admin.overview.diskUsage.title")}
         subtitle={t("admin.overview.diskUsage.subtitle")}
+        action={
+          totalBytes > 0 ? (
+            <Typography variant="metaMono" sx={{ color: "text.secondary" }}>
+              {t("admin.overview.diskUsage.total", { total: formatTbOrGb(totalBytes) })}
+            </Typography>
+          ) : undefined
+        }
       />
-      <FancyEmpty
-        icon={HardDrive}
-        title={t("admin.overview.diskUsage.emptyTitle")}
-        body={t("admin.overview.diskUsage.emptyBody")}
-        badge={t("admin.overview.diskUsage.emptyBadge")}
-        badgeTone="warn"
-      />
+
+      {usage.isLoading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress size={20} color="primary" />
+        </Box>
+      ) : entries.length === 0 ? (
+        <FancyEmpty
+          icon={HardDrive}
+          title={t("admin.overview.diskUsage.emptyTitle")}
+          body={t("admin.overview.diskUsage.emptyBody")}
+          badge={t("admin.overview.diskUsage.emptyBadge")}
+          badgeTone="warn"
+        />
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {entries.map((entry, index) => (
+            <StorageBar
+              key={entry.library_id}
+              name={nameFor(entry.library_id)}
+              sizeLabel={formatBytesShort(entry.size_bytes)}
+              pct={maxBytes > 0 ? (entry.size_bytes / maxBytes) * 100 : 0}
+              color={LIB_BAR_COLORS[index % LIB_BAR_COLORS.length]}
+            />
+          ))}
+        </Box>
+      )}
     </AdminCard>
+  );
+}
+
+function StorageBar({
+  name,
+  sizeLabel,
+  pct,
+  color,
+}: {
+  name: string;
+  sizeLabel: string;
+  pct: number;
+  color: string;
+}) {
+  return (
+    <Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          gap: 1,
+          mb: 0.75,
+        }}
+      >
+        <Typography variant="control" noWrap sx={{ minWidth: 0 }}>
+          {name}
+        </Typography>
+        <Typography variant="metaMono" color="text.secondary" sx={{ flexShrink: 0 }}>
+          {sizeLabel}
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          height: 6,
+          borderRadius: 999,
+          bgcolor: whiteAlpha(0.05),
+          overflow: "hidden",
+        }}
+      >
+        <Box sx={{ width: `${pct}%`, height: "100%", borderRadius: 999, bgcolor: color }} />
+      </Box>
+    </Box>
   );
 }
 
@@ -790,7 +884,7 @@ function RecentlyFlaggedPanel({
   const hasMore = totalCount > RECENTLY_FLAGGED_LIMIT;
 
   return (
-    <AdminCard sx={{ minHeight: 360 }}>
+    <AdminCard>
       <AdminCardHeader
         title={t("admin.overview.recentlyFlagged.title")}
         subtitle={t("admin.overview.recentlyFlagged.subtitle")}
