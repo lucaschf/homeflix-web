@@ -1,17 +1,19 @@
 import { Box, IconButton, Snackbar, Tooltip, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { ExternalLink, Inbox, Trash2 } from "lucide-react";
+import { Check, ExternalLink, Heart, Inbox, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   useAdminCatalogRequests,
   useDismissCatalogRequest,
+  useIncludeCatalogRequest,
   usePagedList,
 } from "../../api/hooks";
 import type { CatalogRequest } from "../../api/types";
 import { ApiError } from "../../api/client";
 import {
   AdminBadge,
+  AdminButton,
   AdminConfirmDialog,
   AdminPageHeader,
   AdminTable,
@@ -48,11 +50,14 @@ export function CatalogRequestsAdmin() {
 
   const { data, isLoading, isError, refetch } = useAdminCatalogRequests();
   const dismiss = useDismissCatalogRequest();
+  const include = useIncludeCatalogRequest();
   const [pageSize, setPageSize] = useState(10);
   const allRows = data ?? [];
   const paged = usePagedList<CatalogRequest>(allRows, pageSize);
   const [pendingDismiss, setPendingDismiss] = useState<CatalogRequest | null>(null);
   const [dismissError, setDismissError] = useState<string | null>(null);
+  const [pendingInclude, setPendingInclude] = useState<CatalogRequest | null>(null);
+  const [includeError, setIncludeError] = useState<string | null>(null);
   const [snack, setSnack] = useState<Snack>(null);
 
   const onConfirmDismiss = async () => {
@@ -72,6 +77,27 @@ export function CatalogRequestsAdmin() {
         err instanceof ApiError
           ? err.message
           : t("admin.requests.snack.dismissFailed"),
+      );
+    }
+  };
+
+  const onConfirmInclude = async () => {
+    if (!pendingInclude) return;
+    setIncludeError(null);
+    try {
+      await include.mutateAsync(pendingInclude.id);
+      setSnack({
+        message: t("admin.requests.snack.includeSuccess", {
+          tmdbId: pendingInclude.tmdb_id,
+        }),
+        severity: "success",
+      });
+      setPendingInclude(null);
+    } catch (err) {
+      setIncludeError(
+        err instanceof ApiError
+          ? err.message
+          : t("admin.requests.snack.includeFailed"),
       );
     }
   };
@@ -129,44 +155,49 @@ export function CatalogRequestsAdmin() {
       ),
     },
     {
-      id: "collection",
-      label: t("admin.requests.col.collection"),
-      width: "150px",
-      mono: true,
-      muted: true,
+      id: "status",
+      label: t("admin.requests.col.status"),
+      width: "120px",
+      render: (r) => (
+        <AdminBadge tone={r.status === "fulfilled" ? "ok" : "warn"}>
+          {t(`admin.requests.status.${r.status}`)}
+        </AdminBadge>
+      ),
+    },
+    {
+      id: "source",
+      label: t("admin.requests.col.source"),
+      width: "180px",
       render: (r) =>
-        r.collection_tmdb_id ? (
-          <Box
-            component="a"
-            href={`${TMDB_BASE}/collection/${r.collection_tmdb_id}`}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            sx={{
-              color: "primary.main",
-              textDecoration: "none",
-              fontFamily: "inherit",
-              "&:hover": { textDecoration: "underline" },
-            }}
-          >
-            collection/{r.collection_tmdb_id}
-          </Box>
+        r.source === "user" ? (
+          <Tooltip title={r.requester_user_id ?? ""}>
+            <Box component="span" sx={{ display: "inline-flex" }}>
+              <AdminBadge tone="peach">
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                  <Users size={11} aria-hidden />
+                  {t("admin.requests.source.user")}
+                </Box>
+              </AdminBadge>
+            </Box>
+          </Tooltip>
         ) : (
-          "—"
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}
+          >
+            <Heart size={11} aria-hidden />
+            {t("admin.requests.source.household")}
+          </Typography>
         ),
     },
     {
-      id: "notify",
-      label: t("admin.requests.col.notify"),
-      width: "120px",
-      render: (r) =>
-        r.notify_on_arrival ? (
-          <AdminBadge tone="ok">{t("admin.requests.notify.on")}</AdminBadge>
-        ) : (
-          <Typography variant="caption" color="text.disabled">
-            {t("admin.requests.notify.off")}
-          </Typography>
-        ),
+      id: "subscribers",
+      label: t("admin.requests.col.subscribers"),
+      width: "100px",
+      align: "right",
+      mono: true,
+      render: (r) => r.subscriber_count ?? 0,
     },
     {
       id: "requested_at",
@@ -178,22 +209,42 @@ export function CatalogRequestsAdmin() {
     {
       id: "actions",
       label: "",
-      width: "60px",
+      width: "210px",
       align: "right",
       render: (r) => (
-        <Tooltip title={t("admin.requests.action.dismiss")}>
-          <IconButton
-            size="small"
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            gap: 1,
+          }}
+        >
+          <AdminButton
+            variant="primary"
+            icon={<Check size={14} />}
             onClick={(e) => {
               e.stopPropagation();
-              setPendingDismiss(r);
-              setDismissError(null);
+              setPendingInclude(r);
+              setIncludeError(null);
             }}
-            sx={{ color: accentCoral }}
           >
-            <Trash2 size={15} />
-          </IconButton>
-        </Tooltip>
+            {t("admin.requests.action.include")}
+          </AdminButton>
+          <Tooltip title={t("admin.requests.action.dismiss")}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setPendingDismiss(r);
+                setDismissError(null);
+              }}
+              sx={{ color: accentCoral }}
+            >
+              <Trash2 size={15} />
+            </IconButton>
+          </Tooltip>
+        </Box>
       ),
     },
   ];
@@ -255,6 +306,28 @@ export function CatalogRequestsAdmin() {
         }}
         onConfirm={onConfirmDismiss}
         confirmLabel={t("admin.requests.dismiss.confirm")}
+      />
+
+      <AdminConfirmDialog
+        open={!!pendingInclude}
+        title={t("admin.requests.include.title", {
+          tmdbId: pendingInclude?.tmdb_id ?? "",
+        })}
+        body={t("admin.requests.include.body")}
+        consequences={[
+          t("admin.requests.include.consequenceNotify", {
+            count: pendingInclude?.subscriber_count ?? 0,
+          }),
+          t("admin.requests.include.consequenceArchive"),
+        ]}
+        busy={include.isPending}
+        errorMessage={includeError}
+        onCancel={() => {
+          setPendingInclude(null);
+          setIncludeError(null);
+        }}
+        onConfirm={onConfirmInclude}
+        confirmLabel={t("admin.requests.include.confirm")}
       />
 
       <Snackbar

@@ -173,6 +173,9 @@ export interface CollectionDetail {
 export type CollectionDetailResponse = ApiDetailResponse<CollectionDetail>;
 
 /** Catalog request shape returned by /catalog-requests endpoints. */
+export type CatalogRequestSource = "user" | "household";
+export type CatalogRequestStatus = "pending" | "fulfilled";
+
 export interface CatalogRequest {
   id: string;
   tmdb_id: number;
@@ -180,11 +183,23 @@ export interface CatalogRequest {
   /** Snapshot of the title taken at request time. ``null`` on rows
    *  created before the backend stored the title. */
   title: string | null;
+  /** External id of the user who first registered it; ``null`` on
+   *  legacy / household-seeded rows. */
+  requester_user_id: string | null;
   collection_tmdb_id: number | null;
+  /** Where it came from: a member request vs. a household/system seed. */
+  source: CatalogRequestSource;
   notify_on_arrival: boolean;
   is_fulfilled: boolean;
+  /** Honest, derived status (pending vs. fulfilled). */
+  status: CatalogRequestStatus;
   requested_at: string;
   fulfilled_at: string | null;
+  /** Active subscriber count — present on the admin queue + member
+   *  feed list responses; absent on single-request responses. */
+  subscriber_count?: number;
+  /** Whether the calling user follows the title — member feed only. */
+  is_subscribed?: boolean;
 }
 
 export type CatalogRequestResponse = ApiDetailResponse<CatalogRequest>;

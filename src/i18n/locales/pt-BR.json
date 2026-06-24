@@ -1043,19 +1043,25 @@
       "col": {
         "title": "Título",
         "type": "Tipo",
-        "collection": "Coleção",
-        "notify": "Notificar",
+        "status": "Status",
+        "source": "Origem",
+        "subscribers": "Inscritos",
         "requestedAt": "Solicitado em"
       },
       "mediaType": {
         "movie": "Filme",
         "series": "Série"
       },
-      "notify": {
-        "on": "Ligado",
-        "off": "—"
+      "status": {
+        "pending": "Pendente",
+        "fulfilled": "Disponível"
+      },
+      "source": {
+        "user": "Sugestão de usuário",
+        "household": "Marcado pela casa"
       },
       "action": {
+        "include": "Marcar como incluído",
         "dismiss": "Dispensar"
       },
       "dismiss": {
@@ -1066,9 +1072,19 @@
         "consequenceRecreatable": "Membros podem recriar a solicitação depois pelo mesmo título no TMDB.",
         "confirm": "Dispensar"
       },
+      "include": {
+        "title": "Marcar solicitação tmdb/{{tmdbId}} como incluída?",
+        "body": "Confirma que o título já está no catálogo. A solicitação é concluída e sai desta fila.",
+        "consequenceNotify_one": "{{count}} inscrito receberá o aviso “já disponível”.",
+        "consequenceNotify_other": "{{count}} inscritos receberão o aviso “já disponível”.",
+        "consequenceArchive": "A solicitação é arquivada automaticamente.",
+        "confirm": "Notificar e arquivar"
+      },
       "snack": {
         "dismissSuccess": "Solicitação tmdb/{{tmdbId}} dispensada.",
-        "dismissFailed": "Não foi possível dispensar essa solicitação."
+        "dismissFailed": "Não foi possível dispensar essa solicitação.",
+        "includeSuccess": "Solicitação tmdb/{{tmdbId}} marcada como incluída.",
+        "includeFailed": "Não foi possível marcar como incluída."
       }
     },
     "catalog": {

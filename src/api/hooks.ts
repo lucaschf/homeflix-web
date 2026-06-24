@@ -2111,6 +2111,22 @@ export function useDismissCatalogRequest() {
   });
 }
 
+/**
+ * Mark a catalog request as included: the backend fulfills it (the row
+ * drops off the pending queue) and fans the "now available"
+ * notification out to every subscriber. Invalidates the admin queue.
+ */
+export function useIncludeCatalogRequest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) =>
+      api.post(`/admin/catalog-requests/${requestId}/include`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "catalog-requests"] });
+    },
+  });
+}
+
 // ─── Admin — System (HLS cache + health) ───────────────────
 
 /**
