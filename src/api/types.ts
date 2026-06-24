@@ -823,6 +823,19 @@ export interface NowPlayingData {
 
 export type NowPlayingResponse = ApiDetailResponse<NowPlayingData>;
 
+/** Catalog size for one library (primary-file bytes), for the disk panel. */
+export interface LibraryUsageEntry {
+  library_id: string;
+  size_bytes: number;
+}
+
+export interface LibraryUsageData {
+  libraries: LibraryUsageEntry[];
+  total_bytes: number;
+}
+
+export type LibraryUsageResponse = ApiDetailResponse<LibraryUsageData>;
+
 /** One episode's detection outcome within an intro-detection run. */
 export interface AdminEpisodeDetectionResult {
   episode_id: string;

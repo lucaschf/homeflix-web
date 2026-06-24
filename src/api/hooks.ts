@@ -78,6 +78,8 @@ import type {
   Library,
   LibraryResponse,
   LibrarySettings,
+  LibraryUsageData,
+  LibraryUsageResponse,
   ListMoviesResponse,
   ListSeriesResponse,
   PlaybackPreferencesData,
@@ -2651,6 +2653,21 @@ export function useNowPlaying() {
       return resp.data;
     },
     refetchInterval: 4000,
+  });
+}
+
+/**
+ * Per-library catalog size (sum of primary-file bytes) for the admin
+ * Overview disk panel. Cheap aggregate — kept fresh-ish.
+ */
+export function useLibraryUsage() {
+  return useQuery({
+    queryKey: ["admin", "library-usage"],
+    queryFn: async (): Promise<LibraryUsageData> => {
+      const resp = await api.get<LibraryUsageResponse>("/admin/library-usage");
+      return resp.data;
+    },
+    staleTime: 60_000,
   });
 }
 

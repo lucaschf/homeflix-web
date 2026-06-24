@@ -373,11 +373,12 @@
         "allLibraries": "Todas as libraries"
       },
       "diskUsage": {
-        "title": "Uso de disco por library",
-        "subtitle": "Armazenamento em disco por library",
-        "emptyTitle": "Uso de disco em breve",
-        "emptyBody": "A agregação de tamanho por library ainda não é exposta pelo backend. Assim que o endpoint de storage chegar, suas libraries serão ranqueadas aqui.",
-        "emptyBadge": "em breve"
+        "title": "Uso de disco por biblioteca",
+        "subtitle": "Tamanho do catálogo em disco, por biblioteca",
+        "total": "{{total}} de mídia",
+        "emptyTitle": "Sem dados de disco",
+        "emptyBody": "Nenhum tamanho de arquivo registrado ainda — rode um scan para popular.",
+        "emptyBadge": "vazio"
       },
       "placeholder": "—",
       "placeholderSub": "Backend pendente",
