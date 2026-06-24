@@ -1536,6 +1536,10 @@ interface SubscribeNotifyVars {
    *  ``RequestCatalogVars``: lets the admin queue read the title
    *  without a TMDB round-trip. */
   title?: string | null;
+  /** Poster snapshot at subscription time (TMDB absolute URL) — same
+   *  purpose as on ``RequestCatalogVars``: gives the "Em breve" grid
+   *  real artwork without a TMDB round-trip. */
+  poster_url?: string | null;
   collection_tmdb_id?: number | null;
 }
 
