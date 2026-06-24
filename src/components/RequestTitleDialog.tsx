@@ -79,6 +79,7 @@ export function RequestTitleDialog({
         tmdb_id: candidate.tmdb_id,
         media_type: candidate.media_type === "tv" ? "series" : "movie",
         title: candidate.title,
+        poster_url: candidate.poster_url,
         // Always subscribe to the arrival notification from this
         // dialog — the user took an intentional action to request
         // the title, so by default they want to be told when it
@@ -219,8 +220,10 @@ function CandidateRow({
   onRequest: () => void;
 }) {
   const { t } = useTranslation();
+  const inCatalog = candidate.in_catalog;
+  const locked = isRequested || isPending || inCatalog;
   const handleClick = () => {
-    if (isRequested || isPending) return;
+    if (locked) return;
     onRequest();
   };
   return (
@@ -231,13 +234,12 @@ function CandidateRow({
         gap: 1.5,
         p: 1.25,
         borderRadius: 1.5,
-        cursor: isRequested || isPending ? "default" : "pointer",
+        cursor: locked ? "default" : "pointer",
         bgcolor: isRequested ? alpha(status.ok.base, 0.08) : "transparent",
         border: `1px solid ${whiteAlpha(0.06)}`,
+        opacity: inCatalog ? 0.6 : 1,
         transition: "background-color 120ms",
-        "&:hover": isRequested || isPending
-          ? {}
-          : { bgcolor: whiteAlpha(0.04) },
+        "&:hover": locked ? {} : { bgcolor: whiteAlpha(0.04) },
       }}
     >
       <Box
@@ -316,7 +318,13 @@ function CandidateRow({
         >
           <ExternalLink size={16} />
         </IconButton>
-        {isRequested ? (
+        {inCatalog ? (
+          <Chip
+            label={t("request.badge.inCatalog")}
+            size="small"
+            sx={{ bgcolor: whiteAlpha(0.06), color: "text.secondary" }}
+          />
+        ) : isRequested ? (
           <Chip
             icon={<Check size={14} />}
             label={t("request.badge.requested")}

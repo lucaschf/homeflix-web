@@ -3,6 +3,7 @@
     "home": "Home",
     "movies": "Movies",
     "series": "Series",
+    "comingSoon": "Coming soon",
     "browse": "Browse",
     "myLists": "My Lists",
     "myListsShort": "Lists",
@@ -15,6 +16,51 @@
     "switchProfile": "Switch profile",
     "manageProfiles": "Manage profiles",
     "logout": "Sign out"
+  },
+  "comingSoon": {
+    "eyebrow": "Catalog · Incoming",
+    "title": "Coming soon to HomeFlix",
+    "subtitle": "Titles on their way into the catalog. Tap <b>Notify me when it arrives</b> and we'll ping you the moment each one lands.",
+    "suggest": "Suggest a title",
+    "untitled": "Untitled",
+    "retry": "Try again",
+    "stats": {
+      "incoming": "titles incoming",
+      "following": "you follow",
+      "waiting": "reminders queued"
+    },
+    "filter": {
+      "all": "All",
+      "movies": "Movies",
+      "series": "Series",
+      "onlyMine": "Only the ones I follow"
+    },
+    "kind": {
+      "movie": "Movie",
+      "series": "Series"
+    },
+    "status": {
+      "pending": "On the way",
+      "fulfilled": "Available"
+    },
+    "card": {
+      "subscribe": "Notify me when it arrives",
+      "subscribed": "You'll be notified",
+      "waiting_one": "{{count}} person waiting",
+      "waiting_other": "{{count}} people waiting",
+      "beFirst": "Be the first to follow"
+    },
+    "toast": {
+      "subscribed": "We'll let you know when it arrives.",
+      "unsubscribed": "Reminder turned off.",
+      "error": "Something went wrong. Try again."
+    },
+    "emptyTitle": "Nothing queued yet",
+    "emptyBody": "When a member requests a title that isn't in the catalog, it shows up here.",
+    "emptyMineTitle": "Nothing here yet",
+    "emptyMineBody": "Titles you follow will appear here once you turn on a reminder.",
+    "errorTitle": "Couldn't load the list",
+    "errorBody": "Something went wrong loading the upcoming titles."
   },
   "notifications": {
     "title": "Notifications",
@@ -1571,7 +1617,8 @@
     "badge": {
       "movie": "Movie",
       "series": "Series",
-      "requested": "Requested"
+      "requested": "Requested",
+      "inCatalog": "In catalog"
     },
     "action": {
       "request": "Request this title",

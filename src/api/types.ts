@@ -183,6 +183,8 @@ export interface CatalogRequest {
   /** Snapshot of the title taken at request time. ``null`` on rows
    *  created before the backend stored the title. */
   title: string | null;
+  /** Snapshot of the TMDB poster URL; ``null`` until captured/backfilled. */
+  poster_url: string | null;
   /** External id of the user who first registered it; ``null`` on
    *  legacy / household-seeded rows. */
   requester_user_id: string | null;
@@ -226,6 +228,9 @@ export interface CatalogLookupCandidate {
   year: number | null;
   overview: string | null;
   poster_url: string | null;
+  /** ``true`` when the title is already hosted locally — the picker
+   *  blocks requesting these. */
+  in_catalog: boolean;
 }
 
 export interface CatalogLookupResult {

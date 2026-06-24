@@ -3,6 +3,7 @@
     "home": "Início",
     "movies": "Filmes",
     "series": "Séries",
+    "comingSoon": "Em breve",
     "browse": "Explorar",
     "myLists": "Minhas Listas",
     "myListsShort": "Listas",
@@ -15,6 +16,51 @@
     "switchProfile": "Trocar perfil",
     "manageProfiles": "Gerenciar perfis",
     "logout": "Sair"
+  },
+  "comingSoon": {
+    "eyebrow": "Catálogo · Chegando",
+    "title": "Em breve no HomeFlix",
+    "subtitle": "Títulos que estão a caminho do catálogo. Toque em <b>Avisar quando chegar</b> e a gente te notifica assim que cada um ficar disponível.",
+    "suggest": "Sugerir um título",
+    "untitled": "Sem título",
+    "retry": "Tentar de novo",
+    "stats": {
+      "incoming": "títulos a caminho",
+      "following": "você acompanha",
+      "waiting": "avisos na fila"
+    },
+    "filter": {
+      "all": "Todos",
+      "movies": "Filmes",
+      "series": "Séries",
+      "onlyMine": "Só os que eu acompanho"
+    },
+    "kind": {
+      "movie": "Filme",
+      "series": "Série"
+    },
+    "status": {
+      "pending": "A caminho",
+      "fulfilled": "Disponível"
+    },
+    "card": {
+      "subscribe": "Avisar quando chegar",
+      "subscribed": "Você será avisado",
+      "waiting_one": "{{count}} pessoa aguardando",
+      "waiting_other": "{{count}} pessoas aguardando",
+      "beFirst": "Seja o primeiro a acompanhar"
+    },
+    "toast": {
+      "subscribed": "A gente te avisa quando chegar.",
+      "unsubscribed": "Aviso desligado.",
+      "error": "Algo deu errado. Tenta de novo."
+    },
+    "emptyTitle": "Nada na fila ainda",
+    "emptyBody": "Quando um membro pede um título que não está no catálogo, ele aparece aqui.",
+    "emptyMineTitle": "Nada por aqui ainda",
+    "emptyMineBody": "Os títulos que você acompanha aparecem aqui quando você liga um aviso.",
+    "errorTitle": "Não foi possível carregar",
+    "errorBody": "Algo deu errado ao carregar os títulos a caminho."
   },
   "notifications": {
     "title": "Notificações",
@@ -1570,7 +1616,8 @@
     "badge": {
       "movie": "Filme",
       "series": "Série",
-      "requested": "Solicitado"
+      "requested": "Solicitado",
+      "inCatalog": "Já no catálogo"
     },
     "action": {
       "request": "Solicitar este título",
