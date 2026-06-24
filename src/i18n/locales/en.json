@@ -346,6 +346,38 @@
     "overview": {
       "title": "Overview",
       "subtitle": "Catalog health, operational queues and system status at a glance.",
+      "cta": {
+        "enrich": "Enrich",
+        "scan": "Run scan"
+      },
+      "nowPlaying": {
+        "title": "Now playing",
+        "subtitle": "Sessions active on the server right now",
+        "emptyTitle": "Live sessions coming soon",
+        "emptyBody": "Once the now-playing endpoint lands, active streams will show here with progress, playback mode and live bitrate.",
+        "emptyBadge": "coming soon",
+        "emptyMeta": "0 streams"
+      },
+      "recentlyAdded": {
+        "title": "Recently added",
+        "subtitle": "Latest titles indexed by the scanner",
+        "seeCatalog": "View catalog",
+        "empty": "Nothing indexed yet."
+      },
+      "scanActivity": {
+        "title": "Scan activity",
+        "subtitle": "Latest scanner runs",
+        "history": "History",
+        "empty": "No scans yet.",
+        "allLibraries": "All libraries"
+      },
+      "diskUsage": {
+        "title": "Disk usage by library",
+        "subtitle": "Per-library storage on disk",
+        "emptyTitle": "Disk usage coming soon",
+        "emptyBody": "Per-library size aggregation isn't exposed by the backend yet. It'll rank your libraries here once the storage endpoint ships.",
+        "emptyBadge": "coming soon"
+      },
       "placeholder": "—",
       "placeholderSub": "Backend pending",
       "reviewSub": "View queue",

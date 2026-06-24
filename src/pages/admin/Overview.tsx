@@ -1,24 +1,51 @@
-import { Box, ButtonBase, CircularProgress, Link, Typography } from "@mui/material";
+import { Box, ButtonBase, CircularProgress, Link, Skeleton, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { AlertTriangle, ChevronRight, Film, HardDrive, ScanLine, Tv, Users } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  ChevronRight,
+  Film,
+  HardDrive,
+  PlayCircle,
+  ScanLine,
+  Sparkles,
+  Tv,
+  Users,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   useAdminOverviewStats,
+  useAdminScanRuns,
+  useLibraries,
   useMoviesNeedingReview,
   useReadiness,
+  useRecentlyAddedCatalog,
 } from "../../api/hooks";
-import type { AdminOverviewStats, NeedsReviewMovie } from "../../api/types";
+import type {
+  AdminOverviewStats,
+  AdminScanRun,
+  CatalogItem,
+  NeedsReviewMovie,
+} from "../../api/types";
 import {
   AdminBadge,
+  AdminButton,
   AdminCard,
   AdminCardHeader,
   AdminPageHeader,
   type BadgeTone,
+  FancyEmpty,
   StatCard,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { inkAlpha, peachAlpha, status as statusTone, whiteAlpha } from "../../theme/tokens";
+import {
+  inkAlpha,
+  peachAlpha,
+  scrim,
+  status as statusTone,
+  whiteAlpha,
+} from "../../theme/tokens";
 import { parseServerTime } from "../../utils/datetime";
 
 type TFn = (key: string, vars?: Record<string, unknown>) => string;
@@ -61,10 +88,7 @@ function formatLastScanValue(
  * Sub label for the last-scan card: status word when the row is
  * available, generic copy otherwise.
  */
-function formatLastScanSub(
-  scan: AdminOverviewStats["last_scan"],
-  t: TFn,
-): string {
+function formatLastScanSub(scan: AdminOverviewStats["last_scan"], t: TFn): string {
   if (!scan) return t("admin.overview.lastScan.neverSub");
   return t(`admin.overview.lastScan.status.${scan.status}`);
 }
@@ -91,17 +115,29 @@ function formatHlsSub(
 }
 
 /**
+ * Compact ``MM-DD · HH:MM`` stamp for the scan-activity rows —
+ * mono affordance, parsed through the shared server-time helper so
+ * it lands in the viewer's local zone.
+ */
+function formatScanTimestamp(iso: string): string {
+  const d = new Date(parseServerTime(iso));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
  * Admin Overview dashboard.
  *
- * Six headline stat cards (movies / series / users / review queue
- * / last scan / HLS cache) all driven by a single
- * ``useAdminOverviewStats`` round-trip so the page settles in
- * one loading transition rather than flickering through each
- * card's own request.
+ * The operator's at-a-glance answer to "is the server healthy, who's
+ * watching, what did the scanner add, what needs attention". Composed
+ * top-to-bottom: header + shortcut CTAs, a six-up stat strip, the
+ * (placeholder) live-sessions panel, a recently-added poster strip, a
+ * flagged + scan-activity row, and a disk + health row.
  *
- * The needs-review queue still uses its own hook for the
- * "Recently flagged" panel below — the aggregated stats only
- * surface the count, not the row payload.
+ * Each panel binds its own query so the page degrades per-panel rather
+ * than on a single page-wide failure. The two panels that depend on
+ * not-yet-built backend (live sessions, per-library disk) render a calm
+ * "coming soon" placeholder.
  */
 export function AdminOverview() {
   const { t, i18n } = useTranslation();
@@ -119,14 +155,36 @@ export function AdminOverview() {
         breadcrumb={[t("admin.nav.overview")]}
         title={t("admin.overview.title")}
         subtitle={t("admin.overview.subtitle")}
+        primaryCTA={
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <AdminButton
+              icon={<Sparkles size={14} />}
+              onClick={() => navigate("/admin/enrich")}
+            >
+              {t("admin.overview.cta.enrich")}
+            </AdminButton>
+            <AdminButton
+              variant="primary"
+              icon={<ScanLine size={14} />}
+              onClick={() => navigate("/admin/scan")}
+            >
+              {t("admin.overview.cta.scan")}
+            </AdminButton>
+          </Box>
+        }
       />
 
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
-          gap: 2.25,
-          mb: 3.5,
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(3, 1fr)",
+            lg: "repeat(6, 1fr)",
+          },
+          gap: 1.5,
+          mb: 3,
         }}
       >
         <StatCard
@@ -180,12 +238,21 @@ export function AdminOverview() {
         />
       </Box>
 
+      <Box sx={{ mb: 2 }}>
+        <NowPlayingPanel />
+      </Box>
+
+      <Box sx={{ mb: 2 }}>
+        <RecentlyAddedPanel onSeeCatalog={() => navigate("/admin/catalog/movies")} />
+      </Box>
+
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "1.1fr 1fr" },
           gap: 2,
           alignItems: "start",
+          mb: 2,
         }}
       >
         <RecentlyFlaggedPanel
@@ -193,9 +260,312 @@ export function AdminOverview() {
           loading={reviewQueue.isLoading}
           onSeeAll={() => navigate("/admin/catalog/review")}
         />
+        <ScanActivityPanel onHistory={() => navigate("/admin/scan")} />
+      </Box>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+          gap: 2,
+          alignItems: "start",
+        }}
+      >
+        <DiskUsagePanel />
         <SystemHealthPanel />
       </Box>
     </>
+  );
+}
+
+/**
+ * Live-sessions panel — the signature surface of the page, showing
+ * what's playing on the server right now. The backing now-playing
+ * endpoint doesn't exist yet, so this lands as a calm placeholder
+ * (an idle server is the expected resting state, not an error).
+ */
+function NowPlayingPanel() {
+  const { t } = useTranslation();
+  return (
+    <AdminCard>
+      <AdminCardHeader
+        title={t("admin.overview.nowPlaying.title")}
+        subtitle={t("admin.overview.nowPlaying.subtitle")}
+      />
+      <FancyEmpty
+        icon={PlayCircle}
+        title={t("admin.overview.nowPlaying.emptyTitle")}
+        body={t("admin.overview.nowPlaying.emptyBody")}
+        badge={t("admin.overview.nowPlaying.emptyBadge")}
+        badgeTone="warn"
+        meta={t("admin.overview.nowPlaying.emptyMeta")}
+      />
+    </AdminCard>
+  );
+}
+
+const RECENTLY_ADDED_LIMIT = 8;
+
+/**
+ * Horizontal poster strip of the most recently indexed titles.
+ *
+ * Backed by ``useRecentlyAddedCatalog`` — the mixed movie/series
+ * catalog feed. The catalog item is thin (no per-title "added" date
+ * or resolution), so tiles show poster + title + year and drop the
+ * handoff's 4K chip / added-date until the feed carries them.
+ */
+function RecentlyAddedPanel({ onSeeCatalog }: { onSeeCatalog: () => void }) {
+  const { t } = useTranslation();
+  const { data, isLoading } = useRecentlyAddedCatalog(RECENTLY_ADDED_LIMIT);
+  const items = data ?? [];
+
+  return (
+    <AdminCard>
+      <AdminCardHeader
+        title={t("admin.overview.recentlyAdded.title")}
+        subtitle={t("admin.overview.recentlyAdded.subtitle")}
+        action={
+          <AdminButton
+            variant="ghost"
+            size="small"
+            icon={<ArrowRight size={13} />}
+            onClick={onSeeCatalog}
+          >
+            {t("admin.overview.recentlyAdded.seeCatalog")}
+          </AdminButton>
+        }
+      />
+
+      {isLoading ? (
+        <Box sx={{ display: "flex", gap: 2.25, overflow: "hidden" }}>
+          {Array.from({ length: 7 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              variant="rounded"
+              width={116}
+              height={168}
+              sx={{ flexShrink: 0, borderRadius: "6px" }}
+            />
+          ))}
+        </Box>
+      ) : items.length === 0 ? (
+        <Box sx={{ py: 4, textAlign: "center" }}>
+          <Typography variant="body2" color="text.secondary">
+            {t("admin.overview.recentlyAdded.empty")}
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", gap: 2.25, overflowX: "auto", pb: 0.75 }}>
+          {items.map((item) => (
+            <PosterTile key={item.id} item={item} />
+          ))}
+        </Box>
+      )}
+    </AdminCard>
+  );
+}
+
+function PosterTile({ item }: { item: CatalogItem }) {
+  return (
+    <Box sx={{ width: 116, flexShrink: 0 }}>
+      <Box
+        sx={{
+          position: "relative",
+          width: 116,
+          height: 168,
+          borderRadius: "6px",
+          overflow: "hidden",
+          border: `1px solid ${whiteAlpha(0.07)}`,
+          bgcolor: whiteAlpha(0.04),
+          boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {item.poster_path ? (
+          <Box
+            component="img"
+            src={item.poster_path}
+            alt=""
+            sx={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        ) : (
+          <Typography
+            aria-hidden
+            sx={{ fontFamily: "Georgia, serif", fontSize: 32, color: whiteAlpha(0.14) }}
+          >
+            {item.title[0]}
+          </Typography>
+        )}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: `linear-gradient(180deg, transparent 45%, ${scrim(0.55)} 100%)`,
+          }}
+        />
+      </Box>
+      <Typography variant="body2" fontWeight={500} noWrap sx={{ mt: 1 }}>
+        {item.title}
+      </Typography>
+      <Typography variant="metaMono" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
+        {item.year}
+      </Typography>
+    </Box>
+  );
+}
+
+const SCAN_ACTIVITY_LIMIT = 5;
+
+/**
+ * Last few scan runs, mirroring the Scan page's history. Each row
+ * sums the run's created / updated counts across movies + episodes
+ * and surfaces error count only when non-zero.
+ */
+function ScanActivityPanel({ onHistory }: { onHistory: () => void }) {
+  const { t } = useTranslation();
+  const scanRuns = useAdminScanRuns(undefined, undefined, { pageSize: SCAN_ACTIVITY_LIMIT });
+  const libraries = useLibraries();
+
+  const libraryName = (id: string | null): string => {
+    if (!id) return t("admin.overview.scanActivity.allLibraries");
+    return (
+      libraries.data?.find((library) => library.id === id)?.name ??
+      t("admin.overview.scanActivity.allLibraries")
+    );
+  };
+
+  const rows = scanRuns.items.slice(0, SCAN_ACTIVITY_LIMIT);
+
+  return (
+    <AdminCard>
+      <AdminCardHeader
+        title={t("admin.overview.scanActivity.title")}
+        subtitle={t("admin.overview.scanActivity.subtitle")}
+        action={
+          <AdminButton
+            variant="ghost"
+            size="small"
+            icon={<ArrowRight size={13} />}
+            onClick={onHistory}
+          >
+            {t("admin.overview.scanActivity.history")}
+          </AdminButton>
+        }
+      />
+
+      {scanRuns.isLoading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress size={20} color="primary" />
+        </Box>
+      ) : rows.length === 0 ? (
+        <Box sx={{ py: 5, textAlign: "center" }}>
+          <Typography variant="body2" color="text.secondary">
+            {t("admin.overview.scanActivity.empty")}
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column" }}>
+          {rows.map((run, index) => (
+            <ScanActivityRow
+              key={run.id}
+              run={run}
+              libraryName={libraryName(run.library_id)}
+              last={index === rows.length - 1}
+            />
+          ))}
+        </Box>
+      )}
+    </AdminCard>
+  );
+}
+
+function ScanActivityRow({
+  run,
+  libraryName,
+  last,
+}: {
+  run: AdminScanRun;
+  libraryName: string;
+  last: boolean;
+}) {
+  const created = (run.summary.movies_created ?? 0) + (run.summary.episodes_created ?? 0);
+  const updated = (run.summary.movies_updated ?? 0) + (run.summary.episodes_updated ?? 0);
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1.75,
+        py: 1.25,
+        borderBottom: last ? "none" : `1px solid ${whiteAlpha(0.06)}`,
+      }}
+    >
+      <Typography
+        variant="metaMono"
+        color="text.secondary"
+        sx={{ width: 92, flexShrink: 0 }}
+      >
+        {formatScanTimestamp(run.started_at)}
+      </Typography>
+      <Typography
+        variant="control"
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {libraryName}
+      </Typography>
+      <Box sx={{ display: "inline-flex", gap: 1.5, flexShrink: 0 }}>
+        <Typography variant="metaMono" sx={{ color: statusTone.ok.fg }}>
+          +{created}
+        </Typography>
+        <Typography variant="metaMono" sx={{ color: inkAlpha(0.5) }}>
+          ↻{updated}
+        </Typography>
+        {run.errors_count > 0 && (
+          <Typography variant="metaMono" sx={{ color: statusTone.err.fg }}>
+            !{run.errors_count}
+          </Typography>
+        )}
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * Per-library disk usage panel. The size aggregation isn't exposed
+ * by the backend yet, so this lands as a placeholder until the
+ * library-storage endpoint ships.
+ */
+function DiskUsagePanel() {
+  const { t } = useTranslation();
+  return (
+    <AdminCard>
+      <AdminCardHeader
+        title={t("admin.overview.diskUsage.title")}
+        subtitle={t("admin.overview.diskUsage.subtitle")}
+      />
+      <FancyEmpty
+        icon={HardDrive}
+        title={t("admin.overview.diskUsage.emptyTitle")}
+        body={t("admin.overview.diskUsage.emptyBody")}
+        badge={t("admin.overview.diskUsage.emptyBadge")}
+        badgeTone="warn"
+      />
+    </AdminCard>
   );
 }
 
@@ -439,7 +809,7 @@ function SystemHealthPanel() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
             gap: 1.5,
           }}
         >
@@ -514,4 +884,3 @@ function HealthRow({ label, status }: { label: string; status: string }) {
     </Box>
   );
 }
-
