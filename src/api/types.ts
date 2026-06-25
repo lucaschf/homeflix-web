@@ -1022,6 +1022,9 @@ export interface CheckWatchlistResponse {
 export interface CustomListOutput {
   id: string;
   name: string;
+  /** Optional list description. Populated once the backend adds the
+   *  field; the detail header renders it only when present. */
+  description?: string | null;
   item_count: number;
   created_at: string;
   updated_at: string;
