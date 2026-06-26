@@ -447,7 +447,10 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
             {current.name}
           </Typography>
           {current.description && (
-            <Typography variant="pageSubtitle" sx={{ mt: 1.5, color: inkAlpha(0.55), maxWidth: 620 }}>
+            <Typography
+              variant="pageSubtitle"
+              sx={{ mt: 1.5, color: inkAlpha(0.55), width: "100%", maxWidth: { xs: "100%", lg: "50%" } }}
+            >
               {current.description}
             </Typography>
           )}
@@ -486,20 +489,22 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
           >
             {t("lists.shuffle")}
           </AdminButton>
-          <IconButton
+          <AdminButton
+            variant="secondary"
             aria-label={t("lists.editList")}
             onClick={() => setDialog("rename")}
-            sx={{ border: `1px solid ${whiteAlpha(0.1)}`, borderRadius: 1.5 }}
+            sx={{ minWidth: 0, px: 1, alignSelf: "stretch" }}
           >
             <Pencil size={16} />
-          </IconButton>
-          <IconButton
+          </AdminButton>
+          <AdminButton
+            variant="secondary"
             aria-label={t("lists.moreOptions")}
             onClick={(e) => setMenuAnchor(e.currentTarget)}
-            sx={{ border: `1px solid ${whiteAlpha(0.1)}`, borderRadius: 1.5 }}
+            sx={{ minWidth: 0, px: 1, alignSelf: "stretch" }}
           >
             <MoreVertical size={16} />
-          </IconButton>
+          </AdminButton>
         </Box>
       </Box>
 
