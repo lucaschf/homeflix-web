@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Box, Button, Chip, IconButton, Typography } from "@mui/material";
-import { Bookmark, Play, Clapperboard } from "lucide-react";
+import { Box, Button, Chip, Typography } from "@mui/material";
+import { Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { neutral } from "../theme/colors";
-import { whiteAlpha, panelScrim } from "../theme/tokens";
+import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim } from "../theme/tokens";
 import { ContentRatingBadge } from "./ContentRatingBadge";
 import { TitleLogo } from "./TitleLogo";
 import { TrailerDialog } from "./TrailerDialog";
+import { WatchlistIconButton } from "./WatchlistIconButton";
 
 export interface HeroSlide {
   id: string;
@@ -258,38 +259,29 @@ export function HeroBanner({
         )}
 
         <Box sx={{ display: "flex", gap: 1.5 }}>
-          <Button variant="contained" startIcon={<Play size={18} />} onClick={() => onPlay?.(slide)} size="large">
+          <Button
+            variant="cta"
+            startIcon={<Play size={18} />}
+            onClick={() => onPlay?.(slide)}
+            sx={{ height: ACTION_BAR_HEIGHT, px: 3.25 }}
+          >
             {t("hero.play")}
           </Button>
-          <IconButton
-            aria-label={t("hero.myList")}
+          <WatchlistIconButton
+            active={!!inWatchlist}
             onClick={() => {
               toggleWatchlist.mutate({ media_id: slide.id, media_type: slide.type });
               onAddToList?.(slide);
             }}
-            sx={{
-              color: inWatchlist ? "primary.main" : "text.secondary",
-              border: inWatchlist ? "1px solid" : `1px solid ${whiteAlpha(0.2)}`,
-              borderColor: inWatchlist ? "primary.main" : undefined,
-              borderRadius: 1.5,
-              width: 42,
-              height: 42,
-              "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : whiteAlpha(0.4) },
-            }}
-          >
-            <Bookmark size={20} fill={inWatchlist ? "currentColor" : "none"} />
-          </IconButton>
+            addLabel={t("lists.addToList")}
+            removeLabel={t("lists.removeFromList")}
+          />
           {slide.trailerUrl && (
             <Button
-              variant="outlined"
+              variant="hairline"
               startIcon={<Clapperboard size={18} />}
               onClick={() => setTrailerOpen(true)}
-              sx={{
-                color: "text.secondary",
-                borderColor: whiteAlpha(0.2),
-                "&:hover": { color: "text.primary", borderColor: whiteAlpha(0.4) },
-                height: 42,
-              }}
+              sx={{ height: ACTION_BAR_HEIGHT, px: 2 }}
             >
               {t("detail.trailer")}
             </Button>

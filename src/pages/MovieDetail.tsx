@@ -11,7 +11,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Bookmark, Play, RefreshCw, Clapperboard, Flag, ScrollText } from "lucide-react";
+import { Play, RefreshCw, Clapperboard, Flag, ScrollText } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -33,10 +33,11 @@ import { MetaLine } from "../components/MetaLine";
 import { QualityRail } from "../components/QualityRail";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { WatchlistIconButton } from "../components/WatchlistIconButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
-import { fontSize, inkAlpha, panelScrim, peachAlpha, scrim, status, whiteAlpha } from "../theme/tokens";
+import { ACTION_BAR_HEIGHT, fontSize, inkAlpha, panelScrim, peachAlpha, scrim, status, whiteAlpha } from "../theme/tokens";
 import { neutral } from "../theme/colors";
 
 export function MovieDetail() {
@@ -235,15 +236,13 @@ export function MovieDetail() {
 
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               <Button
-                variant="contained"
+                variant="cta"
                 startIcon={<Play size={16} />}
                 onClick={() => navigate(`/play/movie/${movie.id}`)}
                 sx={{
-                  fontSize: "0.875rem",
-                  fontWeight: 600,
                   position: "relative",
                   overflow: "hidden",
-                  height: 46,
+                  height: ACTION_BAR_HEIGHT,
                   px: 3.25,
                   // No padding-bottom adjustment for the progress
                   // strip — the bar is absolutely positioned at the
@@ -278,44 +277,18 @@ export function MovieDetail() {
                   </Box>
                 )}
               </Button>
-              <Tooltip title={inWatchlist ? t("lists.removeFromList") : t("lists.addToList")} arrow>
-                <IconButton
-                  onClick={() => toggleWatchlist.mutate({ media_id: movie.id, media_type: "movie" })}
-                  sx={{
-                    color: inWatchlist ? "primary.main" : "text.primary",
-                    bgcolor: whiteAlpha(0.08),
-                    border: `1px solid ${whiteAlpha(0.12)}`,
-                    borderColor: inWatchlist ? "primary.main" : whiteAlpha(0.12),
-                    borderRadius: 1,
-                    width: 46,
-                    height: 46,
-                    "&:hover": {
-                      bgcolor: whiteAlpha(0.12),
-                      borderColor: inWatchlist ? "primary.main" : whiteAlpha(0.2),
-                    },
-                  }}
-                >
-                  <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
-                </IconButton>
-              </Tooltip>
+              <WatchlistIconButton
+                active={!!inWatchlist}
+                onClick={() => toggleWatchlist.mutate({ media_id: movie.id, media_type: "movie" })}
+                addLabel={t("lists.addToList")}
+                removeLabel={t("lists.removeFromList")}
+              />
               {movie.trailer_url && (
                 <Button
+                  variant="hairline"
                   startIcon={<Clapperboard size={16} />}
                   onClick={() => setTrailerOpen(true)}
-                  sx={{
-                    color: "text.primary",
-                    bgcolor: whiteAlpha(0.08),
-                    border: `1px solid ${whiteAlpha(0.12)}`,
-                    borderRadius: 1,
-                    height: 46,
-                    px: 2,
-                    fontSize: fontSize.control,
-                    fontWeight: 500,
-                    "&:hover": {
-                      bgcolor: whiteAlpha(0.12),
-                      borderColor: whiteAlpha(0.2),
-                    },
-                  }}
+                  sx={{ height: ACTION_BAR_HEIGHT, px: 2 }}
                 >
                   {t("detail.trailer")}
                 </Button>

@@ -1,9 +1,8 @@
-import { useState } from "react";
-import { Box, Menu, MenuItem, Typography } from "@mui/material";
-import { ChevronDown, Clock, Play, Shuffle } from "lucide-react";
+import { Box, Typography } from "@mui/material";
+import { Clock, Play, Shuffle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AdminButton } from "../admin/AdminButton";
-import { fontFamily, fontSize, whiteAlpha } from "../../theme/tokens";
+import { SortMenuButton } from "./SortMenuButton";
 
 export type QueueSort = "recent" | "title";
 
@@ -30,12 +29,11 @@ export function QueueToolbar({
   disabled,
 }: QueueToolbarProps) {
   const { t } = useTranslation();
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
-  const sortLabels: Record<QueueSort, string> = {
-    recent: t("lists.sortRecent"),
-    title: t("lists.sortTitle"),
-  };
+  const sortOptions = [
+    { key: "recent" as const, label: t("lists.sortRecent") },
+    { key: "title" as const, label: t("lists.sortTitle") },
+  ];
 
   return (
     <Box
@@ -60,56 +58,12 @@ export function QueueToolbar({
       </Box>
 
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap" }}>
-        {/* sort dropdown */}
-        <Box
-          component="button"
-          type="button"
-          onClick={(e) => setAnchor(e.currentTarget as HTMLElement)}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-            px: 1.5,
-            py: 1,
-            cursor: "pointer",
-            borderRadius: 1.75,
-            bgcolor: whiteAlpha(0.04),
-            border: `1px solid ${whiteAlpha(0.08)}`,
-            color: "text.secondary",
-            "&:hover": { bgcolor: whiteAlpha(0.07) },
-          }}
-        >
-          <Box
-            component="span"
-            sx={{
-              fontFamily: fontFamily.mono,
-              fontSize: fontSize.micro,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              opacity: 0.7,
-            }}
-          >
-            {t("lists.sortLabel")}
-          </Box>
-          <Box component="span" sx={{ color: "text.primary", fontSize: fontSize.control, whiteSpace: "nowrap" }}>
-            {sortLabels[sort]}
-          </Box>
-          <ChevronDown size={13} />
-        </Box>
-        <Menu anchorEl={anchor} open={!!anchor} onClose={() => setAnchor(null)}>
-          {(Object.keys(sortLabels) as QueueSort[]).map((key) => (
-            <MenuItem
-              key={key}
-              selected={key === sort}
-              onClick={() => {
-                onSortChange(key);
-                setAnchor(null);
-              }}
-            >
-              {sortLabels[key]}
-            </MenuItem>
-          ))}
-        </Menu>
+        <SortMenuButton
+          label={t("lists.sortLabel")}
+          value={sort}
+          options={sortOptions}
+          onChange={onSortChange}
+        />
 
         <AdminButton
           variant="secondary"

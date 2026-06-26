@@ -121,7 +121,9 @@ export function FilterChip<V extends string | number>({
       sx={{
         fontSize: fontSize.control,
         bgcolor: active ? peachAlpha(0.1) : whiteAlpha(0.025),
-        borderRadius: 999,
+        // Canonical control radius (8px = shape.borderRadius), matching the
+        // ToolbarSearch field beside it — was a full `999` pill (ADR-001).
+        borderRadius: 1,
         ".MuiOutlinedInput-notchedOutline": {
           borderColor: active ? peachAlpha(0.3) : whiteAlpha(0.08),
         },
