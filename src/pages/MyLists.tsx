@@ -18,6 +18,7 @@ import {
   Bookmark,
   ChevronDown,
   ChevronRight,
+  GripVertical,
   LayoutGrid,
   List,
   MoreVertical,
@@ -38,6 +39,7 @@ import {
   useDeleteCustomList,
   useRemoveItemFromCustomList,
   useRenameCustomList,
+  useReorderCustomListItems,
   useSearch,
   useToggleWatchlist,
   useWatchlist,
@@ -336,6 +338,12 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const current = lists?.find((l) => l.id === list.id) ?? list;
   const { data: items, isLoading } = useCustomListItems(list.id);
   const removeItem = useRemoveItemFromCustomList();
+  const reorder = useReorderCustomListItems();
+
+  // Manual drag order overlaid on the server order; reset once the
+  // server returns the persisted order after a reorder.
+  const [manualOrder, setManualOrder] = useState<string[] | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -354,12 +362,53 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   // progress; series report none).
   const watched = (items ?? []).filter((i) => (i.progress ?? 0) >= 0.9).length;
 
+  // Server order key — when it changes (after a persisted reorder),
+  // drop the local override so the server becomes authoritative again.
+  // Adjusting state during render is the idiomatic reset-on-prop-change.
+  const itemsKey = (items ?? []).map((i) => i.media_id).join(",");
+  const [orderKey, setOrderKey] = useState(itemsKey);
+  if (orderKey !== itemsKey) {
+    setOrderKey(itemsKey);
+    setManualOrder(null);
+  }
+
   const ordered = useMemo(() => {
     const arr = [...(items ?? [])];
+    if (manualOrder) {
+      const idx = new Map(manualOrder.map((id, i) => [id, i]));
+      arr.sort((a, b) => (idx.get(a.media_id) ?? 0) - (idx.get(b.media_id) ?? 0));
+      return arr;
+    }
     if (sort === "title") arr.sort((a, b) => a.title.localeCompare(b.title));
     else if (sort === "recent") arr.sort((a, b) => (b.added_at ?? "").localeCompare(a.added_at ?? ""));
     return arr; // "manual" keeps the server position order
-  }, [items, sort]);
+  }, [items, sort, manualOrder]);
+
+  const handleDragStart = (id: string) => {
+    setDraggingId(id);
+    setManualOrder(ordered.map((i) => i.media_id)); // snapshot current order
+  };
+  const handleDragEnter = (overId: string) => {
+    const from = draggingId;
+    if (!from || from === overId) return;
+    setManualOrder((prev) => {
+      if (!prev) return prev;
+      const ids = prev.slice();
+      const f = ids.indexOf(from);
+      const o = ids.indexOf(overId);
+      if (f < 0 || o < 0) return prev;
+      ids.splice(f, 1);
+      ids.splice(o, 0, from);
+      return ids;
+    });
+  };
+  const handleDragEnd = () => {
+    if (draggingId && manualOrder) {
+      if (sort !== "manual") setSort("manual");
+      reorder.mutate({ listId: list.id, mediaIds: manualOrder });
+    }
+    setDraggingId(null);
+  };
 
   const sortLabels: Record<ListSort, string> = {
     manual: t("lists.sortManual"),
@@ -620,6 +669,10 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
                 index={i}
                 title={item.title}
                 posterPath={item.poster_path}
+                dragging={draggingId === item.media_id}
+                onDragStart={() => handleDragStart(item.media_id)}
+                onDragEnter={() => handleDragEnter(item.media_id)}
+                onDragEnd={handleDragEnd}
                 onOpen={() => nav.open(item.media_id, item.media_type)}
                 onRemove={() => removeItem.mutate({ listId: list.id, mediaId: item.media_id })}
               />
@@ -675,32 +728,59 @@ function ListRow({
   index,
   title,
   posterPath,
+  dragging,
+  onDragStart,
+  onDragEnter,
+  onDragEnd,
   onOpen,
   onRemove,
 }: {
   index: number;
   title: string;
   posterPath?: string | null;
+  dragging?: boolean;
+  onDragStart?: () => void;
+  onDragEnter?: () => void;
+  onDragEnd?: () => void;
   onOpen: () => void;
   onRemove: () => void;
 }) {
   return (
     <Box
+      draggable
+      onDragStart={onDragStart}
+      onDragEnter={onDragEnter}
+      onDragOver={(e) => e.preventDefault()}
+      onDragEnd={onDragEnd}
       onClick={onOpen}
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 2,
+        gap: 1.5,
         p: 1,
         borderRadius: 1.5,
         cursor: "pointer",
-        transition: "background-color 140ms",
+        opacity: dragging ? 0.4 : 1,
+        transition: "background-color 140ms, opacity 140ms",
         "&:hover": { bgcolor: whiteAlpha(0.04) },
         "&:hover .lr-remove": { opacity: 1 },
+        "&:hover .lr-grip": { opacity: 0.7 },
       }}
     >
+      <Box
+        className="lr-grip"
+        sx={{
+          display: "flex",
+          color: "text.secondary",
+          cursor: "grab",
+          opacity: { xs: 0.7, md: 0 },
+          transition: "opacity 140ms",
+        }}
+      >
+        <GripVertical size={16} />
+      </Box>
       <Typography
-        sx={{ width: 28, textAlign: "right", fontFamily: fontFamily.mono, fontSize: 12, color: "text.secondary" }}
+        sx={{ width: 24, textAlign: "right", fontFamily: fontFamily.mono, fontSize: 12, color: "text.secondary" }}
       >
         {String(index + 1).padStart(2, "0")}
       </Typography>
