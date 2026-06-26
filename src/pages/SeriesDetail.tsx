@@ -17,7 +17,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Bookmark, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag } from "lucide-react";
+import { LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useFlagSeriesEnrichment, useIsInWatchlist, useRelatedSeries, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
@@ -33,9 +33,10 @@ import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { WatchlistIconButton } from "../components/WatchlistIconButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
-import { fontFamily, inkAlpha, panelScrim, scrim, status, whiteAlpha } from "../theme/tokens";
+import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, status, whiteAlpha } from "../theme/tokens";
 
 type EpisodeView = "list" | "cards";
 
@@ -186,42 +187,25 @@ export function SeriesDetail() {
 
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               <Button
-                variant="contained"
+                variant="cta"
                 startIcon={<Play size={16} />}
-                size="medium"
-                sx={{ fontSize: { xs: "0.8rem", md: "0.875rem" } }}
+                sx={{ height: ACTION_BAR_HEIGHT, px: 3.25 }}
                 onClick={() => navigate(`/play/episode/${series.id}/${playTarget.season}/${playTarget.episode}`)}
               >
                 {playLabel}
               </Button>
-              <Tooltip title={inWatchlist ? t("lists.removeFromList") : t("lists.addToList")} arrow>
-                <IconButton
-                  onClick={() => toggleWatchlist.mutate({ media_id: series.id, media_type: "series" })}
-                  sx={{
-                    color: inWatchlist ? "primary.main" : "text.secondary",
-                    border: inWatchlist ? "1px solid" : `1px solid ${whiteAlpha(0.2)}`,
-                    borderColor: inWatchlist ? "primary.main" : undefined,
-                    borderRadius: 1.5,
-                    width: 38,
-                    height: 38,
-                    "&:hover": { color: inWatchlist ? "primary.main" : "text.primary", borderColor: inWatchlist ? "primary.main" : whiteAlpha(0.4) },
-                  }}
-                >
-                  <Bookmark size={18} fill={inWatchlist ? "currentColor" : "none"} />
-                </IconButton>
-              </Tooltip>
+              <WatchlistIconButton
+                active={!!inWatchlist}
+                onClick={() => toggleWatchlist.mutate({ media_id: series.id, media_type: "series" })}
+                addLabel={t("lists.addToList")}
+                removeLabel={t("lists.removeFromList")}
+              />
               {series.trailer_url && (
                 <Button
-                  variant="outlined"
+                  variant="hairline"
                   startIcon={<Clapperboard size={16} />}
                   onClick={() => setTrailerOpen(true)}
-                  sx={{
-                    color: "text.secondary",
-                    borderColor: whiteAlpha(0.2),
-                    "&:hover": { color: "text.primary", borderColor: whiteAlpha(0.4) },
-                    height: 38,
-                    fontSize: { xs: "0.8rem", md: "0.875rem" },
-                  }}
+                  sx={{ height: ACTION_BAR_HEIGHT, px: 2 }}
                 >
                   {t("detail.trailer")}
                 </Button>

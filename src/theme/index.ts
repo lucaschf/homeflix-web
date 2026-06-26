@@ -1,6 +1,6 @@
-import { createTheme, type ThemeOptions } from "@mui/material/styles";
+import { alpha, createTheme, type ThemeOptions } from "@mui/material/styles";
 import { error, info, neutral, peach, success, warning } from "./colors";
-import { fontFamily, fontSize, inkAlpha } from "./tokens";
+import { border, fontFamily, fontSize, inkAlpha, status, whiteAlpha } from "./tokens";
 import React from "react";
 
 // -- Overlay token namespace ---------------------------------------------------
@@ -67,6 +67,22 @@ declare module "@mui/material/styles" {
   }
 }
 
+// Canonical interactive-control variants (ADR-001). The four looks every
+// action bar / toolbar needs, registered once so call-sites stop hand-rolling
+// coral CTAs and hairline secondaries with divergent radius/border/weight.
+declare module "@mui/material/Button" {
+  interface ButtonPropsVariantOverrides {
+    /** Primary coral CTA — "Assistir", "Reproduzir fila". */
+    cta: true;
+    /** Secondary hairline button — "Trailer", "Aleatório", sort control. */
+    hairline: true;
+    /** Transparent, label-only button. */
+    ghost: true;
+    /** Destructive, red-tinted button. */
+    danger: true;
+  }
+}
+
 declare module "@mui/material/Typography" {
   interface TypographyPropsVariantOverrides {
     overlayTitle: true;
@@ -96,6 +112,19 @@ const OVERLAY_TEXT_SECONDARY = inkAlpha(0.7);
 // constants to keep in sync.
 const defaultTheme = createTheme();
 const OVERLAY_BREAKPOINT_MD = defaultTheme.breakpoints.up("md");
+
+// Shared base for the canonical Button variants (ADR-001): compact toolbar
+// padding, control type scale and `none` transform. Spread into each variant
+// so only the colors/border differ. Padding is the raw-px equivalent of the
+// former AdminButton `py: 0.875 / px: 1.75` (× 8px spacing).
+const CONTROL_BASE = {
+  textTransform: "none" as const,
+  fontWeight: 500,
+  fontSize: fontSize.control,
+  paddingBlock: "7px",
+  paddingInline: "14px",
+  transition: "background-color 140ms ease, border-color 140ms ease",
+};
 
 const themeOptions: ThemeOptions = {
   colorSchemes: {
@@ -288,11 +317,62 @@ const themeOptions: ThemeOptions = {
       defaultProps: {
         disableElevation: true,
       },
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
+      // Canonical interactive-control variants (ADR-001). Each carries the
+      // FULL look — colors, hairline, weight, compact padding, `none`
+      // text-transform — so call-sites no longer hand-roll coral CTAs and
+      // hairline secondaries with divergent radius/border/weight. Border
+      // radius is intentionally NOT set here: it inherits `shape.borderRadius`
+      // (8px), the single canonical control radius. Scale (a taller hero
+      // height) is layered per call-site via `sx`, never the look.
+      variants: [
+        {
+          props: { variant: "cta" },
+          style: ({ theme }) => ({
+            ...CONTROL_BASE,
+            fontWeight: 600,
+            backgroundColor: theme.palette.primary.main,
+            color: theme.palette.primary.contrastText,
+            border: `1px solid ${theme.palette.primary.main}`,
+            "&:hover": {
+              backgroundColor: theme.palette.primary.dark,
+              borderColor: theme.palette.primary.dark,
+            },
+          }),
         },
-      },
+        {
+          props: { variant: "hairline" },
+          style: ({ theme }) => ({
+            ...CONTROL_BASE,
+            backgroundColor: whiteAlpha(0.04),
+            color: theme.palette.text.primary,
+            border: `1px solid ${border.hairline}`,
+            "&:hover": { backgroundColor: whiteAlpha(0.07) },
+          }),
+        },
+        {
+          props: { variant: "ghost" },
+          style: ({ theme }) => ({
+            ...CONTROL_BASE,
+            backgroundColor: "transparent",
+            color: theme.palette.text.secondary,
+            border: "1px solid transparent",
+            "&:hover": {
+              backgroundColor: whiteAlpha(0.04),
+              color: theme.palette.text.primary,
+            },
+          }),
+        },
+        {
+          props: { variant: "danger" },
+          style: {
+            ...CONTROL_BASE,
+            backgroundColor: alpha(status.err.base, 0.08),
+            color: status.err.fg,
+            border: `1px solid ${alpha(status.err.base, 0.35)}`,
+            "&:hover": { backgroundColor: alpha(status.err.base, 0.14) },
+          },
+        },
+      ],
     },
     MuiCard: {
       styleOverrides: {

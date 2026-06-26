@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import {
   Bookmark,
-  ChevronDown,
   ChevronRight,
   GripVertical,
   LayoutGrid,
@@ -54,9 +53,10 @@ import { CreateListCard } from "../components/lists/CreateListCard";
 import { ListCard } from "../components/lists/ListCard";
 import { QueueCard } from "../components/lists/QueueCard";
 import { QueueToolbar, type QueueSort } from "../components/lists/QueueToolbar";
+import { SortMenuButton } from "../components/lists/SortMenuButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral, peach } from "../theme/colors";
-import { fontFamily, fontSize, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
+import { fontFamily, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 import { formatRelativeServerTime } from "../utils/datetime";
 import { formatDuration } from "../utils/duration";
 import { mediaQuality } from "../utils/quality";
@@ -349,7 +349,6 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<ListSort>("manual");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [sortAnchor, setSortAnchor] = useState<HTMLElement | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
 
@@ -528,57 +527,17 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
         </AdminButton>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box
-            component="button"
-            type="button"
-            onClick={(e) => setSortAnchor(e.currentTarget)}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1,
-              px: 1.5,
-              py: 0.9,
-              cursor: "pointer",
-              borderRadius: 1.75,
-              bgcolor: whiteAlpha(0.04),
-              border: `1px solid ${whiteAlpha(0.08)}`,
-              color: "text.secondary",
-              "&:hover": { bgcolor: whiteAlpha(0.07) },
-            }}
-          >
-            <Box
-              component="span"
-              sx={{
-                fontFamily: fontFamily.mono,
-                fontSize: fontSize.micro,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                opacity: 0.7,
-              }}
-            >
-              {t("lists.sortLabel")}
-            </Box>
-            <Box component="span" sx={{ color: "text.primary", fontSize: fontSize.control }}>
-              {sortLabels[sort]}
-            </Box>
-            <ChevronDown size={13} />
-          </Box>
-          <Menu anchorEl={sortAnchor} open={!!sortAnchor} onClose={() => setSortAnchor(null)}>
-            {(Object.keys(sortLabels) as ListSort[]).map((key) => (
-              <MenuItem
-                key={key}
-                selected={key === sort}
-                onClick={() => {
-                  setSort(key);
-                  setSortAnchor(null);
-                }}
-              >
-                {sortLabels[key]}
-              </MenuItem>
-            ))}
-          </Menu>
+          <SortMenuButton
+            label={t("lists.sortLabel")}
+            value={sort}
+            options={(Object.keys(sortLabels) as ListSort[]).map((key) => ({
+              key,
+              label: sortLabels[key],
+            }))}
+            onChange={setSort}
+          />
 
-          <Box sx={{ display: "flex", border: `1px solid ${whiteAlpha(0.08)}`, borderRadius: 1.75, overflow: "hidden" }}>
+          <Box sx={{ display: "flex", border: `1px solid ${whiteAlpha(0.08)}`, borderRadius: 1, overflow: "hidden" }}>
             {(["grid", "list"] as const).map((v) => (
               <IconButton
                 key={v}

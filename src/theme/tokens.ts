@@ -69,6 +69,33 @@ export const fontFamily = {
   mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
 } as const;
 
+// -- Control geometry ----------------------------------------------------------
+//
+// Canonical sizing + border treatment for the interactive controls that sit
+// side-by-side in an action bar / toolbar (Button, IconButton, sort control).
+// Centralized here so siblings share one vertical rhythm and one hairline
+// instead of each call-site hardcoding its own `height` / `whiteAlpha(...)`.
+// See ADR-001 (canonical control variants).
+
+/**
+ * Height of a hero action-bar control — the Watch / Trailer buttons and the
+ * bookmark IconButton on a detail page. They must be identical so the row
+ * doesn't read as ragged; the bookmark is a square of this size.
+ */
+export const ACTION_BAR_HEIGHT = 46;
+
+/**
+ * Hairline borders for "secondary / outlined" controls on dark surfaces. The
+ * resting value matches the `hairline` Button variant; reach for these instead
+ * of inlining `whiteAlpha(0.08)` / `whiteAlpha(0.12)` per call-site.
+ */
+export const border = {
+  /** Resting hairline border. */
+  hairline: whiteAlpha(0.08),
+  /** Hover / emphasized hairline border. */
+  hairlineStrong: whiteAlpha(0.12),
+} as const;
+
 // -- Admin status palette -----------------------------------------------------
 //
 // The admin surfaces share a status palette (see `AdminBadge`). Each tone has a
