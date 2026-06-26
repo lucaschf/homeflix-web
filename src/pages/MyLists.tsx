@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  InputAdornment,
   Menu,
   MenuItem,
   TextField,
@@ -24,14 +23,12 @@ import {
   Pencil,
   Play,
   Plus,
-  Search,
   Shuffle,
   X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
-  useAddItemToCustomList,
   useCreateCustomList,
   useCustomListItems,
   useCustomLists,
@@ -39,7 +36,6 @@ import {
   useRemoveItemFromCustomList,
   useRenameCustomList,
   useReorderCustomListItems,
-  useSearch,
   useToggleWatchlist,
   useWatchlist,
 } from "../api/hooks";
@@ -49,13 +45,14 @@ import { AdminButton } from "../components/admin/AdminButton";
 import { AdminConfirmDialog } from "../components/admin/AdminConfirmDialog";
 import { AdminTabs } from "../components/admin/AdminTabs";
 import { FancyEmpty } from "../components/admin/FancyEmpty";
+import { AddTitlesDialog } from "../components/lists/AddTitlesDialog";
 import { CreateListCard } from "../components/lists/CreateListCard";
 import { ListCard } from "../components/lists/ListCard";
 import { QueueCard } from "../components/lists/QueueCard";
 import { QueueToolbar, type QueueSort } from "../components/lists/QueueToolbar";
 import { SortMenuButton } from "../components/lists/SortMenuButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-import { neutral, peach } from "../theme/colors";
+import { peach } from "../theme/colors";
 import { fontFamily, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 import { formatRelativeServerTime } from "../utils/datetime";
 import { formatDuration } from "../utils/duration";
@@ -345,8 +342,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const [manualOrder, setManualOrder] = useState<string[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
   const [sort, setSort] = useState<ListSort>("manual");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -521,7 +517,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
         <AdminButton
           variant="secondary"
           icon={<Plus size={15} />}
-          onClick={() => setShowSearch((s) => !s)}
+          onClick={() => setAddOpen(true)}
         >
           {t("lists.addTitles")}
         </AdminButton>
@@ -555,44 +551,6 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
           </Box>
         </Box>
       </Box>
-
-      {showSearch && (
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            autoFocus
-            size="small"
-            placeholder={t("lists.searchMedia")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ width: { xs: "100%", sm: 360 } }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search size={16} color={neutral[600]} />
-                  </InputAdornment>
-                ),
-                endAdornment: searchQuery ? (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setSearchQuery("")}>
-                      <X size={14} />
-                    </IconButton>
-                  </InputAdornment>
-                ) : null,
-              },
-            }}
-          />
-          {searchQuery.trim() && (
-            <Box sx={{ mt: 2 }}>
-              <MediaSearchResults
-                query={searchQuery.trim()}
-                listId={list.id}
-                existingMediaIds={new Set(items?.map((i) => i.media_id) ?? [])}
-              />
-            </Box>
-          )}
-        </Box>
-      )}
 
       {isLoading ? (
         <CenteredSpinner />
@@ -683,6 +641,13 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
           onDeleted={onBack}
         />
       )}
+
+      <AddTitlesDialog
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        listId={list.id}
+        existingIds={new Set(items?.map((i) => i.media_id) ?? [])}
+      />
     </Box>
   );
 }
@@ -775,95 +740,6 @@ function ListRow({
       >
         <X size={15} />
       </IconButton>
-    </Box>
-  );
-}
-
-// ── Media Search Results (inline in list detail) ─────────
-
-function MediaSearchResults({
-  query,
-  listId,
-  existingMediaIds,
-}: {
-  query: string;
-  listId: string;
-  existingMediaIds: Set<string>;
-}) {
-  const { t } = useTranslation();
-  const { data: searchResults } = useSearch(query);
-  const addItem = useAddItemToCustomList();
-  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
-
-  const results = useMemo(
-    () =>
-      searchResults
-        .map((item) => ({
-          id: item.id,
-          title: item.title,
-          type: item.type,
-          imageUrl: item.poster_path ?? undefined,
-          year: item.year,
-        }))
-        .slice(0, 12),
-    [searchResults],
-  );
-
-  const handleAdd = (mediaId: string, mediaType: "movie" | "series") => {
-    addItem.mutate(
-      { listId, media_id: mediaId, media_type: mediaType },
-      { onSuccess: () => setAddedIds((prev) => new Set(prev).add(mediaId)) },
-    );
-  };
-
-  if (!results.length) {
-    return (
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {t("lists.noSearchResults", { query })}
-      </Typography>
-    );
-  }
-
-  return (
-    <Box sx={{ mb: 4 }}>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        {t("lists.searchResults")}
-      </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1.5,
-          overflowX: "auto",
-          scrollbarWidth: "none",
-          "&::-webkit-scrollbar": { display: "none" },
-          pb: 1,
-        }}
-      >
-        {results.map((item) => {
-          const alreadyIn = existingMediaIds.has(item.id) || addedIds.has(item.id);
-          return (
-            <Box key={item.id} sx={{ flexShrink: 0, width: 120, position: "relative" }}>
-              <MediaCard
-                title={item.title}
-                imageUrl={item.imageUrl}
-                variant="poster"
-                fullWidth
-                year={item.year}
-              />
-              <Button
-                size="small"
-                variant={alreadyIn ? "outlined" : "contained"}
-                disabled={alreadyIn}
-                onClick={() => handleAdd(item.id, item.type)}
-                fullWidth
-                sx={{ mt: 0.5, fontSize: "0.65rem", py: 0.25, textTransform: "none", minHeight: 0 }}
-              >
-                {alreadyIn ? t("lists.added") : t("lists.addToList")}
-              </Button>
-            </Box>
-          );
-        })}
-      </Box>
     </Box>
   );
 }
