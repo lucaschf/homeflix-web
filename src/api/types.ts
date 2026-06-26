@@ -1008,6 +1008,8 @@ export interface WatchlistItemOutput {
   genres?: string[];
   resolution?: string | null;
   hdr?: boolean;
+  // Watched fraction in [0, 1] (B2); null/absent when no progress.
+  progress?: number | null;
 }
 
 export interface ToggleWatchlistResponse {
@@ -1050,6 +1052,8 @@ export interface CustomListItemOutput {
   genres?: string[];
   resolution?: string | null;
   hdr?: boolean;
+  // Watched fraction in [0, 1] (B2); null/absent when no progress.
+  progress?: number | null;
 }
 
 export interface CustomListsResponse {

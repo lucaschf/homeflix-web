@@ -180,6 +180,7 @@ function WatchlistTab() {
                 genre: item.genres?.[0],
                 qualityLabel: q?.label,
                 qualityKind: q?.kind,
+                progress: item.progress ?? undefined,
               }}
               index={index}
               onOpen={() => nav.open(item.media_id, item.media_type)}
@@ -349,6 +350,9 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const created = formatMonthYear(current.created_at, i18n.language);
   const totalRuntime =
     formatDuration((items ?? []).reduce((acc, i) => acc + (i.runtime_seconds ?? 0), 0)) || null;
+  // "Watched" = items past the ~90% completion mark (movies only carry
+  // progress; series report none).
+  const watched = (items ?? []).filter((i) => (i.progress ?? 0) >= 0.9).length;
 
   const ordered = useMemo(() => {
     const arr = [...(items ?? [])];
@@ -403,6 +407,9 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
             {totalRuntime && (
               <Stat label={t("lists.totalRuntimeLabel")} value={totalRuntime} />
             )}
+            {count > 0 && (
+              <Stat label={t("lists.watchedLabel")} value={`${watched} / ${count}`} />
+            )}
             {updated && (
               <Stat
                 label={t("lists.updatedLabel")}
@@ -410,7 +417,6 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
                 sub={created ? t("lists.createdAt", { date: created }) : undefined}
               />
             )}
-            {/* ASSISTIDOS lights up once the item DTOs carry progress (B2). */}
           </Box>
         </Box>
 
@@ -598,6 +604,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
                 title={item.title}
                 imageUrl={item.poster_path ?? undefined}
                 year={item.year ?? undefined}
+                progress={item.progress != null ? Math.round(item.progress * 100) : undefined}
                 variant="poster"
                 fullWidth
                 onClick={() => nav.open(item.media_id, item.media_type)}
