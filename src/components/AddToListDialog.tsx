@@ -51,7 +51,9 @@ export function AddToListDialog({ open, onClose, mediaId, mediaType }: AddToList
 
   const handleCreate = () => {
     if (!newListName.trim()) return;
-    createList.mutate(newListName.trim(), {
+    createList.mutate(
+      { name: newListName.trim() },
+      {
       onSuccess: (resp) => {
         setNewListName("");
         setShowCreate(false);

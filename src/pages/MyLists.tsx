@@ -838,11 +838,15 @@ function CreateListDialog({
   const { t } = useTranslation();
   const createList = useCreateCustomList();
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const trimmed = name.trim();
 
   const submit = () => {
     if (!trimmed) return;
-    createList.mutate(trimmed, { onSuccess: onClose });
+    createList.mutate(
+      { name: trimmed, description: description.trim() || null },
+      { onSuccess: onClose },
+    );
   };
 
   return (
@@ -893,6 +897,19 @@ function CreateListDialog({
           </Typography>
         </Box>
 
+        <TextField
+          fullWidth
+          size="small"
+          multiline
+          minRows={2}
+          label={t("lists.descriptionLabel")}
+          placeholder={t("lists.descriptionPlaceholder")}
+          value={description}
+          onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+          slotProps={{ htmlInput: { maxLength: 500 } }}
+          sx={{ mt: 2 }}
+        />
+
         <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25, mt: 3 }}>
           <AdminButton variant="ghost" onClick={onClose}>
             {t("lists.cancel")}
@@ -920,30 +937,48 @@ function RenameListDialog({
   const { t } = useTranslation();
   const renameList = useRenameCustomList();
   const [name, setName] = useState(list.name);
+  const [description, setDescription] = useState(list.description ?? "");
   const trimmed = name.trim();
+  const trimmedDesc = description.trim();
 
   const submit = () => {
     if (!trimmed) return;
-    if (trimmed === list.name) {
+    const unchanged = trimmed === list.name && trimmedDesc === (list.description ?? "");
+    if (unchanged) {
       onClose();
       return;
     }
-    renameList.mutate({ listId: list.id, name: trimmed }, { onSuccess: onClose });
+    renameList.mutate(
+      { listId: list.id, name: trimmed, description: trimmedDesc || null },
+      { onSuccess: onClose },
+    );
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>{t("lists.renameList")}</DialogTitle>
+      <DialogTitle>{t("lists.editList")}</DialogTitle>
       <DialogContent>
         <TextField
           autoFocus
           fullWidth
-          variant="standard"
+          size="small"
           label={t("lists.listName")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           sx={{ mt: 1 }}
+        />
+        <TextField
+          fullWidth
+          size="small"
+          multiline
+          minRows={2}
+          label={t("lists.descriptionLabel")}
+          placeholder={t("lists.descriptionPlaceholder")}
+          value={description}
+          onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+          slotProps={{ htmlInput: { maxLength: 500 } }}
+          sx={{ mt: 2 }}
         />
       </DialogContent>
       <DialogActions>
@@ -956,7 +991,7 @@ function RenameListDialog({
           variant="contained"
           disabled={!trimmed || renameList.isPending}
         >
-          {t("lists.rename")}
+          {t("lists.save")}
         </Button>
       </DialogActions>
     </Dialog>

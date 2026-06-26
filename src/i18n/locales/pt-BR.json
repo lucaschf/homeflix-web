@@ -1668,6 +1668,9 @@
     }
   },
   "lists": {
+    "descriptionLabel": "Descrição",
+    "descriptionPlaceholder": "Opcional — sobre o que é esta lista",
+    "save": "Salvar",
     "playAll": "Reproduzir tudo",
     "addTitles": "Adicionar títulos",
     "sortManual": "Ordem manual",

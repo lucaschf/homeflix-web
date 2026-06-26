@@ -1253,7 +1253,8 @@ export function useCustomListItems(listId: string) {
 export function useCreateCustomList() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (name: string) => api.post<CustomListDetailResponse>("/custom-lists", { name }),
+    mutationFn: ({ name, description }: { name: string; description?: string | null }) =>
+      api.post<CustomListDetailResponse>("/custom-lists", { name, description }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customLists"] });
     },
@@ -1263,8 +1264,15 @@ export function useCreateCustomList() {
 export function useRenameCustomList() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ listId, name }: { listId: string; name: string }) =>
-      api.patch<CustomListDetailResponse>(`/custom-lists/${listId}`, { name }),
+    mutationFn: ({
+      listId,
+      name,
+      description,
+    }: {
+      listId: string;
+      name: string;
+      description?: string | null;
+    }) => api.patch<CustomListDetailResponse>(`/custom-lists/${listId}`, { name, description }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customLists"] });
     },
