@@ -1317,6 +1317,20 @@ export function useRemoveItemFromCustomList() {
   });
 }
 
+export function useReorderCustomListItems() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ listId, mediaIds }: { listId: string; mediaIds: string[] }) =>
+      api.patch(`/custom-lists/${listId}/items/order`, { media_ids: mediaIds }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        predicate: (q) =>
+          q.queryKey[0] === "customLists" && q.queryKey[1] === vars.listId && q.queryKey[2] === "items",
+      });
+    },
+  });
+}
+
 // ── Libraries ───────────────────────────────────────────
 
 /**
