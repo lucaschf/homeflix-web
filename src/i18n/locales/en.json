@@ -1669,6 +1669,9 @@
     }
   },
   "lists": {
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Optional — what this list is about",
+    "save": "Save",
     "playAll": "Play all",
     "addTitles": "Add titles",
     "sortManual": "Manual order",
