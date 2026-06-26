@@ -58,6 +58,9 @@ export function Navbar() {
   const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
+  // The list-detail view keeps the /lists route (it's local state), so a
+  // prefix match keeps the bookmark lit while browsing a list.
+  const listsActive = location.pathname.startsWith("/lists");
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [searchOpen, setSearchOpen] = useState(false);
   const { data: currentUser } = useCurrentUser();
@@ -191,9 +194,12 @@ export function Navbar() {
               to="/lists"
               size="small"
               aria-label={t("nav.myLists")}
-              sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
+              sx={{
+                color: listsActive ? "primary.main" : "text.secondary",
+                "&:hover": { color: listsActive ? "primary.main" : "text.primary" },
+              }}
             >
-              <Bookmark size={22} />
+              <Bookmark size={22} fill={listsActive ? "currentColor" : "none"} />
             </IconButton>
           )}
           <NotificationBell />
