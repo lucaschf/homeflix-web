@@ -56,6 +56,8 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral, peach } from "../theme/colors";
 import { fontFamily, fontSize, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 import { formatRelativeServerTime } from "../utils/datetime";
+import { formatDuration } from "../utils/duration";
+import { mediaQuality } from "../utils/quality";
 
 const MAX_LISTS = 10;
 
@@ -136,9 +138,18 @@ function WatchlistTab() {
     if (pick) nav.play(pick.media_id, pick.media_type);
   };
 
+  const totalRuntime =
+    formatDuration(sorted.reduce((acc, i) => acc + (i.runtime_seconds ?? 0), 0)) || undefined;
+
   return (
     <>
-      <QueueToolbar sort={sort} onSortChange={setSort} onShuffle={shuffle} onPlayQueue={playQueue} />
+      <QueueToolbar
+        totalRuntime={totalRuntime}
+        sort={sort}
+        onSortChange={setSort}
+        onShuffle={shuffle}
+        onPlayQueue={playQueue}
+      />
       <Box
         sx={{
           display: "grid",
@@ -154,16 +165,29 @@ function WatchlistTab() {
           rowGap: { xs: 2.5, md: 3.5 },
         }}
       >
-        {sorted.map((item, index) => (
-          <QueueCard
-            key={item.media_id}
-            item={item}
-            index={index}
-            onOpen={() => nav.open(item.media_id, item.media_type)}
-            onPlay={() => nav.play(item.media_id, item.media_type)}
-            onRemove={() => remove(item)}
-          />
-        ))}
+        {sorted.map((item, index) => {
+          const q = mediaQuality(item.resolution, item.hdr);
+          return (
+            <QueueCard
+              key={item.media_id}
+              item={{
+                media_id: item.media_id,
+                media_type: item.media_type,
+                title: item.title,
+                poster_path: item.poster_path,
+                year: item.year ?? undefined,
+                runtime: formatDuration(item.runtime_seconds) || undefined,
+                genre: item.genres?.[0],
+                qualityLabel: q?.label,
+                qualityKind: q?.kind,
+              }}
+              index={index}
+              onOpen={() => nav.open(item.media_id, item.media_type)}
+              onPlay={() => nav.play(item.media_id, item.media_type)}
+              onRemove={() => remove(item)}
+            />
+          );
+        })}
       </Box>
     </>
   );
@@ -323,6 +347,8 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const count = items?.length ?? current.item_count;
   const updated = formatRelativeServerTime(current.updated_at, i18n.language);
   const created = formatMonthYear(current.created_at, i18n.language);
+  const totalRuntime =
+    formatDuration((items ?? []).reduce((acc, i) => acc + (i.runtime_seconds ?? 0), 0)) || null;
 
   const ordered = useMemo(() => {
     const arr = [...(items ?? [])];
@@ -374,6 +400,9 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
           )}
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4, mt: 3 }}>
             <Stat label={t("lists.titlesLabel")} value={String(count)} />
+            {totalRuntime && (
+              <Stat label={t("lists.totalRuntimeLabel")} value={totalRuntime} />
+            )}
             {updated && (
               <Stat
                 label={t("lists.updatedLabel")}
@@ -381,8 +410,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
                 sub={created ? t("lists.createdAt", { date: created }) : undefined}
               />
             )}
-            {/* DURAÇÃO TOTAL / ASSISTIDOS light up once the item DTOs carry
-                runtime + progress (B1/B2). */}
+            {/* ASSISTIDOS lights up once the item DTOs carry progress (B2). */}
           </Box>
         </Box>
 
@@ -569,6 +597,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
                 key={item.media_id}
                 title={item.title}
                 imageUrl={item.poster_path ?? undefined}
+                year={item.year ?? undefined}
                 variant="poster"
                 fullWidth
                 onClick={() => nav.open(item.media_id, item.media_type)}

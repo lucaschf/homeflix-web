@@ -1001,6 +1001,13 @@ export interface WatchlistItemOutput {
   title: string;
   poster_path: string | null;
   added_at: string;
+  // Enriched media metadata (B1). Movies carry all of these; series
+  // only year + genres (runtime/quality are episode-derived).
+  year?: number | null;
+  runtime_seconds?: number | null;
+  genres?: string[];
+  resolution?: string | null;
+  hdr?: boolean;
 }
 
 export interface ToggleWatchlistResponse {
@@ -1037,6 +1044,12 @@ export interface CustomListItemOutput {
   poster_path: string | null;
   position: number;
   added_at: string;
+  // Enriched media metadata (B1) — see WatchlistItemOutput.
+  year?: number | null;
+  runtime_seconds?: number | null;
+  genres?: string[];
+  resolution?: string | null;
+  hdr?: boolean;
 }
 
 export interface CustomListsResponse {
