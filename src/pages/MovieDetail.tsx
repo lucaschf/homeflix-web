@@ -212,13 +212,7 @@ export function MovieDetail() {
           )}
 
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-            <TitleLogo
-              logoUrl={movie.logo_path}
-              title={movie.title}
-              maxHeight={{ xs: 50, sm: 70, md: 100 }}
-              fallbackVariant="h1"
-              fallbackFontSize={{ xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }}
-            />
+            <TitleLogo logoUrl={movie.logo_path} title={movie.title} />
 
             <MetaLine
               contentRating={movie.content_rating}

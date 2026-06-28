@@ -2,25 +2,32 @@ import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
 
+/**
+ * Canonical sizing for the title logo, shared by every surface that
+ * renders it (hero carousel + detail headers) so the branding looks
+ * uniform across the app. Tweak these constants to rescale everywhere
+ * at once.
+ */
+// HBO-style sizing: the logo lives in a fixed-aspect-ratio box whose
+// WIDTH is a consistent responsive value (capped by the column). The
+// image is ``object-fit: contain`` inside it, so every logo occupies
+// the same horizontal footprint — wide logos fill the width, compact
+// ones are centered within the derived height — and low-res PNGs are
+// scaled up to fill rather than rendering at their tiny native size.
+const LOGO_WIDTH = { xs: 260, sm: 400, md: 560 } as const;
+const LOGO_MAX_WIDTH = "100%";
+const LOGO_ASPECT_RATIO = "432 / 130";
+const FALLBACK_FONT_SIZE = { xs: "1.25rem", sm: "1.75rem", md: "2.5rem" } as const;
+
 interface TitleLogoProps {
   /** TMDB-hosted transparent PNG URL, or ``null`` when not available. */
   logoUrl: string | null | undefined;
   /** Plain-text title used as the fallback and as ``alt`` on the image. */
   title: string;
-  /**
-   * Max height of the rendered logo. The image keeps its native aspect
-   * ratio inside this box. The fallback ``<Typography>`` ignores this
-   * value and uses its own variant-driven sizing.
-   */
-  maxHeight: { xs: number; sm?: number; md: number };
   /** Optional ``onClick`` — used by hero/detail headers that double as a navigate-to-detail control. */
   onClick?: () => void;
   /** Extra styling forwarded to the wrapper for layout tweaks (margins, alignment). */
   sx?: SxProps<Theme>;
-  /** Variant for the fallback ``<Typography>`` so it matches the surrounding heading scale. */
-  fallbackVariant?: "h1" | "h2" | "h3";
-  /** Font size override for the fallback, mirroring the existing ``Typography`` calls in MovieDetail / SeriesDetail. */
-  fallbackFontSize?: { xs: string; sm?: string; md: string };
 }
 
 /**
@@ -31,17 +38,10 @@ interface TitleLogoProps {
  *
  * Used by the hero carousel and the detail-page header — both render
  * a large title at the top of a backdrop and benefit from the logo's
- * branding when available.
+ * branding when available. Sizing is uniform across every surface
+ * (see ``LOGO_WIDTH`` / ``LOGO_ASPECT_RATIO`` / ``FALLBACK_FONT_SIZE``).
  */
-export function TitleLogo({
-  logoUrl,
-  title,
-  maxHeight,
-  onClick,
-  sx,
-  fallbackVariant = "h1",
-  fallbackFontSize,
-}: TitleLogoProps) {
+export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
   // ``imageFailed`` flips when ``onError`` fires so a 404 / network
   // failure on the logo asset transparently falls back to text on the
   // same render path. Reset is implicit — ``logoUrl`` changing
@@ -63,10 +63,9 @@ export function TitleLogo({
         onClick={onClick}
         sx={{
           display: "block",
-          height: "auto",
-          width: "auto",
-          maxHeight,
-          maxWidth: "100%",
+          width: LOGO_WIDTH,
+          maxWidth: LOGO_MAX_WIDTH,
+          aspectRatio: LOGO_ASPECT_RATIO,
           objectFit: "contain",
           objectPosition: "left",
           mb: 3,
@@ -79,10 +78,10 @@ export function TitleLogo({
 
   return (
     <Typography
-      variant={fallbackVariant}
+      variant="h1"
       onClick={onClick}
       sx={{
-        fontSize: fallbackFontSize,
+        fontSize: FALLBACK_FONT_SIZE,
         fontWeight: 700,
         mb: 1,
         cursor: onClick ? "pointer" : "default",

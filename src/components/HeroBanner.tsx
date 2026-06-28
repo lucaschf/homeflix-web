@@ -213,10 +213,7 @@ export function HeroBanner({
         <TitleLogo
           logoUrl={slide.logoUrl}
           title={slide.title}
-          maxHeight={{ xs: 60, sm: 80, md: 110 }}
           onClick={onDetails ? () => onDetails(slide) : undefined}
-          fallbackVariant="h1"
-          fallbackFontSize={{ xs: "1.5rem", sm: "1.75rem", md: "2.25rem" }}
         />
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>

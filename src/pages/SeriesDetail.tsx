@@ -163,13 +163,7 @@ export function SeriesDetail() {
           )}
 
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-            <TitleLogo
-              logoUrl={series.logo_path}
-              title={series.title}
-              maxHeight={{ xs: 50, sm: 70, md: 100 }}
-              fallbackVariant="h1"
-              fallbackFontSize={{ xs: "1.25rem", sm: "1.75rem", md: "2.5rem" }}
-            />
+            <TitleLogo logoUrl={series.logo_path} title={series.title} />
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
               {series.content_rating && <ContentRatingBadge rating={series.content_rating} size={24} />}
