@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Tooltip, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
 
 /**
@@ -52,27 +52,33 @@ export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
 
   if (showLogo) {
     return (
-      <Box
-        component="img"
-        // Force remount when the URL changes so a previously-failed
-        // attempt for an old slide doesn't poison the new one.
-        key={logoUrl}
-        src={logoUrl ?? undefined}
-        alt={title}
-        onError={() => setImageFailed(true)}
-        onClick={onClick}
-        sx={{
-          display: "block",
-          width: LOGO_WIDTH,
-          maxWidth: LOGO_MAX_WIDTH,
-          aspectRatio: LOGO_ASPECT_RATIO,
-          objectFit: "contain",
-          objectPosition: "left",
-          mb: 3,
-          cursor: onClick ? "pointer" : "default",
-          ...sx,
-        }}
-      />
+      // Tooltip surfaces the plain title on hover — useful when a
+      // stylized logo is hard to read, and gives the clickable hero
+      // logo an extra affordance. ``enterDelay`` avoids flashing it on
+      // a quick pass-over.
+      <Tooltip title={title} enterDelay={400} placement="top-start">
+        <Box
+          component="img"
+          // Force remount when the URL changes so a previously-failed
+          // attempt for an old slide doesn't poison the new one.
+          key={logoUrl}
+          src={logoUrl ?? undefined}
+          alt={title}
+          onError={() => setImageFailed(true)}
+          onClick={onClick}
+          sx={{
+            display: "block",
+            width: LOGO_WIDTH,
+            maxWidth: LOGO_MAX_WIDTH,
+            aspectRatio: LOGO_ASPECT_RATIO,
+            objectFit: "contain",
+            objectPosition: "left",
+            mb: 3,
+            cursor: onClick ? "pointer" : "default",
+            ...sx,
+          }}
+        />
+      </Tooltip>
     );
   }
 
