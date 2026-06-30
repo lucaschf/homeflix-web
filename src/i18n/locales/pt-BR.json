@@ -484,24 +484,11 @@
             "movies": "Filmes",
             "series": "Séries"
           },
+          "metadataLang": "Idioma dos metadados",
           "paths": "Caminhos",
           "pathPlaceholder": "/mnt/media/filmes",
           "addPath": "Adicionar caminho",
           "removePath": "Remover caminho"
-        },
-        "playback": {
-          "title": "Defaults de reprodução",
-          "helper": "Idioma preferido de áudio + legenda escolhido no primeiro play, e quando mostrar legendas.",
-          "audioLang": "Idioma do áudio",
-          "subtitleLang": "Idioma da legenda",
-          "subtitleLangNone": "Nenhuma",
-          "subtitleMode": "Modo de legenda",
-          "subtitleModeOption": {
-            "none": "Desligado",
-            "always": "Sempre ligado",
-            "foreign": "Só com áudio estrangeiro",
-            "forced": "Só legendas forçadas"
-          }
         },
         "scan": {
           "title": "Scan & automação",
