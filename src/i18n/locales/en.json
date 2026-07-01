@@ -278,6 +278,7 @@
     "off": "Off",
     "version": "Version {{n}}",
     "sdh": "SDH",
+    "forced": "Forced",
     "normal": "Normal",
     "nextEpisode": "Next Episode",
     "nextEpisodeIn": "Next episode in {{seconds}}s",

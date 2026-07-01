@@ -40,10 +40,7 @@ import {
 import type { FileAudioTrack, FileSubtitleTrack, FileTrackVersion } from "../api/types";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeDrawer } from "../components/EpisodeDrawer";
-import {
-  usePlaybackPreferences,
-  type SubtitleMode,
-} from "../hooks/usePlaybackPreferences";
+import { usePlaybackPreferences } from "../hooks/usePlaybackPreferences";
 import {
   findFrame,
   useScrubThumbnails,
@@ -153,83 +150,31 @@ function localizedLanguage(code: string, locale: string): string {
 }
 
 /**
- * Find the track whose `lang` best matches the preference.
+ * Correlate a `/tracks` entry to its hls.js rendition and return the
+ * rendition's hls.js ``id`` (or ``null`` when this manifest carries no
+ * matching rendition). The join mirrors the menu-label composition:
+ * first by the ``audio_{index}`` / ``sub_{index}`` ordinal parsed from
+ * the rendition URL, then by a same-language match — which also covers
+ * the muxed primary audio, whose rendition carries no URL ordinal.
  *
- * Returns `null` if no track carries language metadata matching
- * the preference — the caller keeps the HLS default (usually
- * track index 0) in that case. The helper is deliberately tiny
- * because the preference system is opt-in; if a user's catalog
- * has tracks without `lang` tags, the preference silently becomes
- * a no-op and the player falls back to its legacy behavior.
+ * The server resolves the *authoritative* default track per-profile and
+ * marks it on ``/tracks`` (ADR-026); the player trusts that flag and
+ * only needs this to translate the server's ``index`` into the id hls.js
+ * expects on ``hls.audioTrack`` / ``hls.subtitleTrack``.
  */
-function findTrackByLang<T extends { id: number; lang?: string }>(
-  tracks: readonly T[],
-  preferredLang: string,
-): T | null {
-  const want = normalizeLang(preferredLang);
-  if (!want) return null;
-  return tracks.find((track) => normalizeLang(track.lang) === want) ?? null;
-}
-
-/**
- * Pick the subtitle track id to auto-enable for a new media,
- * respecting the user's mode + language preferences.
- *
- * Returns `null` when nothing should be auto-enabled — the
- * caller then leaves `hls.subtitleTrack` at its default (-1,
- * "no subtitles"). This keeps the call-site logic straight: if
- * the helper returns a number, assign it; otherwise do nothing.
- *
- * The `chosenAudioLang` argument is the *normalized* language of
- * the audio track the player just committed to (saved value or
- * preference match or HLS default), NOT the user's audio
- * preference. `foreignOnly` specifically needs to compare the
- * ACTUAL audio being played against the viewer's native language
- * (represented by `preferredSubLang`), so passing the preference
- * here would be wrong when the user is watching a catalog item
- * whose only audio happens to match their subtitle language.
- */
-function pickPreferredSubtitleId(
-  hls: Hls,
-  chosenAudioLang: string,
-  preferredSubLang: string,
-  mode: SubtitleMode,
+function hlsIdForFileTrack<T extends { id: number; lang?: string; url?: string }>(
+  hlsTracks: readonly T[],
+  fileIndex: number,
+  fileLanguage: string,
+  prefix: "audio" | "sub",
 ): number | null {
-  // Two equivalent off switches: the mode itself, or setting the
-  // preferred subtitle language to "off" in the dropdown. Either
-  // one short-circuits the whole pick.
-  if (mode === "off" || preferredSubLang === "off") return null;
-
-  if (mode === "forcedOnly") {
-    // HLS manifests can tag a subtitle track as FORCED — typically
-    // used for foreign-dialogue signs embedded in an otherwise
-    // same-language release. hls.js propagates the attribute on
-    // each subtitle track but the TS definitions don't expose it
-    // directly on the public type, so we read it through a narrow
-    // structural cast instead of the whole `MediaPlaylist`.
-    const forced = hls.subtitleTracks.find(
-      (t) => (t as unknown as { forced?: boolean }).forced === true,
-    );
-    return forced?.id ?? null;
-  }
-
-  const langMatch = findTrackByLang(hls.subtitleTracks, preferredSubLang);
-  if (!langMatch) return null;
-
-  if (mode === "always") return langMatch.id;
-
-  if (mode === "foreignOnly") {
-    // Show subs only when the selected audio is in a different
-    // language from the viewer's native (= their subtitle lang).
-    // A viewer with sub pref "pt-BR" watching a pt-BR audio track
-    // gets no subs; the same viewer on a "ja" audio track gets
-    // the Portuguese subtitle track auto-enabled.
-    return chosenAudioLang !== normalizeLang(preferredSubLang)
-      ? langMatch.id
-      : null;
-  }
-
-  return null;
+  const byOrdinal = hlsTracks.find((t) => renditionIndex(t.url, prefix) === fileIndex);
+  if (byOrdinal) return byOrdinal.id;
+  const want = normalizeLang(fileLanguage);
+  const byLang = want
+    ? hlsTracks.find((t) => normalizeLang(t.lang) === want)
+    : undefined;
+  return byLang?.id ?? null;
 }
 
 function formatTime(seconds: number): string {
@@ -558,6 +503,9 @@ export function Player() {
   // simple boolean would lock after the first episode and silently skip
   // restoring tracks for every episode after that.
   const progressRestoredForMediaIdRef = useRef<string | null>(null);
+  // Sibling of the restore ref, keyed the same way, for the separate
+  // server-default track selection effect (applied once `/tracks` loads).
+  const defaultsAppliedForMediaIdRef = useRef<string | null>(null);
   // Source-time seconds the next HLS mount should land on after the
   // bucket-start changes (user-initiated far seek). Read from the
   // ``hlsReady`` effect, which translates it into the bucket-local
@@ -723,10 +671,16 @@ export function Player() {
         );
       const base = localizedLanguage(ft?.language ?? track.lang, i18n.language);
       if (!base) return { ...track, label: track.name };
+      const parts = [base];
       const suffix = versionSuffix(ft?.version);
-      return { ...track, label: suffix ? `${base} · ${suffix}` : base };
+      if (suffix) parts.push(suffix);
+      // The server reports forced status from the source (ffprobe), so
+      // the label is now reliable — no more reading hls.js's undocumented
+      // `forced` flag.
+      if (ft?.is_forced) parts.push(t("player.forced"));
+      return { ...track, label: parts.join(" · ") };
     });
-  }, [subtitleTracks, fileTracks, i18n.language, versionSuffix]);
+  }, [subtitleTracks, fileTracks, i18n.language, versionSuffix, t]);
 
   // Use metadata duration as authoritative source (movie or episode).
   // The backend's HLS bucket covers the full source now, so the <video>
@@ -1103,55 +1057,64 @@ export function Player() {
       }
     }
 
-    // ── Audio ───────────────────────────────────────────────
-    // Setting hls.audioTrack on HLS.js — even to the same value
-    // it already is — can trigger a buffer flush of the audio
-    // segments, which manifests as the audio dropping out for a
-    // few seconds right after playback starts. So we compare
-    // before assigning in every branch.
+    // ── Audio / Subtitles (saved selections only) ───────────
+    // Restore the exact tracks the viewer last used on this media.
+    // The *default* selection — when there's nothing saved — is applied
+    // separately below, once `/tracks` resolves, because the server owns
+    // that choice now (ADR-026). Setting hls.audioTrack on HLS.js — even
+    // to the value it already is — can trigger a buffer flush of the
+    // audio segments (a brief dropout right after start), so compare
+    // before assigning.
     const savedAudio = savedProgress?.audio_track;
-    let chosenAudioLang = normalizeLang(
-      hls.audioTracks[hls.audioTrack]?.lang ?? "",
-    );
-    if (savedAudio != null && savedAudio !== 0) {
-      if (hls.audioTrack !== savedAudio) hls.audioTrack = savedAudio;
-      chosenAudioLang = normalizeLang(hls.audioTracks[savedAudio]?.lang ?? "");
-    } else {
-      const audioMatch = findTrackByLang(hls.audioTracks, playbackPrefs.audioLang);
-      if (audioMatch && hls.audioTrack !== audioMatch.id) {
-        hls.audioTrack = audioMatch.id;
-        chosenAudioLang = normalizeLang(audioMatch.lang);
-      }
+    if (savedAudio != null && savedAudio !== 0 && hls.audioTrack !== savedAudio) {
+      hls.audioTrack = savedAudio;
+    }
+    const savedSub = savedProgress?.subtitle_track;
+    if (savedSub != null && savedSub !== -1 && hls.subtitleTrack !== savedSub) {
+      hls.subtitleTrack = savedSub;
+    }
+  }, [savedProgress, progressPending, hlsReady, mediaId, bucketStart]);
+
+  // Apply the server-resolved default audio/subtitle once `/tracks`
+  // resolves, when the viewer has no saved selection to restore. The
+  // server marks exactly one (or zero) default per list, per-profile and
+  // by subtitle mode — off / always / foreignOnly / forcedOnly, incl.
+  // auto-forced (ADR-026). We translate its ``index`` to the hls.js id
+  // and commit it. Kept separate from the resume restore above so a slow
+  // (or failed) `/tracks` never delays the position seek.
+  useEffect(() => {
+    if (progressPending) return;
+    if (!hlsReady) return;
+    const hls = hlsRef.current;
+    if (!hls || !fileTracks) return;
+    if (defaultsAppliedForMediaIdRef.current === mediaId) return;
+    defaultsAppliedForMediaIdRef.current = mediaId;
+
+    const savedAudio = savedProgress?.audio_track;
+    if (savedAudio == null || savedAudio === 0) {
+      const preferred = fileTracks.audio_tracks.find((a) => a.is_default);
+      const id = preferred
+        ? hlsIdForFileTrack(hls.audioTracks, preferred.index, preferred.language, "audio")
+        : null;
+      if (id != null && hls.audioTrack !== id) hls.audioTrack = id;
     }
 
-    // ── Subtitles ───────────────────────────────────────────
-    // Decide the preferred subtitle id BASED on the audio lang we
-    // just committed to (not the audio preference) so foreignOnly
-    // compares against the track that's actually going to play.
     const savedSub = savedProgress?.subtitle_track;
-    if (savedSub != null && savedSub !== -1) {
-      if (hls.subtitleTrack !== savedSub) hls.subtitleTrack = savedSub;
-    } else {
-      const subtitleChoice = pickPreferredSubtitleId(
-        hls,
-        chosenAudioLang,
-        playbackPrefs.subtitleLang,
-        playbackPrefs.subtitleMode,
-      );
-      if (subtitleChoice != null && hls.subtitleTrack !== subtitleChoice) {
-        hls.subtitleTrack = subtitleChoice;
+    if (savedSub == null || savedSub === -1) {
+      const preferred = fileTracks.subtitle_tracks.find((s) => s.is_default);
+      const id = preferred
+        ? hlsIdForFileTrack(hls.subtitleTracks, preferred.index, preferred.language, "sub")
+        : null;
+      // No server default → subtitles off. The server owns the mode, so
+      // an absent default means "don't auto-enable", not "keep whatever
+      // hls.js picked from the manifest".
+      if (id != null) {
+        if (hls.subtitleTrack !== id) hls.subtitleTrack = id;
+      } else if (hls.subtitleTrack !== -1) {
+        hls.subtitleTrack = -1;
       }
     }
-  }, [
-    savedProgress,
-    progressPending,
-    hlsReady,
-    mediaId,
-    bucketStart,
-    playbackPrefs.audioLang,
-    playbackPrefs.subtitleLang,
-    playbackPrefs.subtitleMode,
-  ]);
+  }, [savedProgress, progressPending, hlsReady, mediaId, fileTracks]);
 
   // Apply ``pendingBucketSeekRef`` once the user-initiated remount
   // finishes parsing its new manifest. Kept separate from the
