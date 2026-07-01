@@ -506,6 +506,17 @@ export function Player() {
   // Sibling of the restore ref, keyed the same way, for the separate
   // server-default track selection effect (applied once `/tracks` loads).
   const defaultsAppliedForMediaIdRef = useRef<string | null>(null);
+  // The audio/subtitle track the player *wants* to be on. A far seek or
+  // Skip Intro rebuilds the Hls instance (``hlsUrl`` gets a new
+  // ``?start=``), which resets hls.js back to the manifest default — the
+  // muxed primary audio. Without re-applying, a dubbed/preferred track
+  // drops to the original language on every seek. The
+  // ``*_TRACKS_UPDATED`` handlers re-apply these on each manifest parse.
+  // ``null`` means "no committed choice yet" — let the selection effects
+  // decide on first play. Audio: an hls.js track id; subtitle: an id or
+  // ``-1`` (off).
+  const desiredAudioTrackRef = useRef<number | null>(null);
+  const desiredSubtitleTrackRef = useRef<number | null>(null);
   // Source-time seconds the next HLS mount should land on after the
   // bucket-start changes (user-initiated far seek). Read from the
   // ``hlsReady`` effect, which translates it into the bucket-local
@@ -896,6 +907,19 @@ export function Player() {
           url: t.url,
         }));
         setAudioTracks(tracks);
+        // Re-apply the committed audio choice across a remount (new Hls
+        // instance from a far seek / Skip Intro) so a dubbed track isn't
+        // reset to the manifest default. Null = first play; the selection
+        // effects will decide and set the desired ref.
+        const desired = desiredAudioTrackRef.current;
+        if (
+          desired != null &&
+          desired >= 0 &&
+          desired !== hls.audioTrack &&
+          hls.audioTracks.some((tk) => tk.id === desired)
+        ) {
+          hls.audioTrack = desired;
+        }
         setCurrentAudioTrack(hls.audioTrack);
       });
 
@@ -913,6 +937,17 @@ export function Player() {
           url: t.url,
         }));
         setSubtitleTracks(tracks);
+        // Re-apply the committed subtitle choice across a remount (incl.
+        // ``-1`` = off, so hls.js can't silently re-enable a manifest
+        // default). Null = first play; the selection effects decide.
+        const desired = desiredSubtitleTrackRef.current;
+        if (
+          desired != null &&
+          desired !== hls.subtitleTrack &&
+          (desired === -1 || hls.subtitleTracks.some((tk) => tk.id === desired))
+        ) {
+          hls.subtitleTrack = desired;
+        }
         setCurrentSubtitleTrack(hls.subtitleTrack);
       });
 
@@ -988,13 +1023,23 @@ export function Player() {
     }
   }, [volume, muted]);
 
+  // Forget the committed track choices when the media itself changes
+  // (new movie/episode) so one title's selection doesn't bleed into the
+  // next before its own selection resolves. A bucket remount keeps the
+  // same mediaId, so the choice deliberately survives seeks / Skip Intro.
+  useEffect(() => {
+    desiredAudioTrackRef.current = null;
+    desiredSubtitleTrackRef.current = null;
+  }, [mediaId]);
+
   // Restore audio/subtitle track selection on first play.
   //
   // Priority order for each track:
   //   1. Saved per-media selection from `savedProgress` (the user
   //      picked a specific track last time they watched this item).
-  //   2. Global language preference from Settings, matched against
-  //      the HLS track metadata.
+  //   2. Server-resolved per-profile default from `/tracks`
+  //      (`is_default`), applied in the sibling effect below once the
+  //      query settles — the server owns audio + subtitle-by-mode.
   //   3. HLS default (audio track 0, subtitles off).
   //
   // Resume position is applied HERE too — the backend serves a full
@@ -1066,12 +1111,14 @@ export function Player() {
     // audio segments (a brief dropout right after start), so compare
     // before assigning.
     const savedAudio = savedProgress?.audio_track;
-    if (savedAudio != null && savedAudio !== 0 && hls.audioTrack !== savedAudio) {
-      hls.audioTrack = savedAudio;
+    if (savedAudio != null && savedAudio !== 0) {
+      desiredAudioTrackRef.current = savedAudio;
+      if (hls.audioTrack !== savedAudio) hls.audioTrack = savedAudio;
     }
     const savedSub = savedProgress?.subtitle_track;
-    if (savedSub != null && savedSub !== -1 && hls.subtitleTrack !== savedSub) {
-      hls.subtitleTrack = savedSub;
+    if (savedSub != null && savedSub !== -1) {
+      desiredSubtitleTrackRef.current = savedSub;
+      if (hls.subtitleTrack !== savedSub) hls.subtitleTrack = savedSub;
     }
   }, [savedProgress, progressPending, hlsReady, mediaId, bucketStart]);
 
@@ -1096,7 +1143,10 @@ export function Player() {
       const id = preferred
         ? hlsIdForFileTrack(hls.audioTracks, preferred.index, preferred.language, "audio")
         : null;
-      if (id != null && hls.audioTrack !== id) hls.audioTrack = id;
+      if (id != null) {
+        desiredAudioTrackRef.current = id;
+        if (hls.audioTrack !== id) hls.audioTrack = id;
+      }
     }
 
     const savedSub = savedProgress?.subtitle_track;
@@ -1107,7 +1157,9 @@ export function Player() {
         : null;
       // No server default → subtitles off. The server owns the mode, so
       // an absent default means "don't auto-enable", not "keep whatever
-      // hls.js picked from the manifest".
+      // hls.js picked from the manifest". Either way it's a committed
+      // choice, so record it (incl. -1) to survive a remount.
+      desiredSubtitleTrackRef.current = id ?? -1;
       if (id != null) {
         if (hls.subtitleTrack !== id) hls.subtitleTrack = id;
       } else if (hls.subtitleTrack !== -1) {
@@ -1573,6 +1625,8 @@ export function Player() {
   const changeAudioTrack = (trackId: number) => {
     const hls = hlsRef.current;
     if (!hls) return;
+    // Remember the manual choice so a later seek/remount re-applies it.
+    desiredAudioTrackRef.current = trackId;
     hls.audioTrack = trackId;
     setAudioAnchor(null);
   };
@@ -1580,6 +1634,7 @@ export function Player() {
   const changeSubtitleTrack = (trackId: number) => {
     const hls = hlsRef.current;
     if (!hls) return;
+    desiredSubtitleTrackRef.current = trackId;
     hls.subtitleTrack = trackId;
     setSubtitleAnchor(null);
   };
