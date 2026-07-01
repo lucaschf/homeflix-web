@@ -569,12 +569,6 @@ export function Player() {
   // over a stale render's value. Updated via a layout effect below.
   const bucketStartRef = useRef(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
-  // The Skip Intro button has its own visibility + hide timer, decoupled
-  // from the controls so it can show alone while the chrome stays hidden.
-  // ``introActiveRef`` lets the interaction callback refresh that timer
-  // without re-binding on every tick.
-  const skipIntroTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
-  const introActiveRef = useRef(false);
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Distinct refs per edge zone so a tap on the left followed by a
   // tap on the right within the double-tap window doesn't get
@@ -666,9 +660,6 @@ export function Player() {
   const [muted, setMuted] = useState<boolean>(readPersistedMuted);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  // Visibility of the Skip Intro button, independent of ``showControls``
-  // so it can appear alone while the chrome is hidden.
-  const [skipIntroVisible, setSkipIntroVisible] = useState(false);
   // Speed is derived from playbackPrefs so it persists across
   // episodes and sessions. The local alias avoids a rename cascade
   // throughout the JSX.
@@ -830,10 +821,12 @@ export function Player() {
   const [subtitleAnchor, setSubtitleAnchor] = useState<null | HTMLElement>(null);
 
   // Source-time is inside the intro window. Derived (not state) so it
-  // re-evaluates each render; the effect below only reacts to the
-  // boolean flipping, not to every ``currentTime`` tick. Gated on
-  // ``hlsReady`` so an intro that starts at t=0 doesn't surface the
-  // button during cold start — it appears once playback actually begins.
+  // re-evaluates each render and drives the Skip Intro button's
+  // visibility directly — the button stays up for the whole window,
+  // independent of the controls' auto-hide, so it remains reachable
+  // once the chrome fades. Gated on ``hlsReady`` so an intro that
+  // starts at t=0 doesn't surface the button during cold start — it
+  // appears once playback actually begins.
   const introActive =
     hlsReady &&
     !!currentIntro &&
@@ -846,39 +839,7 @@ export function Player() {
     if (playing) {
       hideTimerRef.current = setTimeout(() => setShowControls(false), 3000);
     }
-    // Interaction also keeps the Skip Intro button alive on its own 5s
-    // cadence so it survives independently of the controls' 3s timer.
-    if (introActiveRef.current) {
-      setSkipIntroVisible(true);
-      if (skipIntroTimerRef.current) clearTimeout(skipIntroTimerRef.current);
-      if (playing) {
-        skipIntroTimerRef.current = setTimeout(() => setSkipIntroVisible(false), 5000);
-      }
-    }
   }, [playing]);
-
-  // Surface the Skip Intro button the moment playback enters the intro
-  // window — alone, without revealing the rest of the controls — and hide
-  // it again when the window ends. Render-phase "adjust state on change"
-  // pattern; the 5s auto-hide timer lives in the effect below.
-  const [introWasActive, setIntroWasActive] = useState(false);
-  if (introActive !== introWasActive) {
-    setIntroWasActive(introActive);
-    setSkipIntroVisible(introActive);
-  }
-
-  // Start the button's 5s hide timer on the intro's rising edge so it
-  // fades out after no interaction (interaction restarts it via
-  // resetHideTimer). setState only runs inside the async timeout, never
-  // synchronously here. Paused playback keeps the button up.
-  useEffect(() => {
-    introActiveRef.current = introActive;
-    if (!introActive) return;
-    if (skipIntroTimerRef.current) clearTimeout(skipIntroTimerRef.current);
-    if (playing) {
-      skipIntroTimerRef.current = setTimeout(() => setSkipIntroVisible(false), 5000);
-    }
-  }, [introActive, playing]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -2041,16 +2002,15 @@ export function Player() {
           a vertical line with it. The next-episode prompt fires near
           the end of an episode, so the two overlays never share the
           screen in practice. */}
-      {introActive && (
           <Box
             sx={{
               position: "absolute",
               bottom: { xs: 80, md: 120 },
               right: { xs: 12, md: 40 },
               zIndex: 10,
-              opacity: skipIntroVisible ? 1 : 0,
+              opacity: introActive ? 1 : 0,
               transition: "opacity 300ms",
-              pointerEvents: skipIntroVisible ? "auto" : "none",
+              pointerEvents: introActive ? "auto" : "none",
             }}
           >
             <Button
@@ -2071,7 +2031,6 @@ export function Player() {
               {t("player.skipIntro")}
             </Button>
           </Box>
-        )}
 
       {/* Next Episode Overlay */}
       {nextEpCountdown !== null && nextEpisode && (
