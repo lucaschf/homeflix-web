@@ -485,24 +485,11 @@
             "movies": "Movies",
             "series": "Series"
           },
+          "metadataLang": "Metadata language",
           "paths": "Paths",
           "pathPlaceholder": "/mnt/media/movies",
           "addPath": "Add another path",
           "removePath": "Remove path"
-        },
-        "playback": {
-          "title": "Playback defaults",
-          "helper": "Preferred audio + subtitle language picked on first play, plus when to show subtitles.",
-          "audioLang": "Audio language",
-          "subtitleLang": "Subtitle language",
-          "subtitleLangNone": "None",
-          "subtitleMode": "Subtitle mode",
-          "subtitleModeOption": {
-            "none": "Off",
-            "always": "Always on",
-            "foreign": "Foreign audio only",
-            "forced": "Forced subtitles only"
-          }
         },
         "scan": {
           "title": "Scan & automation",

@@ -37,20 +37,15 @@ import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 type LibraryType = "movies" | "series";
-type SubtitleMode = "always" | "foreign" | "forced" | "none";
 type Snack = { message: string; severity: "success" | "error" } | null;
 
 const DEFAULT_SETTINGS: LibrarySettings = {
-  preferred_audio_language: "en",
-  preferred_subtitle_language: null,
-  subtitle_mode: "none",
   generate_thumbnails: true,
   detect_intros: false,
   auto_refresh_metadata: false,
 };
 
 const LIBRARY_TYPE_OPTIONS: LibraryType[] = ["movies", "series"];
-const SUBTITLE_MODE_OPTIONS: SubtitleMode[] = ["none", "always", "foreign", "forced"];
 
 /**
  * Library create / edit. The same component handles both flows —
@@ -60,12 +55,14 @@ const SUBTITLE_MODE_OPTIONS: SubtitleMode[] = ["none", "always", "foreign", "for
  *
  * Sections (``AdminFormSection`` rows):
  *
- * 1. **Identity** — name + type + paths editor (add / remove rows).
- * 2. **Playback defaults** — preferred audio + subtitle language +
- *    subtitle mode (matches ``LibrarySettings`` shape).
- * 3. **Scan & automation** — cron schedule + 3 toggles
+ * 1. **Identity** — name + type + metadata language + paths editor.
+ * 2. **Scan & automation** — cron schedule + 3 toggles
  *    (thumbnails, intro detection, auto-refresh metadata).
- * 4. **Danger zone** — soft-delete CTA (edit mode only).
+ * 3. **Danger zone** — soft-delete CTA (edit mode only).
+ *
+ * Playback preferences (audio/subtitle language, subtitle mode) are
+ * **not** here — they are per-user in the backend Preferences BC
+ * (ADR-026), set on the player's Settings page, not per-library.
  *
  * Metadata-provider editing is **not** in this page yet — adding
  * / removing / reordering providers needs a richer UI than this
@@ -81,18 +78,6 @@ export function LibraryDetailAdmin() {
   const languageOptions = useMemo(
     () => buildLanguageOptions(i18n.language),
     [i18n.language],
-  );
-  const SUBTITLE_LANGUAGE_NONE = "__none__";
-  const subtitleLanguageOptions = useMemo(
-    () => [
-      {
-        value: SUBTITLE_LANGUAGE_NONE,
-        label: t("admin.libraries.detail.playback.subtitleLangNone"),
-        meta: "",
-      },
-      ...languageOptions,
-    ],
-    [languageOptions, t],
   );
 
   const detail = useLibrary(isCreate ? undefined : id);
@@ -275,59 +260,14 @@ export function LibraryDetailAdmin() {
               }))}
               sx={{ minWidth: 220 }}
             />
-            <PathsEditor paths={paths} onChange={setPaths} />
-          </Stack>
-        </AdminFormSection>
-
-        <AdminFormSection
-          title={t("admin.libraries.detail.playback.title")}
-          helper={t("admin.libraries.detail.playback.helper")}
-        >
-          <Stack spacing={2}>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <AdminSelect<string>
-                  label={t("admin.libraries.detail.playback.audioLang")}
-                  value={language}
-                  onChange={(e) => setLanguage(String(e.target.value))}
-                  options={languageOptions}
-                  fullWidth
-                />
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <AdminSelect<string>
-                  label={t("admin.libraries.detail.playback.subtitleLang")}
-                  value={
-                    settings.preferred_subtitle_language ?? SUBTITLE_LANGUAGE_NONE
-                  }
-                  onChange={(e) => {
-                    const next = String(e.target.value);
-                    setSettings((s) => ({
-                      ...s,
-                      preferred_subtitle_language:
-                        next === SUBTITLE_LANGUAGE_NONE ? null : next,
-                    }));
-                  }}
-                  options={subtitleLanguageOptions}
-                  fullWidth
-                />
-              </Box>
-            </Stack>
-            <AdminSelect<SubtitleMode>
-              label={t("admin.libraries.detail.playback.subtitleMode")}
-              value={(settings.subtitle_mode as SubtitleMode) ?? "none"}
-              onChange={(e) =>
-                setSettings((s) => ({
-                  ...s,
-                  subtitle_mode: e.target.value as SubtitleMode,
-                }))
-              }
-              options={SUBTITLE_MODE_OPTIONS.map((opt) => ({
-                value: opt,
-                label: t(`admin.libraries.detail.playback.subtitleModeOption.${opt}`),
-              }))}
-              sx={{ minWidth: 260 }}
+            <AdminSelect<string>
+              label={t("admin.libraries.detail.identity.metadataLang")}
+              value={language}
+              onChange={(e) => setLanguage(String(e.target.value))}
+              options={languageOptions}
+              sx={{ minWidth: 220 }}
             />
+            <PathsEditor paths={paths} onChange={setPaths} />
           </Stack>
         </AdminFormSection>
 

@@ -1105,9 +1105,6 @@ export interface LibraryMetadataProvider {
 }
 
 export interface LibrarySettings {
-  preferred_audio_language: string;
-  preferred_subtitle_language: string | null;
-  subtitle_mode: string;
   generate_thumbnails: boolean;
   detect_intros: boolean;
   auto_refresh_metadata: boolean;
