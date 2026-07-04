@@ -33,6 +33,7 @@ import { CreditsStatusAdmin } from "./pages/admin/CreditsStatusAdmin";
 import { IntroDetectionRunsAdmin } from "./pages/admin/IntroDetectionRunsAdmin";
 import { IntroPicker } from "./pages/admin/IntroPicker";
 import { JobsAdmin } from "./pages/admin/JobsAdmin";
+import { SubtitleOcrRunsAdmin } from "./pages/admin/SubtitleOcrRunsAdmin";
 import { IntroEditor } from "./pages/admin/IntroEditor";
 import { LibrariesAdmin } from "./pages/admin/LibrariesAdmin";
 import { LibraryDetailAdmin } from "./pages/admin/LibraryDetailAdmin";
@@ -145,6 +146,7 @@ function App() {
                     element={<IntroEditor />}
                   />
                   <Route path="/admin/credits" element={<CreditsStatusAdmin />} />
+                  <Route path="/admin/subtitle-ocr" element={<SubtitleOcrRunsAdmin />} />
                   <Route path="/admin/catalog/review" element={<MovieReview />} />
                   <Route path="/admin/catalog/review/series" element={<SeriesReview />} />
                   <Route path="/admin/catalog/conflicts" element={<ConflictsAdmin />} />

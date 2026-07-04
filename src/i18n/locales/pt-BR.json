@@ -308,6 +308,7 @@
       "intros": "Aberturas",
       "introRuns": "Detecções",
       "credits": "Créditos",
+      "subtitleOcr": "OCR de legendas",
       "requests": "Solicitações",
       "users": "Usuários",
       "jobs": "Jobs",
@@ -1350,6 +1351,39 @@
         "COMPLETED": "Concluído",
         "INSUFFICIENT_EPISODES": "Insuficiente",
         "FAILED": "Falhou"
+      }
+    },
+    "subtitleOcrRuns": {
+      "title": "OCR de legendas",
+      "subtitle": "Execuções de OCR por arquivo — quais títulos foram processados e, por legenda de imagem, o que foi extraído.",
+      "history": {
+        "title": "Histórico de execuções",
+        "subtitle": "Mais recentes primeiro. Expanda uma execução para ver o idioma, o resultado e o número de legendas de cada faixa de imagem."
+      },
+      "loading": "Carregando execuções…",
+      "error": "Não foi possível carregar as execuções de OCR.",
+      "empty": "Nenhuma execução de OCR ainda.",
+      "unknownMedia": "Título desconhecido",
+      "tracksLabel": "faixas",
+      "extractedLabel": "extraídas",
+      "noTracks": "Nenhuma legenda de imagem foi processada nesta execução.",
+      "cueCount_one": "{{count}} legenda",
+      "cueCount_other": "{{count}} legendas",
+      "kind": {
+        "movie": "Filme",
+        "episode": "Episódio"
+      },
+      "outcome": {
+        "completed": "Concluído",
+        "failed": "Falhou"
+      },
+      "trackOutcome": {
+        "extracted": "Extraída",
+        "no_text": "Sem texto",
+        "unsupported_format": "Não suportado",
+        "no_language_model": "Sem modelo",
+        "skipped_language": "Ignorada",
+        "failed": "Falhou"
       }
     },
     "credits": {

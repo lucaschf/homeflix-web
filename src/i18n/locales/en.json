@@ -308,6 +308,7 @@
       "intros": "Intros",
       "introRuns": "Detection runs",
       "credits": "Credits",
+      "subtitleOcr": "Subtitle OCR",
       "requests": "Catalog requests",
       "conflicts": "Conflicts",
       "users": "Users",
@@ -1351,6 +1352,39 @@
         "COMPLETED": "Completed",
         "INSUFFICIENT_EPISODES": "Insufficient",
         "FAILED": "Failed"
+      }
+    },
+    "subtitleOcrRuns": {
+      "title": "Subtitle OCR",
+      "subtitle": "Per-file OCR runs — which titles were processed and, per image subtitle, what was extracted.",
+      "history": {
+        "title": "Run history",
+        "subtitle": "Newest first. Expand a run to see each image subtitle's language, outcome and cue count."
+      },
+      "loading": "Loading runs…",
+      "error": "Could not load OCR runs.",
+      "empty": "No OCR runs yet.",
+      "unknownMedia": "Unknown title",
+      "tracksLabel": "tracks",
+      "extractedLabel": "extracted",
+      "noTracks": "No image subtitles were processed on this run.",
+      "cueCount_one": "{{count}} cue",
+      "cueCount_other": "{{count}} cues",
+      "kind": {
+        "movie": "Movie",
+        "episode": "Episode"
+      },
+      "outcome": {
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "trackOutcome": {
+        "extracted": "Extracted",
+        "no_text": "No text",
+        "unsupported_format": "Unsupported",
+        "no_language_model": "No model",
+        "skipped_language": "Skipped",
+        "failed": "Failed"
       }
     },
     "credits": {

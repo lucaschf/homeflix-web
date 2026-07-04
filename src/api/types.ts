@@ -889,6 +889,36 @@ export interface AdminIntroDetectionRun {
 
 export type AdminIntroDetectionRunsResponse = ApiListResponse<AdminIntroDetectionRun>;
 
+/** One image subtitle track's OCR outcome within a run. */
+export interface AdminSubtitleTrackOcrResult {
+  track_index: number;
+  language: string;
+  /** extracted | no_text | unsupported_format | no_language_model | skipped_language | failed. */
+  outcome: string;
+  /** Number of subtitle cues OCR'd (0 unless outcome is ``extracted``). */
+  cue_count: number;
+}
+
+/** One per-file subtitle-OCR run (audit history row). */
+export interface AdminSubtitleOcrRun {
+  id: string;
+  /** ``movie`` | ``episode``. */
+  media_kind: string;
+  media_id: string;
+  media_title: string;
+  file_path: string;
+  /** ``completed`` | ``failed``. */
+  outcome: string;
+  image_track_count: number;
+  extracted_count: number;
+  error: string | null;
+  started_at: string;
+  finished_at: string;
+  track_results: AdminSubtitleTrackOcrResult[];
+}
+
+export type AdminSubtitleOcrRunsResponse = ApiListResponse<AdminSubtitleOcrRun>;
+
 /** One recorded execution of a background scheduler job. */
 export interface JobRunRecord {
   id: string;
