@@ -264,6 +264,8 @@ function TrackCell({
         gap: 1.25,
         px: 1.375,
         py: 1,
+        minWidth: 0,
+        overflow: "hidden",
         borderRadius: 1.5,
         bgcolor: whiteAlpha(0.025),
         border: `1px solid ${extracted ? status.ok.base : whiteAlpha(0.08)}`,
@@ -274,20 +276,25 @@ function TrackCell({
       ) : (
         <X size={12} color={inkAlpha(0.45)} style={{ flexShrink: 0 }} />
       )}
-      <Typography variant="body2" sx={{ fontWeight: 600, flexShrink: 0 }}>
+      <Typography
+        variant="body2"
+        noWrap
+        sx={{ fontWeight: 600, flex: "1 1 auto", minWidth: 0 }}
+      >
         {languageName(track.language, locale)}
       </Typography>
-      <AdminBadge tone={trackTone(track.outcome)}>
-        {t(`admin.subtitleOcrRuns.trackOutcome.${track.outcome}`, { defaultValue: track.outcome })}
-      </AdminBadge>
-      {extracted && (
-        <Typography
-          variant="metaMono"
-          sx={{ fontSize: "0.8125rem", color: "text.secondary", ml: "auto", flexShrink: 0 }}
-        >
-          {t("admin.subtitleOcrRuns.cueCount", { count: track.cue_count })}
-        </Typography>
-      )}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
+        <AdminBadge tone={trackTone(track.outcome)}>
+          {t(`admin.subtitleOcrRuns.trackOutcome.${track.outcome}`, {
+            defaultValue: track.outcome,
+          })}
+        </AdminBadge>
+        {extracted && (
+          <Typography variant="metaMono" sx={{ fontSize: "0.8125rem", color: "text.secondary" }}>
+            {t("admin.subtitleOcrRuns.cueCount", { count: track.cue_count })}
+          </Typography>
+        )}
+      </Box>
     </Box>
   );
 }
