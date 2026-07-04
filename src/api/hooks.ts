@@ -22,6 +22,8 @@ import type {
   ResolveAdminConflictResponse,
   AdminIntroDetectionRun,
   AdminIntroDetectionRunsResponse,
+  AdminSubtitleOcrRun,
+  AdminSubtitleOcrRunsResponse,
   AdminOverviewStats,
   AdminOverviewStatsResponse,
   AdminScanRun,
@@ -602,6 +604,43 @@ export function useIntroDetectionRuns(
 }
 
 /**
+ * Offset-paginated history of subtitle-OCR runs (audit log).
+ *
+ * One row per media file the OCR job / manual trigger processed; each
+ * row carries per-track detail (language, outcome, cue count) so the
+ * admin can see which titles were processed and what was extracted.
+ */
+export function useSubtitleOcrRuns(
+  filters: { mediaKind?: string; mediaId?: string } = {},
+  options: { pageSize?: number } = {},
+) {
+  const pageSize = options.pageSize ?? ADMIN_PAGE_LIMIT;
+  const { mediaKind, mediaId } = filters;
+  const filterKey = `${mediaKind ?? "all"}|${mediaId ?? "all"}|${pageSize}`;
+  const query = useInfiniteQuery({
+    queryKey: ["admin", "subtitle-ocr-runs", filterKey],
+    queryFn: async ({ pageParam }: { pageParam: number }) => {
+      const params = new URLSearchParams();
+      if (mediaKind) params.set("media_kind", mediaKind);
+      if (mediaId) params.set("media_id", mediaId);
+      params.set("limit", String(pageSize));
+      params.set("offset", String(pageParam));
+      const resp = await api.get<AdminSubtitleOcrRunsResponse>(
+        `/admin/subtitle-ocr/runs?${params.toString()}`,
+      );
+      return {
+        data: resp.data,
+        nextOffset: resp.data.length === pageSize ? pageParam + pageSize : null,
+      };
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+  });
+
+  return usePagedInfiniteQuery<AdminSubtitleOcrRun>(query, filterKey);
+}
+
+/**
  * Background-jobs dashboard overview: every scheduler job with its live
  * schedule (next run) merged with its last recorded execution and a
  * "running now" flag. Polled so the next-run countdown and running state
@@ -664,6 +703,28 @@ export function useTriggerJob() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "jobs"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "job-runs"] });
+    },
+  });
+}
+
+/**
+ * Manually trigger subtitle OCR for one movie/episode (ADR-027).
+ *
+ * Fires the background OCR run (202 Accepted); the result appears in the
+ * subtitle-OCR runs list, which is invalidated on success so it refreshes
+ * while open.
+ */
+export function useTriggerSubtitleOcr() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ mediaKind, mediaId }: { mediaKind: "movie" | "episode"; mediaId: string }) => {
+      const segment = mediaKind === "movie" ? "movies" : "episodes";
+      return api.post<ApiDetailResponse<{ media_id: string; triggered: boolean }>>(
+        `/admin/subtitle-ocr/${segment}/${encodeURIComponent(mediaId)}/run`,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "subtitle-ocr-runs"] });
     },
   });
 }
@@ -2358,6 +2419,7 @@ const ADMIN_SETTINGS_SLUG: Record<AdminSettingKey, string> = {
   streaming: "streaming",
   avatar: "avatar",
   scan_dedup: "scan-dedup",
+  subtitle_ocr: "subtitle-ocr",
 };
 
 /**

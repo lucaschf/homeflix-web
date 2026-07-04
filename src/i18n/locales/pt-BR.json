@@ -191,6 +191,11 @@
       "success": "Enriquecimento marcado — o filme voltou para a fila de revisão.",
       "error": "Não foi possível marcar o enriquecimento. Tente novamente."
     },
+    "subtitleOcr": {
+      "tooltip": "Gerar legendas de texto (OCR)",
+      "started": "OCR iniciado — as legendas de texto aparecem quando terminar.",
+      "error": "Não foi possível iniciar o OCR. Tente novamente."
+    },
     "watchNow": "Assistir Agora",
     "watch": "Assistir",
     "resume": "Continuar",
@@ -308,6 +313,7 @@
       "intros": "Aberturas",
       "introRuns": "Detecções",
       "credits": "Créditos",
+      "subtitleOcr": "OCR de legendas",
       "requests": "Solicitações",
       "users": "Usuários",
       "jobs": "Jobs",
@@ -931,6 +937,35 @@
           "saved": "Configurações de detecção de créditos salvas."
         }
       },
+      "subtitleOcr": {
+        "title": "OCR de legendas",
+        "subtitle": "Converte legendas baseadas em imagem (PGS/SUP) em texto selecionável — a solução para remuxes de Blu-ray cujas únicas legendas são bitmaps. Desligado por padrão; exige ffmpeg + tesseract (com os dados de idioma) no host. Best-effort — a qualidade varia por fonte.",
+        "enabled": {
+          "label": "Habilitado",
+          "helper": "Roda o job periódico que faz OCR das legendas de imagem para sidecars WebVTT de texto. Exige tesseract no host."
+        },
+        "cadence": {
+          "label": "Cadência",
+          "helper": "Quantos arquivos cada ciclo processa e com que frequência o job roda. OCR é caro — mantenha o lote pequeno."
+        },
+        "batchSize": { "label": "Tamanho do lote" },
+        "interval": { "label": "Intervalo" },
+        "languages": {
+          "label": "Idiomas",
+          "helper": "Quais idiomas de legenda processar. Deixe vazio para processar toda faixa cujo idioma tenha modelo tesseract instalado.",
+          "field": "Códigos de idioma",
+          "hint": "Códigos ISO 639-1 separados por vírgula (ex.: en, pt). Vazio = todos os instalados."
+        },
+        "engine": {
+          "label": "Motor",
+          "helper": "O executável do tesseract e o tempo limite por legenda."
+        },
+        "tesseractBinary": { "label": "Binário do tesseract" },
+        "perCueTimeout": { "label": "Tempo limite por legenda" },
+        "snack": {
+          "saved": "Configurações de OCR de legendas salvas."
+        }
+      },
       "streaming": {
         "title": "Streaming",
         "subtitle": "Limite de paralelismo do ffmpeg + teto do cache HLS. Aplica a transcoding HLS, extração de legendas e geração de sprites de scrub-preview.",
@@ -1321,6 +1356,39 @@
         "COMPLETED": "Concluído",
         "INSUFFICIENT_EPISODES": "Insuficiente",
         "FAILED": "Falhou"
+      }
+    },
+    "subtitleOcrRuns": {
+      "title": "OCR de legendas",
+      "subtitle": "Execuções de OCR por arquivo — quais títulos foram processados e, por legenda de imagem, o que foi extraído.",
+      "history": {
+        "title": "Histórico de execuções",
+        "subtitle": "Mais recentes primeiro. Expanda uma execução para ver o idioma, o resultado e o número de legendas de cada faixa de imagem."
+      },
+      "loading": "Carregando execuções…",
+      "error": "Não foi possível carregar as execuções de OCR.",
+      "empty": "Nenhuma execução de OCR ainda.",
+      "unknownMedia": "Título desconhecido",
+      "tracksLabel": "faixas",
+      "extractedLabel": "extraídas",
+      "noTracks": "Nenhuma legenda de imagem foi processada nesta execução.",
+      "cueCount_one": "{{count}} legenda",
+      "cueCount_other": "{{count}} legendas",
+      "kind": {
+        "movie": "Filme",
+        "episode": "Episódio"
+      },
+      "outcome": {
+        "completed": "Concluído",
+        "failed": "Falhou"
+      },
+      "trackOutcome": {
+        "extracted": "Extraída",
+        "no_text": "Sem texto",
+        "unsupported_format": "Não suportado",
+        "no_language_model": "Sem modelo",
+        "skipped_language": "Ignorada",
+        "failed": "Falhou"
       }
     },
     "credits": {

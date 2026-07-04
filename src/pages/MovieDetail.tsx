@@ -11,7 +11,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Play, RefreshCw, Clapperboard, Flag, ScrollText } from "lucide-react";
+import { Play, RefreshCw, Clapperboard, Flag, ScrollText, Captions } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -22,6 +22,7 @@ import {
   useProgress,
   useRelatedMovies,
   useToggleWatchlist,
+  useTriggerSubtitleOcr,
 } from "../api/hooks";
 import { useCurrentUser } from "../api/auth";
 import { CreditsMarkerEditor } from "../components/admin";
@@ -53,6 +54,7 @@ export function MovieDetail() {
   useDocumentTitle(movie ? `${movie.title} (${movie.year})` : undefined);
   const enrichMutation = useEnrichMovie();
   const flagEnrichment = useFlagMovieEnrichment();
+  const triggerOcr = useTriggerSubtitleOcr();
   const { data: currentUser } = useCurrentUser();
   const isAdmin = currentUser?.role === "admin";
   const [flagSnack, setFlagSnack] = useState<
@@ -135,6 +137,15 @@ export function MovieDetail() {
       setFlagSnack({ message: t("detail.flagEnrichment.success"), severity: "success" });
     } catch {
       setFlagSnack({ message: t("detail.flagEnrichment.error"), severity: "error" });
+    }
+  };
+
+  const handleTriggerOcr = async () => {
+    try {
+      await triggerOcr.mutateAsync({ mediaKind: "movie", mediaId: movieId! });
+      setFlagSnack({ message: t("detail.subtitleOcr.started"), severity: "success" });
+    } catch {
+      setFlagSnack({ message: t("detail.subtitleOcr.error"), severity: "error" });
     }
   };
 
@@ -359,6 +370,27 @@ export function MovieDetail() {
                   >
                     <ScrollText size={18} />
                   </IconButton>
+                </Tooltip>
+              )}
+              {isAdmin && (
+                <Tooltip title={t("detail.subtitleOcr.tooltip")} arrow>
+                  <span>
+                    <IconButton
+                      onClick={handleTriggerOcr}
+                      disabled={triggerOcr.isPending}
+                      sx={{
+                        color: "text.primary",
+                        bgcolor: whiteAlpha(0.08),
+                        border: `1px solid ${whiteAlpha(0.12)}`,
+                        borderRadius: 1,
+                        width: 46,
+                        height: 46,
+                        "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
+                      }}
+                    >
+                      <Captions size={18} />
+                    </IconButton>
+                  </span>
                 </Tooltip>
               )}
             </Box>

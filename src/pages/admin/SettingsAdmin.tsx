@@ -12,6 +12,7 @@ import type {
   ScanDedupSettings,
   SchedulerSettings,
   StreamingSettings,
+  SubtitleOcrSettings,
   ThumbnailBackfillSettings,
 } from "../../api/types";
 import {
@@ -27,6 +28,7 @@ import { IntroDetectionSettingsCard } from "./components/IntroDetectionSettingsC
 import { ScanDedupSettingsCard } from "./components/ScanDedupSettingsCard";
 import { SchedulerSettingsCard } from "./components/SchedulerSettingsCard";
 import { StreamingSettingsCard } from "./components/StreamingSettingsCard";
+import { SubtitleOcrSettingsCard } from "./components/SubtitleOcrSettingsCard";
 import { ThumbnailBackfillSettingsCard } from "./components/ThumbnailBackfillSettingsCard";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -115,6 +117,7 @@ export function SettingsAdmin() {
   const streaming = detailFor(data, "streaming");
   const avatar = detailFor(data, "avatar");
   const scanDedup = detailFor(data, "scan_dedup");
+  const subtitleOcr = detailFor(data, "subtitle_ocr");
 
   return (
     <>
@@ -211,6 +214,17 @@ export function SettingsAdmin() {
             detail={{
               ...scanDedup,
               value: scanDedup.value as ScanDedupSettings,
+            }}
+            onSuccess={notifySuccess}
+            onError={notifyError}
+          />
+        )}
+        {subtitleOcr && (
+          <SubtitleOcrSettingsCard
+            key={subtitleOcr.updated_at ?? "default"}
+            detail={{
+              ...subtitleOcr,
+              value: subtitleOcr.value as SubtitleOcrSettings,
             }}
             onSuccess={notifySuccess}
             onError={notifyError}

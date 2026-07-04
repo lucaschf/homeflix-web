@@ -191,6 +191,11 @@
       "success": "Enrichment flagged — the movie is back in the review queue.",
       "error": "Couldn't flag the enrichment. Try again."
     },
+    "subtitleOcr": {
+      "tooltip": "Generate text subtitles (OCR)",
+      "started": "OCR started — text subtitles will appear once it finishes.",
+      "error": "Couldn't start OCR. Try again."
+    },
     "watchNow": "Watch Now",
     "watch": "Watch",
     "resume": "Resume",
@@ -308,6 +313,7 @@
       "intros": "Intros",
       "introRuns": "Detection runs",
       "credits": "Credits",
+      "subtitleOcr": "Subtitle OCR",
       "requests": "Catalog requests",
       "conflicts": "Conflicts",
       "users": "Users",
@@ -932,6 +938,35 @@
           "saved": "Credits detection settings saved."
         }
       },
+      "subtitleOcr": {
+        "title": "Subtitle OCR",
+        "subtitle": "OCR image-based (PGS/SUP) subtitles into selectable text — the fix for Blu-ray remuxes whose only subtitles are bitmaps. Off by default; requires ffmpeg + tesseract (with the relevant language data) on the host. Best-effort — quality varies by source.",
+        "enabled": {
+          "label": "Enabled",
+          "helper": "Run the periodic job that OCRs image subtitles to text WebVTT sidecars. Requires tesseract on the host."
+        },
+        "cadence": {
+          "label": "Cadence",
+          "helper": "How many files each tick OCRs and how often the job runs. OCR is expensive — keep the batch small."
+        },
+        "batchSize": { "label": "Batch size" },
+        "interval": { "label": "Interval" },
+        "languages": {
+          "label": "Languages",
+          "helper": "Which subtitle languages to OCR. Leave empty to OCR every track whose language has an installed tesseract model.",
+          "field": "Language codes",
+          "hint": "Comma-separated ISO 639-1 codes (e.g. en, pt). Empty = all installed."
+        },
+        "engine": {
+          "label": "Engine",
+          "helper": "The tesseract executable and the timeout for a single subtitle cue."
+        },
+        "tesseractBinary": { "label": "Tesseract binary" },
+        "perCueTimeout": { "label": "Per-cue timeout" },
+        "snack": {
+          "saved": "Subtitle OCR settings saved."
+        }
+      },
       "streaming": {
         "title": "Streaming",
         "subtitle": "ffmpeg parallelism cap + HLS cache ceiling. Applies to HLS transcoding, subtitle extraction, and scrub-preview sprite generation.",
@@ -1322,6 +1357,39 @@
         "COMPLETED": "Completed",
         "INSUFFICIENT_EPISODES": "Insufficient",
         "FAILED": "Failed"
+      }
+    },
+    "subtitleOcrRuns": {
+      "title": "Subtitle OCR",
+      "subtitle": "Per-file OCR runs — which titles were processed and, per image subtitle, what was extracted.",
+      "history": {
+        "title": "Run history",
+        "subtitle": "Newest first. Expand a run to see each image subtitle's language, outcome and cue count."
+      },
+      "loading": "Loading runs…",
+      "error": "Could not load OCR runs.",
+      "empty": "No OCR runs yet.",
+      "unknownMedia": "Unknown title",
+      "tracksLabel": "tracks",
+      "extractedLabel": "extracted",
+      "noTracks": "No image subtitles were processed on this run.",
+      "cueCount_one": "{{count}} cue",
+      "cueCount_other": "{{count}} cues",
+      "kind": {
+        "movie": "Movie",
+        "episode": "Episode"
+      },
+      "outcome": {
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "trackOutcome": {
+        "extracted": "Extracted",
+        "no_text": "No text",
+        "unsupported_format": "Unsupported",
+        "no_language_model": "No model",
+        "skipped_language": "Skipped",
+        "failed": "Failed"
       }
     },
     "credits": {
