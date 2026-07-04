@@ -83,6 +83,7 @@ export function ThumbnailBackfillSettingsCard({ detail, onSuccess, onError }: Pr
       subtitle={t("admin.settings.thumbnailBackfill.subtitle")}
       source={detail.source}
       updatedAt={detail.updated_at}
+      dirty={dirty}
       canSave={canSave}
       saving={update.isPending}
       onSave={onSave}

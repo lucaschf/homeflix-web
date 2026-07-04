@@ -316,7 +316,7 @@
       "subtitleOcr": "OCR de legendas",
       "requests": "Solicitações",
       "users": "Usuários",
-      "jobs": "Jobs",
+      "jobs": "Tarefas",
       "hls": "HLS cache",
       "health": "Saúde",
       "settings": "Configurações",
@@ -733,6 +733,27 @@
     "settings": {
       "title": "Configurações de runtime",
       "subtitle": "Tunáveis operacionais persistidos no banco. Edições propagam para os consumidores em segundos — sem restart.",
+      "unsaved": "Alterações não salvas",
+      "searchPlaceholder": "Buscar configuração…",
+      "sectionsLabel": "Seções",
+      "noSections": "Nenhuma seção.",
+      "noSectionsQuery": "Nenhuma seção corresponde a “{{query}}”.",
+      "scope": {
+        "default": "Padrão",
+        "admin": "Admin"
+      },
+      "view": {
+        "label": "Vista",
+        "rail": "Trilha",
+        "railHint": "Uma seção por vez, com navegação lateral",
+        "accordion": "Sanfona",
+        "accordionHint": "Todas as seções empilhadas, expandindo uma por vez"
+      },
+      "density": {
+        "label": "Densidade",
+        "comfortable": "Confortável",
+        "compact": "Compacta"
+      },
       "errorLoading": "Não foi possível carregar o snapshot de configurações.",
       "propagationNote": "Alterações invalidam o cache do snapshot imediatamente; consumidores downstream (HLS, scheduler, intro detection) pegam o novo valor na próxima leitura. O diretório de avatar é a exceção — fica em cache no startup, então mudanças exigem restart + mover os arquivos existentes na mão.",
       "lastEdited": "Editado pela última vez em {{date}}",
@@ -749,7 +770,8 @@
       "actions": {
         "save": "Salvar alterações",
         "saving": "Salvando…",
-        "reset": "Descartar"
+        "reset": "Descartar",
+        "discard": "Descartar"
       },
       "snack": {
         "saveFailed": "Não foi possível salvar as alterações."
@@ -784,10 +806,11 @@
       },
       "scheduler": {
         "title": "Scheduler",
-        "subtitle": "Master switch de todos os jobs periódicos (scans de biblioteca, thumbnail backfill, intro detection). Desligado aqui significa que nenhum job roda, independente do switch individual.",
+        "summary": "Master switch de todas as tarefas periódicas.",
+        "subtitle": "Master switch de todas as tarefas periódicas (scans de biblioteca, thumbnail backfill, intro detection). Desligado aqui significa que nenhuma tarefa roda, independente do switch individual.",
         "enabled": {
           "label": "Ativo",
-          "helper": "Desligado paralisa todo o scheduler. Os switches por job abaixo só valem com isso ligado."
+          "helper": "Desligado paralisa todo o scheduler. Os switches por tarefa abaixo só valem com isso ligado."
         },
         "reconcile": {
           "label": "Intervalo de reconciliação",
@@ -799,7 +822,8 @@
       },
       "thumbnailBackfill": {
         "title": "Thumbnail backfill",
-        "subtitle": "Job periódico que gera sprites de scrub-preview para itens que o operador ainda não streamou.",
+        "summary": "Gera sprites de scrub-preview em background.",
+        "subtitle": "Tarefa periódica que gera sprites de scrub-preview para itens que o operador ainda não streamou.",
         "enabled": {
           "label": "Ativo",
           "helper": "Liga/desliga o loop de backfill. O master switch do scheduler também precisa estar ligado pra rodar."
@@ -824,6 +848,7 @@
       },
       "introDetection": {
         "title": "Intro detection",
+        "summary": "Detecta aberturas para oferecer \"Pular Abertura\".",
         "subtitle": "Detecta aberturas de séries para o player oferecer Pular Abertura. Escolha o algoritmo abaixo — ambos rodam no servidor (Chromaprint ainda exige o binário fpcalc no PATH).",
         "enabled": {
           "label": "Ativo",
@@ -904,14 +929,15 @@
       },
       "creditsDetection": {
         "title": "Detecção de créditos",
+        "summary": "Marca créditos finais para \"próximo automático\".",
         "subtitle": "Detecção de créditos finais por arquivo (marcar assistido, próximo automático, pular). Combina densidade de borda/texto e baixo movimento — best-effort e dependente do conteúdo; corrija erros no editor manual.",
         "enabled": {
           "label": "Ativado",
-          "helper": "Roda o job periódico de detecção de créditos por arquivo. Requer ffmpeg + ffprobe no host."
+          "helper": "Roda a tarefa periódica de detecção de créditos por arquivo. Requer ffmpeg + ffprobe no host."
         },
         "cadence": {
           "label": "Cadência",
-          "helper": "Quantos arquivos cada tick analisa e com que frequência o job roda."
+          "helper": "Quantos arquivos cada tick analisa e com que frequência a tarefa roda."
         },
         "batchSize": { "label": "Tamanho do lote" },
         "interval": { "label": "Intervalo" },
@@ -939,14 +965,15 @@
       },
       "subtitleOcr": {
         "title": "OCR de legendas",
+        "summary": "OCR de legendas de imagem (PGS/SUP) para texto.",
         "subtitle": "Converte legendas baseadas em imagem (PGS/SUP) em texto selecionável — a solução para remuxes de Blu-ray cujas únicas legendas são bitmaps. Desligado por padrão; exige ffmpeg + tesseract (com os dados de idioma) no host. Best-effort — a qualidade varia por fonte.",
         "enabled": {
           "label": "Habilitado",
-          "helper": "Roda o job periódico que faz OCR das legendas de imagem para sidecars WebVTT de texto. Exige tesseract no host."
+          "helper": "Roda a tarefa periódica que faz OCR das legendas de imagem para sidecars WebVTT de texto. Exige tesseract no host."
         },
         "cadence": {
           "label": "Cadência",
-          "helper": "Quantos arquivos cada ciclo processa e com que frequência o job roda. OCR é caro — mantenha o lote pequeno."
+          "helper": "Quantos arquivos cada ciclo processa e com que frequência a tarefa roda. OCR é caro — mantenha o lote pequeno."
         },
         "batchSize": { "label": "Tamanho do lote" },
         "interval": { "label": "Intervalo" },
@@ -968,6 +995,7 @@
       },
       "streaming": {
         "title": "Streaming",
+        "summary": "Paralelismo do ffmpeg + teto do cache HLS.",
         "subtitle": "Limite de paralelismo do ffmpeg + teto do cache HLS. Aplica a transcoding HLS, extração de legendas e geração de sprites de scrub-preview.",
         "hwAccel": {
           "label": "Aceleração por hardware",
@@ -995,6 +1023,7 @@
       },
       "avatar": {
         "title": "Avatares de perfil",
+        "summary": "Armazenamento e dimensionamento de avatares.",
         "subtitle": "Local de armazenamento e dimensionamento dos avatares enviados.",
         "storageSubdir": {
           "label": "Subdiretório de armazenamento",
@@ -1017,6 +1046,7 @@
       },
       "scanDedup": {
         "title": "Deduplicação no scan",
+        "summary": "Detector de conflitos de duplicatas pós-enrich.",
         "subtitle": "Limiares de diferença de duração para o detector de conflitos pós-enrich. Uma duplicata só é sinalizada como edição diferente quando a diferença de duração ultrapassa AMBOS os limites.",
         "thresholds": {
           "label": "Limiares de edição diferente",
@@ -1034,7 +1064,7 @@
         },
         "sweep": {
           "label": "Varredura agendada",
-          "helper": "Quando ligada, um job em background percorre o catálogo inteiro no intervalo configurado e roda o detector de novo — pega duplicatas que entraram depois do enrich original e pares que nunca casaram no TMDB."
+          "helper": "Quando ligada, uma tarefa em segundo plano percorre o catálogo inteiro no intervalo configurado e roda o detector de novo — pega duplicatas que entraram depois do enrich original e pares que nunca casaram no TMDB."
         },
         "sweepInterval": {
           "label": "Intervalo da varredura",
@@ -1261,12 +1291,12 @@
       }
     },
     "jobs": {
-      "title": "Jobs em segundo plano",
-      "subtitle": "Cada job agendado: quando roda de novo, como foi a última execução e o que está rodando agora.",
+      "title": "Tarefas em segundo plano",
+      "subtitle": "Cada tarefa agendada: quando roda de novo, como foi a última execução e o que está rodando agora.",
       "refresh": "Atualizar",
-      "loading": "Carregando jobs…",
-      "error": "Não foi possível carregar os jobs.",
-      "empty": "Nenhum job registrado.",
+      "loading": "Carregando tarefas…",
+      "error": "Não foi possível carregar as tarefas.",
+      "empty": "Nenhuma tarefa registrada.",
       "running": "Rodando",
       "neverRan": "Nunca rodou",
       "notScheduled": "Não agendado",
@@ -1280,18 +1310,18 @@
         "stopped": "Parado",
         "tick": "Tick a cada minuto",
         "idle": "Não iniciado",
-        "jobs": "Jobs agendados",
+        "jobs": "Tarefas agendadas",
         "neverRan_one": "{{count}} ainda não rodou",
         "neverRan_other": "{{count}} ainda não rodaram",
         "executions": "Execuções (24 h)",
-        "executionsSub": "Em todos os jobs",
+        "executionsSub": "Em todas as tarefas",
         "failures": "Falhas (24 h)",
         "failuresClean": "Tudo limpo",
         "failuresPresent_one": "{{count}} precisa de atenção",
         "failuresPresent_other": "{{count}} precisam de atenção"
       },
       "cols": {
-        "job": "Job · agendamento",
+        "job": "Tarefa · agendamento",
         "history": "Histórico",
         "lastRun": "Última execução",
         "next": "Próxima"
@@ -1308,15 +1338,15 @@
         "hourly": "todo início de hora"
       },
       "overview": {
-        "title": "Jobs",
-        "subtitle": "Agenda ao vivo e a execução mais recente de cada job."
+        "title": "Tarefas",
+        "subtitle": "Agenda ao vivo e a execução mais recente de cada tarefa."
       },
       "history": {
         "title": "Histórico de execuções",
-        "subtitle": "Mais recentes primeiro, de todos os jobs.",
+        "subtitle": "Mais recentes primeiro, de todas as tarefas.",
         "empty": "Nenhuma execução registrada ainda.",
         "cols": {
-          "job": "Job",
+          "job": "Tarefa",
           "status": "Status",
           "duration": "Duração",
           "detail": "Detalhe",
@@ -1455,7 +1485,7 @@
       "redetect": "Re-detectar",
       "redetectHint": "Recolocar esta temporada na fila de detecção automática de abertura",
       "redetectConfirmTitle": "Re-detectar aberturas desta temporada?",
-      "redetectConfirm": "A temporada {{season}} será reanalisada no próximo tick de detecção. Os markers automáticos são limpos; os manuais são mantidos. O job de detecção precisa estar ativo para rodar.",
+      "redetectConfirm": "A temporada {{season}} será reanalisada no próximo tick de detecção. Os markers automáticos são limpos; os manuais são mantidos. A tarefa de detecção precisa estar ativa para rodar.",
       "redetectInProgress": "Recolocando na fila…",
       "redetectQueued": "Temporada na fila para detecção ({{count}} markers automáticos limpos).",
       "redetectFailed": "Não foi possível recolocar a temporada na fila. Tente novamente.",

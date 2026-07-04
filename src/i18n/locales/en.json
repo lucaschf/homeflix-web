@@ -734,6 +734,27 @@
     "settings": {
       "title": "Runtime settings",
       "subtitle": "Operational tunables persisted in the database. Edits propagate to consumers within seconds — no restart required.",
+      "unsaved": "Unsaved changes",
+      "searchPlaceholder": "Search setting…",
+      "sectionsLabel": "Sections",
+      "noSections": "No sections.",
+      "noSectionsQuery": "No section matches “{{query}}”.",
+      "scope": {
+        "default": "Default",
+        "admin": "Admin"
+      },
+      "view": {
+        "label": "View",
+        "rail": "Rail",
+        "railHint": "One section at a time, with a side nav",
+        "accordion": "Accordion",
+        "accordionHint": "All sections stacked, expanding one at a time"
+      },
+      "density": {
+        "label": "Density",
+        "comfortable": "Comfortable",
+        "compact": "Compact"
+      },
       "errorLoading": "Couldn't load the settings snapshot.",
       "propagationNote": "Changes flush the snapshot cache immediately; downstream consumers (HLS, scheduler, intro detection) pick them up on their next read. Avatar storage directory is the lone exception — it lazy-caches at startup, so changes require a restart and a manual move of existing files.",
       "lastEdited": "Last edited {{date}}",
@@ -750,7 +771,8 @@
       "actions": {
         "save": "Save changes",
         "saving": "Saving…",
-        "reset": "Reset"
+        "reset": "Reset",
+        "discard": "Discard"
       },
       "snack": {
         "saveFailed": "Could not save the changes."
@@ -785,6 +807,7 @@
       },
       "scheduler": {
         "title": "Scheduler",
+        "summary": "Master switch for every periodic job.",
         "subtitle": "Master switch for every periodic job (library scans, thumbnail backfill, intro detection). Off here means no job ticks at all, regardless of its per-job switch.",
         "enabled": {
           "label": "Enabled",
@@ -800,6 +823,7 @@
       },
       "thumbnailBackfill": {
         "title": "Thumbnail backfill",
+        "summary": "Generates scrub-preview sprites in the background.",
         "subtitle": "Periodic job that fills in scrub-preview sprites for items the operator hasn't streamed yet.",
         "enabled": {
           "label": "Enabled",
@@ -825,6 +849,7 @@
       },
       "introDetection": {
         "title": "Intro detection",
+        "summary": "Detects intros to offer Skip Intro.",
         "subtitle": "Detects series intros so the player can offer Skip Intro. Pick the algorithm below — both run on the server (Chromaprint also needs the fpcalc binary on PATH).",
         "enabled": {
           "label": "Enabled",
@@ -905,6 +930,7 @@
       },
       "creditsDetection": {
         "title": "Credits detection",
+        "summary": "Marks end credits for auto-next.",
         "subtitle": "Per-file end-credits detection (mark-watched, auto-next, skip). Combines edge/text density and low-motion signals — best-effort and content-dependent; correct misses with the manual editor.",
         "enabled": {
           "label": "Enabled",
@@ -940,6 +966,7 @@
       },
       "subtitleOcr": {
         "title": "Subtitle OCR",
+        "summary": "OCRs image subtitles (PGS/SUP) into text.",
         "subtitle": "OCR image-based (PGS/SUP) subtitles into selectable text — the fix for Blu-ray remuxes whose only subtitles are bitmaps. Off by default; requires ffmpeg + tesseract (with the relevant language data) on the host. Best-effort — quality varies by source.",
         "enabled": {
           "label": "Enabled",
@@ -969,6 +996,7 @@
       },
       "streaming": {
         "title": "Streaming",
+        "summary": "ffmpeg parallelism + HLS cache cap.",
         "subtitle": "ffmpeg parallelism cap + HLS cache ceiling. Applies to HLS transcoding, subtitle extraction, and scrub-preview sprite generation.",
         "hwAccel": {
           "label": "Hardware acceleration",
@@ -996,6 +1024,7 @@
       },
       "avatar": {
         "title": "Profile avatars",
+        "summary": "Avatar storage and sizing.",
         "subtitle": "Output location and sizing for uploaded profile avatars.",
         "storageSubdir": {
           "label": "Storage subdirectory",
@@ -1018,6 +1047,7 @@
       },
       "scanDedup": {
         "title": "Scan deduplication",
+        "summary": "Post-enrich duplicate-conflict detector.",
         "subtitle": "Runtime-delta thresholds for the post-enrich conflict detector. A duplicate is flagged as a suspected different edit only when its runtime delta exceeds BOTH bounds.",
         "thresholds": {
           "label": "Different-edit thresholds",

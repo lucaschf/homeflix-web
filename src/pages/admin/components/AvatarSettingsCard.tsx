@@ -85,6 +85,7 @@ export function AvatarSettingsCard({ detail, onSuccess, onError }: Props) {
       subtitle={t("admin.settings.avatar.subtitle")}
       source={detail.source}
       updatedAt={detail.updated_at}
+      dirty={dirty}
       canSave={canSave}
       saving={update.isPending}
       onSave={onSave}

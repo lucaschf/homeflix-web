@@ -103,6 +103,7 @@ export function SubtitleOcrSettingsCard({ detail, onSuccess, onError }: Props) {
       subtitle={t("admin.settings.subtitleOcr.subtitle")}
       source={detail.source}
       updatedAt={detail.updated_at}
+      dirty={dirty}
       canSave={canSave}
       saving={update.isPending}
       onSave={onSave}

@@ -172,6 +172,7 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
       subtitle={t("admin.settings.introDetection.subtitle")}
       source={detail.source}
       updatedAt={detail.updated_at}
+      dirty={dirty}
       canSave={canSave}
       saving={update.isPending}
       onSave={onSave}
