@@ -2358,6 +2358,7 @@ const ADMIN_SETTINGS_SLUG: Record<AdminSettingKey, string> = {
   streaming: "streaming",
   avatar: "avatar",
   scan_dedup: "scan-dedup",
+  subtitle_ocr: "subtitle-ocr",
 };
 
 /**

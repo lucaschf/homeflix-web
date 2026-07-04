@@ -932,6 +932,35 @@
           "saved": "Credits detection settings saved."
         }
       },
+      "subtitleOcr": {
+        "title": "Subtitle OCR",
+        "subtitle": "OCR image-based (PGS/SUP) subtitles into selectable text — the fix for Blu-ray remuxes whose only subtitles are bitmaps. Off by default; requires ffmpeg + tesseract (with the relevant language data) on the host. Best-effort — quality varies by source.",
+        "enabled": {
+          "label": "Enabled",
+          "helper": "Run the periodic job that OCRs image subtitles to text WebVTT sidecars. Requires tesseract on the host."
+        },
+        "cadence": {
+          "label": "Cadence",
+          "helper": "How many files each tick OCRs and how often the job runs. OCR is expensive — keep the batch small."
+        },
+        "batchSize": { "label": "Batch size" },
+        "interval": { "label": "Interval" },
+        "languages": {
+          "label": "Languages",
+          "helper": "Which subtitle languages to OCR. Leave empty to OCR every track whose language has an installed tesseract model.",
+          "field": "Language codes",
+          "hint": "Comma-separated ISO 639-1 codes (e.g. en, pt). Empty = all installed."
+        },
+        "engine": {
+          "label": "Engine",
+          "helper": "The tesseract executable and the timeout for a single subtitle cue."
+        },
+        "tesseractBinary": { "label": "Tesseract binary" },
+        "perCueTimeout": { "label": "Per-cue timeout" },
+        "snack": {
+          "saved": "Subtitle OCR settings saved."
+        }
+      },
       "streaming": {
         "title": "Streaming",
         "subtitle": "ffmpeg parallelism cap + HLS cache ceiling. Applies to HLS transcoding, subtitle extraction, and scrub-preview sprite generation.",

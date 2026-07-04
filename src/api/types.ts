@@ -605,7 +605,8 @@ export type AdminSettingKey =
   | "credits_detection"
   | "streaming"
   | "avatar"
-  | "scan_dedup";
+  | "scan_dedup"
+  | "subtitle_ocr";
 
 /** Provenance marker. ``default`` is synthesised by the read endpoint
  *  for buckets that have never been persisted. */
@@ -733,6 +734,24 @@ export interface ScanDedupSettings {
 }
 
 /**
+ * Subtitle OCR bucket — image-based (PGS/SUP) subtitles are OCR'd to
+ * text WebVTT sidecars so they become selectable (ADR-027). Off by
+ * default; requires ffmpeg + tesseract (with the relevant language
+ * data) on the host.
+ */
+export interface SubtitleOcrSettings {
+  enabled: boolean;
+  batch_size: number;
+  interval_minutes: number;
+  /** Output subdirectory (relative to each media file's folder). */
+  subdir: string;
+  /** ISO 639-1 codes to OCR; empty = every track with an installed model. */
+  languages: string[];
+  tesseract_binary: string;
+  per_cue_timeout_seconds: number;
+}
+
+/**
  * Union of every settings VO payload. The ``key`` on the parent
  * ``AdminSettingDetail`` disambiguates which concrete shape ``value``
  * carries — read sites narrow via ``detail.key === "scheduler"``
@@ -745,7 +764,8 @@ export type AdminSettingsValue =
   | CreditsDetectionSettings
   | StreamingSettings
   | AvatarSettings
-  | ScanDedupSettings;
+  | ScanDedupSettings
+  | SubtitleOcrSettings;
 
 /**
  * Row returned by ``GET /api/v1/admin/settings``. ``source`` is
