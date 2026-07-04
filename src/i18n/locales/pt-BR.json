@@ -191,6 +191,11 @@
       "success": "Enriquecimento marcado — o filme voltou para a fila de revisão.",
       "error": "Não foi possível marcar o enriquecimento. Tente novamente."
     },
+    "subtitleOcr": {
+      "tooltip": "Gerar legendas de texto (OCR)",
+      "started": "OCR iniciado — as legendas de texto aparecem quando terminar.",
+      "error": "Não foi possível iniciar o OCR. Tente novamente."
+    },
     "watchNow": "Assistir Agora",
     "watch": "Assistir",
     "resume": "Continuar",

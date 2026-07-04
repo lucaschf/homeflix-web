@@ -191,6 +191,11 @@
       "success": "Enrichment flagged — the movie is back in the review queue.",
       "error": "Couldn't flag the enrichment. Try again."
     },
+    "subtitleOcr": {
+      "tooltip": "Generate text subtitles (OCR)",
+      "started": "OCR started — text subtitles will appear once it finishes.",
+      "error": "Couldn't start OCR. Try again."
+    },
     "watchNow": "Watch Now",
     "watch": "Watch",
     "resume": "Resume",

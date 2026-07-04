@@ -708,6 +708,28 @@ export function useTriggerJob() {
 }
 
 /**
+ * Manually trigger subtitle OCR for one movie/episode (ADR-027).
+ *
+ * Fires the background OCR run (202 Accepted); the result appears in the
+ * subtitle-OCR runs list, which is invalidated on success so it refreshes
+ * while open.
+ */
+export function useTriggerSubtitleOcr() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ mediaKind, mediaId }: { mediaKind: "movie" | "episode"; mediaId: string }) => {
+      const segment = mediaKind === "movie" ? "movies" : "episodes";
+      return api.post<ApiDetailResponse<{ media_id: string; triggered: boolean }>>(
+        `/admin/subtitle-ocr/${segment}/${encodeURIComponent(mediaId)}/run`,
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "subtitle-ocr-runs"] });
+    },
+  });
+}
+
+/**
  * Cursor-paginated infinite query over the full series catalog.
  *
  * Powers the admin intro-editor picker, which needs a flat list of
