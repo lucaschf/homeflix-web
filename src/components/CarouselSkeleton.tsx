@@ -13,7 +13,7 @@ const CARD_DIMS = {
     aspectRatio: "2/3",
   },
   landscape: {
-    width: { xs: 240, sm: 320, md: 360, lg: 400 },
+    width: { xs: 210, sm: 300, md: 360, lg: 420 },
     aspectRatio: "16/9",
   },
 } as const;
@@ -39,7 +39,8 @@ interface CarouselSkeletonProps {
    * Aspect ratio + width breakpoints of each fake card. Defaults
    * to ``poster`` (2/3) which matches ``MediaCard variant="poster"``
    * for genre and recently-added rows. Use ``landscape`` (16/9) for
-   * Continue Watching, where the real cards are backdrop-shaped.
+   * Continue Watching, where the real cards are backdrop-shaped and
+   * sized ~1.5× the poster width.
    */
   variant?: keyof typeof CARD_DIMS;
 }

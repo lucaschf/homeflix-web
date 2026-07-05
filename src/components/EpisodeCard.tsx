@@ -78,7 +78,10 @@ export function EpisodeCard({
       }
       sx={{
         flex: "0 0 auto",
-        width: { xs: 220, sm: 260, md: 300 },
+        // 16:9 landscape card, one step smaller than the Continue
+        // Watching card (MediaCard variant="landscape") so the episode
+        // list stays denser while sharing the same visual language.
+        width: { xs: 210, sm: 280, md: 320, lg: 380 },
         cursor: isAvailable ? "pointer" : "default",
         "&:hover .ep-card-thumb": isAvailable ? { transform: "scale(1.03)" } : {},
         "&:hover .ep-play-overlay": isAvailable ? { opacity: 1 } : {},
