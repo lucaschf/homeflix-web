@@ -904,26 +904,13 @@ function EpisodeRow({ episode, last, onEdit }: EpisodeRowProps) {
 
 function IntroBadge({ intro }: { intro: EpisodeOutput["intro"] }) {
   const { t } = useTranslation();
-  const badgeSx = { fontSize: "1rem" } as const;
   if (!intro) {
-    return (
-      <AdminBadge tone="neutral" sx={badgeSx}>
-        {t("admin.intros.statusPending")}
-      </AdminBadge>
-    );
+    return <AdminBadge tone="neutral">{t("admin.intros.statusPending")}</AdminBadge>;
   }
   if (intro.source === "MANUAL") {
-    return (
-      <AdminBadge tone="peach" sx={badgeSx}>
-        {t("admin.intros.statusManual")}
-      </AdminBadge>
-    );
+    return <AdminBadge tone="peach">{t("admin.intros.statusManual")}</AdminBadge>;
   }
   const isLow = (intro.confidence ?? 0) < LOW_CONFIDENCE_THRESHOLD;
   const tone: BadgeTone = isLow ? "warn" : "info";
-  return (
-    <AdminBadge tone={tone} sx={badgeSx}>
-      {t("admin.intros.filterAuto")}
-    </AdminBadge>
-  );
+  return <AdminBadge tone={tone}>{t("admin.intros.filterAuto")}</AdminBadge>;
 }
