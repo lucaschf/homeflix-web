@@ -226,7 +226,8 @@
     "episode": "E{{number}}",
     "noEpisodes": "No episodes available for this season.",
     "viewList": "List view",
-    "viewCards": "Card view"
+    "viewCards": "Card view",
+    "viewGrid": "Grid view"
   },
   "episode": {
     "unavailableShort": "Unavailable",

@@ -226,7 +226,8 @@
     "episode": "E{{number}}",
     "noEpisodes": "Nenhum episodio disponivel para esta temporada.",
     "viewList": "Modo lista",
-    "viewCards": "Modo cards"
+    "viewCards": "Modo cards",
+    "viewGrid": "Modo grade"
   },
   "episode": {
     "unavailableShort": "Indisponível",
