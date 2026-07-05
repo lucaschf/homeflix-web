@@ -75,6 +75,7 @@ export function SchedulerSettingsCard({
       subtitle={t("admin.settings.scheduler.subtitle")}
       source={detail.source}
       updatedAt={detail.updated_at}
+      dirty={dirty}
       canSave={canSave}
       saving={update.isPending}
       onSave={onSave}

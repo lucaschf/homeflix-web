@@ -88,6 +88,7 @@ export function ScanDedupSettingsCard({ detail, onSuccess, onError }: Props) {
       subtitle={t("admin.settings.scanDedup.subtitle")}
       source={detail.source}
       updatedAt={detail.updated_at}
+      dirty={dirty}
       canSave={canSave}
       saving={update.isPending}
       onSave={onSave}

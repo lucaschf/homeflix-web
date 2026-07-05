@@ -93,6 +93,7 @@ export function StreamingSettingsCard({ detail, onSuccess, onError }: Props) {
       subtitle={t("admin.settings.streaming.subtitle")}
       source={detail.source}
       updatedAt={detail.updated_at}
+      dirty={dirty}
       canSave={canSave}
       saving={update.isPending}
       onSave={onSave}

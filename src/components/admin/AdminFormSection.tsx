@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { whiteAlpha } from "../../theme/tokens";
+import { useFormDensity } from "./FormDensity";
 
 interface AdminFormSectionProps {
   title: ReactNode;
@@ -25,6 +26,11 @@ interface AdminFormSectionProps {
  * soaks up that gutter and collapses the helper text to ~2 lines.
  */
 export function AdminFormSection({ title, helper, children }: AdminFormSectionProps) {
+  // ``compact`` density (settings page) tightens the row rhythm so a
+  // long section fits without scrolling; every other consumer runs
+  // without a provider and keeps the comfortable default.
+  const density = useFormDensity();
+  const py = density === "compact" ? 1.75 : 3;
   return (
     <Box
       sx={{
@@ -36,7 +42,7 @@ export function AdminFormSection({ title, helper, children }: AdminFormSectionPr
         },
         columnGap: 4,
         rowGap: 1.5,
-        py: 3,
+        py,
         borderTop: `1px solid ${whiteAlpha(0.06)}`,
         "&:first-of-type": { borderTop: "none", pt: 1 },
       }}

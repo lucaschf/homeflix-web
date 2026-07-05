@@ -118,6 +118,7 @@ export function CreditsDetectionSettingsCard({ detail, onSuccess, onError }: Pro
       subtitle={t("admin.settings.creditsDetection.subtitle")}
       source={detail.source}
       updatedAt={detail.updated_at}
+      dirty={dirty}
       canSave={canSave}
       saving={update.isPending}
       onSave={onSave}
