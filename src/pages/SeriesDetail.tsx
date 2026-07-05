@@ -4,6 +4,7 @@ import {
   Button,
   Chip,
   CircularProgress,
+  Grid,
   IconButton,
   LinearProgress,
   MenuItem,
@@ -17,7 +18,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag } from "lucide-react";
+import { GalleryHorizontalEnd, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useFlagSeriesEnrichment, useIsInWatchlist, useRelatedSeries, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
@@ -38,17 +39,19 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
 import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, status, whiteAlpha } from "../theme/tokens";
 
-type EpisodeView = "list" | "cards";
+type EpisodeView = "list" | "cards" | "grid";
 
 const EPISODE_VIEW_STORAGE_KEY = "homeflix:episode-view";
 
 function readStoredView(): EpisodeView {
-  // Default to the legacy compact list to preserve the existing UX
-  // for anyone who hasn't explicitly opted into cards. Reading from
-  // localStorage in the initializer keeps the first paint stable —
-  // no flash from cards back to list (or vice versa) on hydration.
-  if (typeof window === "undefined") return "list";
-  return window.localStorage.getItem(EPISODE_VIEW_STORAGE_KEY) === "cards" ? "cards" : "list";
+  // Default to the Prime-Video-style grid — it fills the width and
+  // reads best for browsing a season. A stored preference always
+  // wins. Reading from localStorage in the initializer keeps the
+  // first paint stable — no flash from grid to the stored view on
+  // hydration.
+  if (typeof window === "undefined") return "grid";
+  const stored = window.localStorage.getItem(EPISODE_VIEW_STORAGE_KEY);
+  return stored === "list" || stored === "cards" || stored === "grid" ? stored : "grid";
 }
 
 export function SeriesDetail() {
@@ -313,11 +316,11 @@ export function SeriesDetail() {
         {series.seasons.length > 0 && (
           <>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, mt: 4, mb: 3 }}>
-              {episodeView === "cards" ? (
-                // Apple-TV-style cards keep the season picker compact
-                // so the row of cards has the full width to breathe.
-                // Tabs would either wrap or fight the cards for
-                // horizontal space at narrow widths.
+              {episodeView !== "list" ? (
+                // The card-based views (carousel + grid) keep the
+                // season picker compact so the cards have the full
+                // width to breathe. Tabs would either wrap or fight
+                // the cards for horizontal space at narrow widths.
                 <Select
                   value={selectedSeason}
                   onChange={(e) => setSelectedSeason(Number(e.target.value))}
@@ -370,6 +373,9 @@ export function SeriesDetail() {
                   <List size={16} />
                 </ToggleButton>
                 <ToggleButton value="cards" aria-label={t("detail.viewCards")}>
+                  <GalleryHorizontalEnd size={16} />
+                </ToggleButton>
+                <ToggleButton value="grid" aria-label={t("detail.viewGrid")}>
                   <LayoutGrid size={16} />
                 </ToggleButton>
               </ToggleButtonGroup>
@@ -390,6 +396,25 @@ export function SeriesDetail() {
                   />
                 ))}
               </Box>
+            ) : episodeView === "grid" ? (
+              // Prime-Video-style grid: the same cards laid out in a
+              // responsive MUI Grid that fills the row (no trailing
+              // gap). Each cell owns the column width; the card fills
+              // it via ``fullWidth``.
+              <Grid container spacing={2}>
+                {currentSeason.episodes.map((ep) => (
+                  <Grid key={ep.episode_number} size={{ xs: 6, sm: 4, md: 3, lg: 2.4, xl: 2 }}>
+                    <EpisodeCard
+                      episode={ep}
+                      seriesId={series.id}
+                      seasonNumber={currentSeason.season_number}
+                      seriesPoster={series.poster_path}
+                      onPlay={() => navigate(`/play/episode/${series.id}/${currentSeason.season_number}/${ep.episode_number}`)}
+                      fullWidth
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             ) : (
               <HorizontalScroller>
                 {currentSeason.episodes.map((ep) => (

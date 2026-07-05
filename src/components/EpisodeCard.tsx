@@ -14,6 +14,10 @@ interface EpisodeCardProps {
   seasonNumber: number;
   seriesPoster: string | null;
   onPlay: () => void;
+  /** Fill the parent's width instead of the fixed carousel width.
+   *  Used by the grid view, where a MUI ``Grid`` cell owns the
+   *  responsive column width. */
+  fullWidth?: boolean;
 }
 
 /**
@@ -32,6 +36,7 @@ export function EpisodeCard({
   seasonNumber,
   seriesPoster,
   onPlay,
+  fullWidth = false,
 }: EpisodeCardProps) {
   const { t } = useTranslation();
   const duration = formatDuration(episode.duration_seconds);
@@ -80,8 +85,9 @@ export function EpisodeCard({
         flex: "0 0 auto",
         // 16:9 landscape card, one step smaller than the Continue
         // Watching card (MediaCard variant="landscape") so the episode
-        // list stays denser while sharing the same visual language.
-        width: { xs: 210, sm: 280, md: 320, lg: 380 },
+        // list stays denser while sharing the same visual language. In
+        // the grid view the card fills the MUI Grid cell instead.
+        width: fullWidth ? "100%" : { xs: 210, sm: 280, md: 320, lg: 380 },
         cursor: isAvailable ? "pointer" : "default",
         "&:hover .ep-card-thumb": isAvailable ? { transform: "scale(1.03)" } : {},
         "&:hover .ep-play-overlay": isAvailable ? { opacity: 1 } : {},
