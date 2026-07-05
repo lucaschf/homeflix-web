@@ -45,7 +45,17 @@ export function MediaCard({
   onDismiss,
 }: MediaCardProps) {
   const { t } = useTranslation();
+  // The ``landscape`` card (Continue Watching) is a wide 16:9
+  // backdrop sized ~1.5× the poster width — big enough to read as a
+  // proper thumbnail without matching the poster's full height (which
+  // makes a giant banner). e.g. lg poster 280×420 → landscape 420×236.
+  // ``episode`` keeps the slimmer 16:9 thumbnail at the poster width.
   const aspectRatio = variant === "poster" ? "2/3" : "16/9";
+  const cardWidth = fullWidth
+    ? "100%"
+    : variant === "landscape"
+      ? { xs: 210, sm: 300, md: 360, lg: 420 }
+      : { xs: 140, sm: 200, md: 240, lg: 280 };
   const hasActions = !!mediaId && !!mediaType;
 
   return (
@@ -57,7 +67,7 @@ export function MediaCard({
         minWidth: 0,
         overflow: "hidden",
         borderRadius: 1,
-        width: fullWidth ? "100%" : { xs: 140, sm: 200, md: 240, lg: 280 },
+        width: cardWidth,
         "&:hover .media-image": { transform: "scale(1.05)" },
         "&:hover .card-hover-overlay": { opacity: 1 },
         // On hover: hide text; overlay covers entire card
