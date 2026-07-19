@@ -2420,6 +2420,7 @@ const ADMIN_SETTINGS_SLUG: Record<AdminSettingKey, string> = {
   avatar: "avatar",
   scan_dedup: "scan-dedup",
   subtitle_ocr: "subtitle-ocr",
+  artwork_mirror: "artwork-mirror",
 };
 
 /**

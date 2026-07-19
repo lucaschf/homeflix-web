@@ -1,5 +1,6 @@
 import type {
   AdminSettingDetail,
+  ArtworkMirrorSettings,
   AvatarSettings,
   CreditsDetectionSettings,
   IntroDetectionSettings,
@@ -9,6 +10,7 @@ import type {
   SubtitleOcrSettings,
   ThumbnailBackfillSettings,
 } from "../../../api/types";
+import { ArtworkMirrorSettingsCard } from "./ArtworkMirrorSettingsCard";
 import { AvatarSettingsCard } from "./AvatarSettingsCard";
 import { CreditsDetectionSettingsCard } from "./CreditsDetectionSettingsCard";
 import { IntroDetectionSettingsCard } from "./IntroDetectionSettingsCard";
@@ -86,6 +88,13 @@ export function SettingsCardSwitch({ detail, onSuccess, onError }: Props) {
       return (
         <SubtitleOcrSettingsCard
           detail={{ ...detail, value: detail.value as SubtitleOcrSettings }}
+          {...common}
+        />
+      );
+    case "artwork_mirror":
+      return (
+        <ArtworkMirrorSettingsCard
+          detail={{ ...detail, value: detail.value as ArtworkMirrorSettings }}
           {...common}
         />
       );

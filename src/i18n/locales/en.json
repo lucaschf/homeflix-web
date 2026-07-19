@@ -848,6 +848,38 @@
           "saved": "Thumbnail backfill settings saved."
         }
       },
+      "artworkMirror": {
+        "title": "Artwork mirror",
+        "summary": "Mirrors provider artwork to local storage.",
+        "subtitle": "Periodic job that downloads still-remote poster / backdrop / logo / still images and stores them locally, so the catalog stops depending on the provider CDN.",
+        "enabled": {
+          "label": "Enabled",
+          "helper": "Toggle the mirror loop. The scheduler master switch must also be on for this to tick."
+        },
+        "cadence": {
+          "label": "Cadence",
+          "helper": "Lower batch size spreads network + disk load; higher catches up faster on a large catalog."
+        },
+        "batchSize": {
+          "label": "Batch size"
+        },
+        "interval": {
+          "label": "Interval"
+        },
+        "maxSize": {
+          "label": "Maximum image size",
+          "helper": "Larger downloads are skipped and keep their remote URL for a later retry.",
+          "field": "Max size"
+        },
+        "storage": {
+          "label": "Storage location",
+          "helper": "Mirrored images are stored on the server as flat <hash>.<ext> files. The directory is set at startup via the ARTWORK_STORAGE_DIRECTORY environment variable; changing it requires a restart.",
+          "value": "ARTWORK_STORAGE_DIRECTORY (default: ./artwork)"
+        },
+        "snack": {
+          "saved": "Artwork mirror settings saved."
+        }
+      },
       "introDetection": {
         "title": "Intro detection",
         "summary": "Detects intros to offer Skip Intro.",
