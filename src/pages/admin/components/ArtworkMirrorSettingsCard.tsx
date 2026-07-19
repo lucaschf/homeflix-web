@@ -1,4 +1,4 @@
-import { FormControlLabel, Stack, Switch } from "@mui/material";
+import { FormControlLabel, Stack, Switch, Typography } from "@mui/material";
 import { HardDriveDownload } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -170,6 +170,18 @@ export function ArtworkMirrorSettingsCard({ detail, onSuccess, onError }: Props)
             }
           />
         </Stack>
+      </AdminFormSection>
+
+      <AdminFormSection
+        title={t("admin.settings.artworkMirror.storage.label")}
+        helper={t("admin.settings.artworkMirror.storage.helper")}
+      >
+        <Typography
+          variant="body2"
+          sx={{ fontFamily: "monospace", color: "text.secondary" }}
+        >
+          {t("admin.settings.artworkMirror.storage.value")}
+        </Typography>
       </AdminFormSection>
     </SettingsCardShell>
   );

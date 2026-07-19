@@ -871,6 +871,11 @@
           "helper": "Larger downloads are skipped and keep their remote URL for a later retry.",
           "field": "Max size"
         },
+        "storage": {
+          "label": "Storage location",
+          "helper": "Mirrored images are stored on the server as flat <hash>.<ext> files. The directory is set at startup via the ARTWORK_STORAGE_DIRECTORY environment variable; changing it requires a restart.",
+          "value": "ARTWORK_STORAGE_DIRECTORY (default: ./artwork)"
+        },
         "snack": {
           "saved": "Artwork mirror settings saved."
         }

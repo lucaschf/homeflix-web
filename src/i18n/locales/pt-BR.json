@@ -870,6 +870,11 @@
           "helper": "Downloads maiores são pulados e mantêm a URL remota para uma nova tentativa depois.",
           "field": "Tam. máx."
         },
+        "storage": {
+          "label": "Local de armazenamento",
+          "helper": "As imagens espelhadas são gravadas no servidor como arquivos flat <hash>.<ext>. O diretório é definido no boot pela variável de ambiente ARTWORK_STORAGE_DIRECTORY; alterá-lo exige reiniciar.",
+          "value": "ARTWORK_STORAGE_DIRECTORY (padrão: ./artwork)"
+        },
         "snack": {
           "saved": "Configurações do espelho de artwork salvas."
         }
