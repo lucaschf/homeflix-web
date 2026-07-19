@@ -48,6 +48,34 @@ export function MediaCard({
   const aspectRatio = variant === "poster" ? "2/3" : "16/9";
   const hasActions = !!mediaId && !!mediaType;
 
+  // Off-screen rendering skip for carousel cards. `content-visibility:
+  // auto` lets the browser skip layout/paint for cards outside the
+  // scroll viewport, so appending a full page of ~20 items no longer
+  // paints every card at once mid-scroll. The `contain-intrinsic-size`
+  // placeholder is only used until a card renders once — the `auto`
+  // keyword then remembers the real measured size, so the carousel's
+  // scrollWidth (which drives the arrows and the load-more sentinel)
+  // stays accurate. Fixed-width carousel cards only; `fullWidth` cards
+  // live in grids/detail pages where the container drives the width.
+  //
+  // Heights below are estimates: card width × aspect + ~44px for the
+  // title/year block. Poster (2/3) ≈ width × 1.5; landscape/episode
+  // (16/9) ≈ width × 0.5625.
+  const intrinsicSize =
+    variant === "poster"
+      ? {
+          xs: "auto 140px auto 254px",
+          sm: "auto 200px auto 344px",
+          md: "auto 240px auto 404px",
+          lg: "auto 280px auto 464px",
+        }
+      : {
+          xs: "auto 140px auto 123px",
+          sm: "auto 200px auto 156px",
+          md: "auto 240px auto 179px",
+          lg: "auto 280px auto 202px",
+        };
+
   return (
     <Box
       sx={{
@@ -58,6 +86,9 @@ export function MediaCard({
         overflow: "hidden",
         borderRadius: 1,
         width: fullWidth ? "100%" : { xs: 140, sm: 200, md: 240, lg: 280 },
+        ...(fullWidth
+          ? null
+          : { contentVisibility: "auto", containIntrinsicSize: intrinsicSize }),
         "&:hover .media-image": { transform: "scale(1.05)" },
         "&:hover .card-hover-overlay": { opacity: 1 },
         // On hover: hide text; overlay covers entire card
