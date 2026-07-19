@@ -90,6 +90,13 @@ export function MediaCard({
             className="media-image"
             src={imageUrl}
             alt={title}
+            // Defer offscreen fetches and hand decoding to a
+            // background thread so a freshly-appended page of cards
+            // doesn't block the main thread mid-scroll — the stutter
+            // that only shows up when scrolling into freshly-loaded
+            // items, never when scrolling back over decoded ones.
+            loading="lazy"
+            decoding="async"
             sx={{
               width: "100%",
               height: "100%",
