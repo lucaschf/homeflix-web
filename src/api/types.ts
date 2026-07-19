@@ -606,7 +606,8 @@ export type AdminSettingKey =
   | "streaming"
   | "avatar"
   | "scan_dedup"
-  | "subtitle_ocr";
+  | "subtitle_ocr"
+  | "artwork_mirror";
 
 /** Provenance marker. ``default`` is synthesised by the read endpoint
  *  for buckets that have never been persisted. */
@@ -628,6 +629,14 @@ export interface ThumbnailBackfillSettings {
   batch_size: number;
   interval_minutes: number;
   subdir: string;
+}
+
+/** Artwork mirror bucket — cadence + per-tick batch size + max download size (bytes). */
+export interface ArtworkMirrorSettings {
+  enabled: boolean;
+  batch_size: number;
+  interval_minutes: number;
+  max_bytes: number;
 }
 
 /**
@@ -765,7 +774,8 @@ export type AdminSettingsValue =
   | StreamingSettings
   | AvatarSettings
   | ScanDedupSettings
-  | SubtitleOcrSettings;
+  | SubtitleOcrSettings
+  | ArtworkMirrorSettings;
 
 /**
  * Row returned by ``GET /api/v1/admin/settings``. ``source`` is

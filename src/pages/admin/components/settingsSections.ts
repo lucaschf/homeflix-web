@@ -5,6 +5,7 @@ import {
   Clock,
   Copy,
   Cpu,
+  HardDriveDownload,
   Image as ImageIcon,
   Music,
   UserCircle,
@@ -42,6 +43,7 @@ export const SETTINGS_SECTIONS: SettingsSectionMeta[] = [
   { id: "avatar", icon: UserCircle, scope: "default", i18n: "avatar" },
   { id: "scan_dedup", icon: Copy, scope: "admin", i18n: "scanDedup" },
   { id: "subtitle_ocr", icon: Captions, scope: "admin", i18n: "subtitleOcr" },
+  { id: "artwork_mirror", icon: HardDriveDownload, scope: "admin", i18n: "artworkMirror" },
 ];
 
 export const sectionTitle = (t: TFunction, m: SettingsSectionMeta): string =>

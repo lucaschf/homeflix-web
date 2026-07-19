@@ -847,6 +847,33 @@
           "saved": "Configurações de thumbnail backfill salvas."
         }
       },
+      "artworkMirror": {
+        "title": "Espelho de artwork",
+        "summary": "Espelha as artes do provedor para armazenamento local.",
+        "subtitle": "Job periódico que baixa as imagens ainda remotas (pôster / backdrop / logo / still) e as armazena localmente, para o catálogo parar de depender do CDN do provedor.",
+        "enabled": {
+          "label": "Ativado",
+          "helper": "Liga/desliga o loop de espelhamento. A chave mestra do agendador também precisa estar ligada para rodar."
+        },
+        "cadence": {
+          "label": "Cadência",
+          "helper": "Lotes menores distribuem a carga de rede + disco; maiores alcançam mais rápido num catálogo grande."
+        },
+        "batchSize": {
+          "label": "Tamanho do lote"
+        },
+        "interval": {
+          "label": "Intervalo"
+        },
+        "maxSize": {
+          "label": "Tamanho máximo da imagem",
+          "helper": "Downloads maiores são pulados e mantêm a URL remota para uma nova tentativa depois.",
+          "field": "Tam. máx."
+        },
+        "snack": {
+          "saved": "Configurações do espelho de artwork salvas."
+        }
+      },
       "introDetection": {
         "title": "Intro detection",
         "summary": "Detecta aberturas para oferecer \"Pular Abertura\".",
