@@ -297,8 +297,18 @@
     "skipIntro": "Skip Intro",
     "creditsRolling": "Credits",
     "markedWatched": "Marked as watched",
-    "dismiss": "Dismiss",
-    "backToMovie": "Back to movie"
+    "backToMovie": "Back to movie",
+    "postPlay": {
+      "finished": "Finished",
+      "upNext": "Up next",
+      "nextInCollection": "Next in the collection",
+      "moreLikeThis": "More like this",
+      "moreInGenre": "More {{genre}}",
+      "play": "Play",
+      "watchAgain": "Watch again",
+      "details": "Details",
+      "noSuggestions": "No suggestions available for this title."
+    }
   },
   "admin": {
     "title": "Admin",

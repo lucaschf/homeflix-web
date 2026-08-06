@@ -297,8 +297,18 @@
     "skipIntro": "Pular abertura",
     "creditsRolling": "Créditos",
     "markedWatched": "Marcado como assistido",
-    "dismiss": "Dispensar",
-    "backToMovie": "Voltar ao filme"
+    "backToMovie": "Voltar ao filme",
+    "postPlay": {
+      "finished": "Você terminou",
+      "upNext": "A seguir",
+      "nextInCollection": "Próximo da coleção",
+      "moreLikeThis": "Mais como este",
+      "moreInGenre": "Mais de {{genre}}",
+      "play": "Assistir",
+      "watchAgain": "Assistir de novo",
+      "details": "Detalhes",
+      "noSuggestions": "Sem sugestões disponíveis para este título."
+    }
   },
   "admin": {
     "title": "Admin",

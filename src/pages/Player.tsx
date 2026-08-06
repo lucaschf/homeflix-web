@@ -40,7 +40,10 @@ import {
 import type { FileAudioTrack, FileSubtitleTrack, FileTrackVersion } from "../api/types";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeDrawer } from "../components/EpisodeDrawer";
+import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
+import { TitleLogo } from "../components/TitleLogo";
 import { usePlaybackPreferences } from "../hooks/usePlaybackPreferences";
+import { useMovieUpNext, useSeriesUpNext, type UpNextItem } from "../hooks/useUpNext";
 import {
   findFrame,
   useScrubThumbnails,
@@ -50,6 +53,40 @@ import { neutral, peach } from "../theme/colors";
 import { menuScrim, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
+
+// How long before the end the post-play panel is assumed to be due when
+// the title carries no detected credits marker. Only used to prefetch
+// suggestions early — without a marker the panel itself waits for the
+// native ``ended`` event, so an overshoot costs nothing but a request.
+const NO_MARKER_ONSET_SECONDS = 60;
+
+// Lead time on that estimate for the suggestion queries, so the panel
+// opens already populated rather than on a spinner.
+const UP_NEXT_PREFETCH_SECONDS = 45;
+
+// Post-play stage geometry. The picture is scaled down and pushed
+// aside; the end-of-title caption is a *sibling* of that transform (it
+// must not inherit the scale, or its text would render at 46% size and
+// turn to mush), so it has to reproduce the same rectangle by hand.
+// Both read from these constants — change one and the other follows.
+const STAGE_SCALE = 0.46;
+/** Horizontal shift on desktop, as a fraction of the viewport. */
+const STAGE_SHIFT_X = 0.25;
+/** Vertical shift on phones, where the stage moves up instead. */
+const STAGE_SHIFT_Y = 0.3;
+
+/** Viewport-percentage rect the shrunken picture occupies. */
+const STAGE_RECT = {
+  md: {
+    left: `${(0.5 - STAGE_SHIFT_X - STAGE_SCALE / 2) * 100}%`,
+    top: `${(0.5 - STAGE_SCALE / 2) * 100}%`,
+  },
+  xs: {
+    left: `${(0.5 - STAGE_SCALE / 2) * 100}%`,
+    top: `${(0.5 - STAGE_SHIFT_Y - STAGE_SCALE / 2) * 100}%`,
+  },
+  size: `${STAGE_SCALE * 100}%`,
+} as const;
 
 /** Clean up track names: remove URLs, site names, normalize encoding. */
 function cleanTrackName(name: string): string {
@@ -562,9 +599,14 @@ export function Player() {
   const [playing, setPlaying] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
   const [nextEpCountdown, setNextEpCountdown] = useState<number | null>(null);
-  // Netflix-style post-credits overlay for movies (series reuse the
-  // next-episode overlay instead).
-  const [movieCreditsActive, setMovieCreditsActive] = useState(false);
+  // Post-play surface: the video shrinks aside and a suggestion panel
+  // takes over. Raised for movies and for the last episode of a series —
+  // anything with a next episode keeps the existing countdown overlay.
+  const [postPlayActive, setPostPlayActive] = useState(false);
+  // Whether playback has actually reached the end (as opposed to the
+  // credits merely having started). Only changes the panel's copy, but
+  // it also decides whether "back to the movie" is still meaningful.
+  const [postPlayEnded, setPostPlayEnded] = useState(false);
   // Fires the credits trigger at most once per playback; reset when the
   // media changes.
   const creditsHandledRef = useRef(false);
@@ -700,6 +742,38 @@ export function Player() {
   // still fetching the manifest.
   const knownDuration = isMovie ? (movieData?.duration_seconds ?? 0) : episodeDuration;
   const displayDuration = knownDuration > 0 ? knownDuration : duration;
+
+  // Where the post-play panel is expected to appear: the detected
+  // credits onset, or a minute before the end when the title has no
+  // marker (nothing has scanned it yet, or detection found nothing).
+  const postPlayOnset = currentCredits
+    ? currentCredits.start_seconds
+    : displayDuration > 0
+      ? displayDuration - NO_MARKER_ONSET_SECONDS
+      : 0;
+
+  // Suggestions are fetched a little before the panel is due so it
+  // renders populated instead of spinning. Series that still have an
+  // episode ahead never arm — they hand off to the next-episode
+  // countdown and never show this panel.
+  const upNextArmed =
+    (isMovie || !nextEpisode) &&
+    (postPlayActive ||
+      (hlsReady && postPlayOnset > 0 && currentTime >= postPlayOnset - UP_NEXT_PREFETCH_SECONDS));
+
+  const movieUpNext = useMovieUpNext({
+    movieId: params.movieId ?? "",
+    enabled: isMovie && upNextArmed && !!params.movieId,
+    collectionTmdbId: movieData?.collection?.tmdb_id ?? null,
+    genres: movieData?.genres,
+    year: movieData?.year ?? null,
+  });
+  const seriesUpNext = useSeriesUpNext({
+    seriesId: params.seriesId ?? "",
+    enabled: !isMovie && upNextArmed && !!params.seriesId,
+    genres: seriesData?.genres,
+  });
+  const upNext = isMovie ? movieUpNext : seriesUpNext;
 
   // Quality list pulled from the movie's file variants. `files` is hoisted
   // into a local so the same reference feeds both the memo and the derived
@@ -1343,6 +1417,57 @@ export function Player() {
     seekTo(currentIntro.end_seconds);
   }, [currentIntro, seekTo]);
 
+  // ── Post-play actions ────────────────────────────────────
+
+  const detailPath = isMovie ? `/movie/${params.movieId}` : seriesDetailPath;
+
+  /** Put the video back full-screen and let the credits finish. */
+  const dismissPostPlay = useCallback(() => setPostPlayActive(false), []);
+
+  /**
+   * Restart the title from the top. The credits guard is cleared too,
+   * otherwise the panel would never come back on this second viewing.
+   */
+  const replayFromStart = useCallback(() => {
+    creditsHandledRef.current = false;
+    setPostPlayActive(false);
+    setPostPlayEnded(false);
+    seekTo(0);
+    videoRef.current?.play().catch(() => {});
+  }, [seekTo]);
+
+  /**
+   * Open a suggestion. Movies start playing straight away — the click
+   * on the card *is* the explicit consent this panel deliberately waits
+   * for. Series can't: picking which episode to resume belongs to the
+   * detail page, so they route there instead.
+   */
+  const openSuggestion = useCallback(
+    (item: UpNextItem) => {
+      saveCurrentProgress();
+      navigate(item.mediaType === "movie" ? `/play/movie/${item.id}` : `/series/${item.id}`, {
+        replace: true,
+      });
+    },
+    [navigate, saveCurrentProgress],
+  );
+
+  // The strongest suggestion is promoted out of the grid into the
+  // panel's hero slot — landscape artwork reads better there, and the
+  // grid below renders whatever is left.
+  const postPlayHero = useMemo<PostPlayHero | null>(() => {
+    const top = upNext.items[0];
+    if (!top) return null;
+    return {
+      title: top.title,
+      subtitle: top.subtitle,
+      synopsis: top.synopsis,
+      imageUrl: top.backdropUrl ?? top.posterUrl,
+      ctaLabel: t("player.postPlay.play"),
+      onPlay: () => openSuggestion(top),
+    };
+  }, [upNext.items, openSuggestion, t]);
+
   const cancelNextEpisode = useCallback(() => {
     if (countdownTimerRef.current) {
       clearInterval(countdownTimerRef.current);
@@ -1387,18 +1512,19 @@ export function Player() {
     });
   }, [mediaId, mediaType, displayDuration]);
 
-  // Reset the one-shot credits guard + movie overlay whenever the media
-  // changes (next episode, different movie).
+  // Reset the one-shot credits guard + post-play panel whenever the
+  // media changes (next episode, different movie).
   useEffect(() => {
     creditsHandledRef.current = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMovieCreditsActive(false);
+    setPostPlayActive(false);
+    setPostPlayEnded(false);
   }, [mediaId]);
 
   // Credits trigger: once playback passes the detected credits onset,
-  // mark the title watched and — for series — start the auto-next
-  // countdown (the existing next-episode overlay renders it); for movies
-  // surface the Netflix-style post-credits overlay. Fires once per
+  // mark the title watched and hand off to whichever end-of-title
+  // surface applies — the auto-next countdown when another episode is
+  // queued up, otherwise the post-play suggestion panel. Fires once per
   // playback (``creditsHandledRef``). When there is no credits marker
   // this never runs and the native ``ended`` event remains the fallback.
   useEffect(() => {
@@ -1406,25 +1532,36 @@ export function Player() {
     if (currentTime < currentCredits.start_seconds) return;
     creditsHandledRef.current = true;
     markWatched();
-    if (isMovie) {
+    if (isMovie || !nextEpisode) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMovieCreditsActive(true);
+      setPostPlayActive(true);
     } else {
       startNextEpisodeCountdown();
     }
-  }, [currentTime, currentCredits, isMovie, markWatched, startNextEpisodeCountdown]);
+  }, [
+    currentTime,
+    currentCredits,
+    isMovie,
+    markWatched,
+    nextEpisode,
+    startNextEpisodeCountdown,
+  ]);
 
-  // Start countdown when episode ends (fallback when no credits marker
-  // fired, or when the credits countdown was cancelled). ``start...``
-  // bails if a countdown is already running.
+  // End of playback. With another episode queued this starts the
+  // countdown (the fallback path when no credits marker fired, or when
+  // the credits countdown was cancelled — ``start...`` bails if one is
+  // already running). Otherwise the post-play panel takes the screen,
+  // which is also what keeps a finished movie from parking the viewer
+  // on a frozen black frame.
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || isMovie) return;
+    if (!video) return;
 
     const onEnded = () => {
       saveCurrentProgress();
-      if (!nextEpisode) {
-        navigate(seriesDetailPath, { replace: true });
+      if (isMovie || !nextEpisode) {
+        setPostPlayEnded(true);
+        setPostPlayActive(true);
         return;
       }
       startNextEpisodeCountdown();
@@ -1432,7 +1569,7 @@ export function Player() {
 
     video.addEventListener("ended", onEnded);
     return () => video.removeEventListener("ended", onEnded);
-  }, [isMovie, nextEpisode, navigate, saveCurrentProgress, seriesDetailPath, startNextEpisodeCountdown]);
+  }, [isMovie, nextEpisode, saveCurrentProgress, startNextEpisodeCountdown]);
 
   // Navigate when countdown reaches 0. The state-in-effect lint is
   // unavoidable here: `goToNextEpisode` calls `navigate(...)` AND
@@ -1565,7 +1702,13 @@ export function Player() {
           showAction(<Subtitles size={28} />);
           break;
         case "escape":
-          if (isFullscreen) document.exitFullscreen();
+          // While the post-play panel is up, Escape closes it and
+          // returns to the credits rather than leaving the player —
+          // the panel is the topmost surface, so it's what the key
+          // should dismiss. Once playback has ended there's nothing to
+          // return to and the usual exit applies.
+          if (postPlayActive && !postPlayEnded) dismissPostPlay();
+          else if (isFullscreen) document.exitFullscreen();
           else navigate(-1);
           break;
       }
@@ -1576,8 +1719,11 @@ export function Player() {
   }, [
     containerEl,
     displayDuration,
+    dismissPostPlay,
     isFullscreen,
     navigate,
+    postPlayActive,
+    postPlayEnded,
     resetHideTimer,
     showAction,
     toggleFullscreen,
@@ -1686,6 +1832,20 @@ export function Player() {
 
   const subtitlesActive = currentSubtitleTrack >= 0;
 
+  // Key art for the end-of-title still. A finished HLS stream leaves the
+  // element parked on a black frame, which reads as a dead player rather
+  // than a finished film — the title's own backdrop fills the stage
+  // instead. Only used once playback has actually ended; while the
+  // credits roll the moving picture is still the point.
+  const endStillUrl = (isMovie ? movieData?.backdrop_path : seriesData?.backdrop_path) ?? null;
+
+  // Metadata line under the logo on that still. Movies get the release
+  // year and their headline genres; episodes get the SxxExx line the
+  // seek-bar header already composes.
+  const endStillCaption = isMovie
+    ? [movieData?.year, movieData?.genres?.slice(0, 3).join(" · ")].filter(Boolean).join(" · ")
+    : heading.subtitle;
+
   return (
     <Box
       ref={setContainerEl}
@@ -1696,15 +1856,108 @@ export function Player() {
         inset: 0,
         zIndex: 9999,
         bgcolor: "common.black",
-        cursor: showControls ? "default" : "none",
+        // The panel is an affordance the user is meant to point at, so
+        // the cursor stays visible while it's up even if the controls
+        // have auto-hidden.
+        cursor: showControls || postPlayActive ? "default" : "none",
         userSelect: "none",
         WebkitUserSelect: "none",
       }}
     >
-      <video
-        ref={videoRef}
-        style={{ width: "100%", height: "100%", objectFit: "contain" }}
-      />
+      {/* Video stage. On post-play the picture scales down and slides
+          aside — left column on desktop, top half on phones — so the
+          credits keep running next to the suggestion panel instead of
+          being replaced by it. The wrapper carries the transform so the
+          <video> element itself is never re-mounted (that would tear
+          down the HLS session mid-transition). */}
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          transformOrigin: "center",
+          transition: "transform 480ms cubic-bezier(0.4, 0, 0.2, 1)",
+          transform: postPlayActive
+            ? {
+                xs: `translateY(-${STAGE_SHIFT_Y * 100}%) scale(${STAGE_SCALE})`,
+                md: `translateX(-${STAGE_SHIFT_X * 100}%) scale(${STAGE_SCALE})`,
+              }
+            : "none",
+          "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+        }}
+      >
+        <video
+          ref={videoRef}
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+        />
+
+        {/* End-of-title still — see ``endStillUrl``. Lives inside the
+            transform wrapper so it lands exactly where the picture was,
+            and fades in rather than cutting, which would read as a
+            glitch right after the last frame. */}
+        {postPlayEnded && endStillUrl && (
+          <Box
+            component="img"
+            src={endStillUrl}
+            alt=""
+            sx={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              animation: "postplay-still 800ms ease-out both",
+              "@keyframes postplay-still": { from: { opacity: 0 }, to: { opacity: 1 } },
+              "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+            }}
+          />
+        )}
+      </Box>
+
+      {/* Title block over the end-of-title still. Deliberately a sibling
+          of the transform wrapper rather than a child: inheriting the
+          0.46 scale would render the caption at roughly 6px. It instead
+          reproduces the stage rectangle from the shared constants and
+          draws at full size. */}
+      {postPlayEnded && (
+        <Box
+          sx={{
+            position: "absolute",
+            left: { xs: STAGE_RECT.xs.left, md: STAGE_RECT.md.left },
+            top: { xs: STAGE_RECT.xs.top, md: STAGE_RECT.md.top },
+            width: STAGE_RECT.size,
+            height: STAGE_RECT.size,
+            zIndex: 13,
+            pointerEvents: "none",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-end",
+            p: { xs: 2, md: 3 },
+            // Foot scrim so the logo reads over a bright backdrop.
+            background: `linear-gradient(to top, ${scrim(0.85)} 0%, ${scrim(0.4)} 28%, transparent 58%)`,
+            animation: "postplay-caption 800ms ease-out both",
+            "@keyframes postplay-caption": { from: { opacity: 0 }, to: { opacity: 1 } },
+            "@media (prefers-reduced-motion: reduce)": { animation: "none" },
+          }}
+        >
+          <TitleLogo
+            logoUrl={isMovie ? movieData?.logo_path : seriesData?.logo_path}
+            title={heading.title}
+            sx={{ mb: endStillCaption ? 1 : 0 }}
+          />
+          {endStillCaption && (
+            <Typography
+              sx={{
+                color: "overlayText.secondary",
+                fontSize: "0.8125rem",
+                fontWeight: 500,
+                letterSpacing: "0.02em",
+              }}
+            >
+              {endStillCaption}
+            </Typography>
+          )}
+        </Box>
+      )}
 
       {/* Loading overlay while HLS is preparing or buffering */}
       {(!hlsReady || buffering) && (
@@ -1768,7 +2021,10 @@ export function Player() {
         </Box>
       )}
 
-      {/* Controls Overlay */}
+      {/* Controls Overlay. Suppressed while the post-play panel is up:
+          the transport belongs to a full-screen picture, and leaving a
+          full-width seek bar under a half-width video reads as a
+          leftover. Dismissing the panel brings it straight back. */}
       <Box
         sx={{
           position: "absolute",
@@ -1776,23 +2032,11 @@ export function Player() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          opacity: showControls ? 1 : 0,
+          opacity: showControls && !postPlayActive ? 1 : 0,
           transition: "opacity 300ms",
-          pointerEvents: showControls ? "auto" : "none",
+          pointerEvents: showControls && !postPlayActive ? "auto" : "none",
         }}
       >
-        {/* Top Bar */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, p: { xs: 1, md: 2 }, background: `linear-gradient(to bottom, ${scrim(0.7)}, transparent)` }}>
-          <IconButton onClick={() => navigate(-1)} sx={{ color: "overlayText.primary" }}>
-            <ChevronLeft size={28} />
-          </IconButton>
-          {movieData?.content_rating && (
-            <Box sx={{ opacity: showBadge ? 1 : 0, transition: "opacity 500ms" }}>
-              <ContentRatingBadge rating={movieData.content_rating} size={32} />
-            </Box>
-          )}
-        </Box>
-
         {/* Click row split into three zones. Single tap in any zone
             toggles play/pause; double tap on the left seeks back, on
             the right seeks forward, and in the center toggles
@@ -2014,6 +2258,39 @@ export function Player() {
         </Box>
       </Box>
 
+      {/* Top bar. Deliberately NOT part of the controls overlay: back is
+          a way out of the player, not a transport control, and the
+          post-play panel suppresses the transport. Folding it in there
+          left the end screen with no visible exit. Over the panel it
+          stops at the stage edge so its scrim doesn't bleed across the
+          suggestions. */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: postPlayActive ? { xs: 0, md: "52%" } : 0,
+          zIndex: 13,
+          display: "flex",
+          alignItems: "center",
+          gap: 0.5,
+          p: { xs: 1, md: 2 },
+          background: `linear-gradient(to bottom, ${scrim(0.7)}, transparent)`,
+          opacity: showControls || postPlayActive ? 1 : 0,
+          transition: "opacity 300ms",
+          pointerEvents: showControls || postPlayActive ? "auto" : "none",
+        }}
+      >
+        <IconButton onClick={() => navigate(-1)} sx={{ color: "overlayText.primary" }}>
+          <ChevronLeft size={28} />
+        </IconButton>
+        {movieData?.content_rating && (
+          <Box sx={{ opacity: showBadge ? 1 : 0, transition: "opacity 500ms" }}>
+            <ContentRatingBadge rating={movieData.content_rating} size={32} />
+          </Box>
+        )}
+      </Box>
+
       {/* Skip Intro Overlay — shown only while playback is inside the
           intro window. Anchored to the right edge of the
           remaining-time label above the seek bar so the button shares
@@ -2128,67 +2405,23 @@ export function Player() {
         </Box>
       )}
 
-      {/* Movie post-credits overlay (Netflix-style) — once the credits
-          roll the movie is marked watched; offer to head back or keep
-          watching. Dismissible so the user can sit through the credits. */}
-      {isMovie && movieCreditsActive && (
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: { xs: 80, md: 120 },
-            right: { xs: 16, md: 48 },
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            bgcolor: scrim(0.85),
-            backdropFilter: "blur(8px)",
-            borderRadius: 2,
-            p: { xs: 1.5, md: 2 },
-            zIndex: 10,
-            opacity: showControls ? 1 : 0,
-            transition: "opacity 300ms",
-            pointerEvents: showControls ? "auto" : "none",
-          }}
-        >
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
-              {t("player.creditsRolling")}
-            </Typography>
-            <Typography variant="body2" color="overlayText.primary" fontWeight={600} noWrap>
-              {t("player.markedWatched")}
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => setMovieCreditsActive(false)}
-            sx={{
-              color: "text.secondary",
-              borderColor: whiteAlpha(0.3),
-              "&:hover": { borderColor: whiteAlpha(0.5) },
-              minWidth: 0,
-              px: 1.5,
-              py: 1.2,
-            }}
-          >
-            {t("player.dismiss")}
-          </Button>
-          <Button
-            variant="contained"
-            size="small"
-            onClick={() => navigate(`/movie/${params.movieId}`, { replace: true })}
-            sx={{
-              minWidth: 0,
-              px: 1.5,
-              py: 1.2,
-              bgcolor: whiteAlpha(1),
-              color: neutral[900],
-              "&:hover": { bgcolor: whiteAlpha(0.85) },
-            }}
-          >
-            {t("player.backToMovie")}
-          </Button>
-        </Box>
+      {/* Post-play panel — what replaces the dead end at the end of a
+          title. Raised for movies and for the last episode of a series;
+          anything with a next episode keeps the countdown overlay
+          above. Nothing here auto-advances: every suggestion is a
+          click. */}
+      {postPlayActive && (
+        <PostPlayPanel
+          ended={postPlayEnded}
+          hero={postPlayHero}
+          items={upNext.items}
+          genreName={upNext.genreName}
+          loading={upNext.isLoading}
+          onSelect={openSuggestion}
+          onDismiss={postPlayEnded ? null : dismissPostPlay}
+          onReplay={replayFromStart}
+          onExit={() => navigate(detailPath, { replace: true })}
+        />
       )}
 
       {/* Episode Drawer */}
