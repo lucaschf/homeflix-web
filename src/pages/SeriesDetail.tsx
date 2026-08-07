@@ -27,11 +27,11 @@ import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailT
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { CastCard } from "../components/CastCard";
-import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeCard } from "../components/EpisodeCard";
 import { HorizontalScroller } from "../components/HorizontalScroller";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { MetaLine } from "../components/MetaLine";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { WatchlistIconButton } from "../components/WatchlistIconButton";
@@ -146,7 +146,7 @@ export function SeriesDetail() {
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: `linear-gradient(to right, ${panelScrim(0.97)} 0%, ${panelScrim(0.75)} 50%, ${panelScrim(0.3)} 100%)`, md: `linear-gradient(to right, ${panelScrim(0.95)} 0%, ${panelScrim(0.6)} 40%, transparent 70%)` } }} />
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(1)} 35%, ${panelScrim(0.85)} 45%, ${panelScrim(0.5)} 58%, ${panelScrim(0.2)} 72%, transparent 85%)`, md: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(1)} 30%, ${panelScrim(0.85)} 40%, ${panelScrim(0.5)} 55%, ${panelScrim(0.15)} 70%, transparent 80%)` } }} />
 
-        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
+        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
           {series.poster_path && !series.logo_path && (
             // See ``MovieDetail`` — poster is only shown when no
             // title-logo is available, otherwise the two compete for
@@ -168,19 +168,14 @@ export function SeriesDetail() {
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
             <TitleLogo logoUrl={series.logo_path} title={series.title} />
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5, flexWrap: "wrap" }}>
-              {series.content_rating && <ContentRatingBadge rating={series.content_rating} size={24} />}
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>
-                {series.start_year}{series.end_year ? `–${series.end_year}` : "–"}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: "0.85rem", md: "0.95rem" } }}>
-                {t("common.seasons", { count: series.season_count })}
-              </Typography>
-              {series.genres.slice(0, 3).map((g) => (
-                <Chip key={g} label={g} size="small" sx={{ bgcolor: whiteAlpha(0.1), color: "text.secondary", height: 22, fontSize: "0.75rem" }} />
-              ))}
-            </Box>
+            <MetaLine
+              contentRating={series.content_rating}
+              items={[
+                `${series.start_year}${series.end_year ? `–${series.end_year}` : "–"}`,
+                t("common.seasons", { count: series.season_count }),
+              ]}
+              genres={series.genres}
+            />
 
             <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
               <Button
@@ -241,12 +236,13 @@ export function SeriesDetail() {
                           onClick={handleFlagEnrichment}
                           disabled={flagEnrichment.isPending || flagged}
                           sx={{
-                            color: flagged ? status.warn.fg : "text.secondary",
-                            border: `1px solid ${whiteAlpha(0.2)}`,
-                            borderRadius: 1.5,
-                            width: 38,
-                            height: 38,
-                            "&:hover": { color: "text.primary", borderColor: whiteAlpha(0.4) },
+                            color: flagged ? status.warn.fg : "text.primary",
+                            bgcolor: whiteAlpha(0.08),
+                            border: `1px solid ${whiteAlpha(0.12)}`,
+                            borderRadius: 1,
+                            width: ACTION_BAR_HEIGHT,
+                            height: ACTION_BAR_HEIGHT,
+                            "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
                             "&.Mui-disabled": {
                               color: flagged ? status.warn.fg : "text.disabled",
                             },
@@ -270,7 +266,7 @@ export function SeriesDetail() {
 
       {/* Body — ``zIndex: 1`` keeps content above the hero's bleed
         layers (which extend to the viewport bottom). */}
-      <Box sx={{ position: "relative", zIndex: 1, px: { xs: 2, sm: 3, md: 6 }, pt: { xs: 1, md: 1 }, pb: { xs: 3, md: 4 } }}>
+      <Box sx={{ position: "relative", zIndex: 1, px: { xs: 3, md: 6 }, pt: { xs: 1, md: 1 }, pb: { xs: 3, md: 4 } }}>
         {series.synopsis && (
           <>
             <Typography
@@ -294,19 +290,16 @@ export function SeriesDetail() {
             </Typography>
             {synopsisOverflows && (
               <Typography
-                variant="body2"
+                variant="eyebrow"
                 onClick={() => setExpanded(!expanded)}
                 sx={{
                   color: "primary.main",
                   cursor: "pointer",
                   mt: 1.5,
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                  "&:hover": { textDecoration: "underline" },
+                  "&:hover": { opacity: 0.8 },
                 }}
               >
-                {expanded ? t("detail.lessDetails") : t("detail.moreDetails")}
+                {expanded ? `← ${t("detail.lessDetails")}` : `${t("detail.moreDetails")} →`}
               </Typography>
             )}
           </>
@@ -446,7 +439,7 @@ export function SeriesDetail() {
           // padding and push the first card inwards. ``zIndex: 1``
           // keeps the cards above the hero's bleed layers.
           <Box sx={{ position: "relative", zIndex: 1, pb: { xs: 3, md: 4 } }}>
-            <MediaCarousel title={t("detail.cast")}>
+            <MediaCarousel title={t("detail.cast")} headingVariant="h3">
               {cast.map((member, idx) => (
                 <CastCard
                   // Prefer the TMDB person id when present — stable
@@ -471,7 +464,7 @@ export function SeriesDetail() {
         // those cases (no empty header). Sits OUTSIDE the body's
         // padded box for the same alignment reason as the cast row.
         <Box sx={{ position: "relative", zIndex: 1 }}>
-          <MediaCarousel title={t("detail.related")}>
+          <MediaCarousel title={t("detail.related")} headingVariant="h3">
             {relatedSeries.map((s) => (
               <MediaCard
                 key={s.id}

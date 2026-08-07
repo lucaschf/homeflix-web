@@ -4,18 +4,31 @@ import { ContentRatingBadge } from "./ContentRatingBadge";
 
 interface MetaLineProps {
   contentRating: string | null;
-  year: number | null;
-  duration: string | null;
+  /**
+   * Primary facts shown pipe-separated after the rating badge — e.g.
+   * ``[year, duration]`` for a movie or ``[yearRange, seasonCount]``
+   * for a series. Falsy entries are dropped so callers can pass
+   * optional fields inline.
+   */
+  items: (string | number | null | undefined)[];
   genres: string[];
 }
 
-export function MetaLine({ contentRating, year, duration, genres }: MetaLineProps) {
+/**
+ * The metadata strip under a detail-page title (rating badge, a few
+ * pipe-separated facts, the lead genre inline and the next genre as a
+ * hairline pill). Shared by ``MovieDetail`` and ``SeriesDetail`` so
+ * both pages read with one visual language instead of each hand-rolling
+ * its own separators and chips.
+ */
+export function MetaLine({ contentRating, items, genres }: MetaLineProps) {
   const primaryGenre = genres[0];
   const secondaryGenre = genres[1];
   const tokens: { key: string; node: React.ReactNode }[] = [];
 
-  if (year) tokens.push({ key: "year", node: String(year) });
-  if (duration) tokens.push({ key: "duration", node: duration });
+  items
+    .filter((item): item is string | number => item != null && item !== "")
+    .forEach((item, idx) => tokens.push({ key: `item-${idx}`, node: String(item) }));
   if (primaryGenre) tokens.push({ key: "genre", node: primaryGenre });
 
   return (
