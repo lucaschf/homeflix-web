@@ -177,6 +177,7 @@
   },
   "common": {
     "undo": "Undo",
+    "retry": "Try again",
     "seasons": "{{count}} Season",
     "seasons_other": "{{count}} Seasons",
     "episodes": "{{count}} Episode",
@@ -1894,6 +1895,8 @@
     "customListsEmptyHint": "Create lists to organize your movies and series",
     "addSeries": "+ Add Series",
     "listItemsEmpty": "This list is empty",
+    "errorTitle": "Couldn't load your lists",
+    "errorBody": "Check your connection and try again.",
     "listItemsEmptyHint": "Use the search above to add items, or add them from the media page",
     "backToLists": "Back to Lists",
     "settings": "Settings",

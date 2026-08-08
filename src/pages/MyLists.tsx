@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import {
+  AlertTriangle,
   Bookmark,
   ChevronRight,
   GripVertical,
@@ -23,6 +24,7 @@ import {
   Pencil,
   Play,
   Plus,
+  RotateCcw,
   Shuffle,
   X,
 } from "lucide-react";
@@ -99,7 +101,7 @@ function WatchlistTab() {
   const { t } = useTranslation();
   const nav = useMediaNav();
   const toggleWatchlist = useToggleWatchlist();
-  const { data: items, isLoading } = useWatchlist();
+  const { data: items, isLoading, isError, refetch } = useWatchlist();
   const [sort, setSort] = useState<QueueSort>("recent");
 
   const sorted = useMemo(() => {
@@ -112,6 +114,7 @@ function WatchlistTab() {
   }, [items, sort]);
 
   if (isLoading) return <CenteredSpinner />;
+  if (isError) return <ListErrorState onRetry={() => refetch()} />;
 
   if (!items?.length) {
     return (
@@ -203,10 +206,11 @@ type ActiveDialog =
 
 function CustomListsTab({ onSelectList }: { onSelectList: (list: CustomListOutput) => void }) {
   const { t } = useTranslation();
-  const { data: lists, isLoading } = useCustomLists();
+  const { data: lists, isLoading, isError, refetch } = useCustomLists();
   const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
 
   if (isLoading) return <CenteredSpinner />;
+  if (isError) return <ListErrorState onRetry={() => refetch()} />;
 
   const count = lists?.length ?? 0;
 
@@ -333,7 +337,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const nav = useMediaNav();
   const { data: lists } = useCustomLists();
   const current = lists?.find((l) => l.id === list.id) ?? list;
-  const { data: items, isLoading } = useCustomListItems(list.id);
+  const { data: items, isLoading, isError, refetch } = useCustomListItems(list.id);
   const removeItem = useRemoveItemFromCustomList();
   const reorder = useReorderCustomListItems();
 
@@ -552,7 +556,9 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
         </Box>
       </Box>
 
-      {isLoading ? (
+      {isError ? (
+        <ListErrorState onRetry={() => refetch()} />
+      ) : isLoading ? (
         <CenteredSpinner />
       ) : ordered.length ? (
         view === "grid" ? (
@@ -964,6 +970,29 @@ function CenteredSpinner() {
     <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
       <CircularProgress color="primary" />
     </Box>
+  );
+}
+
+/** Error state for a list query that failed, with a retry. */
+function ListErrorState({ onRetry }: { onRetry: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <FancyEmpty
+      icon={AlertTriangle}
+      motif="orbit"
+      title={t("lists.errorTitle")}
+      body={t("lists.errorBody")}
+      primary={
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RotateCcw size={14} />}
+          onClick={onRetry}
+        >
+          {t("common.retry")}
+        </Button>
+      }
+    />
   );
 }
 
