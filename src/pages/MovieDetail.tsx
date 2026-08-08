@@ -4,7 +4,6 @@ import {
   Button,
   IconButton,
   Snackbar,
-  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
@@ -32,6 +31,7 @@ import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { CollectionChip } from "../components/CollectionChip";
 import { MetaLine } from "../components/MetaLine";
+import { OverflowMenu, type OverflowAction } from "../components/OverflowMenu";
 import { QualityRail } from "../components/QualityRail";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
@@ -315,91 +315,44 @@ export function MovieDetail() {
                   <RefreshCw size={18} />
                 </IconButton>
               )}
-              {isAdmin && movie.tmdb_id && (
-                // Admin-only: report a wrong enrichment so the movie
-                // re-enters the needs-review queue for relinking. Shown
-                // only once the movie is enriched (has a tmdb_id) —
-                // un-enriched movies use the enrich button above. The
-                // flagged appearance persists across reloads via the
-                // detail payload's ``needs_enrichment_review``; the
-                // session mutation state covers the optimistic gap
-                // before the invalidated query refetches.
+              {isAdmin &&
                 (() => {
+                  // Admin-only actions folded into a "⋯" menu so the
+                  // main action bar keeps just Watch / Trailer. The flag
+                  // action only applies to an enriched movie (has a
+                  // tmdb_id); un-enriched movies use the enrich button
+                  // above instead. Flagged / has-credits states tint the
+                  // corresponding item.
                   const flagged = movie.needs_enrichment_review || flagEnrichment.isSuccess;
-                  return (
-                    <Tooltip
-                      title={
-                        flagged
-                          ? t("detail.flagEnrichment.flagged")
-                          : t("detail.flagEnrichment.tooltip")
-                      }
-                      arrow
-                    >
-                      {/* span wrapper so the tooltip still works while
-                          the button is disabled (flagged state) */}
-                      <span>
-                        <IconButton
-                          onClick={handleFlagEnrichment}
-                          disabled={flagEnrichment.isPending || flagged}
-                          sx={{
-                            color: flagged ? status.warn.fg : "text.primary",
-                            bgcolor: whiteAlpha(0.08),
-                            border: `1px solid ${whiteAlpha(0.12)}`,
-                            borderRadius: 1,
-                            width: 46,
-                            height: 46,
-                            "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
-                            "&.Mui-disabled": {
-                              color: flagged ? status.warn.fg : "text.disabled",
-                            },
-                          }}
-                        >
-                          <Flag size={18} fill={flagged ? "currentColor" : "none"} />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  );
-                })()
-              )}
-              {isAdmin && (
-                <Tooltip title={t("admin.credits.editButton")} arrow>
-                  <IconButton
-                    onClick={() => setCreditsOpen(true)}
-                    sx={{
-                      color: movie.credits ? status.warn.fg : "text.primary",
-                      bgcolor: whiteAlpha(0.08),
-                      border: `1px solid ${whiteAlpha(0.12)}`,
-                      borderRadius: 1,
-                      width: 46,
-                      height: 46,
-                      "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
-                    }}
-                  >
-                    <ScrollText size={18} />
-                  </IconButton>
-                </Tooltip>
-              )}
-              {isAdmin && (
-                <Tooltip title={t("detail.subtitleOcr.tooltip")} arrow>
-                  <span>
-                    <IconButton
-                      onClick={handleTriggerOcr}
-                      disabled={triggerOcr.isPending}
-                      sx={{
-                        color: "text.primary",
-                        bgcolor: whiteAlpha(0.08),
-                        border: `1px solid ${whiteAlpha(0.12)}`,
-                        borderRadius: 1,
-                        width: 46,
-                        height: 46,
-                        "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
-                      }}
-                    >
-                      <Captions size={18} />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-              )}
+                  const actions: OverflowAction[] = [];
+                  if (movie.tmdb_id) {
+                    actions.push({
+                      key: "flag",
+                      icon: <Flag size={16} fill={flagged ? "currentColor" : "none"} />,
+                      label: flagged
+                        ? t("detail.flagEnrichment.flagged")
+                        : t("detail.flagEnrichment.tooltip"),
+                      onClick: handleFlagEnrichment,
+                      disabled: flagEnrichment.isPending || flagged,
+                      active: flagged,
+                    });
+                  }
+                  actions.push({
+                    key: "credits",
+                    icon: <ScrollText size={16} />,
+                    label: t("admin.credits.editButton"),
+                    onClick: () => setCreditsOpen(true),
+                    active: !!movie.credits,
+                  });
+                  actions.push({
+                    key: "ocr",
+                    icon: <Captions size={16} />,
+                    label: t("detail.subtitleOcr.tooltip"),
+                    onClick: handleTriggerOcr,
+                    disabled: triggerOcr.isPending,
+                  });
+                  return <OverflowMenu actions={actions} ariaLabel={t("detail.moreActions")} />;
+                })()}
             </Box>
           </Box>
         </Box>

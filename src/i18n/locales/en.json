@@ -185,6 +185,7 @@
   },
   "detail": {
     "trailer": "Trailer",
+    "moreActions": "More actions",
     "flagEnrichment": {
       "tooltip": "Flag enrichment as wrong",
       "flagged": "Flagged for review",
