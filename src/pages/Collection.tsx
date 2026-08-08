@@ -3,7 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  CircularProgress,
   Grid,
   Stack,
   Typography,
@@ -20,6 +19,7 @@ import {
   useWatchlist,
 } from "../api/hooks";
 import type { CollectionPart } from "../api/types";
+import { DetailSkeleton } from "../components/DetailSkeleton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { fontFamily, fontSize, inkAlpha, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { neutral } from "../theme/colors";
@@ -172,18 +172,7 @@ export function Collection() {
   ]);
 
   if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "60vh",
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Box>
-    );
+    return <DetailSkeleton />;
   }
 
   if (isError || !collection) {

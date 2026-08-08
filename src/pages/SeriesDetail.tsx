@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Grid,
   IconButton,
   LinearProgress,
@@ -27,6 +26,7 @@ import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailT
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { CastCard } from "../components/CastCard";
+import { DetailSkeleton } from "../components/DetailSkeleton";
 import { EpisodeCard } from "../components/EpisodeCard";
 import { HorizontalScroller } from "../components/HorizontalScroller";
 import { MediaCard } from "../components/MediaCard";
@@ -102,11 +102,7 @@ export function SeriesDetail() {
   };
 
   if (isLoading || !series) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress color="primary" />
-      </Box>
-    );
+    return <DetailSkeleton />;
   }
 
   const currentSeason = series.seasons[selectedSeason];

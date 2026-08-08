@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMoviesByActor, usePerson } from "../api/hooks";
 import type { MovieSummary, PersonBio } from "../api/types";
+import { DetailSkeleton } from "../components/DetailSkeleton";
 import { MediaCard } from "../components/MediaCard";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { fontFamily, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
@@ -93,11 +94,7 @@ export function Actor() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (isLoading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress color="primary" />
-      </Box>
-    );
+    return <DetailSkeleton variant="person" />;
   }
 
   return (
