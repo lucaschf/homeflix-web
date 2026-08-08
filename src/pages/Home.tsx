@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import { Film, FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -16,7 +16,9 @@ import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
+import { useToast } from "../components/ToastProvider";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import type { ContinueWatchingItem } from "../api/types";
 import { peach } from "../theme/colors";
 import { formatDuration } from "../utils/duration";
 import { findResumeEpisode } from "../utils/resumeEpisode";
@@ -43,6 +45,59 @@ export function Home() {
   const clearSeriesProgress = useClearSeriesProgress();
   const { data: featured } = useFeatured("all");
   const { data: recentlyAdded } = useRecentlyAddedCatalog();
+  const { showToast } = useToast();
+
+  // Continue Watching dismiss with an undo window. The X optimistically
+  // hides the item and starts a timer; the destructive delete only fires
+  // once the timer elapses, so "Desfazer" just cancels it — important
+  // because dismissing a series wipes ALL of its episode progress.
+  const UNDO_WINDOW_MS = 5000;
+  const [hiddenKeys, setHiddenKeys] = useState<Set<string>>(new Set());
+  const dismissTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(
+    // Cancel any still-pending deletes on unmount so navigating away
+    // during the undo window never deletes progress behind the user's
+    // back — they can dismiss again next time.
+    () => () => dismissTimers.current.forEach((timer) => clearTimeout(timer)),
+    [],
+  );
+
+  const handleDismiss = (item: ContinueWatchingItem) => {
+    const key = item.media_id;
+    setHiddenKeys((prev) => new Set(prev).add(key));
+    const timer = setTimeout(() => {
+      dismissTimers.current.delete(key);
+      if (item.media_type === "episode" && item.series_id) {
+        clearSeriesProgress.mutate(item.series_id);
+      } else {
+        clearProgress.mutate(item.media_id);
+      }
+    }, UNDO_WINDOW_MS);
+    dismissTimers.current.set(key, timer);
+    showToast(t("home.removedFromContinue"), {
+      durationMs: UNDO_WINDOW_MS,
+      action: {
+        label: t("common.undo"),
+        onClick: () => {
+          const pending = dismissTimers.current.get(key);
+          if (pending) {
+            clearTimeout(pending);
+            dismissTimers.current.delete(key);
+          }
+          setHiddenKeys((prev) => {
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+          });
+        },
+      },
+    });
+  };
+
+  const visibleContinueWatching = (continueWatching ?? []).filter(
+    (item) => !hiddenKeys.has(item.media_id),
+  );
 
   // ``hasContent`` only flips to false once the genres query has
   // resolved with an empty list — while it's still loading we want
@@ -119,9 +174,9 @@ export function Home() {
             zero items. */}
         {continueWatching === undefined ? (
           <CarouselSkeleton title={t("home.continueWatching")} variant="landscape" />
-        ) : continueWatching.length > 0 ? (
+        ) : visibleContinueWatching.length > 0 ? (
           <MediaCarousel title={t("home.continueWatching")}>
-            {continueWatching.map((item) => (
+            {visibleContinueWatching.map((item) => (
               <MediaCard
                 key={item.media_id}
                 title={
@@ -136,13 +191,7 @@ export function Home() {
                 progress={item.percentage}
                 progressLabel={formatRemaining(item.position_seconds, item.duration_seconds)}
                 variant="landscape"
-                onDismiss={() => {
-                  if (item.media_type === "episode" && item.series_id) {
-                    clearSeriesProgress.mutate(item.series_id);
-                  } else {
-                    clearProgress.mutate(item.media_id);
-                  }
-                }}
+                onDismiss={() => handleDismiss(item)}
                 onClick={() => {
                   if (item.media_type === "movie") {
                     navigate(`/play/movie/${item.media_id}`);
