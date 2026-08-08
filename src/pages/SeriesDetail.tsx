@@ -17,7 +17,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { GalleryHorizontalEnd, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag } from "lucide-react";
+import { GalleryHorizontalEnd, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useFlagSeriesEnrichment, useIsInWatchlist, useRelatedSeries, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
@@ -40,6 +40,7 @@ import { TrailerDialog } from "../components/TrailerDialog";
 import { WatchedBadge } from "../components/WatchedBadge";
 import { WatchlistIconButton } from "../components/WatchlistIconButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { neutral } from "../theme/colors";
 import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, status, whiteAlpha } from "../theme/tokens";
 
@@ -379,6 +380,8 @@ export function SeriesDetail() {
                   <EpisodeRow
                     key={ep.episode_number}
                     episode={ep}
+                    seriesId={series.id}
+                    seasonNumber={currentSeason.season_number}
                     seriesPoster={series.poster_path}
                     onPlay={() => navigate(`/play/episode/${series.id}/${currentSeason.season_number}/${ep.episode_number}`)}
                   />
@@ -545,8 +548,21 @@ function findInProgressEpisode(
   return fallback;
 }
 
-function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput; seriesPoster: string | null; onPlay: () => void }) {
+function EpisodeRow({
+  episode,
+  seriesId,
+  seasonNumber,
+  seriesPoster,
+  onPlay,
+}: {
+  episode: EpisodeOutput;
+  seriesId: string;
+  seasonNumber: number;
+  seriesPoster: string | null;
+  onPlay: () => void;
+}) {
   const { t } = useTranslation();
+  const toggleWatched = useWatchedToggle();
   const langs = uniqueLanguages(episode.files ?? []);
   // Same availability rule as EpisodeCard — keeps the card and the
   // list view in sync so an episode that's "missing" looks missing
@@ -704,6 +720,31 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
           </Typography>
         )}
       </Box>
+
+      {isAvailable && (
+        <Tooltip title={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")} arrow>
+          <IconButton
+            aria-label={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleWatched({
+                mediaId: `epi_${seriesId}_${seasonNumber}_${episode.episode_number}`,
+                mediaType: "episode",
+                durationSeconds: episode.duration_seconds,
+                watched: isWatched,
+              });
+            }}
+            sx={{
+              alignSelf: "center",
+              flexShrink: 0,
+              color: isWatched ? "primary.main" : "text.secondary",
+              "&:hover": { color: isWatched ? "primary.main" : "text.primary" },
+            }}
+          >
+            <CheckCircle2 size={20} />
+          </IconButton>
+        </Tooltip>
+      )}
     </Box>
   );
 }
