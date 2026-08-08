@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Box, IconButton, LinearProgress, Tooltip, Typography } from "@mui/material";
 import { Bookmark, BookmarkCheck, ListPlus, Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
+import { useContinueWatching, useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
 import { useToast } from "./ToastProvider";
 import { neutral } from "../theme/colors";
@@ -58,6 +58,20 @@ export function MediaCard({
   // badge on every poster cluttered the mobile lists) and play from
   // the detail page instead — a tap on the card opens details there.
   const canPlay = hasActions && !!onPlay;
+
+  // Surface resume progress on movie cards outside Continue Watching:
+  // when the caller didn't pass an explicit ``progress`` and this is a
+  // movie, derive it from the (cached, app-wide) Continue Watching feed
+  // so a half-watched movie shows a bar in genre / related / recently-
+  // added rows too. React Query dedupes the query across every card.
+  const { data: continueWatching } = useContinueWatching();
+  const effectiveProgress = useMemo(() => {
+    if (progress !== undefined) return progress;
+    if (mediaType !== "movie" || !mediaId) return undefined;
+    return continueWatching?.find(
+      (item) => item.media_type === "movie" && item.media_id === mediaId,
+    )?.percentage;
+  }, [progress, mediaType, mediaId, continueWatching]);
 
   // Off-screen rendering skip for carousel cards. `content-visibility:
   // auto` lets the browser skip layout/paint for cards outside the
@@ -248,7 +262,7 @@ export function MediaCard({
         )}
 
         {/* Progress bar + remaining time label */}
-        {progress !== undefined && progress > 0 && (
+        {effectiveProgress !== undefined && effectiveProgress > 0 && (
           <>
             {progressLabel && (
               <Box
@@ -273,7 +287,7 @@ export function MediaCard({
             )}
             <LinearProgress
               variant="determinate"
-              value={progress}
+              value={effectiveProgress}
               sx={{
                 position: "absolute",
                 bottom: 0,
