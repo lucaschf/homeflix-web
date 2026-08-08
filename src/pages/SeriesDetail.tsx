@@ -129,10 +129,18 @@ export function SeriesDetail() {
     ? { season: inProgressEpisode.seasonNumber, episode: inProgressEpisode.episodeNumber }
     : { season: firstEpisode ? series.seasons[0].season_number : 1, episode: firstEpisode?.episode_number ?? 1 };
 
+  // Season 0 is Specials, where a "S0" prefix reads oddly — spell it
+  // out instead. Otherwise show "T1 E11" so it's clear which season
+  // the resume/first episode belongs to.
+  const episodeRef =
+    playTarget.season === 0
+      ? `${t("detail.specials")} ${t("detail.episode", { number: playTarget.episode })}`
+      : t("detail.seasonEpisodeShort", { season: playTarget.season, episode: playTarget.episode });
+
   const playLabel = inProgressEpisode
-    ? `${t("detail.resume")} E${inProgressEpisode.episodeNumber}`
+    ? `${t("detail.resume")} ${episodeRef}`
     : firstEpisode
-      ? `${t("detail.watch")} E${firstEpisode.episode_number}`
+      ? `${t("detail.watch")} ${episodeRef}`
       : t("detail.watch");
 
   // Hero action controls — rendered inside the hero on desktop and

@@ -246,6 +246,7 @@
     "season": "Temporada {{number}}",
     "specials": "Especiais",
     "episode": "E{{number}}",
+    "seasonEpisodeShort": "T{{season}} E{{episode}}",
     "noEpisodes": "Nenhum episodio disponivel para esta temporada.",
     "viewList": "Modo lista",
     "viewCards": "Modo cards",
