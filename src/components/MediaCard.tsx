@@ -51,11 +51,11 @@ export function MediaCard({
   // A movie card can start playback straight from the carousel. Series
   // need an episode picked first, so their cards only ever open the
   // detail page — ``onPlay`` is left undefined for them and no play
-  // button is shown. When present, a prominent centered play button is
-  // the primary affordance: it reveals on hover (pointer devices) and
-  // stays visible on touch (where there is no hover), so "watch from
-  // the carousel" works on every device instead of relying on a tiny
-  // hover-only icon.
+  // button is shown. When present, a prominent centered play button
+  // reveals on hover so pointer users can start playback without the
+  // old tiny hover-only icon. Touch devices hide it (a persistent
+  // badge on every poster cluttered the mobile lists) and play from
+  // the detail page instead — a tap on the card opens details there.
   const canPlay = hasActions && !!onPlay;
 
   // Off-screen rendering skip for carousel cards. `content-visibility:
@@ -102,9 +102,9 @@ export function MediaCard({
           : { contentVisibility: "auto", containIntrinsicSize: intrinsicSize }),
         "&:hover .media-image": { transform: "scale(1.05)" },
         "&:hover .card-hover-overlay": { opacity: 1 },
-        // Reveal the primary play button on hover (pointer devices).
-        // On touch it's kept visible via a `hover: none` query on the
-        // button itself, so this only governs the desktop fade-in.
+        // Reveal the primary play button on hover (pointer devices
+        // only). Touch devices hide it entirely (see the `hover: none`
+        // rule on the button), so this governs the desktop fade-in.
         "&:hover .card-play": { opacity: 1 },
         // On hover: hide text; overlay covers entire card
         ...(hasActions && {
@@ -299,11 +299,11 @@ export function MediaCard({
       )}
 
       {/* Primary play button — centered over the poster. Sits above
-          the hover overlay (zIndex 3 > overlay's 1) so it's always the
-          click target for playback, while the rest of the card still
-          routes to the detail page. Hidden until hover on pointer
-          devices; permanently visible on touch (no hover) so mobile
-          users can play straight from the carousel. */}
+          the hover overlay (zIndex 3 > overlay's 1) so it's the click
+          target for playback, while the rest of the card routes to the
+          detail page. Revealed on hover on pointer devices; hidden on
+          touch (a badge on every poster cluttered the mobile lists) —
+          mobile plays from the detail page after a tap on the card. */}
       {canPlay && (
         <Box
           className="card-play"
@@ -323,7 +323,11 @@ export function MediaCard({
             pointerEvents: "none",
             opacity: 0,
             transition: "opacity 200ms ease",
-            "@media (hover: none)": { opacity: 1 },
+            // Touch devices have no hover to reveal the button and a
+            // persistent one cluttered the poster lists — remove it
+            // entirely there (no paint, no stray tap target); mobile
+            // plays from the detail page instead.
+            "@media (hover: none)": { display: "none" },
           }}
         >
           <Box
