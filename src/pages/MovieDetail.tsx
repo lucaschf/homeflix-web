@@ -25,6 +25,7 @@ import {
 import { useCurrentUser } from "../api/auth";
 import { CreditsMarkerEditor } from "../components/admin";
 import { CastCard } from "../components/CastCard";
+import { DetailError } from "../components/DetailError";
 import { DetailSkeleton } from "../components/DetailSkeleton";
 import { useToast } from "../components/ToastProvider";
 import { MediaCard } from "../components/MediaCard";
@@ -46,7 +47,7 @@ export function MovieDetail() {
   const { t } = useTranslation();
   const { movieId } = useParams<{ movieId: string }>();
   const navigate = useNavigate();
-  const { data: movie, isLoading } = useMovie(movieId!);
+  const { data: movie, isLoading, isError } = useMovie(movieId!);
   const { data: relatedMovies } = useRelatedMovies(movieId);
   const { data: progress } = useProgress(movieId!);
   // Tab title flips from the bare app name to the movie name once
@@ -151,8 +152,12 @@ export function MovieDetail() {
     }
   };
 
-  if (isLoading || !movie) {
+  if (isLoading) {
     return <DetailSkeleton />;
+  }
+
+  if (isError || !movie) {
+    return <DetailError />;
   }
 
   return (

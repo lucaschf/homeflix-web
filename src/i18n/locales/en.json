@@ -186,6 +186,9 @@
   "detail": {
     "trailer": "Trailer",
     "moreActions": "More actions",
+    "errorTitle": "Couldn't load this title",
+    "errorBody": "It may have been removed from the catalog, or the link is wrong.",
+    "back": "Back",
     "flagEnrichment": {
       "tooltip": "Flag enrichment as wrong",
       "flagged": "Flagged for review",

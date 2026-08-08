@@ -26,6 +26,7 @@ import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailT
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { CastCard } from "../components/CastCard";
+import { DetailError } from "../components/DetailError";
 import { DetailSkeleton } from "../components/DetailSkeleton";
 import { EpisodeCard } from "../components/EpisodeCard";
 import { HorizontalScroller } from "../components/HorizontalScroller";
@@ -60,7 +61,7 @@ export function SeriesDetail() {
   const { t } = useTranslation();
   const { seriesId } = useParams<{ seriesId: string }>();
   const navigate = useNavigate();
-  const { data: series, isLoading } = useSeriesDetail(seriesId!);
+  const { data: series, isLoading, isError } = useSeriesDetail(seriesId!);
   useDocumentTitle(series?.title);
   const enrichMutation = useEnrichSeries();
   const flagEnrichment = useFlagSeriesEnrichment();
@@ -104,8 +105,12 @@ export function SeriesDetail() {
     }
   };
 
-  if (isLoading || !series) {
+  if (isLoading) {
     return <DetailSkeleton />;
+  }
+
+  if (isError || !series) {
+    return <DetailError />;
   }
 
   const currentSeason = series.seasons[selectedSeason];
