@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import type { SeriesDetail } from "../api/types";
 import { neutral, peach } from "../theme/colors";
 import { panelScrim, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { WatchedBadge } from "./WatchedBadge";
 import { formatDuration } from "../utils/duration";
 
 interface EpisodeDrawerProps {
@@ -130,6 +131,7 @@ export function EpisodeDrawer({
         <Box sx={{ flex: 1, overflowY: "auto", py: 0.5 }} role="listbox" aria-label={t("player.episodes")}>
           {season?.episodes.map((ep) => {
             const isCurrent = season.season_number === currentSeason && ep.episode_number === currentEpisode;
+            const isWatched = ep.watch_status === "completed";
             return (
               <Box
                 key={ep.episode_number}
@@ -160,7 +162,12 @@ export function EpisodeDrawer({
                       <Play size={20} color={peach.main} fill={peach.main} />
                     </Box>
                   )}
-                  {ep.progress_percentage != null && ep.progress_percentage > 0 && (
+                  {isWatched && !isCurrent && (
+                    <Box sx={{ position: "absolute", top: 4, right: 4, zIndex: 2 }}>
+                      <WatchedBadge size={18} />
+                    </Box>
+                  )}
+                  {!isWatched && ep.progress_percentage != null && ep.progress_percentage > 0 && (
                     <LinearProgress
                       variant="determinate"
                       value={ep.progress_percentage}

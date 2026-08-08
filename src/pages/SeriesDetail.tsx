@@ -37,6 +37,7 @@ import { OverflowMenu, type OverflowAction } from "../components/OverflowMenu";
 import { TitleLogo } from "../components/TitleLogo";
 import { useToast } from "../components/ToastProvider";
 import { TrailerDialog } from "../components/TrailerDialog";
+import { WatchedBadge } from "../components/WatchedBadge";
 import { WatchlistIconButton } from "../components/WatchlistIconButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { neutral } from "../theme/colors";
@@ -551,6 +552,7 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
   // list view in sync so an episode that's "missing" looks missing
   // regardless of which view the user picked.
   const isAvailable = (episode.files?.length ?? 0) > 0;
+  const isWatched = episode.watch_status === "completed";
 
   return (
     <Box
@@ -639,7 +641,13 @@ function EpisodeRow({ episode, seriesPoster, onPlay }: { episode: EpisodeOutput;
           </>
         )}
 
-        {episode.progress_percentage != null && episode.progress_percentage > 0 && (
+        {isAvailable && isWatched && (
+          <Box sx={{ position: "absolute", top: 6, right: 6, zIndex: 2 }}>
+            <WatchedBadge size={20} />
+          </Box>
+        )}
+
+        {!isWatched && episode.progress_percentage != null && episode.progress_percentage > 0 && (
           <LinearProgress
             variant="determinate"
             value={episode.progress_percentage}

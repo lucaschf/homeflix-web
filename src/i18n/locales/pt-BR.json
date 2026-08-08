@@ -242,7 +242,8 @@
   },
   "episode": {
     "unavailableShort": "Indisponível",
-    "unavailableTooltip": "Esse episódio não tem arquivo no disco. Coloque o vídeo correspondente na pasta da série e re-escaneie para torná-lo reproduzível."
+    "unavailableTooltip": "Esse episódio não tem arquivo no disco. Coloque o vídeo correspondente na pasta da série e re-escaneie para torná-lo reproduzível.",
+    "watched": "Assistido"
   },
   "collection": {
     "eyebrow": "Coleção",
