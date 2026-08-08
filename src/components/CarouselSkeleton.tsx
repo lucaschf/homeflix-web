@@ -1,19 +1,19 @@
 import { Box, Skeleton, Typography } from "@mui/material";
+import { CARD_WIDTH } from "./mediaCardDimensions";
 
 /**
  * Card geometry for the two card variants ``MediaCard`` exposes.
- * Mirrored verbatim from ``MediaCard``'s sx so the skeleton has
- * pixel-identical breakpoints — any future tweak to the real card
- * sizes needs to land here too. Kept module-local so the values
- * don't leak into the `Skeleton` API surface.
+ * Widths come from the shared ``CARD_WIDTH`` source that ``MediaCard``
+ * also reads, so the skeleton and the real card can never drift apart.
+ * Only the aspect ratio lives here (it's the skeleton's own concern).
  */
 const CARD_DIMS = {
   poster: {
-    width: { xs: 140, sm: 200, md: 240, lg: 280 },
+    width: CARD_WIDTH.poster,
     aspectRatio: "2/3",
   },
   landscape: {
-    width: { xs: 240, sm: 320, md: 360, lg: 400 },
+    width: CARD_WIDTH.landscape,
     aspectRatio: "16/9",
   },
 } as const;

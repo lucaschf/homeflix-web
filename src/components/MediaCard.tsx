@@ -6,6 +6,7 @@ import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
 import { neutral } from "../theme/colors";
 import { whiteAlpha, scrim } from "../theme/tokens";
+import { CARD_WIDTH } from "./mediaCardDimensions";
 
 interface MediaCardProps {
   title: string;
@@ -47,6 +48,15 @@ export function MediaCard({
   const { t } = useTranslation();
   const aspectRatio = variant === "poster" ? "2/3" : "16/9";
   const hasActions = !!mediaId && !!mediaType;
+  // A movie card can start playback straight from the carousel. Series
+  // need an episode picked first, so their cards only ever open the
+  // detail page — ``onPlay`` is left undefined for them and no play
+  // button is shown. When present, a prominent centered play button is
+  // the primary affordance: it reveals on hover (pointer devices) and
+  // stays visible on touch (where there is no hover), so "watch from
+  // the carousel" works on every device instead of relying on a tiny
+  // hover-only icon.
+  const canPlay = hasActions && !!onPlay;
 
   // Off-screen rendering skip for carousel cards. `content-visibility:
   // auto` lets the browser skip layout/paint for cards outside the
@@ -60,7 +70,8 @@ export function MediaCard({
   //
   // Heights below are estimates: card width × aspect + ~44px for the
   // title/year block. Poster (2/3) ≈ width × 1.5; landscape/episode
-  // (16/9) ≈ width × 0.5625.
+  // (16/9) ≈ width × 0.5625. Widths mirror ``CARD_WIDTH`` — keep the
+  // two in sync if the breakpoints change.
   const intrinsicSize =
     variant === "poster"
       ? {
@@ -70,10 +81,10 @@ export function MediaCard({
           lg: "auto 280px auto 464px",
         }
       : {
-          xs: "auto 140px auto 123px",
-          sm: "auto 200px auto 156px",
-          md: "auto 240px auto 179px",
-          lg: "auto 280px auto 202px",
+          xs: "auto 240px auto 179px",
+          sm: "auto 320px auto 224px",
+          md: "auto 360px auto 246px",
+          lg: "auto 400px auto 269px",
         };
 
   return (
@@ -85,12 +96,16 @@ export function MediaCard({
         minWidth: 0,
         overflow: "hidden",
         borderRadius: 1,
-        width: fullWidth ? "100%" : { xs: 140, sm: 200, md: 240, lg: 280 },
+        width: fullWidth ? "100%" : CARD_WIDTH[variant === "poster" ? "poster" : "landscape"],
         ...(fullWidth
           ? null
           : { contentVisibility: "auto", containIntrinsicSize: intrinsicSize }),
         "&:hover .media-image": { transform: "scale(1.05)" },
         "&:hover .card-hover-overlay": { opacity: 1 },
+        // Reveal the primary play button on hover (pointer devices).
+        // On touch it's kept visible via a `hover: none` query on the
+        // button itself, so this only governs the desktop fade-in.
+        "&:hover .card-play": { opacity: 1 },
         // On hover: hide text; overlay covers entire card
         ...(hasActions && {
           "&:hover .card-text": { opacity: 0 },
@@ -279,9 +294,71 @@ export function MediaCard({
           year={year}
           mediaId={mediaId}
           mediaType={mediaType}
-          onPlay={onPlay}
           onClick={onClick}
         />
+      )}
+
+      {/* Primary play button — centered over the poster. Sits above
+          the hover overlay (zIndex 3 > overlay's 1) so it's always the
+          click target for playback, while the rest of the card still
+          routes to the detail page. Hidden until hover on pointer
+          devices; permanently visible on touch (no hover) so mobile
+          users can play straight from the carousel. */}
+      {canPlay && (
+        <Box
+          className="card-play"
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            aspectRatio,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3,
+            // The wrapper never intercepts clicks — only the button
+            // does — so clicks off the button fall through to the card
+            // (detail navigation).
+            pointerEvents: "none",
+            opacity: 0,
+            transition: "opacity 200ms ease",
+            "@media (hover: none)": { opacity: 1 },
+          }}
+        >
+          <Box
+            component="button"
+            type="button"
+            aria-label={t("card.play")}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPlay?.();
+            }}
+            sx={{
+              pointerEvents: "auto",
+              border: "none",
+              p: 0,
+              cursor: "pointer",
+              width: 48,
+              height: 48,
+              borderRadius: "50%",
+              bgcolor: "primary.main",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: `0 2px 10px ${scrim(0.55)}`,
+              transition: "transform 150ms ease, background-color 150ms ease",
+              "&:hover": { transform: "scale(1.08)", bgcolor: "primary.dark" },
+              "&:focus-visible": {
+                outline: "2px solid",
+                outlineColor: "primary.light",
+                outlineOffset: 2,
+              },
+            }}
+          >
+            <Play size={22} color={neutral[950]} fill={neutral[950]} />
+          </Box>
+        </Box>
       )}
     </Box>
   );
@@ -295,7 +372,6 @@ function InfoOverlay({
   year,
   mediaId,
   mediaType,
-  onPlay,
   onClick,
 }: {
   title: string;
@@ -303,7 +379,6 @@ function InfoOverlay({
   year?: number;
   mediaId: string;
   mediaType: "movie" | "series";
-  onPlay?: () => void;
   onClick?: () => void;
 }) {
   const { t } = useTranslation();
@@ -364,19 +439,13 @@ function InfoOverlay({
             </Typography>
           )}
 
-          {/* Action buttons — accent-colored icons, no background */}
+          {/* Secondary actions — watchlist + add-to-list. Playback is
+              handled by the centered play button above, so no play
+              icon here. */}
           <Box
             sx={{ display: "flex", gap: 0.5, mt: 1.5 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {onPlay && (
-              <Tooltip title={t("card.play")} arrow>
-                <IconButton size="small" onClick={onPlay} sx={{ color: "primary.main" }}>
-                  <Play size={18} />
-                </IconButton>
-              </Tooltip>
-            )}
-
             <Tooltip title={inWatchlist ? t("card.removeFromWatchlist") : t("card.addToWatchlist")} arrow>
               <IconButton
                 size="small"

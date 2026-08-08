@@ -102,7 +102,10 @@ export function HorizontalScroller({ children }: HorizontalScrollerProps) {
         onScroll={update}
         sx={{
           display: "flex",
-          gap: 2,
+          // Match ``MediaCarousel``'s inter-card gap (12px) so the
+          // episode "cards" row and the cast row on the series page
+          // share one horizontal rhythm.
+          gap: 1.5,
           overflowX: "auto",
           scrollbarWidth: "none",
           "&::-webkit-scrollbar": { display: "none" },
