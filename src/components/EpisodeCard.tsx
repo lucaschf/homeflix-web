@@ -7,6 +7,7 @@ import type { EpisodeOutput } from "../api/types";
 import { neutral } from "../theme/colors";
 import { fontFamily, inkAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { formatDuration } from "../utils/duration";
+import { WatchedBadge } from "./WatchedBadge";
 
 interface EpisodeCardProps {
   episode: EpisodeOutput;
@@ -46,6 +47,7 @@ export function EpisodeCard({
   // only the first part has a local file, or for series where the
   // user hasn't downloaded every episode.
   const isAvailable = (episode.files?.length ?? 0) > 0;
+  const isWatched = episode.watch_status === "completed";
 
   // Only fetch the VTT when there's no real per-episode thumbnail and
   // the backend has actually generated a scrub sprite for the file.
@@ -175,6 +177,15 @@ export function EpisodeCard({
         >
           E{episode.episode_number}
         </Box>
+
+        {/* Watched check — top-right, mutually exclusive with the
+            "unavailable" badge (a missing episode is never watched). */}
+        {isAvailable && isWatched && (
+          <Box sx={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}>
+            <WatchedBadge size={22} />
+          </Box>
+        )}
+
         {duration && (
           <Box
             sx={{
@@ -264,7 +275,7 @@ export function EpisodeCard({
           </>
         )}
 
-        {episode.progress_percentage != null && episode.progress_percentage > 0 && (
+        {!isWatched && episode.progress_percentage != null && episode.progress_percentage > 0 && (
           <LinearProgress
             variant="determinate"
             value={episode.progress_percentage}

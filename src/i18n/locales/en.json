@@ -242,7 +242,8 @@
   },
   "episode": {
     "unavailableShort": "Unavailable",
-    "unavailableTooltip": "This episode has no file on disk. Drop the matching video into the series folder and rescan to make it playable."
+    "unavailableTooltip": "This episode has no file on disk. Drop the matching video into the series folder and rescan to make it playable.",
+    "watched": "Watched"
   },
   "collection": {
     "eyebrow": "Collection",
