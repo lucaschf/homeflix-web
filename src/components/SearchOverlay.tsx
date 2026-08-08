@@ -146,7 +146,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           placeholder={t("search.placeholder")}
           sx={{ flex: 1, ml: 1.5, fontSize: "0.95rem", color: "text.primary" }}
         />
-        <IconButton onClick={onClose} size="small" sx={{ color: "text.secondary" }}>
+        <IconButton onClick={onClose} size="small" aria-label={t("common.close")} sx={{ color: "text.secondary" }}>
           <X size={18} />
         </IconButton>
       </Box>

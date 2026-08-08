@@ -173,11 +173,13 @@
     "play": "Assistir",
     "addToWatchlist": "Adicionar à Fila",
     "removeFromWatchlist": "Remover da Fila",
-    "addToList": "Adicionar à Lista"
+    "addToList": "Adicionar à Lista",
+    "dismiss": "Remover de Continue Assistindo"
   },
   "common": {
     "undo": "Desfazer",
     "retry": "Tentar novamente",
+    "close": "Fechar",
     "seasons": "{{count}} Temporada",
     "seasons_other": "{{count}} Temporadas",
     "episodes": "{{count}} Episodio",

@@ -211,6 +211,7 @@ export function MediaCard({
         {onDismiss && (
           <IconButton
             size="small"
+            aria-label={t("card.dismiss")}
             onClick={(e) => {
               e.stopPropagation();
               onDismiss();
