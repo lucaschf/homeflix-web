@@ -100,8 +100,11 @@ export function GenreCarousel({ genre, type }: GenreCarouselProps) {
           variant="poster"
           mediaId={item.id}
           mediaType={item.type}
-          onPlay={() =>
-            navigate(item.type === "movie" ? `/play/movie/${item.id}` : `/series/${item.id}`)
+          onPlay={
+            // Only movies play straight from the card. Series need an
+            // episode, so they get no play button — the card opens the
+            // series detail page instead.
+            item.type === "movie" ? () => navigate(`/play/movie/${item.id}`) : undefined
           }
           onClick={() =>
             navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)
