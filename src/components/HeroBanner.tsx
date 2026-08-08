@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Box, Button, Chip, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { neutral } from "../theme/colors";
 import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim } from "../theme/tokens";
-import { ContentRatingBadge } from "./ContentRatingBadge";
+import { MetaLine } from "./MetaLine";
 import { TitleLogo } from "./TitleLogo";
 import { TrailerDialog } from "./TrailerDialog";
 import { useToast } from "./ToastProvider";
@@ -218,28 +218,11 @@ export function HeroBanner({
           onClick={onDetails ? () => onDetails(slide) : undefined}
         />
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
-          {slide.contentRating && <ContentRatingBadge rating={slide.contentRating} />}
-          {slide.year && (
-            <Typography variant="body2" color="text.secondary">
-              {slide.year}
-            </Typography>
-          )}
-          {slide.duration && (
-            <>
-              <Typography variant="body2" color="text.secondary">|</Typography>
-              <Typography variant="body2" color="text.secondary">{slide.duration}</Typography>
-            </>
-          )}
-          {slide.genres?.map((genre) => (
-            <Chip
-              key={genre}
-              label={genre}
-              size="small"
-              sx={{ bgcolor: whiteAlpha(0.1), color: "text.secondary", height: 22, fontSize: "0.7rem" }}
-            />
-          ))}
-        </Box>
+        <MetaLine
+          contentRating={slide.contentRating ?? null}
+          items={[slide.year, slide.duration]}
+          genres={slide.genres ?? []}
+        />
 
         {slide.synopsis && (
           <Typography
