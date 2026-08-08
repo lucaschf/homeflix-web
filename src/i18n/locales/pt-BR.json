@@ -185,6 +185,12 @@
     "scrollLeft": "Rolar para a esquerda",
     "scrollRight": "Rolar para a direita"
   },
+  "progress": {
+    "markWatched": "Marcar como assistido",
+    "markUnwatched": "Marcar como não assistido",
+    "markedWatched": "Marcado como assistido",
+    "markedUnwatched": "Marcado como não assistido"
+  },
   "errorBoundary": {
     "title": "Algo deu errado",
     "body": "Ocorreu um erro inesperado nesta tela. Recarregar costuma resolver.",

@@ -185,6 +185,12 @@
     "scrollLeft": "Scroll left",
     "scrollRight": "Scroll right"
   },
+  "progress": {
+    "markWatched": "Mark as watched",
+    "markUnwatched": "Mark as unwatched",
+    "markedWatched": "Marked as watched",
+    "markedUnwatched": "Marked as unwatched"
+  },
   "errorBoundary": {
     "title": "Something went wrong",
     "body": "An unexpected error occurred on this screen. Reloading usually fixes it.",
