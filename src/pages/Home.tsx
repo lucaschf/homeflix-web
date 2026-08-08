@@ -162,11 +162,11 @@ export function Home() {
       />
 
       {/* Pull the carousels up over the hero's gradient bleed. On
-          mobile the hero is shorter and its slide dots sit close to
-          the bottom edge, so a full -80px pull made the first
-          carousel title collide with the dots — ease it to -32px
-          there while keeping the deeper desktop overlap. */}
-      <Box sx={{ mt: { xs: -4, md: -10 }, position: "relative", zIndex: 1 }}>
+          on mobile the hero is a contained 4:5 card whose slide dots
+          sit inside it near the bottom edge, so there's no bleed to
+          pull into — a positive gap keeps the first carousel clear of
+          the dots while desktop keeps its deep full-bleed overlap. */}
+      <Box sx={{ mt: { xs: 2, md: -10 }, position: "relative", zIndex: 1 }}>
         {/* Continue Watching: skeleton while pending so the row
             below it (Recently Added / first genre) doesn't shift
             up by ~250px when the data lands. Empty resolved

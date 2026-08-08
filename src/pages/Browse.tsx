@@ -119,12 +119,13 @@ export function Browse() {
           // of whether ``slides`` actually resolved — the placeholder
           // reserves the same vertical space, so the negative margin
           // still lines up with the bottom of the (possibly
-          // placeholder) hero. On mobile the hero is shorter and its
-          // slide dots sit close to the bottom edge, so the full -80px
-          // pull made the first carousel title ("Adicionados
-          // Recentemente") overlap the dots — ease it to -32px there
-          // while keeping the deeper desktop overlap (matches Home).
-          mt: genreFilter ? 4 : { xs: -4, md: -10 },
+          // placeholder) hero. On mobile the hero is now a contained
+          // 4:5 card whose slide dots sit inside it near the bottom
+          // edge, so there's no bleed to pull into — a positive gap
+          // keeps the first carousel ("Adicionados Recentemente") clear
+          // of the dots while desktop keeps its deep full-bleed overlap
+          // (matches Home).
+          mt: genreFilter ? 4 : { xs: 2, md: -10 },
           position: "relative",
           zIndex: 1,
         }}
