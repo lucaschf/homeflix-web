@@ -184,6 +184,7 @@ export function Navbar() {
           <IconButton
             onClick={() => setSearchOpen(true)}
             size="small"
+            aria-label={t("nav.search")}
             sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
           >
             <Search size={22} />
