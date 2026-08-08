@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Box, LinearProgress, Tooltip, Typography } from "@mui/material";
-import { Play } from "lucide-react";
+import { Check, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useEpisodeScrubFrame } from "../hooks/useEpisodeScrubFrame";
+import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import type { EpisodeOutput } from "../api/types";
 import { neutral } from "../theme/colors";
 import { fontFamily, inkAlpha, scrim, whiteAlpha } from "../theme/tokens";
@@ -48,6 +49,8 @@ export function EpisodeCard({
   // user hasn't downloaded every episode.
   const isAvailable = (episode.files?.length ?? 0) > 0;
   const isWatched = episode.watch_status === "completed";
+  const toggleWatched = useWatchedToggle();
+  const progressMediaId = `epi_${seriesId}_${seasonNumber}_${episode.episode_number}`;
 
   // Only fetch the VTT when there's no real per-episode thumbnail and
   // the backend has actually generated a scrub sprite for the file.
@@ -93,6 +96,9 @@ export function EpisodeCard({
         cursor: isAvailable ? "pointer" : "default",
         "&:hover .ep-card-thumb": isAvailable ? { transform: "scale(1.03)" } : {},
         "&:hover .ep-play-overlay": isAvailable ? { opacity: 1 } : {},
+        // Reveal the "mark as watched" affordance for unwatched episodes
+        // on hover (pointer devices).
+        "&:hover .ep-mark-watched": isAvailable ? { opacity: 1 } : {},
         "&:focus-visible": isAvailable
           ? {
               outline: "2px solid",
@@ -178,11 +184,56 @@ export function EpisodeCard({
           E{episode.episode_number}
         </Box>
 
-        {/* Watched check — top-right, mutually exclusive with the
-            "unavailable" badge (a missing episode is never watched). */}
-        {isAvailable && isWatched && (
-          <Box sx={{ position: "absolute", top: 8, right: 8, zIndex: 2 }}>
-            <WatchedBadge size={22} />
+        {/* Watched toggle — top-right, only for available episodes.
+            Watched shows a filled check (tap to unmark); unwatched shows
+            a faint check that fades in on hover (tap to mark watched). */}
+        {isAvailable && (
+          <Box
+            component="button"
+            type="button"
+            className={isWatched ? undefined : "ep-mark-watched"}
+            aria-label={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")}
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleWatched({
+                mediaId: progressMediaId,
+                mediaType: "episode",
+                durationSeconds: episode.duration_seconds,
+                watched: isWatched,
+              });
+            }}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              zIndex: 3,
+              p: 0,
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              lineHeight: 0,
+              opacity: isWatched ? 1 : 0,
+              transition: "opacity 150ms ease",
+            }}
+          >
+            {isWatched ? (
+              <WatchedBadge size={22} />
+            ) : (
+              <Box
+                sx={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: "50%",
+                  bgcolor: scrim(0.6),
+                  border: `1px solid ${whiteAlpha(0.5)}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Check size={13} color="#fff" strokeWidth={3} />
+              </Box>
+            )}
           </Box>
         )}
 

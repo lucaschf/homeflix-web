@@ -4,12 +4,13 @@ import {
   Button,
   IconButton,
   Snackbar,
+  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { Play, RefreshCw, Clapperboard, Flag, ScrollText, Captions } from "lucide-react";
+import { Play, RefreshCw, Clapperboard, Flag, ScrollText, Captions, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -38,6 +39,7 @@ import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { WatchlistIconButton } from "../components/WatchlistIconButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { ACTION_BAR_HEIGHT, fontSize, inkAlpha, panelScrim, peachAlpha, scrim, status, whiteAlpha } from "../theme/tokens";
@@ -67,6 +69,8 @@ export function MovieDetail() {
   const toggleWatchlist = useToggleWatchlist();
   const { showToast } = useToast();
   const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
+  const isWatched = progress?.status === "completed";
+  const toggleWatched = useWatchedToggle();
   const langs = useMemo(() => uniqueLanguages(movie?.files ?? []), [movie?.files]);
   const theme = useTheme();
   // Mobile mode hides ALL detail rows behind the toggle (Crunchyroll
@@ -300,6 +304,33 @@ export function MovieDetail() {
                 addLabel={t("lists.addToList")}
                 removeLabel={t("lists.removeFromList")}
               />
+              <Tooltip
+                title={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")}
+                arrow
+              >
+                <IconButton
+                  aria-label={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")}
+                  onClick={() =>
+                    toggleWatched({
+                      mediaId: movie.id,
+                      mediaType: "movie",
+                      durationSeconds: movie.duration_seconds,
+                      watched: !!isWatched,
+                    })
+                  }
+                  sx={{
+                    color: isWatched ? "primary.main" : "text.primary",
+                    bgcolor: whiteAlpha(0.08),
+                    border: `1px solid ${whiteAlpha(0.12)}`,
+                    borderRadius: 1,
+                    width: ACTION_BAR_HEIGHT,
+                    height: ACTION_BAR_HEIGHT,
+                    "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
+                  }}
+                >
+                  <CheckCircle2 size={18} />
+                </IconButton>
+              </Tooltip>
               {movie.trailer_url && (
                 <Button
                   variant="hairline"
