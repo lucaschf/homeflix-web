@@ -27,6 +27,7 @@ import { useCurrentUser } from "../api/auth";
 import { CreditsMarkerEditor } from "../components/admin";
 import { CastCard } from "../components/CastCard";
 import { DetailSkeleton } from "../components/DetailSkeleton";
+import { useToast } from "../components/ToastProvider";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { CollectionChip } from "../components/CollectionChip";
@@ -63,6 +64,7 @@ export function MovieDetail() {
   const [creditsOpen, setCreditsOpen] = useState(false);
   const { data: inWatchlist } = useIsInWatchlist(movieId!);
   const toggleWatchlist = useToggleWatchlist();
+  const { showToast } = useToast();
   const hasProgress = progress && progress.status !== "completed" && progress.position_seconds > 0;
   const langs = useMemo(() => uniqueLanguages(movie?.files ?? []), [movie?.files]);
   const theme = useTheme();
@@ -279,7 +281,17 @@ export function MovieDetail() {
               </Button>
               <WatchlistIconButton
                 active={!!inWatchlist}
-                onClick={() => toggleWatchlist.mutate({ media_id: movie.id, media_type: "movie" })}
+                onClick={() =>
+                  toggleWatchlist.mutate(
+                    { media_id: movie.id, media_type: "movie" },
+                    {
+                      onSuccess: (res) =>
+                        showToast(
+                          t(res.data.added ? "lists.addedToList" : "lists.removedFromList"),
+                        ),
+                    },
+                  )
+                }
                 addLabel={t("lists.addToList")}
                 removeLabel={t("lists.removeFromList")}
               />

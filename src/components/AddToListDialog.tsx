@@ -20,6 +20,7 @@ import {
   useCreateCustomList,
   useCustomLists,
 } from "../api/hooks";
+import { useToast } from "./ToastProvider";
 import { success } from "../theme/colors";
 
 interface AddToListDialogProps {
@@ -34,16 +35,18 @@ export function AddToListDialog({ open, onClose, mediaId, mediaType }: AddToList
   const { data: lists, isLoading } = useCustomLists();
   const addItem = useAddItemToCustomList();
   const createList = useCreateCustomList();
+  const { showToast } = useToast();
   const [addedTo, setAddedTo] = useState<Set<string>>(new Set());
   const [showCreate, setShowCreate] = useState(false);
   const [newListName, setNewListName] = useState("");
 
-  const handleAdd = (listId: string) => {
+  const handleAdd = (listId: string, listName: string) => {
     addItem.mutate(
       { listId, media_id: mediaId, media_type: mediaType },
       {
         onSuccess: () => {
           setAddedTo((prev) => new Set(prev).add(listId));
+          showToast(t("lists.addedToCustomList", { list: listName }));
         },
       },
     );
@@ -64,6 +67,7 @@ export function AddToListDialog({ open, onClose, mediaId, mediaType }: AddToList
           {
             onSuccess: () => {
               setAddedTo((prev) => new Set(prev).add(newList.id));
+              showToast(t("lists.addedToCustomList", { list: newList.name }));
             },
           },
         );
@@ -99,7 +103,7 @@ export function AddToListDialog({ open, onClose, mediaId, mediaType }: AddToList
                 return (
                   <ListItemButton
                     key={list.id}
-                    onClick={() => !wasAdded && handleAdd(list.id)}
+                    onClick={() => !wasAdded && handleAdd(list.id, list.name)}
                     disabled={wasAdded}
                     sx={{ px: 3 }}
                   >
