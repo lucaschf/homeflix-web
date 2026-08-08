@@ -125,8 +125,9 @@ export function HeroBanner({
         sx={{
           position: "relative",
           width: "100%",
-          height: "75dvh",
-          minHeight: 500,
+          aspectRatio: { xs: "4 / 5", md: "auto" },
+          height: { md: "75dvh" },
+          minHeight: { md: 500 },
           background:
             `linear-gradient(180deg, ${neutral[900]} 0%, ${panelScrim(1)} 70%, ${panelScrim(1)} 100%)`,
         }}
@@ -141,8 +142,9 @@ export function HeroBanner({
       sx={{
         position: "relative",
         width: "100%",
-        height: "75dvh",
-        minHeight: 500,
+        aspectRatio: { xs: "4 / 5", md: "auto" },
+        height: { md: "75dvh" },
+        minHeight: { md: 500 },
       }}
     >
       {/* Backdrop — extends beyond container to bleed under content below */}
@@ -154,7 +156,7 @@ export function HeroBanner({
             top: 0,
             left: 0,
             right: 0,
-            bottom: { xs: -200, md: -250 },
+            bottom: { xs: 0, md: -250 },
             opacity: i === current ? 1 : 0,
             transition: "opacity 800ms ease-in-out",
           }}
@@ -177,7 +179,7 @@ export function HeroBanner({
           top: 0,
           left: 0,
           right: 0,
-          bottom: { xs: -200, md: -250 },
+          bottom: { xs: 0, md: -250 },
           background: {
             xs: `linear-gradient(to right, ${panelScrim(0.97)} 0%, ${panelScrim(0.75)} 50%, ${panelScrim(0.3)} 100%)`,
             md: `linear-gradient(to right, ${panelScrim(0.95)} 0%, ${panelScrim(0.6)} 40%, transparent 70%)`,
@@ -190,7 +192,7 @@ export function HeroBanner({
           top: 0,
           left: 0,
           right: 0,
-          bottom: { xs: -200, md: -250 },
+          bottom: { xs: 0, md: -250 },
           background: {
             xs: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(0.95)} 8%, ${panelScrim(0.78)} 20%, ${panelScrim(0.5)} 35%, ${panelScrim(0.2)} 55%, transparent 75%)`,
             md: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(0.92)} 8%, ${panelScrim(0.7)} 18%, ${panelScrim(0.4)} 32%, ${panelScrim(0.15)} 50%, transparent 70%)`,
@@ -207,7 +209,7 @@ export function HeroBanner({
           flexDirection: "column",
           justifyContent: "flex-end",
           px: { xs: 3, md: 6 },
-          pb: { xs: 8, md: 22 },
+          pb: { xs: 3, md: 22 },
           maxWidth: 600,
           zIndex: 1,
         }}
@@ -280,7 +282,7 @@ export function HeroBanner({
 
         {/* Dot Indicators — positioned near the first list below */}
         {count > 1 && (
-          <Box sx={{ display: "flex", gap: 0.75, mt: { xs: 8, md: 12 } }}>
+          <Box sx={{ display: "flex", gap: 0.75, mt: { xs: 3, md: 12 } }}>
           {slides.map((s, i) => (
             <Box
               key={s.id}
