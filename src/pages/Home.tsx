@@ -19,6 +19,7 @@ import { MediaCarousel } from "../components/MediaCarousel";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { peach } from "../theme/colors";
 import { formatDuration } from "../utils/duration";
+import { findResumeEpisode } from "../utils/resumeEpisode";
 
 function formatRemaining(positionSeconds: number, durationSeconds: number): string {
   const remaining = Math.max(0, durationSeconds - positionSeconds);
@@ -85,8 +86,19 @@ export function Home() {
       <HeroBanner
         slides={heroSlides}
         onPlay={(slide) => {
-          if (slide.type === "movie") navigate(`/play/movie/${slide.id}`);
-          else navigate(`/series/${slide.id}`);
+          if (slide.type === "movie") {
+            navigate(`/play/movie/${slide.id}`);
+            return;
+          }
+          // Series: resume the in-progress episode straight from the
+          // hero when there is one; otherwise open the detail page,
+          // which owns the first-episode / season picker.
+          const resume = findResumeEpisode(continueWatching, slide.id);
+          if (resume) {
+            navigate(`/play/episode/${slide.id}/${resume.season}/${resume.episode}`);
+          } else {
+            navigate(`/series/${slide.id}`);
+          }
         }}
         onDetails={(slide) => {
           if (slide.type === "movie") navigate(`/movie/${slide.id}`);

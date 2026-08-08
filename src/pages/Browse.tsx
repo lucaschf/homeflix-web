@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   useByGenre,
+  useContinueWatching,
   useFeatured,
   useGenres,
   useRecentlyAddedMovies,
@@ -17,6 +18,7 @@ import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
+import { findResumeEpisode } from "../utils/resumeEpisode";
 
 /**
  * Narrow an unvalidated ``?type=`` URL param down to the
@@ -55,6 +57,10 @@ export function Browse() {
   // the Movies tab shouldn't banner a series on top of its carousels.
   const { data: featured } = useFeatured(typeFilter ?? "all");
 
+  // Powers "Continuar" on a series hero slide — resume the in-progress
+  // episode straight from the hero instead of routing via the detail.
+  const { data: continueWatching } = useContinueWatching();
+
   const heroSlides: HeroSlide[] = useMemo(
     () =>
       (featured ?? []).map((f) => ({
@@ -84,11 +90,20 @@ export function Browse() {
         <HeroBanner
           slides={heroSlides}
           onPlay={(slide) => {
-            // "Assistir" starts playback for a movie; a series has no
-            // single playable target, so it opens the series detail
-            // (where the resume / first-episode button lives).
-            if (slide.type === "movie") navigate(`/play/movie/${slide.id}`);
-            else navigate(`/series/${slide.id}`);
+            // "Assistir" starts playback for a movie. A series resumes
+            // its in-progress episode when there is one; otherwise it
+            // opens the detail page (which owns the first-episode /
+            // season picker).
+            if (slide.type === "movie") {
+              navigate(`/play/movie/${slide.id}`);
+              return;
+            }
+            const resume = findResumeEpisode(continueWatching, slide.id);
+            if (resume) {
+              navigate(`/play/episode/${slide.id}/${resume.season}/${resume.episode}`);
+            } else {
+              navigate(`/series/${slide.id}`);
+            }
           }}
           onDetails={(slide) => {
             // Clicking the title logo opens the detail page.
