@@ -84,6 +84,14 @@ export function Browse() {
         <HeroBanner
           slides={heroSlides}
           onPlay={(slide) => {
+            // "Assistir" starts playback for a movie; a series has no
+            // single playable target, so it opens the series detail
+            // (where the resume / first-episode button lives).
+            if (slide.type === "movie") navigate(`/play/movie/${slide.id}`);
+            else navigate(`/series/${slide.id}`);
+          }}
+          onDetails={(slide) => {
+            // Clicking the title logo opens the detail page.
             if (slide.type === "movie") navigate(`/movie/${slide.id}`);
             else navigate(`/series/${slide.id}`);
           }}
@@ -309,8 +317,10 @@ function GenreGrid({ genreId, displayName, onClearFilter, type }: GenreGridProps
             fullWidth
             mediaId={item.id}
             mediaType={item.type}
-            onPlay={() =>
-              navigate(item.type === "movie" ? `/play/movie/${item.id}` : `/series/${item.id}`)
+            onPlay={
+              // Only movies play straight from the card; series open
+              // their detail page (no play button shown).
+              item.type === "movie" ? () => navigate(`/play/movie/${item.id}`) : undefined
             }
             onClick={() =>
               navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)
