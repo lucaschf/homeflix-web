@@ -201,7 +201,7 @@ export function MovieDetail() {
           }}
         />
 
-        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 2, sm: 3, md: 6 }, pb: { xs: 4, md: "20dvh" }, gap: { xs: 2, md: 4 } }}>
+        <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: "20dvh" }, gap: { xs: 2, md: 4 } }}>
           {movie.poster_path && !movie.logo_path && (
             // Poster is shown only when there's no localized title-logo
             // — when the logo is present it carries the visual identity
@@ -227,8 +227,7 @@ export function MovieDetail() {
 
             <MetaLine
               contentRating={movie.content_rating}
-              year={movie.year}
-              duration={formatDuration(movie.duration_seconds)}
+              items={[movie.year, formatDuration(movie.duration_seconds)]}
               genres={movie.genres}
             />
 
@@ -424,7 +423,7 @@ export function MovieDetail() {
           gridTemplateColumns: { xs: "1fr", md: "2fr 1fr" },
           columnGap: { md: 10 },
           rowGap: { xs: 3, md: 0 },
-          px: { xs: 2, sm: 3, md: 6 },
+          px: { xs: 3, md: 6 },
           pt: { xs: 2, md: 3 },
           pb: { xs: 4, md: 5 },
           // Pull the body up so it starts right below the hero title
