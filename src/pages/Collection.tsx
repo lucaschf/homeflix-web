@@ -789,6 +789,14 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
       {/* Poster */}
       <Box
         sx={{
+          // Derive the height from the column width, never the other
+          // way around. The row is ``alignItems: stretch``, so without
+          // pinning ``alignSelf`` the poster stretches to the (tall)
+          // row height and ``aspectRatio`` then widens it past its grid
+          // column — on mobile that overflowed into the info column and
+          // clipped the title/synopsis on rows with long text.
+          alignSelf: "start",
+          width: "100%",
           aspectRatio: "2/3",
           borderRadius: 1,
           overflow: "hidden",
