@@ -177,6 +177,7 @@
   },
   "common": {
     "undo": "Desfazer",
+    "retry": "Tentar novamente",
     "seasons": "{{count}} Temporada",
     "seasons_other": "{{count}} Temporadas",
     "episodes": "{{count}} Episodio",
@@ -1893,6 +1894,8 @@
     "customListsEmptyHint": "Crie listas para organizar seus filmes e séries",
     "addSeries": "+ Adicionar Série",
     "listItemsEmpty": "Esta lista está vazia",
+    "errorTitle": "Não foi possível carregar suas listas",
+    "errorBody": "Verifique sua conexão e tente novamente.",
     "listItemsEmptyHint": "Use a busca acima para adicionar itens, ou adicione pela página da mídia",
     "backToLists": "Voltar às Listas",
     "settings": "Configurações",
