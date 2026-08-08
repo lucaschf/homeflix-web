@@ -429,40 +429,46 @@ function FilmographySection({ movies, sort, onSortChange, t, onPlay, onOpen }: F
         )}
       </Box>
 
-      <Box
-        sx={{
-          // Responsive ``auto-fill`` grid: the columns stretch (``1fr``)
-          // to fill the row, so full rows never leave a trailing gap on
-          // the right. The ``minmax`` floors roughly preserve the
-          // intrinsic ``MediaCard`` sizes (200 / 240 / 280) used by the
-          // Home / Browse / Series carousels. Cards are full-width so
-          // each fills its grid cell.
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "repeat(2, 1fr)",
-            sm: "repeat(auto-fill, minmax(180px, 1fr))",
-            md: "repeat(auto-fill, minmax(200px, 1fr))",
-            lg: "repeat(auto-fill, minmax(240px, 1fr))",
-          },
-          gap: { xs: 1.5, sm: 2, md: 2.25 },
-        }}
-      >
-        {movies.map((movie) => (
-          <MediaCard
-            key={movie.id}
-            title={movie.title}
-            year={movie.year}
-            imageUrl={movie.poster_path ?? undefined}
-            synopsis={movie.synopsis ?? undefined}
-            variant="poster"
-            mediaId={movie.id}
-            mediaType="movie"
-            fullWidth
-            onPlay={() => onPlay(movie.id)}
-            onClick={() => onOpen(movie.id)}
-          />
-        ))}
-      </Box>
+      {movies.length === 0 ? (
+        <Typography variant="body2" color="text.secondary" sx={{ py: 4 }}>
+          {t("actor.emptyFilmography")}
+        </Typography>
+      ) : (
+        <Box
+          sx={{
+            // Responsive ``auto-fill`` grid: the columns stretch (``1fr``)
+            // to fill the row, so full rows never leave a trailing gap on
+            // the right. The ``minmax`` floors roughly preserve the
+            // intrinsic ``MediaCard`` sizes (200 / 240 / 280) used by the
+            // Home / Browse / Series carousels. Cards are full-width so
+            // each fills its grid cell.
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "repeat(2, 1fr)",
+              sm: "repeat(auto-fill, minmax(180px, 1fr))",
+              md: "repeat(auto-fill, minmax(200px, 1fr))",
+              lg: "repeat(auto-fill, minmax(240px, 1fr))",
+            },
+            gap: { xs: 1.5, sm: 2, md: 2.25 },
+          }}
+        >
+          {movies.map((movie) => (
+            <MediaCard
+              key={movie.id}
+              title={movie.title}
+              year={movie.year}
+              imageUrl={movie.poster_path ?? undefined}
+              synopsis={movie.synopsis ?? undefined}
+              variant="poster"
+              mediaId={movie.id}
+              mediaType="movie"
+              fullWidth
+              onPlay={() => onPlay(movie.id)}
+              onClick={() => onOpen(movie.id)}
+            />
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

@@ -1733,6 +1733,7 @@
     "movieCount": "{{count}} movie",
     "movieCount_other": "{{count}} movies",
     "noMovies": "No movies featuring this actor in the library",
+    "emptyFilmography": "No movies with this actor in your catalog yet.",
     "filmography": "Filmography",
     "born": "Born {{date}}",
     "lifeSpan": "{{birth}} – {{death}}",

@@ -1732,6 +1732,7 @@
     "movieCount": "{{count}} filme",
     "movieCount_other": "{{count}} filmes",
     "noMovies": "Nenhum filme com este ator no acervo",
+    "emptyFilmography": "Nenhum filme com este ator no seu catálogo ainda.",
     "filmography": "Filmografia",
     "born": "Nascido em {{date}}",
     "lifeSpan": "{{birth}} – {{death}}",
