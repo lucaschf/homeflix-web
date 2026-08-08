@@ -2,11 +2,23 @@ import { Box, CircularProgress, IconButton, Typography } from "@mui/material";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link as RouterLink } from "react-router-dom";
 
 interface MediaCarouselProps {
   title: string;
   subtitle?: string;
   onSeeAll?: () => void;
+  /**
+   * Destination for the "See all" affordance. When provided the link
+   * renders as a real `<a>` (react-router `Link`) so it is keyboard
+   * focusable and opens in a new tab on ctrl/middle-click — semantics
+   * a `Typography onClick` can't offer. Falls back to a focusable
+   * `<button>` driven by `onSeeAll` when no href is given (e.g. the
+   * admin overview, which routes imperatively).
+   */
+  seeAllHref?: string;
+  /** Accessible label for the "See all" link (defaults to the visible text). */
+  seeAllAriaLabel?: string;
   children: React.ReactNode;
   // Heading typography variant — defaults to ``h2`` (the home/browse
   // section style). Detail pages opt into ``h3`` so the cast and
@@ -26,6 +38,8 @@ export function MediaCarousel({
   title,
   subtitle,
   onSeeAll,
+  seeAllHref,
+  seeAllAriaLabel,
   children,
   headingVariant = "h2",
   onLoadMore,
@@ -123,15 +137,35 @@ export function MediaCarousel({
             </Typography>
           )}
         </Box>
-        {onSeeAll && hasOverflow && (
+        {(seeAllHref || onSeeAll) && hasOverflow && (
           <Typography
             variant="body2"
-            onClick={onSeeAll}
+            // Real link when a destination is known (keyboard focus +
+            // open-in-new-tab); focusable button otherwise so imperative
+            // callers still get keyboard access instead of a bare
+            // `onClick` on non-interactive text.
+            {...(seeAllHref
+              ? { component: RouterLink, to: seeAllHref }
+              : { component: "button", type: "button", onClick: onSeeAll })}
+            aria-label={seeAllAriaLabel}
             sx={{
               color: "primary.main",
               cursor: "pointer",
               flexShrink: 0,
+              // Strip the intrinsic <button>/<a> chrome so the affordance
+              // still reads as the same inline text link it was before.
+              border: "none",
+              background: "none",
+              p: 0,
+              font: "inherit",
+              textDecoration: "none",
               "&:hover": { textDecoration: "underline" },
+              "&:focus-visible": {
+                outline: "2px solid",
+                outlineColor: "primary.main",
+                outlineOffset: 2,
+                borderRadius: 0.5,
+              },
             }}
           >
             {t("home.seeAll")} &gt;

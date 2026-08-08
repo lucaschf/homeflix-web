@@ -1784,7 +1784,13 @@
     "yearNewest": "Ano (Mais Recente)",
     "yearOldest": "Ano (Mais Antigo)",
     "noResults": "Nenhum resultado encontrado. Tente um filtro diferente.",
-    "loadMore": "Carregar Mais"
+    "loadMore": "Carregar Mais",
+    "back": "Voltar",
+    "backToBrowse": "Voltar para explorar",
+    "titlesCount": "{{count}} titulo",
+    "titlesCount_other": "{{count}} titulos",
+    "filterType": "Tipo",
+    "seeAllAria": "Ver tudo em {{genre}}"
   },
   "search": {
     "placeholder": "Buscar no HomeFlix...",

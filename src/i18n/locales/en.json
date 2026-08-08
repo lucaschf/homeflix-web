@@ -1785,7 +1785,13 @@
     "yearNewest": "Year (Newest)",
     "yearOldest": "Year (Oldest)",
     "noResults": "No results found. Try a different filter.",
-    "loadMore": "Load More"
+    "loadMore": "Load More",
+    "back": "Back",
+    "backToBrowse": "Back to browse",
+    "titlesCount": "{{count}} title",
+    "titlesCount_other": "{{count}} titles",
+    "filterType": "Type",
+    "seeAllAria": "See all in {{genre}}"
   },
   "search": {
     "placeholder": "Search HomeFlix...",
