@@ -15,6 +15,8 @@ import {
   Tooltip,
   Typography,
   Snackbar,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { GalleryHorizontalEnd, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag, CheckCircle2 } from "lucide-react";
@@ -64,6 +66,8 @@ export function SeriesDetail() {
   const { seriesId } = useParams<{ seriesId: string }>();
   const navigate = useNavigate();
   const { data: series, isLoading, isError } = useSeriesDetail(seriesId!);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   useDocumentTitle(series?.title);
   const enrichMutation = useEnrichSeries();
   const flagEnrichment = useFlagSeriesEnrichment();
@@ -131,6 +135,96 @@ export function SeriesDetail() {
       ? `${t("detail.watch")} E${firstEpisode.episode_number}`
       : t("detail.watch");
 
+  // Hero action controls — rendered inside the hero on desktop and
+  // below the contained hero (on solid bg) on mobile.
+  const heroActions = (
+    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      <Button
+        variant="cta"
+        startIcon={<Play size={16} />}
+        sx={{ height: ACTION_BAR_HEIGHT, px: 3.25, flex: { xs: 1 }, minWidth: 0, whiteSpace: "nowrap" }}
+        onClick={() => navigate(`/play/episode/${series.id}/${playTarget.season}/${playTarget.episode}`)}
+      >
+        {playLabel}
+      </Button>
+      <WatchlistIconButton
+        active={!!inWatchlist}
+        onClick={() =>
+          toggleWatchlist.mutate(
+            { media_id: series.id, media_type: "series" },
+            {
+              onSuccess: (res) =>
+                showToast(t(res.data.added ? "lists.addedToList" : "lists.removedFromList")),
+            },
+          )
+        }
+        addLabel={t("lists.addToList")}
+        removeLabel={t("lists.removeFromList")}
+      />
+      {series.trailer_url &&
+        (isMobile ? (
+          <IconButton
+            aria-label={t("detail.trailer")}
+            onClick={() => setTrailerOpen(true)}
+            sx={{
+              width: ACTION_BAR_HEIGHT,
+              height: ACTION_BAR_HEIGHT,
+              borderRadius: 1,
+              color: "text.primary",
+              bgcolor: whiteAlpha(0.08),
+              border: `1px solid ${whiteAlpha(0.12)}`,
+              "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
+            }}
+          >
+            <Clapperboard size={18} />
+          </IconButton>
+        ) : (
+          <Button
+            variant="hairline"
+            startIcon={<Clapperboard size={16} />}
+            onClick={() => setTrailerOpen(true)}
+            sx={{ height: ACTION_BAR_HEIGHT, px: 2 }}
+          >
+            {t("detail.trailer")}
+          </Button>
+        ))}
+      {!series.tmdb_id && (
+        <IconButton
+          onClick={() => enrichMutation.mutate({ seriesId: series.id })}
+          disabled={enrichMutation.isPending}
+          sx={{ color: "text.secondary" }}
+          size="small"
+        >
+          <RefreshCw size={18} />
+        </IconButton>
+      )}
+      {isAdmin &&
+        series.tmdb_id &&
+        (() => {
+          const flagged = series.needs_enrichment_review || flagEnrichment.isSuccess;
+          const actions: OverflowAction[] = [
+            {
+              key: "flag",
+              icon: <Flag size={16} fill={flagged ? "currentColor" : "none"} />,
+              label: flagged
+                ? t("detail.flagEnrichment.flagged")
+                : t("detail.flagEnrichment.tooltip"),
+              onClick: handleFlagEnrichment,
+              disabled: flagEnrichment.isPending || flagged,
+              active: flagged,
+            },
+          ];
+          return <OverflowMenu actions={actions} ariaLabel={t("detail.moreActions")} />;
+        })()}
+    </Box>
+  );
+
+  const seriesEyebrow = (
+    <Typography variant="eyebrow" sx={{ color: "primary.main", mb: 1.25 }}>
+      {t("detail.seriesEyebrow")}
+    </Typography>
+  );
+
   return (
     <Box sx={{ position: "relative" }}>
       {/* Hero Header — same structure as the home ``HeroBanner``:
@@ -138,6 +232,37 @@ export function SeriesDetail() {
         box so the cinematic backdrop reaches the bottom edge of
         the viewport. ``56dvh`` hero + ``-44dvh`` bleed = ``100dvh``
         total, matching ``HeroBanner``'s look on common viewports. */}
+      {isMobile ? (
+        <Box sx={{ position: "relative", width: "100%", aspectRatio: "4 / 5", overflow: "hidden" }}>
+          {(series.backdrop_path || series.poster_path) && (
+            <Box
+              component="img"
+              src={series.backdrop_path ?? series.poster_path ?? undefined}
+              alt=""
+              sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+            />
+          )}
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background: `linear-gradient(180deg, ${panelScrim(0.25)} 0%, ${panelScrim(0)} 26%, ${panelScrim(0.5)} 60%, ${panelScrim(0.92)} 86%, ${neutral[950]} 100%)`,
+            }}
+          />
+          <Box sx={{ position: "absolute", left: 0, right: 0, bottom: 0, px: 3, pb: "22px", display: "flex", flexDirection: "column" }}>
+            {seriesEyebrow}
+            <TitleLogo logoUrl={series.logo_path} title={series.title} sx={{ fontSize: { xs: "2.125rem" }, mb: 1.5 }} />
+            <MetaLine
+              contentRating={series.content_rating}
+              items={[
+                `${series.start_year}${series.end_year ? `–${series.end_year}` : "–"}`,
+                t("common.seasons", { count: series.season_count }),
+              ]}
+              genres={series.genres}
+            />
+          </Box>
+        </Box>
+      ) : (
       <Box sx={{ position: "relative", width: "100%", height: "56dvh", minHeight: 400 }}>
         {series.backdrop_path && (
           <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh" }}>
@@ -183,78 +308,18 @@ export function SeriesDetail() {
               genres={series.genres}
             />
 
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <Button
-                variant="cta"
-                startIcon={<Play size={16} />}
-                sx={{ height: ACTION_BAR_HEIGHT, px: 3.25 }}
-                onClick={() => navigate(`/play/episode/${series.id}/${playTarget.season}/${playTarget.episode}`)}
-              >
-                {playLabel}
-              </Button>
-              <WatchlistIconButton
-                active={!!inWatchlist}
-                onClick={() =>
-                  toggleWatchlist.mutate(
-                    { media_id: series.id, media_type: "series" },
-                    {
-                      onSuccess: (res) =>
-                        showToast(
-                          t(res.data.added ? "lists.addedToList" : "lists.removedFromList"),
-                        ),
-                    },
-                  )
-                }
-                addLabel={t("lists.addToList")}
-                removeLabel={t("lists.removeFromList")}
-              />
-              {series.trailer_url && (
-                <Button
-                  variant="hairline"
-                  startIcon={<Clapperboard size={16} />}
-                  onClick={() => setTrailerOpen(true)}
-                  sx={{ height: ACTION_BAR_HEIGHT, px: 2 }}
-                >
-                  {t("detail.trailer")}
-                </Button>
-              )}
-              {!series.tmdb_id && (
-                <IconButton
-                  onClick={() => enrichMutation.mutate({ seriesId: series.id })}
-                  disabled={enrichMutation.isPending}
-                  sx={{ color: "text.secondary" }}
-                  size="small"
-                >
-                  <RefreshCw size={18} />
-                </IconButton>
-              )}
-              {isAdmin &&
-                series.tmdb_id &&
-                (() => {
-                  // Admin-only "report wrong enrichment", folded into a
-                  // "⋯" menu so the main bar matches the movie detail
-                  // (Watch / Trailer only). Shown once enriched (has a
-                  // tmdb_id); flagged state persists via the detail
-                  // payload's ``needs_enrichment_review``.
-                  const flagged = series.needs_enrichment_review || flagEnrichment.isSuccess;
-                  const actions: OverflowAction[] = [
-                    {
-                      key: "flag",
-                      icon: <Flag size={16} fill={flagged ? "currentColor" : "none"} />,
-                      label: flagged
-                        ? t("detail.flagEnrichment.flagged")
-                        : t("detail.flagEnrichment.tooltip"),
-                      onClick: handleFlagEnrichment,
-                      disabled: flagEnrichment.isPending || flagged,
-                      active: flagged,
-                    },
-                  ];
-                  return <OverflowMenu actions={actions} ariaLabel={t("detail.moreActions")} />;
-                })()}
-            </Box>
+            {heroActions}
           </Box>
         </Box>
       </Box>
+      )}
+
+      {/* Mobile: the hero's actions live below the contained hero on the
+          solid page background (Collection-style), instead of inside the
+          backdrop. */}
+      {isMobile && (
+        <Box sx={{ position: "relative", zIndex: 1, px: 3, pt: 2 }}>{heroActions}</Box>
+      )}
 
       {series.trailer_url && (
         <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} url={series.trailer_url} />
