@@ -183,6 +183,11 @@
     "scrollLeft": "Scroll left",
     "scrollRight": "Scroll right"
   },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "body": "An unexpected error occurred on this screen. Reloading usually fixes it.",
+    "reload": "Reload"
+  },
   "detail": {
     "trailer": "Trailer",
     "moreActions": "More actions",
