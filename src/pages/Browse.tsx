@@ -100,12 +100,16 @@ export function Browse() {
 
       <Box
         sx={{
-          // Carousel-mode bleed under the hero (-10) is the same
-          // regardless of whether ``slides`` actually resolved —
-          // the placeholder reserves the same vertical space, so
-          // the negative margin still lines up with the bottom of
-          // the (possibly placeholder) hero.
-          mt: genreFilter ? 4 : -10,
+          // Carousel-mode bleed under the hero is the same regardless
+          // of whether ``slides`` actually resolved — the placeholder
+          // reserves the same vertical space, so the negative margin
+          // still lines up with the bottom of the (possibly
+          // placeholder) hero. On mobile the hero is shorter and its
+          // slide dots sit close to the bottom edge, so the full -80px
+          // pull made the first carousel title ("Adicionados
+          // Recentemente") overlap the dots — ease it to -32px there
+          // while keeping the deeper desktop overlap (matches Home).
+          mt: genreFilter ? 4 : { xs: -4, md: -10 },
           position: "relative",
           zIndex: 1,
         }}
