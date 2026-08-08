@@ -185,6 +185,7 @@
   },
   "detail": {
     "trailer": "Trailer",
+    "moreActions": "Mais ações",
     "flagEnrichment": {
       "tooltip": "Marcar enriquecimento como incorreto",
       "flagged": "Marcado para revisão",

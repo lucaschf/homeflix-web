@@ -32,6 +32,7 @@ import { HorizontalScroller } from "../components/HorizontalScroller";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { MetaLine } from "../components/MetaLine";
+import { OverflowMenu, type OverflowAction } from "../components/OverflowMenu";
 import { TitleLogo } from "../components/TitleLogo";
 import { useToast } from "../components/ToastProvider";
 import { TrailerDialog } from "../components/TrailerDialog";
@@ -220,49 +221,29 @@ export function SeriesDetail() {
                   <RefreshCw size={18} />
                 </IconButton>
               )}
-              {isAdmin && series.tmdb_id && (
-                // Admin-only: report a wrong enrichment so the series
-                // re-enters the needs-review queue for relinking. Shown
-                // only once enriched (has a tmdb_id). Flagged state
-                // persists across reloads via the detail payload's
-                // ``needs_enrichment_review``; the mutation success
-                // state covers the optimistic gap before refetch.
+              {isAdmin &&
+                series.tmdb_id &&
                 (() => {
+                  // Admin-only "report wrong enrichment", folded into a
+                  // "⋯" menu so the main bar matches the movie detail
+                  // (Watch / Trailer only). Shown once enriched (has a
+                  // tmdb_id); flagged state persists via the detail
+                  // payload's ``needs_enrichment_review``.
                   const flagged = series.needs_enrichment_review || flagEnrichment.isSuccess;
-                  return (
-                    <Tooltip
-                      title={
-                        flagged
-                          ? t("detail.flagEnrichment.flagged")
-                          : t("detail.flagEnrichment.tooltip")
-                      }
-                      arrow
-                    >
-                      {/* span keeps the tooltip working while disabled */}
-                      <span>
-                        <IconButton
-                          onClick={handleFlagEnrichment}
-                          disabled={flagEnrichment.isPending || flagged}
-                          sx={{
-                            color: flagged ? status.warn.fg : "text.primary",
-                            bgcolor: whiteAlpha(0.08),
-                            border: `1px solid ${whiteAlpha(0.12)}`,
-                            borderRadius: 1,
-                            width: ACTION_BAR_HEIGHT,
-                            height: ACTION_BAR_HEIGHT,
-                            "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
-                            "&.Mui-disabled": {
-                              color: flagged ? status.warn.fg : "text.disabled",
-                            },
-                          }}
-                        >
-                          <Flag size={18} fill={flagged ? "currentColor" : "none"} />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  );
-                })()
-              )}
+                  const actions: OverflowAction[] = [
+                    {
+                      key: "flag",
+                      icon: <Flag size={16} fill={flagged ? "currentColor" : "none"} />,
+                      label: flagged
+                        ? t("detail.flagEnrichment.flagged")
+                        : t("detail.flagEnrichment.tooltip"),
+                      onClick: handleFlagEnrichment,
+                      disabled: flagEnrichment.isPending || flagged,
+                      active: flagged,
+                    },
+                  ];
+                  return <OverflowMenu actions={actions} ariaLabel={t("detail.moreActions")} />;
+                })()}
             </Box>
           </Box>
         </Box>
