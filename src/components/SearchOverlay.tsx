@@ -32,6 +32,9 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
   const [query, setQuery] = useState("");
   const { data: searchResults, isLoading: searchLoading } = useSearch(query);
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  // Index of the keyboard-highlighted result, driven by ↑/↓ and opened
+  // with Enter. Reset to the top whenever the result set changes.
+  const [activeIndex, setActiveIndex] = useState(0);
   const [recentSearches, setRecentSearches] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) || "[]");
@@ -65,6 +68,13 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [open]);
+
+  // Snap the highlight back to the first row whenever the results
+  // change (new query, debounce settled) so Enter opens the top match.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveIndex(0);
+  }, [searchResults]);
 
   const saveRecentSearch = useCallback((term: string) => {
     setRecentSearches((prev) => {
@@ -119,6 +129,20 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
           inputRef={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (!hasResults) return;
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setActiveIndex((i) => Math.min(i + 1, searchResults.length - 1));
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setActiveIndex((i) => Math.max(i - 1, 0));
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              const item = searchResults[activeIndex] ?? searchResults[0];
+              if (item) handleSelect(item);
+            }
+          }}
           placeholder={t("search.placeholder")}
           sx={{ flex: 1, ml: 1.5, fontSize: "0.95rem", color: "text.primary" }}
         />
@@ -174,10 +198,11 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
         {/* Results — unified list ranked by relevance */}
         {hasResults && (
           <Box sx={{ px: 1.5, py: 1 }}>
-            {searchResults.map((item) => (
+            {searchResults.map((item, index) => (
               <SearchResultRow
                 key={item.id}
                 item={item}
+                active={index === activeIndex}
                 onSelect={handleSelect}
               />
             ))}
@@ -216,15 +241,27 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
 
 function SearchResultRow({
   item,
+  active,
   onSelect,
 }: {
   item: CatalogItem;
+  active: boolean;
   onSelect: (item: CatalogItem) => void;
 }) {
   const { t } = useTranslation();
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // Keep the keyboard-highlighted row visible as ↑/↓ moves past the
+  // edges of the scroll viewport.
+  useEffect(() => {
+    if (active) rowRef.current?.scrollIntoView({ block: "nearest" });
+  }, [active]);
+
   return (
     <Box
+      ref={rowRef}
       onClick={() => onSelect(item)}
+      aria-selected={active}
       sx={{
         display: "flex",
         alignItems: "center",
@@ -233,6 +270,7 @@ function SearchResultRow({
         px: 1,
         borderRadius: 1.5,
         cursor: "pointer",
+        bgcolor: active ? "action.hover" : "transparent",
         "&:hover": { bgcolor: "action.hover" },
       }}
     >
