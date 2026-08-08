@@ -285,6 +285,7 @@ export function useByGenre(genreId: string, options: CatalogQueryOptions = {}) {
     hasNextPage: !!query.hasNextPage,
     fetchNextPage: query.fetchNextPage,
     isError: query.isError,
+    refetch: query.refetch,
   };
 }
 

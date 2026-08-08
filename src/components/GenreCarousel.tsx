@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -56,12 +56,14 @@ export function GenreCarousel({ genre, type }: GenreCarouselProps) {
 
   // Preserve the current `?type=` filter (if any) when jumping into
   // the genre-grid view, so the "See all" link from a Movies-tab
-  // carousel keeps the user on the Movies tab.
-  const handleSeeAll = useCallback(() => {
+  // carousel keeps the user on the Movies tab. Built as a real URL so
+  // the carousel can render it as an `<a href>` (keyboard + new-tab)
+  // rather than an imperative onClick.
+  const seeAllHref = useMemo(() => {
     const params = new URLSearchParams({ genre: genre.id });
     if (type) params.set("type", type);
-    navigate(`/browse?${params.toString()}`);
-  }, [navigate, genre.id, type]);
+    return `/browse?${params.toString()}`;
+  }, [genre.id, type]);
 
   if (isLoading) {
     return <CarouselSkeleton title={genre.name} />;
@@ -85,7 +87,8 @@ export function GenreCarousel({ genre, type }: GenreCarouselProps) {
   return (
     <MediaCarousel
       title={genre.name}
-      onSeeAll={handleSeeAll}
+      seeAllHref={seeAllHref}
+      seeAllAriaLabel={t("browse.seeAllAria", { genre: genre.name })}
       onLoadMore={handleLoadMore}
       hasMore={hasNextPage}
       loadingMore={isFetchingNextPage}

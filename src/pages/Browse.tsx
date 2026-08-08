@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, Skeleton, Typography } from "@mui/material";
+import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { SegmentedControl, type SegmentedOption } from "../components/admin/SegmentedControl";
 import {
   useByGenre,
   useContinueWatching,
@@ -137,8 +139,14 @@ export function Browse() {
             displayName={
               genres?.find((g) => g.id === genreFilter)?.name ?? genreFilter
             }
+            count={genres?.find((g) => g.id === genreFilter)?.count}
             onClearFilter={() => {
               searchParams.delete("genre");
+              setSearchParams(searchParams);
+            }}
+            onTypeChange={(next) => {
+              if (next === "all") searchParams.delete("type");
+              else searchParams.set("type", next);
               setSearchParams(searchParams);
             }}
           />
@@ -237,9 +245,29 @@ function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
   );
 }
 
+// Shared poster-grid geometry so the skeleton and the loaded grid stay
+// pixel-aligned instead of each re-deriving the breakpoints — a drift
+// between them would make the load resolve as a reflow rather than a
+// clean content swap.
+const GRID_COLUMNS = {
+  xs: "repeat(3, 1fr)",
+  sm: "repeat(4, 1fr)",
+  md: "repeat(5, 1fr)",
+  lg: "repeat(6, 1fr)",
+  xl: "repeat(7, 1fr)",
+} as const;
+const GRID_GAP = { xs: 1, sm: 1.5, md: 2 } as const;
+const GRID_PX = { xs: 2, md: 6 } as const;
+
 interface GenreGridProps {
   genreId: string;
   displayName: string;
+  /**
+   * Total titles in this genre, scoped to `type` when a type filter is
+   * active. Drives the "N titles" subtitle; omitted while the parent's
+   * genres list is still loading.
+   */
+  count?: number;
   onClearFilter: () => void;
   /**
    * Optional media-type filter forwarded to `useByGenre`. Keeps the
@@ -247,6 +275,34 @@ interface GenreGridProps {
    * Movies- or Series-tab carousel's "See all" link.
    */
   type?: CatalogTypeFilter;
+  /**
+   * Switch the active `?type=` filter from the in-grid segmented
+   * control. `"all"` clears the filter; `"movie"` / `"series"` narrow
+   * the listing server-side (the backend accepts the same `type` param
+   * the carousels already use).
+   */
+  onTypeChange: (next: CatalogTypeFilter | "all") => void;
+}
+
+/**
+ * Structural skeleton for the genre grid's first load: a full grid of
+ * poster-shaped placeholders on the exact same breakpoints as the real
+ * grid, so the load resolves as a content swap instead of the old
+ * centered-spinner → grid jump.
+ */
+function GenreGridSkeleton() {
+  return (
+    <Box sx={{ display: "grid", gridTemplateColumns: GRID_COLUMNS, gap: GRID_GAP, px: GRID_PX }}>
+      {Array.from({ length: 18 }, (_, i) => (
+        <Skeleton
+          key={i}
+          variant="rounded"
+          animation="wave"
+          sx={{ width: "100%", aspectRatio: "2/3", borderRadius: 2 }}
+        />
+      ))}
+    </Box>
+  );
 }
 
 /**
@@ -257,13 +313,18 @@ interface GenreGridProps {
  * reference, with a 400px rootMargin so the next page is in flight
  * by the time the user reaches the end of the visible rows.
  */
-function GenreGrid({ genreId, displayName, onClearFilter, type }: GenreGridProps) {
+function GenreGrid({
+  genreId,
+  displayName,
+  count,
+  onClearFilter,
+  type,
+  onTypeChange,
+}: GenreGridProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { items, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } = useByGenre(
-    genreId,
-    { type },
-  );
+  const { items, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
+    useByGenre(genreId, { type });
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -280,91 +341,126 @@ function GenreGrid({ genreId, displayName, onClearFilter, type }: GenreGridProps
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "40vh",
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Box>
-    );
-  }
+  // Type filter reflected in the URL — switching a segment re-runs the
+  // by-genre query under a new cache key (server-side narrowing), so
+  // the grid falls back to its skeleton for a clean swap.
+  const typeOptions: SegmentedOption<"all" | "movie" | "series">[] = [
+    { value: "all", label: t("browse.all") },
+    { value: "movie", label: t("nav.movies") },
+    { value: "series", label: t("nav.series") },
+  ];
 
   return (
     <>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: { xs: 3, md: 6 }, mb: 3 }}>
-        <Typography variant="h2">{displayName}</Typography>
-        <Typography
-          variant="body2"
-          onClick={onClearFilter}
-          sx={{
-            color: "primary.main",
-            cursor: "pointer",
-            "&:hover": { textDecoration: "underline" },
-          }}
-        >
-          {t("browse.all")} &gt;
-        </Typography>
-      </Box>
-
+      {/* Header: back affordance + genre name + result count on the
+          left, the type filter on the right (stacks under the title on
+          phones). Replaces the old bare "Todos >" text-clear. */}
       <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "repeat(3, 1fr)",
-            sm: "repeat(4, 1fr)",
-            md: "repeat(5, 1fr)",
-            lg: "repeat(6, 1fr)",
-            xl: "repeat(7, 1fr)",
-          },
-          gap: { xs: 1, sm: 1.5, md: 2 },
-          px: { xs: 2, md: 6 },
-        }}
-      >
-        {items.map((item) => (
-          <MediaCard
-            key={`${item.type}:${item.id}`}
-            title={item.title}
-            year={item.year}
-            imageUrl={item.poster_path ?? undefined}
-            synopsis={item.synopsis ?? undefined}
-            variant="poster"
-            fullWidth
-            mediaId={item.id}
-            mediaType={item.type}
-            onPlay={
-              // Only movies play straight from the card; series open
-              // their detail page (no play button shown).
-              item.type === "movie" ? () => navigate(`/play/movie/${item.id}`) : undefined
-            }
-            onClick={() =>
-              navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)
-            }
-          />
-        ))}
-      </Box>
-
-      {/* Sentinel + loading-more spinner below the grid. The
-          IntersectionObserver above watches it relative to the page
-          viewport so vertical scroll near the bottom triggers the
-          next page fetch. */}
-      <Box
-        ref={sentinelRef}
         sx={{
           display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 80,
-          mt: 2,
+          flexDirection: { xs: "column", md: "row" },
+          alignItems: { xs: "stretch", md: "center" },
+          gap: { xs: 1.5, md: 2 },
+          px: { xs: 3, md: 6 },
+          mb: 3,
         }}
       >
-        {isFetchingNextPage && <CircularProgress color="primary" size={28} />}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0, flex: 1 }}>
+          <IconButton
+            onClick={onClearFilter}
+            aria-label={t("browse.backToBrowse")}
+            size="small"
+            sx={{ color: "text.secondary", flexShrink: 0, "&:hover": { color: "text.primary" } }}
+          >
+            <ArrowLeft size={20} />
+          </IconButton>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h2" noWrap>
+              {displayName}
+            </Typography>
+            {count !== undefined && (
+              <Typography variant="body2" color="text.secondary">
+                {t("browse.titlesCount", { count })}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+        <SegmentedControl
+          value={type ?? "all"}
+          options={typeOptions}
+          onChange={onTypeChange}
+          ariaLabel={t("browse.filterType")}
+        />
       </Box>
+
+      {isLoading ? (
+        <GenreGridSkeleton />
+      ) : isError ? (
+        <Box sx={{ textAlign: "center", py: 10, px: 3 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+            {t("common.errorLoadingSection")}
+          </Typography>
+          <Button variant="outlined" color="primary" onClick={() => void refetch()}>
+            {t("common.retry")}
+          </Button>
+        </Box>
+      ) : items.length === 0 ? (
+        <Box sx={{ textAlign: "center", py: 10, px: 3 }}>
+          <Typography variant="body1" color="text.secondary">
+            {t("browse.noResults")}
+          </Typography>
+        </Box>
+      ) : (
+        <>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: GRID_COLUMNS,
+              gap: GRID_GAP,
+              px: GRID_PX,
+            }}
+          >
+            {items.map((item) => (
+              <MediaCard
+                key={`${item.type}:${item.id}`}
+                title={item.title}
+                year={item.year}
+                imageUrl={item.poster_path ?? undefined}
+                synopsis={item.synopsis ?? undefined}
+                variant="poster"
+                fullWidth
+                mediaId={item.id}
+                mediaType={item.type}
+                onPlay={
+                  // Only movies play straight from the card; series open
+                  // their detail page (no play button shown).
+                  item.type === "movie" ? () => navigate(`/play/movie/${item.id}`) : undefined
+                }
+                onClick={() =>
+                  navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`)
+                }
+              />
+            ))}
+          </Box>
+
+          {/* Sentinel + loading-more spinner below the grid. The
+              IntersectionObserver above watches it relative to the page
+              viewport so vertical scroll near the bottom triggers the
+              next page fetch. */}
+          <Box
+            ref={sentinelRef}
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: 80,
+              mt: 2,
+            }}
+          >
+            {isFetchingNextPage && <CircularProgress color="primary" size={28} />}
+          </Box>
+        </>
+      )}
     </>
   );
 }
