@@ -18,6 +18,12 @@ export function CollectionChip({ collection }: CollectionChipProps) {
       aria-label={`${t("detail.partOf")} ${collection.name}`}
       sx={{
         display: "inline-flex",
+        // Wrap and cap at the container width so a long collection name
+        // doesn't force the pill past the viewport (it did on mobile —
+        // ``whiteSpace: nowrap`` kept the whole label on one line and
+        // pushed the page into horizontal scroll).
+        flexWrap: "wrap",
+        maxWidth: "100%",
         alignItems: "center",
         gap: 1,
         alignSelf: "flex-start",
@@ -28,7 +34,6 @@ export function CollectionChip({ collection }: CollectionChipProps) {
         fontSize: fontSize.control,
         color: inkAlpha(0.85),
         lineHeight: 1.4,
-        whiteSpace: "nowrap",
         textDecoration: "none",
         cursor: "pointer",
         transition: "border-color 160ms ease, background-color 160ms ease, color 160ms ease",
