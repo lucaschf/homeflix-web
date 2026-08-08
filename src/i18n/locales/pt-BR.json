@@ -155,7 +155,8 @@
     "recentlyAdded": "Adicionados Recentemente",
     "movies": "Filmes",
     "series": "Series",
-    "seeAll": "Ver Tudo"
+    "seeAll": "Ver Tudo",
+    "removedFromContinue": "Removido de Continue Assistindo"
   },
   "hero": {
     "play": "Assistir",
@@ -175,6 +176,7 @@
     "addToList": "Adicionar à Lista"
   },
   "common": {
+    "undo": "Desfazer",
     "seasons": "{{count}} Temporada",
     "seasons_other": "{{count}} Temporadas",
     "episodes": "{{count}} Episodio",

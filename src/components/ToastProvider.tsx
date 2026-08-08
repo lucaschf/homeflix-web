@@ -6,15 +6,30 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Box, Snackbar } from "@mui/material";
+import { Box, Button, Snackbar } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { status, whiteAlpha } from "../theme/tokens";
 
 type ToastSeverity = "success" | "error" | "info";
 
+interface ToastOptions {
+  severity?: ToastSeverity;
+  /** Optional inline action (e.g. "Undo"). Running it dismisses the toast. */
+  action?: { label: string; onClick: () => void };
+  /** Auto-hide delay in ms (default 3000; give undo toasts a longer window). */
+  durationMs?: number;
+}
+
+interface ToastState {
+  message: string;
+  severity: ToastSeverity;
+  action?: { label: string; onClick: () => void };
+  durationMs: number;
+}
+
 interface ToastContextValue {
-  /** Show a transient confirmation toast (defaults to the success tone). */
-  showToast: (message: string, severity?: ToastSeverity) => void;
+  /** Show a transient toast (defaults to the success tone). */
+  showToast: (message: string, options?: ToastOptions) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -23,14 +38,20 @@ const ToastContext = createContext<ToastContextValue | null>(null);
  * Lightweight app-wide toast. A single bottom-anchored Snackbar reused
  * for every call, styled like the existing detail-page Snackbars
  * (tinted translucent panel) so confirmations read consistently.
- * Actions like watchlist add/remove and add-to-list use it to give the
- * user feedback that was previously silent.
+ * Actions like watchlist add/remove and add-to-list use it for feedback
+ * that was previously silent; destructive actions can pass an ``action``
+ * (e.g. Undo) with a longer ``durationMs``.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<{ message: string; severity: ToastSeverity } | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
 
-  const showToast = useCallback((message: string, severity: ToastSeverity = "success") => {
-    setToast({ message, severity });
+  const showToast = useCallback((message: string, options?: ToastOptions) => {
+    setToast({
+      message,
+      severity: options?.severity ?? "success",
+      action: options?.action,
+      durationMs: options?.durationMs ?? 3000,
+    });
   }, []);
 
   const value = useMemo(() => ({ showToast }), [showToast]);
@@ -47,7 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <Snackbar
         open={!!toast}
-        autoHideDuration={3000}
+        autoHideDuration={toast?.durationMs ?? 3000}
         onClose={() => setToast(null)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
         // Sit above the mobile bottom navigation; fall back to the
@@ -57,18 +78,43 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toast ? (
           <Box
             sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
               bgcolor: alpha(tone.base, 0.15),
               border: `1px solid ${whiteAlpha(0.1)}`,
               color: "text.primary",
               borderRadius: 1,
-              px: 2,
+              pl: 2,
+              pr: toast.action ? 1 : 2,
               py: 1.25,
               fontSize: "0.875rem",
               maxWidth: 480,
               backdropFilter: "blur(8px)",
             }}
           >
-            {toast.message}
+            <Box component="span" sx={{ minWidth: 0 }}>
+              {toast.message}
+            </Box>
+            {toast.action && (
+              <Button
+                size="small"
+                onClick={() => {
+                  toast.action?.onClick();
+                  setToast(null);
+                }}
+                sx={{
+                  flexShrink: 0,
+                  color: "primary.main",
+                  fontWeight: 600,
+                  textTransform: "none",
+                  minWidth: "auto",
+                  px: 1,
+                }}
+              >
+                {toast.action.label}
+              </Button>
+            )}
           </Box>
         ) : undefined}
       </Snackbar>
