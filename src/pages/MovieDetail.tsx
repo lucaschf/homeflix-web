@@ -2,7 +2,6 @@ import { useMemo, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
-  CircularProgress,
   IconButton,
   Snackbar,
   Tooltip,
@@ -27,6 +26,7 @@ import {
 import { useCurrentUser } from "../api/auth";
 import { CreditsMarkerEditor } from "../components/admin";
 import { CastCard } from "../components/CastCard";
+import { DetailSkeleton } from "../components/DetailSkeleton";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { CollectionChip } from "../components/CollectionChip";
@@ -150,11 +150,7 @@ export function MovieDetail() {
   };
 
   if (isLoading || !movie) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress color="primary" />
-      </Box>
-    );
+    return <DetailSkeleton />;
   }
 
   return (
