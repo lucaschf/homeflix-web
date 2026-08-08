@@ -11,6 +11,7 @@ import {
   RequireAuth,
 } from "./components/auth";
 import { SplashScreen } from "./components/SplashScreen";
+import { ToastProvider } from "./components/ToastProvider";
 import { Actor } from "./pages/Actor";
 import { Browse } from "./pages/Browse";
 import { Collection } from "./pages/Collection";
@@ -87,6 +88,7 @@ function App() {
       <CssBaseline />
       {splashOpen && <SplashScreen onDone={handleSplashDone} />}
       <QueryClientProvider client={queryClient}>
+        <ToastProvider>
         <BrowserRouter>
           {/* Listens for the global auth-expired event from
               ``api/client.ts`` and redirects to /login. Sits
@@ -174,6 +176,7 @@ function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

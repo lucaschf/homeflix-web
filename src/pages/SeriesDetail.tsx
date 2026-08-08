@@ -33,6 +33,7 @@ import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { MetaLine } from "../components/MetaLine";
 import { TitleLogo } from "../components/TitleLogo";
+import { useToast } from "../components/ToastProvider";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { WatchlistIconButton } from "../components/WatchlistIconButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -69,6 +70,7 @@ export function SeriesDetail() {
   >(null);
   const { data: inWatchlist } = useIsInWatchlist(seriesId!);
   const toggleWatchlist = useToggleWatchlist();
+  const { showToast } = useToast();
   const { data: continueWatching } = useContinueWatching();
   const { data: relatedSeries } = useRelatedSeries(seriesId);
   const [selectedSeason, setSelectedSeason] = useState(0);
@@ -184,7 +186,17 @@ export function SeriesDetail() {
               </Button>
               <WatchlistIconButton
                 active={!!inWatchlist}
-                onClick={() => toggleWatchlist.mutate({ media_id: series.id, media_type: "series" })}
+                onClick={() =>
+                  toggleWatchlist.mutate(
+                    { media_id: series.id, media_type: "series" },
+                    {
+                      onSuccess: (res) =>
+                        showToast(
+                          t(res.data.added ? "lists.addedToList" : "lists.removedFromList"),
+                        ),
+                    },
+                  )
+                }
                 addLabel={t("lists.addToList")}
                 removeLabel={t("lists.removeFromList")}
               />

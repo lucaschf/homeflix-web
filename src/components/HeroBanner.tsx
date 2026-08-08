@@ -8,6 +8,7 @@ import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim } from "../theme/tokens";
 import { ContentRatingBadge } from "./ContentRatingBadge";
 import { TitleLogo } from "./TitleLogo";
 import { TrailerDialog } from "./TrailerDialog";
+import { useToast } from "./ToastProvider";
 import { WatchlistIconButton } from "./WatchlistIconButton";
 
 export interface HeroSlide {
@@ -44,6 +45,7 @@ export function HeroBanner({
   const [trailerOpen, setTrailerOpen] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const toggleWatchlist = useToggleWatchlist();
+  const { showToast } = useToast();
 
   const count = slides.length;
 
@@ -267,7 +269,15 @@ export function HeroBanner({
           <WatchlistIconButton
             active={!!inWatchlist}
             onClick={() => {
-              toggleWatchlist.mutate({ media_id: slide.id, media_type: slide.type });
+              toggleWatchlist.mutate(
+                { media_id: slide.id, media_type: slide.type },
+                {
+                  onSuccess: (res) =>
+                    showToast(
+                      t(res.data.added ? "lists.addedToList" : "lists.removedFromList"),
+                    ),
+                },
+              );
               onAddToList?.(slide);
             }}
             addLabel={t("lists.addToList")}

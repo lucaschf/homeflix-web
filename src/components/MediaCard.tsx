@@ -4,6 +4,7 @@ import { Bookmark, BookmarkCheck, ListPlus, Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
+import { useToast } from "./ToastProvider";
 import { neutral } from "../theme/colors";
 import { whiteAlpha, scrim } from "../theme/tokens";
 import { CARD_WIDTH } from "./mediaCardDimensions";
@@ -413,6 +414,7 @@ function InfoOverlay({
   const { t } = useTranslation();
   const { data: inWatchlist } = useIsInWatchlist(mediaId);
   const toggleWatchlist = useToggleWatchlist();
+  const { showToast } = useToast();
   const [addToListOpen, setAddToListOpen] = useState(false);
 
   return (
@@ -484,7 +486,17 @@ function InfoOverlay({
             <Tooltip title={inWatchlist ? t("card.removeFromWatchlist") : t("card.addToWatchlist")} arrow>
               <IconButton
                 size="small"
-                onClick={() => toggleWatchlist.mutate({ media_id: mediaId, media_type: mediaType })}
+                onClick={() =>
+                  toggleWatchlist.mutate(
+                    { media_id: mediaId, media_type: mediaType },
+                    {
+                      onSuccess: (res) =>
+                        showToast(
+                          t(res.data.added ? "lists.addedToList" : "lists.removedFromList"),
+                        ),
+                    },
+                  )
+                }
                 sx={{ color: "primary.main" }}
               >
                 {inWatchlist ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
