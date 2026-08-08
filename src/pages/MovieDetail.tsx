@@ -164,6 +164,170 @@ export function MovieDetail() {
     return <DetailError />;
   }
 
+  const qualityRail = (
+    <QualityRail
+      files={movie.files}
+      resolution={movie.resolution}
+      languages={langs.audio.map(formatLanguage)}
+    />
+  );
+
+  const movieEyebrow = (
+    <Typography variant="eyebrow" sx={{ color: "primary.main", mb: 1.25 }}>
+      {t("detail.movieEyebrow")}
+    </Typography>
+  );
+
+  // Hero action controls — inside the hero on desktop, below the
+  // contained hero (solid bg) on mobile. On mobile the CTA flexes and
+  // drops its "· X restantes" suffix, and Trailer becomes icon-only, so
+  // the whole row fits without wrapping.
+  const heroActions = (
+    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      <Button
+        variant="cta"
+        startIcon={<Play size={16} />}
+        onClick={() => navigate(`/play/movie/${movie.id}`)}
+        sx={{
+          position: "relative",
+          overflow: "hidden",
+          height: ACTION_BAR_HEIGHT,
+          px: 3.25,
+          flex: { xs: 1 },
+          minWidth: 0,
+          whiteSpace: "nowrap",
+          boxShadow: `0 2px 6px ${peachAlpha(0.2)}`,
+        }}
+      >
+        {hasProgress
+          ? isMobile
+            ? t("detail.resume")
+            : `${t("detail.resume")} · ${t("detail.remaining", { time: formatDuration(movie.duration_seconds - progress.position_seconds) })}`
+          : t("detail.watch")}
+        {hasProgress && (
+          <Box
+            sx={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, bgcolor: scrim(0.2) }}
+          >
+            <Box
+              sx={{
+                width: `${(progress.position_seconds / movie.duration_seconds) * 100}%`,
+                height: "100%",
+                bgcolor: scrim(0.55),
+              }}
+            />
+          </Box>
+        )}
+      </Button>
+      <WatchlistIconButton
+        active={!!inWatchlist}
+        onClick={() =>
+          toggleWatchlist.mutate(
+            { media_id: movie.id, media_type: "movie" },
+            {
+              onSuccess: (res) =>
+                showToast(t(res.data.added ? "lists.addedToList" : "lists.removedFromList")),
+            },
+          )
+        }
+        addLabel={t("lists.addToList")}
+        removeLabel={t("lists.removeFromList")}
+      />
+      <Tooltip title={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")} arrow>
+        <IconButton
+          aria-label={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")}
+          onClick={() =>
+            toggleWatched({
+              mediaId: movie.id,
+              mediaType: "movie",
+              durationSeconds: movie.duration_seconds,
+              watched: !!isWatched,
+            })
+          }
+          sx={{
+            color: isWatched ? "primary.main" : "text.primary",
+            bgcolor: whiteAlpha(0.08),
+            border: `1px solid ${whiteAlpha(0.12)}`,
+            borderRadius: 1,
+            width: ACTION_BAR_HEIGHT,
+            height: ACTION_BAR_HEIGHT,
+            "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
+          }}
+        >
+          <CheckCircle2 size={18} />
+        </IconButton>
+      </Tooltip>
+      {movie.trailer_url &&
+        (isMobile ? (
+          <IconButton
+            aria-label={t("detail.trailer")}
+            onClick={() => setTrailerOpen(true)}
+            sx={{
+              width: ACTION_BAR_HEIGHT,
+              height: ACTION_BAR_HEIGHT,
+              borderRadius: 1,
+              color: "text.primary",
+              bgcolor: whiteAlpha(0.08),
+              border: `1px solid ${whiteAlpha(0.12)}`,
+              "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
+            }}
+          >
+            <Clapperboard size={18} />
+          </IconButton>
+        ) : (
+          <Button
+            variant="hairline"
+            startIcon={<Clapperboard size={16} />}
+            onClick={() => setTrailerOpen(true)}
+            sx={{ height: ACTION_BAR_HEIGHT, px: 2 }}
+          >
+            {t("detail.trailer")}
+          </Button>
+        ))}
+      {!movie.tmdb_id && (
+        <IconButton
+          onClick={() => enrichMutation.mutate({ movieId: movie.id })}
+          disabled={enrichMutation.isPending}
+          sx={{ color: "text.secondary" }}
+          size="small"
+        >
+          <RefreshCw size={18} />
+        </IconButton>
+      )}
+      {isAdmin &&
+        (() => {
+          const flagged = movie.needs_enrichment_review || flagEnrichment.isSuccess;
+          const actions: OverflowAction[] = [];
+          if (movie.tmdb_id) {
+            actions.push({
+              key: "flag",
+              icon: <Flag size={16} fill={flagged ? "currentColor" : "none"} />,
+              label: flagged
+                ? t("detail.flagEnrichment.flagged")
+                : t("detail.flagEnrichment.tooltip"),
+              onClick: handleFlagEnrichment,
+              disabled: flagEnrichment.isPending || flagged,
+              active: flagged,
+            });
+          }
+          actions.push({
+            key: "credits",
+            icon: <ScrollText size={16} />,
+            label: t("admin.credits.editButton"),
+            onClick: () => setCreditsOpen(true),
+            active: !!movie.credits,
+          });
+          actions.push({
+            key: "ocr",
+            icon: <Captions size={16} />,
+            label: t("detail.subtitleOcr.tooltip"),
+            onClick: handleTriggerOcr,
+            disabled: triggerOcr.isPending,
+          });
+          return <OverflowMenu actions={actions} ariaLabel={t("detail.moreActions")} />;
+        })()}
+    </Box>
+  );
+
   return (
     <Box sx={{ position: "relative" }}>
       {/* Hero — matches the refined spec: a self-contained backdrop
@@ -174,6 +338,34 @@ export function MovieDetail() {
         page bg (where title + pulled-up body live), and a 90deg
         gradient gives the left column (title/buttons) a darker
         backing so a blown-out backdrop center can't wash it out. */}
+      {isMobile ? (
+        <Box sx={{ position: "relative", width: "100%", aspectRatio: "4 / 5", overflow: "hidden" }}>
+          {(movie.backdrop_path || movie.poster_path) && (
+            <Box
+              component="img"
+              src={movie.backdrop_path ?? movie.poster_path ?? undefined}
+              alt=""
+              sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+            />
+          )}
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background: `linear-gradient(180deg, ${panelScrim(0.25)} 0%, ${panelScrim(0)} 26%, ${panelScrim(0.5)} 60%, ${panelScrim(0.92)} 86%, ${neutral[950]} 100%)`,
+            }}
+          />
+          <Box sx={{ position: "absolute", left: 0, right: 0, bottom: 0, px: 3, pb: "22px", display: "flex", flexDirection: "column" }}>
+            {movieEyebrow}
+            <TitleLogo logoUrl={movie.logo_path} title={movie.title} sx={{ fontSize: { xs: "2.125rem" }, mb: 1.5 }} />
+            <MetaLine
+              contentRating={movie.content_rating}
+              items={[movie.year, formatDuration(movie.duration_seconds)]}
+              genres={movie.genres}
+            />
+          </Box>
+        </Box>
+      ) : (
       <Box sx={{ position: "relative", width: "100%", height: "75dvh", minHeight: 460, overflow: "hidden" }}>
         {movie.backdrop_path && (
           <Box
@@ -238,161 +430,22 @@ export function MovieDetail() {
               genres={movie.genres}
             />
 
+            {qualityRail}
 
-            <QualityRail
-              files={movie.files}
-              resolution={movie.resolution}
-              languages={langs.audio.map(formatLanguage)}
-            />
-
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <Button
-                variant="cta"
-                startIcon={<Play size={16} />}
-                onClick={() => navigate(`/play/movie/${movie.id}`)}
-                sx={{
-                  position: "relative",
-                  overflow: "hidden",
-                  height: ACTION_BAR_HEIGHT,
-                  px: 3.25,
-                  // No padding-bottom adjustment for the progress
-                  // strip — the bar is absolutely positioned at the
-                  // bottom edge (3px tall) and doesn't reflow the
-                  // content. The previous 16px reservation pushed
-                  // the label noticeably above center, which read as
-                  // a vertical-alignment bug.
-                  boxShadow: `0 2px 6px ${peachAlpha(0.2)}`,
-                }}
-              >
-                {hasProgress
-                  ? `${t("detail.resume")} · ${t("detail.remaining", { time: formatDuration(movie.duration_seconds - progress.position_seconds) })}`
-                  : t("detail.watch")}
-                {hasProgress && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: 3,
-                      bgcolor: scrim(0.2),
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: `${(progress.position_seconds / movie.duration_seconds) * 100}%`,
-                        height: "100%",
-                        bgcolor: scrim(0.55),
-                      }}
-                    />
-                  </Box>
-                )}
-              </Button>
-              <WatchlistIconButton
-                active={!!inWatchlist}
-                onClick={() =>
-                  toggleWatchlist.mutate(
-                    { media_id: movie.id, media_type: "movie" },
-                    {
-                      onSuccess: (res) =>
-                        showToast(
-                          t(res.data.added ? "lists.addedToList" : "lists.removedFromList"),
-                        ),
-                    },
-                  )
-                }
-                addLabel={t("lists.addToList")}
-                removeLabel={t("lists.removeFromList")}
-              />
-              <Tooltip
-                title={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")}
-                arrow
-              >
-                <IconButton
-                  aria-label={isWatched ? t("progress.markUnwatched") : t("progress.markWatched")}
-                  onClick={() =>
-                    toggleWatched({
-                      mediaId: movie.id,
-                      mediaType: "movie",
-                      durationSeconds: movie.duration_seconds,
-                      watched: !!isWatched,
-                    })
-                  }
-                  sx={{
-                    color: isWatched ? "primary.main" : "text.primary",
-                    bgcolor: whiteAlpha(0.08),
-                    border: `1px solid ${whiteAlpha(0.12)}`,
-                    borderRadius: 1,
-                    width: ACTION_BAR_HEIGHT,
-                    height: ACTION_BAR_HEIGHT,
-                    "&:hover": { bgcolor: whiteAlpha(0.12), borderColor: whiteAlpha(0.2) },
-                  }}
-                >
-                  <CheckCircle2 size={18} />
-                </IconButton>
-              </Tooltip>
-              {movie.trailer_url && (
-                <Button
-                  variant="hairline"
-                  startIcon={<Clapperboard size={16} />}
-                  onClick={() => setTrailerOpen(true)}
-                  sx={{ height: ACTION_BAR_HEIGHT, px: 2 }}
-                >
-                  {t("detail.trailer")}
-                </Button>
-              )}
-              {!movie.tmdb_id && (
-                <IconButton
-                  onClick={() => enrichMutation.mutate({ movieId: movie.id })}
-                  disabled={enrichMutation.isPending}
-                  sx={{ color: "text.secondary" }}
-                  size="small"
-                >
-                  <RefreshCw size={18} />
-                </IconButton>
-              )}
-              {isAdmin &&
-                (() => {
-                  // Admin-only actions folded into a "⋯" menu so the
-                  // main action bar keeps just Watch / Trailer. The flag
-                  // action only applies to an enriched movie (has a
-                  // tmdb_id); un-enriched movies use the enrich button
-                  // above instead. Flagged / has-credits states tint the
-                  // corresponding item.
-                  const flagged = movie.needs_enrichment_review || flagEnrichment.isSuccess;
-                  const actions: OverflowAction[] = [];
-                  if (movie.tmdb_id) {
-                    actions.push({
-                      key: "flag",
-                      icon: <Flag size={16} fill={flagged ? "currentColor" : "none"} />,
-                      label: flagged
-                        ? t("detail.flagEnrichment.flagged")
-                        : t("detail.flagEnrichment.tooltip"),
-                      onClick: handleFlagEnrichment,
-                      disabled: flagEnrichment.isPending || flagged,
-                      active: flagged,
-                    });
-                  }
-                  actions.push({
-                    key: "credits",
-                    icon: <ScrollText size={16} />,
-                    label: t("admin.credits.editButton"),
-                    onClick: () => setCreditsOpen(true),
-                    active: !!movie.credits,
-                  });
-                  actions.push({
-                    key: "ocr",
-                    icon: <Captions size={16} />,
-                    label: t("detail.subtitleOcr.tooltip"),
-                    onClick: handleTriggerOcr,
-                    disabled: triggerOcr.isPending,
-                  });
-                  return <OverflowMenu actions={actions} ariaLabel={t("detail.moreActions")} />;
-                })()}
-            </Box>
+            {heroActions}
           </Box>
         </Box>
       </Box>
+      )}
+
+      {/* Mobile: quality rail + actions sit below the contained hero on
+          the solid page background (Collection-style). */}
+      {isMobile && (
+        <Box sx={{ position: "relative", zIndex: 1, px: 3, pt: 2, display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {qualityRail}
+          {heroActions}
+        </Box>
+      )}
 
       {isAdmin && creditsOpen && (
         <CreditsMarkerEditor

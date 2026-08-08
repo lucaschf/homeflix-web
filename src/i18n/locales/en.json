@@ -202,6 +202,8 @@
   "detail": {
     "trailer": "Trailer",
     "moreActions": "More actions",
+    "seriesEyebrow": "Series",
+    "movieEyebrow": "Movie",
     "errorTitle": "Couldn't load this title",
     "errorBody": "It may have been removed from the catalog, or the link is wrong.",
     "back": "Back",

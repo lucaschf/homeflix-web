@@ -202,6 +202,8 @@
   "detail": {
     "trailer": "Trailer",
     "moreActions": "Mais ações",
+    "seriesEyebrow": "Série",
+    "movieEyebrow": "Filme",
     "errorTitle": "Não foi possível carregar este título",
     "errorBody": "Ele pode ter sido removido do catálogo ou o link está incorreto.",
     "back": "Voltar",
