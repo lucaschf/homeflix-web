@@ -100,28 +100,53 @@ export function MediaCard({
         ...(fullWidth
           ? null
           : { contentVisibility: "auto", containIntrinsicSize: intrinsicSize }),
-        "&:hover .media-image": { transform: "scale(1.05)" },
-        "&:hover .card-hover-overlay": { opacity: 1 },
-        // Reveal the primary play button on hover (pointer devices
-        // only). Touch devices hide it entirely (see the `hover: none`
-        // rule on the button), so this governs the desktop fade-in.
-        "&:hover .card-play": { opacity: 1 },
-        // On hover: hide text; overlay covers entire card
-        ...(hasActions && {
-          "&:hover .card-text": { opacity: 0 },
-        }),
-        ...(!hasActions && {
-          "&:hover .play-overlay": { opacity: 1 },
-        }),
+        // Hover affordances (image zoom, info overlay, play button,
+        // text swap) are gated to pointer devices. On touch there is no
+        // hover, so a tap would otherwise get "stuck" revealing the
+        // overlay instead of navigating — gating keeps a tap going
+        // straight to the detail page (the overlay is also made
+        // non-interactive on touch, see InfoOverlay).
+        "@media (hover: hover)": {
+          "&:hover .media-image": { transform: "scale(1.05)" },
+          "&:hover .card-hover-overlay": { opacity: 1 },
+          "&:hover .card-play": { opacity: 1 },
+          ...(hasActions && {
+            "&:hover .card-text": { opacity: 0 },
+          }),
+          ...(!hasActions && {
+            "&:hover .play-overlay": { opacity: 1 },
+          }),
+        },
       }}
     >
-      {/* Image */}
+      {/* Image — this is the card's keyboard-focusable navigation
+          target (role/button + Enter/Space). It's the image wrapper
+          rather than the whole card so the focusable element doesn't
+          nest the overlay's real action buttons inside a role=button. */}
       <Box
         className={hasActions ? "card-image-wrapper" : undefined}
         onClick={onClick}
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        aria-label={onClick ? title : undefined}
+        onKeyDown={
+          onClick
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onClick();
+                }
+              }
+            : undefined
+        }
         sx={{
           position: "relative",
           aspectRatio,
+          "&:focus-visible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
+          },
           borderRadius: 1,
           overflow: "hidden",
           bgcolor: "background.paper",
@@ -407,6 +432,12 @@ function InfoOverlay({
           transition: "opacity 250ms ease",
           zIndex: 1,
           overflow: "hidden",
+          // The overlay never reveals on touch (its opacity is only
+          // lifted under `@media (hover: hover)`), so make it ignore
+          // taps there — a tap then falls through to the image below
+          // and navigates to the detail page instead of hitting the
+          // invisible watchlist / add-to-list buttons.
+          "@media (hover: none)": { pointerEvents: "none" },
         }}
       >
         {/* Info content */}
