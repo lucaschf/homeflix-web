@@ -10,6 +10,7 @@ import {
   RequireAdmin,
   RequireAuth,
 } from "./components/auth";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { SplashScreen } from "./components/SplashScreen";
 import { ToastProvider } from "./components/ToastProvider";
 import { Actor } from "./pages/Actor";
@@ -86,6 +87,7 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <ErrorBoundary>
       {splashOpen && <SplashScreen onDone={handleSplashDone} />}
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
@@ -178,6 +180,7 @@ function App() {
         </BrowserRouter>
         </ToastProvider>
       </QueryClientProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

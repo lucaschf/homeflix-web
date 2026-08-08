@@ -183,6 +183,11 @@
     "scrollLeft": "Rolar para a esquerda",
     "scrollRight": "Rolar para a direita"
   },
+  "errorBoundary": {
+    "title": "Algo deu errado",
+    "body": "Ocorreu um erro inesperado nesta tela. Recarregar costuma resolver.",
+    "reload": "Recarregar"
+  },
   "detail": {
     "trailer": "Trailer",
     "moreActions": "Mais ações",
