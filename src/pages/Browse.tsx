@@ -1,9 +1,19 @@
-import { useEffect, useMemo, useRef } from "react";
-import { Box, Button, CircularProgress, IconButton, Skeleton, Typography } from "@mui/material";
-import { ArrowLeft } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  Menu,
+  MenuItem,
+  Skeleton,
+  Typography,
+} from "@mui/material";
+import { ArrowDownUp, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { SegmentedControl, type SegmentedOption } from "../components/admin/SegmentedControl";
+import { border } from "../theme/tokens";
 import {
   useByGenre,
   useContinueWatching,
@@ -11,6 +21,7 @@ import {
   useGenres,
   useRecentlyAddedMovies,
   useRecentlyAddedSeries,
+  type CatalogSort,
   type CatalogTypeFilter,
 } from "../api/hooks";
 import { CarouselSkeleton } from "../components/CarouselSkeleton";
@@ -31,6 +42,29 @@ function parseTypeFilter(raw: string | null): CatalogTypeFilter | undefined {
   return raw === "movie" || raw === "series" ? raw : undefined;
 }
 
+/**
+ * Master switch for the genre-grid sort control. Off until the backend
+ * honors the `?sort=` param (see `docs/by-genre-sort-contract.md`) —
+ * a visible control that the server ignored would be a broken UX. When
+ * the contract ships, flip this to `true`. Everything downstream (the
+ * `useByGenre` `sort` option, the `?sort=` URL plumbing, the dropdown)
+ * is already wired; nothing else needs to change.
+ */
+const SORT_ENABLED = false;
+
+const CATALOG_SORTS: CatalogSort[] = [
+  "title_asc",
+  "title_desc",
+  "year_desc",
+  "year_asc",
+  "recently_added",
+];
+
+/** Narrow an unvalidated ``?sort=`` URL param down to the union. */
+function parseSort(raw: string | null): CatalogSort | undefined {
+  return CATALOG_SORTS.includes(raw as CatalogSort) ? (raw as CatalogSort) : undefined;
+}
+
 export function Browse() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -38,6 +72,9 @@ export function Browse() {
 
   const genreFilter = searchParams.get("genre");
   const typeFilter = parseTypeFilter(searchParams.get("type"));
+  // Dormant until `SORT_ENABLED`: no `?sort=` is read or written while
+  // the backend can't honor it, so the grid keeps its default order.
+  const sortFilter = SORT_ENABLED ? parseSort(searchParams.get("sort")) : undefined;
 
   // Tab title reflects the active type filter; the Browse landing
   // (no filter) reads as "Browse".
@@ -150,6 +187,7 @@ export function Browse() {
             type={typeFilter}
             displayName={genreDisplayName}
             count={resolvedGenre?.count}
+            sort={sortFilter}
             onClearFilter={() => {
               searchParams.delete("genre");
               setSearchParams(searchParams);
@@ -159,6 +197,14 @@ export function Browse() {
               else searchParams.set("type", next);
               setSearchParams(searchParams);
             }}
+            onSortChange={
+              SORT_ENABLED
+                ? (next) => {
+                    searchParams.set("sort", next);
+                    setSearchParams(searchParams);
+                  }
+                : undefined
+            }
           />
         ) : genresLoading ? (
           // Structural skeleton while the genres list is in flight —
@@ -292,6 +338,75 @@ interface GenreGridProps {
    * the carousels already use).
    */
   onTypeChange: (next: CatalogTypeFilter | "all") => void;
+  /**
+   * Active sort order forwarded to `useByGenre`. Undefined ⇒ the
+   * server default (`title_asc`); see `docs/by-genre-sort-contract.md`.
+   */
+  sort?: CatalogSort;
+  /**
+   * Switch the sort order from the in-grid dropdown. Only provided when
+   * `SORT_ENABLED` — the dropdown renders only when this is set, so the
+   * whole control stays out of the DOM until the backend honors `sort`.
+   */
+  onSortChange?: (next: CatalogSort) => void;
+}
+
+/**
+ * Sort dropdown for the genre grid. Rendered only when the backend
+ * supports the `?sort=` param (gated by `SORT_ENABLED` at the call
+ * site). Maps the five `CatalogSort` values to their existing i18n
+ * labels.
+ */
+function GenreSortMenu({
+  value,
+  onChange,
+}: {
+  value: CatalogSort;
+  onChange: (next: CatalogSort) => void;
+}) {
+  const { t } = useTranslation();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const options: { value: CatalogSort; label: string }[] = [
+    { value: "title_asc", label: t("browse.titleAZ") },
+    { value: "title_desc", label: t("browse.titleZA") },
+    { value: "year_desc", label: t("browse.yearNewest") },
+    { value: "year_asc", label: t("browse.yearOldest") },
+    { value: "recently_added", label: t("browse.recentlyAdded") },
+  ];
+  const current = options.find((o) => o.value === value) ?? options[0];
+  return (
+    <>
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<ArrowDownUp size={16} />}
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        sx={{
+          color: "text.secondary",
+          borderColor: border.hairline,
+          textTransform: "none",
+          whiteSpace: "nowrap",
+          "&:hover": { borderColor: border.hairlineStrong },
+        }}
+      >
+        {t("browse.sortBy")}: {current.label}
+      </Button>
+      <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)}>
+        {options.map((o) => (
+          <MenuItem
+            key={o.value}
+            selected={o.value === value}
+            onClick={() => {
+              onChange(o.value);
+              setAnchorEl(null);
+            }}
+          >
+            {o.label}
+          </MenuItem>
+        ))}
+      </Menu>
+    </>
+  );
 }
 
 /**
@@ -330,11 +445,13 @@ function GenreGrid({
   onClearFilter,
   type,
   onTypeChange,
+  sort,
+  onSortChange,
 }: GenreGridProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { items, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
-    useByGenre(genreId, { type });
+    useByGenre(genreId, { type, sort });
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -403,12 +520,25 @@ function GenreGrid({
             )}
           </Box>
         </Box>
-        <SegmentedControl
-          value={type ?? "all"}
-          options={typeOptions}
-          onChange={onTypeChange}
-          ariaLabel={t("browse.filterType")}
-        />
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            flexWrap: "wrap",
+            flexShrink: 0,
+          }}
+        >
+          {onSortChange && (
+            <GenreSortMenu value={sort ?? "title_asc"} onChange={onSortChange} />
+          )}
+          <SegmentedControl
+            value={type ?? "all"}
+            options={typeOptions}
+            onChange={onTypeChange}
+            ariaLabel={t("browse.filterType")}
+          />
+        </Box>
       </Box>
 
       {isLoading ? (

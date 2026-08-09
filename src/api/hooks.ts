@@ -159,6 +159,19 @@ const BY_GENRE_PAGE_SIZE = 20;
  */
 export type CatalogTypeFilter = "movie" | "series";
 
+/**
+ * Sort order for the by-genre listing. Mirrors the backend `sort`
+ * param contract in `docs/by-genre-sort-contract.md`. Absent ⇒ the
+ * server default (`title_asc`), which is byte-identical to the current
+ * (no-param) behavior — so passing no `sort` never changes a request.
+ */
+export type CatalogSort =
+  | "title_asc"
+  | "title_desc"
+  | "year_desc"
+  | "year_asc"
+  | "recently_added";
+
 interface CatalogQueryOptions {
   /**
    * Optional ``?type=`` filter forwarded to the backend. When set,
@@ -247,15 +260,20 @@ export function useFileTracks(params: {
  * Movies and Series tabs pass the filter through so a single-type
  * carousel never mixes in the other media type.
  */
-export function useByGenre(genreId: string, options: CatalogQueryOptions = {}) {
+export function useByGenre(
+  genreId: string,
+  options: CatalogQueryOptions & { sort?: CatalogSort } = {},
+) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
-  const { type } = options;
+  const { type, sort } = options;
   const query = useInfiniteQuery({
-    // `type` is in the key so filtered and unfiltered listings keep
-    // independent caches — otherwise a Movies-tab request would
-    // serve its trimmed page to an All-tab consumer and vice versa.
-    queryKey: ["catalog", "by-genre", genreId, lang, type ?? null],
+    // `type` and `sort` are in the key so each filter/order combination
+    // keeps an independent cache — otherwise a Movies-tab or title-desc
+    // request would serve its page to an All-tab / default-order
+    // consumer and vice versa. `sort ?? null` keeps the no-sort key
+    // identical to before this option existed.
+    queryKey: ["catalog", "by-genre", genreId, lang, type ?? null, sort ?? null],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const params: Record<string, string> = {
         lang,
@@ -263,6 +281,9 @@ export function useByGenre(genreId: string, options: CatalogQueryOptions = {}) {
       };
       if (pageParam) params.cursor = pageParam;
       if (type) params.type = type;
+      // Only sent when set, so a default (no-sort) listing is an
+      // unchanged request — a backend without `sort` support is a no-op.
+      if (sort) params.sort = sort;
       return api.get<CatalogByGenreResponse>(
         `/catalog/by-genre/${encodeURIComponent(genreId)}`,
         params,
