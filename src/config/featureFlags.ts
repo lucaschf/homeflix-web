@@ -15,4 +15,4 @@
  * followed-list rendering stay out of the UI and none of the sharing
  * hooks are ever called. Flip to `true` once the contract is live.
  */
-export const SHARE_ENABLED = false;
+export const SHARE_ENABLED = true;
