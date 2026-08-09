@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link as RouterLink } from "react-router-dom";
+import { fontSize, peachAlpha } from "../theme/tokens";
 
 interface MediaCarouselProps {
   title: string;
@@ -149,26 +150,44 @@ export function MediaCarousel({
               : { component: "button", type: "button", onClick: onSeeAll })}
             aria-label={seeAllAriaLabel}
             sx={{
+              // Compact pill affordance: label + chevron that slides on
+              // hover, sitting in a soft peach tint. Replaces the old
+              // "Ver Tudo >" text link with the literal ">".
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.25,
+              flexShrink: 0,
               color: "primary.main",
               cursor: "pointer",
-              flexShrink: 0,
+              fontSize: fontSize.control,
+              fontWeight: 600,
+              fontFamily: "inherit",
+              lineHeight: 1,
               // Strip the intrinsic <button>/<a> chrome so the affordance
-              // still reads as the same inline text link it was before.
+              // reads as one clean pill on both element types.
               border: "none",
               background: "none",
-              p: 0,
-              font: "inherit",
               textDecoration: "none",
-              "&:hover": { textDecoration: "underline" },
+              px: 1,
+              py: 0.5,
+              mr: -0.5,
+              borderRadius: 999,
+              transition: "color 150ms ease, background-color 150ms ease",
+              "& svg": { transition: "transform 150ms ease" },
+              "&:hover": {
+                color: "primary.light",
+                bgcolor: peachAlpha(0.12),
+              },
+              "&:hover svg": { transform: "translateX(2px)" },
               "&:focus-visible": {
                 outline: "2px solid",
                 outlineColor: "primary.main",
                 outlineOffset: 2,
-                borderRadius: 0.5,
               },
             }}
           >
-            {t("home.seeAll")} &gt;
+            {t("home.seeAll")}
+            <ChevronRight size={16} strokeWidth={2.5} />
           </Typography>
         )}
       </Box>
