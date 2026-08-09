@@ -288,18 +288,20 @@ function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
   );
 }
 
-// Shared poster-grid geometry. Columns are FIXED-WIDTH (not `1fr`) at
-// exactly ``CARD_WIDTH.poster`` so the grid cards are the same size as
-// the Home / carousel cards instead of stretching to fill the row —
-// ``auto-fill`` just packs as many fixed columns as fit. Gap (12px) and
+// Shared poster-grid geometry. Columns use ``minmax(CARD_WIDTH.poster,
+// 1fr)`` so cards are never smaller than the Home / carousel cards, and
+// the sub-column leftover on a wide row (never enough to fit another
+// column) is absorbed evenly instead of dumped as a black gutter on the
+// right. On typical widths cards land at exactly the Home size; on
+// ultrawide they grow at most a few px to fill the row. Gap (12px) and
 // horizontal padding match the carousels so the "See all" → grid
 // transition is seamless. The skeleton reuses these so load is a clean
 // content swap, not a reflow.
 const GRID_COLUMNS = {
-  xs: `repeat(auto-fill, ${CARD_WIDTH.poster.xs}px)`,
-  sm: `repeat(auto-fill, ${CARD_WIDTH.poster.sm}px)`,
-  md: `repeat(auto-fill, ${CARD_WIDTH.poster.md}px)`,
-  lg: `repeat(auto-fill, ${CARD_WIDTH.poster.lg}px)`,
+  xs: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.xs}px, 1fr))`,
+  sm: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.sm}px, 1fr))`,
+  md: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.md}px, 1fr))`,
+  lg: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.lg}px, 1fr))`,
 } as const;
 const GRID_GAP = 1.5;
 const GRID_PX = { xs: 3, md: 6 } as const;
@@ -557,6 +559,7 @@ function GenreGrid({
                 imageUrl={item.poster_path ?? undefined}
                 synopsis={item.synopsis ?? undefined}
                 variant="poster"
+                fullWidth
                 mediaId={item.id}
                 mediaType={item.type}
                 onPlay={
