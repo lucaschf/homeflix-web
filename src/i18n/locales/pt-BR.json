@@ -1828,6 +1828,27 @@
     }
   },
   "lists": {
+    "share": {
+      "share": "Compartilhar",
+      "title": "Compartilhar esta lista",
+      "helper": "Qualquer pessoa da sua casa com este link pode seguir a lista.",
+      "linkLabel": "Link de compartilhamento",
+      "copy": "Copiar link",
+      "copied": "Link copiado",
+      "stop": "Parar de compartilhar",
+      "sharedBadge": "Compartilhada",
+      "following": "Seguindo",
+      "followedBy": "por {{name}}",
+      "follow": "Seguir",
+      "unfollow": "Deixar de seguir",
+      "alreadyFollowing": "Seguindo",
+      "readOnly": "Você está seguindo esta lista — ela é somente leitura.",
+      "hiddenItems": "{{count}} item oculto pelo seu perfil",
+      "hiddenItems_other": "{{count}} itens ocultos pelo seu perfil",
+      "notFoundTitle": "Link indisponível",
+      "notFoundBody": "Este link de compartilhamento é inválido ou não está mais ativo.",
+      "landingEyebrow": "Lista compartilhada"
+    },
     "addTitlesSubtitle": "Busque no catálogo e selecione o que entra na lista.",
     "filterAll": "Tudo",
     "filterMovies": "Filmes",

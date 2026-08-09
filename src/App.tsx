@@ -25,6 +25,7 @@ import { Player } from "./pages/Player";
 import { Profiles } from "./pages/Profiles";
 import { SeriesDetail } from "./pages/SeriesDetail";
 import { MyLists } from "./pages/MyLists";
+import { SharedList } from "./pages/SharedList";
 import { Settings } from "./pages/Settings";
 import { CatalogRequestsAdmin } from "./pages/admin/CatalogRequestsAdmin";
 import { EnrichAdmin } from "./pages/admin/EnrichAdmin";
@@ -126,6 +127,7 @@ function App() {
                 <Route path="/collection/:tmdbId" element={<Collection />} />
                 <Route path="/actor/:name" element={<Actor />} />
                 <Route path="/lists" element={<MyLists />} />
+                <Route path="/lists/shared/:token" element={<SharedList />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
               {/* /admin/* requires admin role on top of auth and lives
