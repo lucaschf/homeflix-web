@@ -50,7 +50,7 @@ function parseTypeFilter(raw: string | null): CatalogTypeFilter | undefined {
  * `useByGenre` `sort` option, the `?sort=` URL plumbing, the dropdown)
  * is already wired; nothing else needs to change.
  */
-const SORT_ENABLED = false;
+const SORT_ENABLED = true;
 
 const CATALOG_SORTS: CatalogSort[] = [
   "title_asc",
