@@ -55,6 +55,18 @@ export function Browse() {
   // catalog — the Movies tab never sees a series-only genre.
   const { data: genres, isLoading: genresLoading } = useGenres({ type: typeFilter });
 
+  // Unscoped genres list — always carries every genre's localized name,
+  // regardless of the active type filter. The type-scoped `genres`
+  // above drops a genre entirely once the current type has zero items
+  // in it, so the header reads its name from here (stable "Terror")
+  // while the count still comes from the scoped entry. React Query
+  // dedupes this against the same query the Home / landing view fires.
+  const { data: allGenres } = useGenres();
+  const resolvedGenre = genreFilter ? genres?.find((g) => g.id === genreFilter) : undefined;
+  const genreDisplayName = genreFilter
+    ? (allGenres?.find((g) => g.id === genreFilter)?.name ?? resolvedGenre?.name ?? genreFilter)
+    : "";
+
   // Hero rotates through the same media-type the tab is showing —
   // the Movies tab shouldn't banner a series on top of its carousels.
   const { data: featured } = useFeatured(typeFilter ?? "all");
@@ -136,10 +148,8 @@ export function Browse() {
           <GenreGrid
             genreId={genreFilter}
             type={typeFilter}
-            displayName={
-              genres?.find((g) => g.id === genreFilter)?.name ?? genreFilter
-            }
-            count={genres?.find((g) => g.id === genreFilter)?.count}
+            displayName={genreDisplayName}
+            count={resolvedGenre?.count}
             onClearFilter={() => {
               searchParams.delete("genre");
               setSearchParams(searchParams);
@@ -341,6 +351,14 @@ function GenreGrid({
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // Result count for the subtitle: the parent's genre-scoped `count`
+  // when available, else an explicit 0 once the query has resolved to
+  // an empty list — the genre-has-no-items-of-this-type case, where the
+  // parent's count is undefined because the genre isn't in the
+  // type-scoped genres list at all.
+  const resolvedCount =
+    count ?? (!isLoading && !isError && items.length === 0 ? 0 : undefined);
+
   // Type filter reflected in the URL — switching a segment re-runs the
   // by-genre query under a new cache key (server-side narrowing), so
   // the grid falls back to its skeleton for a clean swap.
@@ -378,9 +396,9 @@ function GenreGrid({
             <Typography variant="h2" noWrap>
               {displayName}
             </Typography>
-            {count !== undefined && (
+            {resolvedCount !== undefined && (
               <Typography variant="body2" color="text.secondary">
-                {t("browse.titlesCount", { count })}
+                {t("browse.titlesCount", { count: resolvedCount })}
               </Typography>
             )}
           </Box>
