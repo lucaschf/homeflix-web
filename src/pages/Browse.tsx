@@ -28,6 +28,7 @@ import { CarouselSkeleton } from "../components/CarouselSkeleton";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
+import { CARD_WIDTH } from "../components/mediaCardDimensions";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
@@ -287,19 +288,21 @@ function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
   );
 }
 
-// Shared poster-grid geometry so the skeleton and the loaded grid stay
-// pixel-aligned instead of each re-deriving the breakpoints — a drift
-// between them would make the load resolve as a reflow rather than a
-// clean content swap.
+// Shared poster-grid geometry. Columns are FIXED-WIDTH (not `1fr`) at
+// exactly ``CARD_WIDTH.poster`` so the grid cards are the same size as
+// the Home / carousel cards instead of stretching to fill the row —
+// ``auto-fill`` just packs as many fixed columns as fit. Gap (12px) and
+// horizontal padding match the carousels so the "See all" → grid
+// transition is seamless. The skeleton reuses these so load is a clean
+// content swap, not a reflow.
 const GRID_COLUMNS = {
-  xs: "repeat(3, 1fr)",
-  sm: "repeat(4, 1fr)",
-  md: "repeat(5, 1fr)",
-  lg: "repeat(6, 1fr)",
-  xl: "repeat(7, 1fr)",
+  xs: `repeat(auto-fill, ${CARD_WIDTH.poster.xs}px)`,
+  sm: `repeat(auto-fill, ${CARD_WIDTH.poster.sm}px)`,
+  md: `repeat(auto-fill, ${CARD_WIDTH.poster.md}px)`,
+  lg: `repeat(auto-fill, ${CARD_WIDTH.poster.lg}px)`,
 } as const;
-const GRID_GAP = { xs: 1, sm: 1.5, md: 2 } as const;
-const GRID_PX = { xs: 2, md: 6 } as const;
+const GRID_GAP = 1.5;
+const GRID_PX = { xs: 3, md: 6 } as const;
 
 interface GenreGridProps {
   genreId: string;
@@ -554,7 +557,6 @@ function GenreGrid({
                 imageUrl={item.poster_path ?? undefined}
                 synopsis={item.synopsis ?? undefined}
                 variant="poster"
-                fullWidth
                 mediaId={item.id}
                 mediaType={item.type}
                 onPlay={
