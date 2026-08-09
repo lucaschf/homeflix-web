@@ -130,6 +130,8 @@ import type {
   SearchResponse,
   SeriesDetail,
   SeriesDetailResponse,
+  ShareListResponse,
+  SharedListPreviewResponse,
   SeriesSummary,
   TmdbSuggestionsPayload,
   TmdbSuggestionsResponse,
@@ -1410,6 +1412,77 @@ export function useReorderCustomListItems() {
         predicate: (q) =>
           q.queryKey[0] === "customLists" && q.queryKey[1] === vars.listId && q.queryKey[2] === "items",
       });
+    },
+  });
+}
+
+// ── Custom Lists — sharing / following ────────────────────
+//
+// Wired against `docs/list-follow-share-contract.md`. Dormant until the
+// backend ships those endpoints and the `SHARE_ENABLED` UI flag flips —
+// no consumer calls these while the flag is off, so a backend that lacks
+// the routes is never hit.
+
+/** Mint (or return the existing) share token for a list you own. */
+export function useShareList() {
+  return useMutation({
+    mutationFn: (listId: string) =>
+      api.post<ShareListResponse>(`/custom-lists/${listId}/share`),
+  });
+}
+
+/** Stop sharing a list — invalidates its token (and drops followers). */
+export function useRevokeShareList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (listId: string) => api.del(`/custom-lists/${listId}/share`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customLists"] });
+    },
+  });
+}
+
+/**
+ * Read-only preview of a shared list, resolved from its opaque token.
+ * ``items`` is already filtered to the caller's library access; the
+ * ``hidden_count`` reflects anything the filter removed.
+ */
+export function useSharedList(token: string) {
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+  return useQuery({
+    queryKey: ["sharedList", token, lang],
+    queryFn: async () => {
+      const resp = await api.get<SharedListPreviewResponse>(
+        `/custom-lists/shared/${encodeURIComponent(token)}`,
+        { lang },
+      );
+      return resp.data;
+    },
+    enabled: !!token,
+  });
+}
+
+/** Follow a shared list by its token. Idempotent server-side. */
+export function useFollowList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (token: string) =>
+      api.post(`/custom-lists/shared/${encodeURIComponent(token)}/follow`),
+    onSuccess: (_, token) => {
+      queryClient.invalidateQueries({ queryKey: ["customLists"] });
+      queryClient.invalidateQueries({ queryKey: ["sharedList", token] });
+    },
+  });
+}
+
+/** Unfollow a list the caller follows (by the list's own id). */
+export function useUnfollowList() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (listId: string) => api.del(`/custom-lists/${listId}/follow`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customLists"] });
     },
   });
 }

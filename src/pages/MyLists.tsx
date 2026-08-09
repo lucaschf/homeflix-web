@@ -25,7 +25,10 @@ import {
   Play,
   Plus,
   RotateCcw,
+  Share2,
   Shuffle,
+  UserMinus,
+  Users,
   X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -39,8 +42,11 @@ import {
   useRenameCustomList,
   useReorderCustomListItems,
   useToggleWatchlist,
+  useUnfollowList,
   useWatchlist,
 } from "../api/hooks";
+import { SHARE_ENABLED } from "../config/featureFlags";
+import { ShareListDialog } from "../components/lists/ShareListDialog";
 import type { CustomListOutput, WatchlistItemOutput } from "../api/types";
 import { MediaCard } from "../components/MediaCard";
 import { AdminButton } from "../components/admin/AdminButton";
@@ -340,6 +346,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const { data: items, isLoading, isError, refetch } = useCustomListItems(list.id);
   const removeItem = useRemoveItemFromCustomList();
   const reorder = useReorderCustomListItems();
+  const unfollow = useUnfollowList();
 
   // Manual drag order overlaid on the server order; reset once the
   // server returns the persisted order after a reorder.
@@ -350,7 +357,11 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   const [sort, setSort] = useState<ListSort>("manual");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
+  const [dialog, setDialog] = useState<"rename" | "delete" | "share" | null>(null);
+
+  // A followed list is read-only: the follower can play/shuffle but can't
+  // add, remove, reorder, rename, delete or share it — only unfollow.
+  const readOnly = !!current.is_followed;
 
   const count = items?.length ?? current.item_count;
   const updated = formatRelativeServerTime(current.updated_at, i18n.language);
@@ -384,6 +395,7 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
   }, [items, sort, manualOrder]);
 
   const handleDragStart = (id: string) => {
+    if (readOnly) return; // followed lists can't be reordered
     setDraggingId(id);
     setManualOrder(ordered.map((i) => i.media_id)); // snapshot current order
   };
@@ -453,6 +465,28 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
               {current.description}
             </Typography>
           )}
+          {readOnly && (
+            <Box
+              sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 0.75,
+                mt: 1.5,
+                px: 1,
+                py: 0.4,
+                borderRadius: 20,
+                bgcolor: peachAlpha(0.12),
+                color: "primary.main",
+              }}
+            >
+              <Users size={13} />
+              <Typography sx={{ fontSize: "0.72rem", fontWeight: 600 }}>
+                {current.owner_name
+                  ? `${t("lists.share.following")} · ${t("lists.share.followedBy", { name: current.owner_name })}`
+                  : t("lists.share.following")}
+              </Typography>
+            </Box>
+          )}
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 4, mt: 3 }}>
             <Stat label={t("lists.titlesLabel")} value={String(count)} />
             {totalRuntime && (
@@ -488,22 +522,35 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
           >
             {t("lists.shuffle")}
           </AdminButton>
-          <AdminButton
-            variant="secondary"
-            aria-label={t("lists.editList")}
-            onClick={() => setDialog("rename")}
-            sx={{ minWidth: 0, px: 1, alignSelf: "stretch" }}
-          >
-            <Pencil size={16} />
-          </AdminButton>
-          <AdminButton
-            variant="secondary"
-            aria-label={t("lists.moreOptions")}
-            onClick={(e) => setMenuAnchor(e.currentTarget)}
-            sx={{ minWidth: 0, px: 1, alignSelf: "stretch" }}
-          >
-            <MoreVertical size={16} />
-          </AdminButton>
+          {readOnly ? (
+            <AdminButton
+              variant="secondary"
+              icon={<UserMinus size={15} />}
+              onClick={() => unfollow.mutate(list.id, { onSuccess: onBack })}
+              disabled={unfollow.isPending}
+            >
+              {t("lists.share.unfollow")}
+            </AdminButton>
+          ) : (
+            <>
+              <AdminButton
+                variant="secondary"
+                aria-label={t("lists.editList")}
+                onClick={() => setDialog("rename")}
+                sx={{ minWidth: 0, px: 1, alignSelf: "stretch" }}
+              >
+                <Pencil size={16} />
+              </AdminButton>
+              <AdminButton
+                variant="secondary"
+                aria-label={t("lists.moreOptions")}
+                onClick={(e) => setMenuAnchor(e.currentTarget)}
+                sx={{ minWidth: 0, px: 1, alignSelf: "stretch" }}
+              >
+                <MoreVertical size={16} />
+              </AdminButton>
+            </>
+          )}
         </Box>
       </Box>
 
@@ -518,13 +565,19 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
           mb: 2.75,
         }}
       >
-        <AdminButton
-          variant="secondary"
-          icon={<Plus size={15} />}
-          onClick={() => setAddOpen(true)}
-        >
-          {t("lists.addTitles")}
-        </AdminButton>
+        {readOnly ? (
+          <Typography variant="body2" color="text.secondary">
+            {t("lists.share.readOnly")}
+          </Typography>
+        ) : (
+          <AdminButton
+            variant="secondary"
+            icon={<Plus size={15} />}
+            onClick={() => setAddOpen(true)}
+          >
+            {t("lists.addTitles")}
+          </AdminButton>
+        )}
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <SortMenuButton
@@ -585,7 +638,11 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
                 variant="poster"
                 fullWidth
                 onClick={() => nav.open(item.media_id, item.media_type)}
-                onDismiss={() => removeItem.mutate({ listId: list.id, mediaId: item.media_id })}
+                onDismiss={
+                  readOnly
+                    ? undefined
+                    : () => removeItem.mutate({ listId: list.id, mediaId: item.media_id })
+                }
               />
             ))}
           </Box>
@@ -597,12 +654,17 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
                 index={i}
                 title={item.title}
                 posterPath={item.poster_path}
+                readOnly={readOnly}
                 dragging={draggingId === item.media_id}
                 onDragStart={() => handleDragStart(item.media_id)}
                 onDragEnter={() => handleDragEnter(item.media_id)}
                 onDragEnd={handleDragEnd}
                 onOpen={() => nav.open(item.media_id, item.media_type)}
-                onRemove={() => removeItem.mutate({ listId: list.id, mediaId: item.media_id })}
+                onRemove={
+                  readOnly
+                    ? undefined
+                    : () => removeItem.mutate({ listId: list.id, mediaId: item.media_id })
+                }
               />
             ))}
           </Box>
@@ -617,6 +679,17 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
       )}
 
       <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={() => setMenuAnchor(null)}>
+        {SHARE_ENABLED && (
+          <MenuItem
+            onClick={() => {
+              setMenuAnchor(null);
+              setDialog("share");
+            }}
+          >
+            <Share2 size={15} style={{ marginRight: 8 }} />
+            {t("lists.share.share")}
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             setMenuAnchor(null);
@@ -647,6 +720,9 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
           onDeleted={onBack}
         />
       )}
+      {dialog === "share" && (
+        <ShareListDialog listId={current.id} open onClose={() => setDialog(null)} />
+      )}
 
       <AddTitlesDialog
         open={addOpen}
@@ -663,6 +739,7 @@ function ListRow({
   index,
   title,
   posterPath,
+  readOnly,
   dragging,
   onDragStart,
   onDragEnter,
@@ -673,16 +750,18 @@ function ListRow({
   index: number;
   title: string;
   posterPath?: string | null;
+  /** Followed-list row: not draggable, no remove control. */
+  readOnly?: boolean;
   dragging?: boolean;
   onDragStart?: () => void;
   onDragEnter?: () => void;
   onDragEnd?: () => void;
   onOpen: () => void;
-  onRemove: () => void;
+  onRemove?: () => void;
 }) {
   return (
     <Box
-      draggable
+      draggable={!readOnly}
       onDragStart={onDragStart}
       onDragEnter={onDragEnter}
       onDragOver={(e) => e.preventDefault()}
@@ -702,18 +781,20 @@ function ListRow({
         "&:hover .lr-grip": { opacity: 0.7 },
       }}
     >
-      <Box
-        className="lr-grip"
-        sx={{
-          display: "flex",
-          color: "text.secondary",
-          cursor: "grab",
-          opacity: { xs: 0.7, md: 0 },
-          transition: "opacity 140ms",
-        }}
-      >
-        <GripVertical size={16} />
-      </Box>
+      {!readOnly && (
+        <Box
+          className="lr-grip"
+          sx={{
+            display: "flex",
+            color: "text.secondary",
+            cursor: "grab",
+            opacity: { xs: 0.7, md: 0 },
+            transition: "opacity 140ms",
+          }}
+        >
+          <GripVertical size={16} />
+        </Box>
+      )}
       <Typography
         sx={{ width: 24, textAlign: "right", fontFamily: fontFamily.mono, fontSize: 12, color: "text.secondary" }}
       >
@@ -734,18 +815,20 @@ function ListRow({
       <Typography sx={{ flex: 1, minWidth: 0, fontSize: "0.92rem", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {title}
       </Typography>
-      <IconButton
-        className="lr-remove"
-        size="small"
-        aria-label="remove"
-        onClick={(e) => {
-          e.stopPropagation();
-          onRemove();
-        }}
-        sx={{ opacity: { xs: 1, md: 0 }, transition: "opacity 140ms", color: "text.secondary" }}
-      >
-        <X size={15} />
-      </IconButton>
+      {onRemove && (
+        <IconButton
+          className="lr-remove"
+          size="small"
+          aria-label="remove"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          sx={{ opacity: { xs: 1, md: 0 }, transition: "opacity 140ms", color: "text.secondary" }}
+        >
+          <X size={15} />
+        </IconButton>
+      )}
     </Box>
   );
 }

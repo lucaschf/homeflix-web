@@ -28,6 +28,12 @@ export function ListCard({ list, onOpen, onPlay, onRename, onDelete }: ListCardP
   const { data: items } = useCustomListItems(list.id);
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 
+  // A followed list is read-only: no owner options (rename/delete). The
+  // flags are absent until the sharing backend ships, so this is inert
+  // while the feature is dormant.
+  const isFollowed = !!list.is_followed;
+  const isShared = !!list.is_shared;
+
   const posters = (items ?? [])
     .map((it) => it.poster_path)
     .filter((p): p is string => !!p)
@@ -127,15 +133,17 @@ export function ListCard({ list, onOpen, onPlay, onRename, onDelete }: ListCardP
           <CollageChip title={t("lists.playList")} onClick={stop(onPlay)} peach>
             <Play size={13} fill="currentColor" />
           </CollageChip>
-          <CollageChip
-            title={t("lists.options")}
-            onClick={(e) => {
-              e.stopPropagation();
-              setMenuAnchor(e.currentTarget as HTMLElement);
-            }}
-          >
-            <MoreVertical size={14} />
-          </CollageChip>
+          {!isFollowed && (
+            <CollageChip
+              title={t("lists.options")}
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuAnchor(e.currentTarget as HTMLElement);
+              }}
+            >
+              <MoreVertical size={14} />
+            </CollageChip>
+          )}
         </Box>
       </Box>
 
@@ -143,6 +151,15 @@ export function ListCard({ list, onOpen, onPlay, onRename, onDelete }: ListCardP
         <Typography sx={{ fontSize: "0.92rem", fontWeight: 600, letterSpacing: "-0.01em" }}>
           {list.name}
         </Typography>
+        {(isFollowed || isShared) && (
+          <Typography sx={{ mt: 0.4, fontSize: "0.68rem", fontWeight: 600, color: "primary.main" }}>
+            {isFollowed
+              ? list.owner_name
+                ? `${t("lists.share.following")} · ${t("lists.share.followedBy", { name: list.owner_name })}`
+                : t("lists.share.following")
+              : t("lists.share.sharedBadge")}
+          </Typography>
+        )}
         {updated && (
           <Typography sx={{ mt: 0.4, fontSize: "0.72rem", color: "text.secondary" }}>
             {t("lists.updatedRelative", { time: updated })}

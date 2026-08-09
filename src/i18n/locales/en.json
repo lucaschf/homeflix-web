@@ -1829,6 +1829,27 @@
     }
   },
   "lists": {
+    "share": {
+      "share": "Share",
+      "title": "Share this list",
+      "helper": "Anyone in your household with this link can follow the list.",
+      "linkLabel": "Share link",
+      "copy": "Copy link",
+      "copied": "Link copied",
+      "stop": "Stop sharing",
+      "sharedBadge": "Shared",
+      "following": "Following",
+      "followedBy": "by {{name}}",
+      "follow": "Follow",
+      "unfollow": "Unfollow",
+      "alreadyFollowing": "Following",
+      "readOnly": "You're following this list — it's read-only.",
+      "hiddenItems": "{{count}} item hidden by your profile",
+      "hiddenItems_other": "{{count}} items hidden by your profile",
+      "notFoundTitle": "Link unavailable",
+      "notFoundBody": "This share link is invalid or no longer active.",
+      "landingEyebrow": "Shared list"
+    },
     "addTitlesSubtitle": "Search the catalog and pick what goes in the list.",
     "filterAll": "All",
     "filterMovies": "Movies",

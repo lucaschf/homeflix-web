@@ -1097,6 +1097,47 @@ export interface CustomListOutput {
   item_count: number;
   created_at: string;
   updated_at: string;
+  // ── Sharing (list-follow-share contract; optional until backend ships) ──
+  /** The caller owns this list and a share token exists for it. */
+  is_shared?: boolean;
+  /** The caller follows this list (does not own it) — render read-only. */
+  is_followed?: boolean;
+  /** Display name of the owner; only meaningful on followed rows. */
+  owner_name?: string | null;
+}
+
+/** Payload of ``POST /custom-lists/{id}/share`` — the opaque share token
+ *  and the app-relative path the frontend turns into a full link. */
+export interface ShareListData {
+  token: string;
+  /** App-relative landing path, e.g. ``/lists/shared/<token>``. */
+  url_path: string;
+}
+
+export interface ShareListResponse {
+  type: string;
+  data: ShareListData;
+}
+
+/** Read-only preview returned by ``GET /custom-lists/shared/{token}``.
+ *  ``items`` is already filtered to the caller's library access; anything
+ *  hidden by that filter is only reflected in ``hidden_count``. */
+export interface SharedListPreviewData {
+  list: {
+    id: string;
+    name: string;
+    description: string | null;
+    owner_name: string | null;
+    item_count: number;
+  };
+  items: CustomListItemOutput[];
+  hidden_count: number;
+  is_following: boolean;
+}
+
+export interface SharedListPreviewResponse {
+  type: string;
+  data: SharedListPreviewData;
 }
 
 export interface CustomListItemOutput {
