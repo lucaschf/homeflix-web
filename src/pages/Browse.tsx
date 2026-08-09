@@ -28,6 +28,7 @@ import { CarouselSkeleton } from "../components/CarouselSkeleton";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
+import { CARD_WIDTH } from "../components/mediaCardDimensions";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { formatDuration } from "../utils/duration";
@@ -287,19 +288,23 @@ function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
   );
 }
 
-// Shared poster-grid geometry so the skeleton and the loaded grid stay
-// pixel-aligned instead of each re-deriving the breakpoints — a drift
-// between them would make the load resolve as a reflow rather than a
-// clean content swap.
+// Shared poster-grid geometry. Columns use ``minmax(CARD_WIDTH.poster,
+// 1fr)`` so cards are never smaller than the Home / carousel cards, and
+// the sub-column leftover on a wide row (never enough to fit another
+// column) is absorbed evenly instead of dumped as a black gutter on the
+// right. On typical widths cards land at exactly the Home size; on
+// ultrawide they grow at most a few px to fill the row. Gap (12px) and
+// horizontal padding match the carousels so the "See all" → grid
+// transition is seamless. The skeleton reuses these so load is a clean
+// content swap, not a reflow.
 const GRID_COLUMNS = {
-  xs: "repeat(3, 1fr)",
-  sm: "repeat(4, 1fr)",
-  md: "repeat(5, 1fr)",
-  lg: "repeat(6, 1fr)",
-  xl: "repeat(7, 1fr)",
+  xs: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.xs}px, 1fr))`,
+  sm: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.sm}px, 1fr))`,
+  md: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.md}px, 1fr))`,
+  lg: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.lg}px, 1fr))`,
 } as const;
-const GRID_GAP = { xs: 1, sm: 1.5, md: 2 } as const;
-const GRID_PX = { xs: 2, md: 6 } as const;
+const GRID_GAP = 1.5;
+const GRID_PX = { xs: 3, md: 6 } as const;
 
 interface GenreGridProps {
   genreId: string;
