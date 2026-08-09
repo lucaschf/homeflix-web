@@ -42,16 +42,6 @@ function parseTypeFilter(raw: string | null): CatalogTypeFilter | undefined {
   return raw === "movie" || raw === "series" ? raw : undefined;
 }
 
-/**
- * Master switch for the genre-grid sort control. Off until the backend
- * honors the `?sort=` param (see `docs/by-genre-sort-contract.md`) —
- * a visible control that the server ignored would be a broken UX. When
- * the contract ships, flip this to `true`. Everything downstream (the
- * `useByGenre` `sort` option, the `?sort=` URL plumbing, the dropdown)
- * is already wired; nothing else needs to change.
- */
-const SORT_ENABLED = true;
-
 const CATALOG_SORTS: CatalogSort[] = [
   "title_asc",
   "title_desc",
@@ -72,9 +62,9 @@ export function Browse() {
 
   const genreFilter = searchParams.get("genre");
   const typeFilter = parseTypeFilter(searchParams.get("type"));
-  // Dormant until `SORT_ENABLED`: no `?sort=` is read or written while
-  // the backend can't honor it, so the grid keeps its default order.
-  const sortFilter = SORT_ENABLED ? parseSort(searchParams.get("sort")) : undefined;
+  // Active sort order from the URL; unknown/absent degrades to
+  // undefined so the grid falls back to the backend default (title_asc).
+  const sortFilter = parseSort(searchParams.get("sort"));
 
   // Tab title reflects the active type filter; the Browse landing
   // (no filter) reads as "Browse".
@@ -197,14 +187,10 @@ export function Browse() {
               else searchParams.set("type", next);
               setSearchParams(searchParams);
             }}
-            onSortChange={
-              SORT_ENABLED
-                ? (next) => {
-                    searchParams.set("sort", next);
-                    setSearchParams(searchParams);
-                  }
-                : undefined
-            }
+            onSortChange={(next) => {
+              searchParams.set("sort", next);
+              setSearchParams(searchParams);
+            }}
           />
         ) : genresLoading ? (
           // Structural skeleton while the genres list is in flight —
@@ -343,19 +329,13 @@ interface GenreGridProps {
    * server default (`title_asc`); see `docs/by-genre-sort-contract.md`.
    */
   sort?: CatalogSort;
-  /**
-   * Switch the sort order from the in-grid dropdown. Only provided when
-   * `SORT_ENABLED` — the dropdown renders only when this is set, so the
-   * whole control stays out of the DOM until the backend honors `sort`.
-   */
-  onSortChange?: (next: CatalogSort) => void;
+  /** Switch the sort order from the in-grid dropdown (updates `?sort=`). */
+  onSortChange: (next: CatalogSort) => void;
 }
 
 /**
- * Sort dropdown for the genre grid. Rendered only when the backend
- * supports the `?sort=` param (gated by `SORT_ENABLED` at the call
- * site). Maps the five `CatalogSort` values to their existing i18n
- * labels.
+ * Sort dropdown for the genre grid. Maps the five `CatalogSort` values
+ * to their existing i18n labels.
  */
 function GenreSortMenu({
   value,
@@ -529,9 +509,7 @@ function GenreGrid({
             flexShrink: 0,
           }}
         >
-          {onSortChange && (
-            <GenreSortMenu value={sort ?? "title_asc"} onChange={onSortChange} />
-          )}
+          <GenreSortMenu value={sort ?? "title_asc"} onChange={onSortChange} />
           <SegmentedControl
             value={type ?? "all"}
             options={typeOptions}
