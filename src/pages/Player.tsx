@@ -2120,6 +2120,38 @@ export function Player() {
         </Typography>
       )}
 
+      {/* Center Play Button (when paused and ready). Anchored to the
+          container's true center — the same reference as the flashing
+          action indicator above — so the two line up exactly. It used
+          to live inside the middle click zone, which is centered
+          between the top bar and the taller bottom controls and so
+          sat higher than the flashing icon. Non-interactive: clicks
+          fall through to the zones below. */}
+      {!playing && hlsReady && !postPlayActive && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%,-50%)",
+            pointerEvents: "none",
+            zIndex: 5,
+          }}
+        >
+          <IconButton
+            sx={{
+              width: 72,
+              height: 72,
+              bgcolor: peachAlpha(0.9),
+              color: "background.default",
+              pointerEvents: "none",
+            }}
+          >
+            <Play size={36} fill={neutral[950]} />
+          </IconButton>
+        </Box>
+      )}
+
       {/* Controls Overlay. Suppressed while the post-play panel is up:
           the transport belongs to a full-screen picture, and leaving a
           full-width seek bar under a half-width video reads as a
@@ -2158,7 +2190,7 @@ export function Player() {
             }}
           />
           <Box
-            sx={{ flex: 4, touchAction: "manipulation", position: "relative" }}
+            sx={{ flex: 4, touchAction: "manipulation" }}
             onClick={() => {
               if (clickTimerRef.current) {
                 clearTimeout(clickTimerRef.current);
@@ -2171,24 +2203,7 @@ export function Player() {
                 }, DOUBLE_TAP_WINDOW_MS);
               }
             }}
-          >
-            {/* Center Play Button (when paused and ready) */}
-            {!playing && hlsReady && (
-              <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none" }}>
-                <IconButton
-                  sx={{
-                    width: 72,
-                    height: 72,
-                    bgcolor: peachAlpha(0.9),
-                    color: "background.default",
-                    pointerEvents: "none",
-                  }}
-                >
-                  <Play size={36} fill={neutral[950]} />
-                </IconButton>
-              </Box>
-            )}
-          </Box>
+          />
           <Box
             sx={{ flex: 3, touchAction: "manipulation" }}
             onClick={() => {
