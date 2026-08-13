@@ -305,6 +305,8 @@
     "speed": "Speed",
     "subtitles": "Subtitles",
     "audio": "Audio",
+    "audioTrack": "Audio track",
+    "subtitleTrack": "Subtitle track",
     "off": "Off",
     "version": "Version {{n}}",
     "sdh": "SDH",

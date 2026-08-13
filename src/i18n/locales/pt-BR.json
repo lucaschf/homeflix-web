@@ -305,6 +305,8 @@
     "speed": "Velocidade",
     "subtitles": "Legendas",
     "audio": "Audio",
+    "audioTrack": "Faixa de áudio",
+    "subtitleTrack": "Faixa de legenda",
     "off": "Desligado",
     "version": "Versão {{n}}",
     "sdh": "SDH",
