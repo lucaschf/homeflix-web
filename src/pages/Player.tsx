@@ -596,6 +596,24 @@ export function Player() {
     [],
   );
 
+  // VLC-style track OSD — a line of text pinned to the top-right corner
+  // when the audio/subtitle track is cycled (e.g. "Audio track:
+  // Português"). Distinct from the centered `actionIndicator` because it
+  // reads as VLC's on-screen-display: it lingers a little longer and
+  // stays out of the picture. `null` = nothing to show.
+  // A monotonic `seq` (kept in state, not a ref, so it's safe to read in
+  // render as the animation-restart `key`) re-mounts the OSD on each
+  // trigger so the fade replays even when the text is unchanged.
+  const [trackOsd, setTrackOsd] = useState<{ seq: number; text: string } | null>(null);
+  const trackOsdSeqRef = useRef(0);
+  const trackOsdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showTrackOsd = useCallback((text: string) => {
+    if (trackOsdTimerRef.current) clearTimeout(trackOsdTimerRef.current);
+    trackOsdSeqRef.current += 1;
+    setTrackOsd({ seq: trackOsdSeqRef.current, text });
+    trackOsdTimerRef.current = setTimeout(() => setTrackOsd(null), 1500);
+  }, []);
+
   const [playing, setPlaying] = useState(false);
   const [showBadge, setShowBadge] = useState(false);
   const [nextEpCountdown, setNextEpCountdown] = useState<number | null>(null);
@@ -1644,6 +1662,41 @@ export function Player() {
     resetHideTimer();
   }, [seekTo, currentTime, showAction, resetHideTimer]);
 
+  // VLC-style track cycling. Pressing the key advances straight to the
+  // next track (and flashes its label) instead of opening a menu —
+  // mirroring VLC's `b` (audio) / `v` (subtitle) behaviour. The chosen
+  // id is committed to the `desired*` ref so a later seek/remount
+  // re-applies it, matching the menu handlers above.
+  const cycleAudioTrack = useCallback(() => {
+    const hls = hlsRef.current;
+    if (!hls || audioTrackItems.length < 2) return;
+    const idx = audioTrackItems.findIndex((tk) => tk.id === currentAudioTrack);
+    const next = audioTrackItems[(idx + 1) % audioTrackItems.length];
+    desiredAudioTrackRef.current = next.id;
+    hls.audioTrack = next.id;
+    showTrackOsd(`${t("player.audioTrack")}: ${next.label}`);
+    resetHideTimer();
+  }, [audioTrackItems, currentAudioTrack, showTrackOsd, resetHideTimer, t]);
+
+  const cycleSubtitleTrack = useCallback(() => {
+    const hls = hlsRef.current;
+    if (!hls) return;
+    // Cycle order: each subtitle track in menu order, then "off" (-1),
+    // then back to the first — same set the subtitle menu offers.
+    const ids = [...subtitleTrackItems.map((tk) => tk.id), -1];
+    if (ids.length < 2) return;
+    const idx = ids.indexOf(currentSubtitleTrack);
+    const nextId = ids[(idx + 1) % ids.length];
+    desiredSubtitleTrackRef.current = nextId;
+    hls.subtitleTrack = nextId;
+    const label =
+      nextId === -1
+        ? t("player.off")
+        : subtitleTrackItems.find((tk) => tk.id === nextId)?.label ?? "";
+    showTrackOsd(`${t("player.subtitleTrack")}: ${label}`);
+    resetHideTimer();
+  }, [subtitleTrackItems, currentSubtitleTrack, showTrackOsd, resetHideTimer, t]);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
@@ -1701,6 +1754,14 @@ export function Player() {
           setSubtitleAnchor((prev) => (prev ? null : containerEl));
           showAction(<Subtitles size={28} />);
           break;
+        case "b":
+          // VLC: cycle audio track.
+          cycleAudioTrack();
+          break;
+        case "v":
+          // VLC: cycle subtitle track (… → off → first).
+          cycleSubtitleTrack();
+          break;
         case "escape":
           // While the post-play panel is up, Escape closes it and
           // returns to the credits rather than leaving the player —
@@ -1729,6 +1790,8 @@ export function Player() {
     toggleFullscreen,
     seekBackward,
     seekForward,
+    cycleAudioTrack,
+    cycleSubtitleTrack,
   ]);
 
   const togglePlay = () => {
@@ -2019,6 +2082,42 @@ export function Player() {
             </Typography>
           )}
         </Box>
+      )}
+
+      {/* VLC-style track OSD — top-right corner, plain text on a subtle
+          scrim, shown briefly when the audio/subtitle track is cycled
+          with `b` / `v`. Sits above the controls chrome and never
+          intercepts pointer events. */}
+      {trackOsd && (
+        <Typography
+          key={trackOsd.seq}
+          sx={{
+            position: "absolute",
+            top: { xs: 16, md: 24 },
+            right: { xs: 16, md: 24 },
+            maxWidth: "70%",
+            px: { xs: 1.75, md: 2.25 },
+            py: { xs: 1, md: 1.25 },
+            color: "overlayText.primary",
+            bgcolor: scrim(0.5),
+            borderRadius: 1.5,
+            fontSize: { xs: "1.1rem", md: "1.5rem" },
+            lineHeight: 1.2,
+            fontWeight: 600,
+            textAlign: "right",
+            pointerEvents: "none",
+            zIndex: 6,
+            animation: "track-osd-fade 1500ms ease-out forwards",
+            "@keyframes track-osd-fade": {
+              "0%": { opacity: 0 },
+              "10%": { opacity: 1 },
+              "80%": { opacity: 1 },
+              "100%": { opacity: 0 },
+            },
+          }}
+        >
+          {trackOsd.text}
+        </Typography>
       )}
 
       {/* Controls Overlay. Suppressed while the post-play panel is up:
