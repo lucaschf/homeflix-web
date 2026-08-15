@@ -643,6 +643,31 @@ export function Player() {
   // by the "are you still watching?" prompt below.
   const autoAdvanceStreakRef = useRef(0);
   const [stillWatchingActive, setStillWatchingActive] = useState(false);
+  // Mirror of ``stillWatchingActive`` for long-lived event handlers
+  // that close over a stale render — the HLS ``MANIFEST_PARSED``
+  // autoplay and the re-pause guard below. ``confirmStillWatching``
+  // flips it synchronously (before the state commit) so its own
+  // ``play()`` isn't swallowed by the guard.
+  const stillWatchingActiveRef = useRef(false);
+
+  // While the prompt is up the video must stay paused no matter who
+  // tries to start it. A single ``pause()`` at trigger time is not
+  // enough: a far seek near the end remounts HLS, and the new mount's
+  // ``MANIFEST_PARSED`` autoplay lands *after* that pause — the prompt
+  // showed over a still-running video. Pause on entry and re-pause on
+  // any stray ``play`` event; the listener sits on the <video> element,
+  // which survives HLS remounts.
+  useEffect(() => {
+    stillWatchingActiveRef.current = stillWatchingActive;
+    const video = videoRef.current;
+    if (!video || !stillWatchingActive) return;
+    video.pause();
+    const onPlay = () => {
+      if (stillWatchingActiveRef.current) video.pause();
+    };
+    video.addEventListener("play", onPlay);
+    return () => video.removeEventListener("play", onPlay);
+  }, [stillWatchingActive]);
   const [episodeDrawerOpen, setEpisodeDrawerOpen] = useState(false);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1002,7 +1027,9 @@ export function Player() {
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
+        // No autoplay while the still-watching prompt is deciding
+        // whether anyone is around to watch.
+        if (!stillWatchingActiveRef.current) video.play().catch(() => {});
       });
 
       // Track audio tracks from HLS manifest
@@ -1091,7 +1118,7 @@ export function Player() {
       // Safari native HLS
       video.src = hlsUrl;
       video.addEventListener("loadedmetadata", () => {
-        video.play().catch(() => {});
+        if (!stillWatchingActiveRef.current) video.play().catch(() => {});
       });
     }
 
@@ -1520,6 +1547,9 @@ export function Player() {
    */
   const confirmStillWatching = useCallback(() => {
     autoAdvanceStreakRef.current = 0;
+    // Synchronous ref flip so the ``play()`` below isn't re-paused by
+    // the guard listener, which only detaches after the next render.
+    stillWatchingActiveRef.current = false;
     setStillWatchingActive(false);
     const video = videoRef.current;
     if (video && !video.ended) {
@@ -1560,7 +1590,9 @@ export function Player() {
       // Two episodes played end-to-end without a single input — stop
       // and ask instead of queueing a third. The pause is what actually
       // releases the backend: no more segment requests, the transcode
-      // session times out on its own.
+      // session times out on its own. The ref flips synchronously so an
+      // HLS autoplay landing before the state commit is already gated.
+      stillWatchingActiveRef.current = true;
       videoRef.current?.pause();
       setStillWatchingActive(true);
       return;
