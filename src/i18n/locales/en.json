@@ -324,6 +324,12 @@
     "creditsRolling": "Credits",
     "markedWatched": "Marked as watched",
     "backToMovie": "Back to movie",
+    "stillWatching": {
+      "title": "Are you still watching?",
+      "upNext": "Up next: {{title}}",
+      "continue": "Continue watching",
+      "exit": "Back to details"
+    },
     "postPlay": {
       "finished": "Finished",
       "upNext": "Up next",

@@ -64,6 +64,13 @@ const NO_MARKER_ONSET_SECONDS = 60;
 // opens already populated rather than on a spinner.
 const UP_NEXT_PREFETCH_SECONDS = 45;
 
+// How many episodes may auto-advance back-to-back with zero user input
+// before the player stops and asks "are you still watching?" instead of
+// starting another countdown. Beyond keeping the history honest, the
+// pause stops HLS segment requests, so the backend's ffmpeg session
+// idles out instead of transcoding for an empty couch.
+const STILL_WATCHING_AFTER_AUTO_ADVANCES = 2;
+
 // Post-play stage geometry. The picture is scaled down and pushed
 // aside; the end-of-title caption is a *sibling* of that transform (it
 // must not inherit the scale, or its text would render at 46% size and
@@ -628,6 +635,39 @@ export function Player() {
   // Fires the credits trigger at most once per playback; reset when the
   // media changes.
   const creditsHandledRef = useRef(false);
+  // Consecutive episodes that auto-advanced with no user input in
+  // between. Lives in a ref because it must survive the param-only
+  // navigation of auto-advance (the Player never unmounts) and because
+  // ticking it must not re-render. Any deliberate input resets it; at
+  // STILL_WATCHING_AFTER_AUTO_ADVANCES the next countdown is replaced
+  // by the "are you still watching?" prompt below.
+  const autoAdvanceStreakRef = useRef(0);
+  const [stillWatchingActive, setStillWatchingActive] = useState(false);
+  // Mirror of ``stillWatchingActive`` for long-lived event handlers
+  // that close over a stale render — the HLS ``MANIFEST_PARSED``
+  // autoplay and the re-pause guard below. ``confirmStillWatching``
+  // flips it synchronously (before the state commit) so its own
+  // ``play()`` isn't swallowed by the guard.
+  const stillWatchingActiveRef = useRef(false);
+
+  // While the prompt is up the video must stay paused no matter who
+  // tries to start it. A single ``pause()`` at trigger time is not
+  // enough: a far seek near the end remounts HLS, and the new mount's
+  // ``MANIFEST_PARSED`` autoplay lands *after* that pause — the prompt
+  // showed over a still-running video. Pause on entry and re-pause on
+  // any stray ``play`` event; the listener sits on the <video> element,
+  // which survives HLS remounts.
+  useEffect(() => {
+    stillWatchingActiveRef.current = stillWatchingActive;
+    const video = videoRef.current;
+    if (!video || !stillWatchingActive) return;
+    video.pause();
+    const onPlay = () => {
+      if (stillWatchingActiveRef.current) video.pause();
+    };
+    video.addEventListener("play", onPlay);
+    return () => video.removeEventListener("play", onPlay);
+  }, [stillWatchingActive]);
   const [episodeDrawerOpen, setEpisodeDrawerOpen] = useState(false);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -987,7 +1027,9 @@ export function Player() {
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {});
+        // No autoplay while the still-watching prompt is deciding
+        // whether anyone is around to watch.
+        if (!stillWatchingActiveRef.current) video.play().catch(() => {});
       });
 
       // Track audio tracks from HLS manifest
@@ -1076,7 +1118,7 @@ export function Player() {
       // Safari native HLS
       video.src = hlsUrl;
       video.addEventListener("loadedmetadata", () => {
-        video.play().catch(() => {});
+        if (!stillWatchingActiveRef.current) video.play().catch(() => {});
       });
     }
 
@@ -1494,11 +1536,67 @@ export function Player() {
     setNextEpCountdown(null);
   }, []);
 
+  // ── "Are you still watching?" actions ────────────────────
+
+  /**
+   * Viewer confirmed they're present. When the prompt fired at the
+   * credits onset the video is merely paused — resume it and let the
+   * ``ended`` handler start a normal countdown (the streak is zero
+   * again). When playback already ended there is nothing left to play,
+   * so advance directly.
+   */
+  const confirmStillWatching = useCallback(() => {
+    autoAdvanceStreakRef.current = 0;
+    // Synchronous ref flip so the ``play()`` below isn't re-paused by
+    // the guard listener, which only detaches after the next render.
+    stillWatchingActiveRef.current = false;
+    setStillWatchingActive(false);
+    const video = videoRef.current;
+    if (video && !video.ended) {
+      video.play().catch(() => {});
+    } else {
+      goToNextEpisode();
+    }
+  }, [goToNextEpisode]);
+
+  /** No one answered on purpose — the viewer wants out. */
+  const exitStillWatching = useCallback(() => {
+    saveCurrentProgress();
+    navigate(seriesDetailPath, { replace: true });
+  }, [saveCurrentProgress, navigate, seriesDetailPath]);
+
+  // Any deliberate input proves someone is on the couch. pointerdown +
+  // keydown — not mousemove, a nudged desk shouldn't count as presence.
+  // The listeners only write a ref, so they never cause a render, and
+  // they stay mounted for the whole session.
+  useEffect(() => {
+    const resetStreak = () => {
+      autoAdvanceStreakRef.current = 0;
+    };
+    window.addEventListener("pointerdown", resetStreak);
+    window.addEventListener("keydown", resetStreak);
+    return () => {
+      window.removeEventListener("pointerdown", resetStreak);
+      window.removeEventListener("keydown", resetStreak);
+    };
+  }, []);
+
   // Start the "next episode in 10s" countdown. Idempotent — bails when a
   // countdown is already running, so the credits trigger and the native
   // ``ended`` event can both call it without double-starting the timer.
   const startNextEpisodeCountdown = useCallback(() => {
     if (!nextEpisode || countdownTimerRef.current) return;
+    if (autoAdvanceStreakRef.current >= STILL_WATCHING_AFTER_AUTO_ADVANCES) {
+      // Two episodes played end-to-end without a single input — stop
+      // and ask instead of queueing a third. The pause is what actually
+      // releases the backend: no more segment requests, the transcode
+      // session times out on its own. The ref flips synchronously so an
+      // HLS autoplay landing before the state commit is already gated.
+      stillWatchingActiveRef.current = true;
+      videoRef.current?.pause();
+      setStillWatchingActive(true);
+      return;
+    }
     setNextEpCountdown(10);
     countdownTimerRef.current = setInterval(() => {
       setNextEpCountdown((prev) => {
@@ -1537,6 +1635,7 @@ export function Player() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPostPlayActive(false);
     setPostPlayEnded(false);
+    setStillWatchingActive(false);
   }, [mediaId]);
 
   // Credits trigger: once playback passes the detected credits onset,
@@ -1597,8 +1696,13 @@ export function Player() {
   // bounded one-shot cascade this effect produces (one render when
   // countdown hits 0, then the next-episode mount takes over).
   useEffect(() => {
+    if (nextEpCountdown !== 0) return;
+    // This is the one path where the episode changed without the viewer
+    // lifting a finger — the streak only grows here. Manual paths (the
+    // overlay buttons, the episode drawer) reset it via pointerdown.
+    autoAdvanceStreakRef.current += 1;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (nextEpCountdown === 0) goToNextEpisode();
+    goToNextEpisode();
   }, [nextEpCountdown, goToNextEpisode]);
 
   // Cleanup stray timers on unmount
@@ -1702,6 +1806,15 @@ export function Player() {
       const video = videoRef.current;
       if (!video) return;
 
+      // The still-watching prompt is modal: swallow shortcuts so a
+      // stray key can't toggle playback underneath it. Escape doubles
+      // as "yes, I'm here" — it dismisses the topmost surface, same
+      // contract as the post-play branch below.
+      if (stillWatchingActive) {
+        if (e.key === "Escape") confirmStillWatching();
+        return;
+      }
+
       switch (e.key.toLowerCase()) {
         case " ":
         case "k":
@@ -1787,6 +1900,8 @@ export function Player() {
     postPlayEnded,
     resetHideTimer,
     showAction,
+    stillWatchingActive,
+    confirmStillWatching,
     toggleFullscreen,
     seekBackward,
     seekForward,
@@ -1922,7 +2037,7 @@ export function Player() {
         // The panel is an affordance the user is meant to point at, so
         // the cursor stays visible while it's up even if the controls
         // have auto-hidden.
-        cursor: showControls || postPlayActive ? "default" : "none",
+        cursor: showControls || postPlayActive || stillWatchingActive ? "default" : "none",
         userSelect: "none",
         WebkitUserSelect: "none",
       }}
@@ -2516,6 +2631,75 @@ export function Player() {
           >
             {t("player.nextEpisode")}
           </Button>
+        </Box>
+      )}
+
+      {/* "Are you still watching?" prompt — replaces the auto-next
+          countdown once STILL_WATCHING_AFTER_AUTO_ADVANCES episodes
+          played back-to-back with zero input. Playback is paused while
+          it's up; nothing here ever auto-advances. */}
+      {stillWatchingActive && (
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+            px: 2,
+            textAlign: "center",
+            bgcolor: scrim(0.75),
+            backdropFilter: "blur(8px)",
+            zIndex: 14,
+          }}
+        >
+          <Typography variant="h5" color="overlayText.primary" fontWeight={700}>
+            {t("player.stillWatching.title")}
+          </Typography>
+          {nextEpisode && (
+            <Typography variant="body2" color="text.secondary">
+              {t("player.stillWatching.upNext", { title: nextEpisode.title })}
+            </Typography>
+          )}
+          <Box
+            sx={{
+              display: "flex",
+              gap: 1.5,
+              mt: 1.5,
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            <Button
+              variant="contained"
+              onClick={confirmStillWatching}
+              startIcon={<Play size={16} />}
+              sx={{
+                px: 3,
+                py: 1.2,
+                bgcolor: whiteAlpha(1),
+                color: neutral[900],
+                "&:hover": { bgcolor: whiteAlpha(0.85) },
+              }}
+            >
+              {t("player.stillWatching.continue")}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={exitStillWatching}
+              sx={{
+                px: 3,
+                py: 1.2,
+                color: "text.secondary",
+                borderColor: whiteAlpha(0.3),
+                "&:hover": { borderColor: whiteAlpha(0.5) },
+              }}
+            >
+              {t("player.stillWatching.exit")}
+            </Button>
+          </Box>
         </Box>
       )}
 
