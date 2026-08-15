@@ -57,9 +57,28 @@ export function FileSegmentsEditor({ open, onClose, seriesId, season, onNotify }
     })),
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // Optional helper: total file duration used only to pre-fill an even split
+  // as a starting guess. Not sent to the backend.
+  const [totalDuration, setTotalDuration] = useState<number>(0);
 
   const patchRow = (index: number, patch: Partial<Row>) =>
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+
+  // Pre-fill every episode with an equal slice of the file. A rough starting
+  // point the operator then fine-tunes — end never exceeds the entered
+  // duration, so the backend's within-duration check can't reject it.
+  const splitEvenly = () => {
+    const dur = Math.floor(totalDuration);
+    if (dur <= 0 || rows.length === 0) return;
+    const n = rows.length;
+    setRows((prev) =>
+      prev.map((r, i) => ({
+        ...r,
+        start: Math.round((i * dur) / n),
+        end: Math.round(((i + 1) * dur) / n),
+      })),
+    );
+  };
 
   // A row counts as "to assign" only once it has a real window; rows left at
   // 0/0 are simply skipped (that episode keeps whatever file it had).
@@ -110,6 +129,26 @@ export function FileSegmentsEditor({ open, onClose, seriesId, season, onNotify }
             error={filePath.trim().length === 0}
             helperText={t("admin.segments.filePathHelp")}
           />
+
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5} alignItems={{ sm: "flex-end" }}>
+            <AdminInput
+              label={t("admin.segments.totalDuration")}
+              type="number"
+              inputProps={{ min: 0, step: 1 }}
+              value={totalDuration || ""}
+              onChange={(e) => setTotalDuration(Number(e.target.value))}
+              helperText={t("admin.segments.totalDurationHelp")}
+              sx={{ width: { sm: 200 } }}
+            />
+            <AdminButton
+              variant="secondary"
+              onClick={splitEvenly}
+              disabled={totalDuration <= 0}
+              sx={{ mb: { sm: 2.5 } }}
+            >
+              {t("admin.segments.splitEvenly")}
+            </AdminButton>
+          </Stack>
 
           <Stack spacing={2}>
             {rows.map((row, index) => {
