@@ -71,6 +71,15 @@ const UP_NEXT_PREFETCH_SECONDS = 45;
 // idles out instead of transcoding for an empty couch.
 const STILL_WATCHING_AFTER_AUTO_ADVANCES = 2;
 
+// The streak alone is unfair to shows with short episodes — two
+// 20-minute episodes is only ~40 minutes of quiet, which a present
+// viewer produces all the time. Both must hold before the prompt
+// fires: the streak says "episodes finished untouched", this clock
+// says "and it's been long enough". At an hour, 45-minute episodes
+// still prompt on the earliest streak the counter allows, while
+// 20-minute ones need a third or fourth auto-advance first.
+const STILL_WATCHING_MIN_IDLE_MS = 60 * 60 * 1000;
+
 // Post-play stage geometry. The picture is scaled down and pushed
 // aside; the end-of-title caption is a *sibling* of that transform (it
 // must not inherit the scale, or its text would render at 46% size and
@@ -642,6 +651,12 @@ export function Player() {
   // STILL_WATCHING_AFTER_AUTO_ADVANCES the next countdown is replaced
   // by the "are you still watching?" prompt below.
   const autoAdvanceStreakRef = useRef(0);
+  // Wall-clock timestamp of the last deliberate input, the second half
+  // of the hybrid trigger. Starts at 0 (not ``Date.now()`` — impure in
+  // render) and is stamped by the listener effect on mount: the click
+  // that navigated here happened before these listeners existed, so the
+  // mount itself is the first known proof of presence.
+  const lastInputAtRef = useRef(0);
   const [stillWatchingActive, setStillWatchingActive] = useState(false);
   // Mirror of ``stillWatchingActive`` for long-lived event handlers
   // that close over a stale render — the HLS ``MANIFEST_PARSED``
@@ -1570,8 +1585,13 @@ export function Player() {
   // The listeners only write a ref, so they never cause a render, and
   // they stay mounted for the whole session.
   useEffect(() => {
+    // Arriving at the player took a click that predates these
+    // listeners — count the mount as the first input, otherwise the
+    // idle clock reads "since forever" and defeats the minimum.
+    lastInputAtRef.current = Date.now();
     const resetStreak = () => {
       autoAdvanceStreakRef.current = 0;
+      lastInputAtRef.current = Date.now();
     };
     window.addEventListener("pointerdown", resetStreak);
     window.addEventListener("keydown", resetStreak);
@@ -1586,9 +1606,12 @@ export function Player() {
   // ``ended`` event can both call it without double-starting the timer.
   const startNextEpisodeCountdown = useCallback(() => {
     if (!nextEpisode || countdownTimerRef.current) return;
-    if (autoAdvanceStreakRef.current >= STILL_WATCHING_AFTER_AUTO_ADVANCES) {
-      // Two episodes played end-to-end without a single input — stop
-      // and ask instead of queueing a third. The pause is what actually
+    if (
+      autoAdvanceStreakRef.current >= STILL_WATCHING_AFTER_AUTO_ADVANCES &&
+      Date.now() - lastInputAtRef.current >= STILL_WATCHING_MIN_IDLE_MS
+    ) {
+      // Enough episodes played end-to-end AND enough quiet time — stop
+      // and ask instead of queueing another. The pause is what actually
       // releases the backend: no more segment requests, the transcode
       // session times out on its own. The ref flips synchronously so an
       // HLS autoplay landing before the state commit is already gated.
