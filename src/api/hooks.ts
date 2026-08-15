@@ -2000,7 +2000,7 @@ export function useDefineFileSegments() {
         `/admin/series/${seriesId}/file-segments`,
         { season_number, file_path, segments },
       );
-      return resp.data.file_segments;
+      return resp.data;
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });

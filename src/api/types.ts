@@ -1451,9 +1451,7 @@ export interface FileSegmentsPayload {
   episodes: FileSegmentsEpisodePayload[];
 }
 
-export type DefineFileSegmentsResponse = ApiDetailResponse<{
-  file_segments: FileSegmentsPayload;
-}>;
+export type DefineFileSegmentsResponse = ApiDetailResponse<FileSegmentsPayload>;
 
 // Cross-type conversion: an admin picked a TV card in the suggestion
 // picker, confirming that the misclassified movie row should be
