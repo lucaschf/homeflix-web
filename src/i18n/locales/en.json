@@ -213,6 +213,9 @@
       "success": "Enrichment flagged — the movie is back in the review queue.",
       "error": "Couldn't flag the enrichment. Try again."
     },
+    "segments": {
+      "action": "Define episode segments"
+    },
     "subtitleOcr": {
       "tooltip": "Generate text subtitles (OCR)",
       "started": "OCR started — text subtitles will appear once it finishes.",
@@ -1495,6 +1498,26 @@
         "no_language_model": "No model",
         "skipped_language": "Skipped",
         "failed": "Failed"
+      }
+    },
+    "segments": {
+      "title": "Multi-episode file",
+      "subtitle": "This file holds several episodes. Set the start and end of each episode's window; every episode then plays just its range — the file is not split on disk.",
+      "filePath": "Shared file path",
+      "filePathHelp": "Absolute path to the physical file all these episodes share.",
+      "episodeLabel": "E{{number}}",
+      "start": "Start (s)",
+      "end": "End (s)",
+      "save": "Save segments",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "errors": {
+        "range": "End must be after start",
+        "failed": "Couldn't save the segments. Check the values and try again."
+      },
+      "snack": {
+        "saved": "Assigned {{count}} episode segment.",
+        "saved_other": "Assigned {{count}} episode segments."
       }
     },
     "credits": {

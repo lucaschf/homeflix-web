@@ -14,6 +14,9 @@ import type {
   AdminBulkMarkDistinctResponse,
   AdminConflictListState,
   AdminConflictResolutionSource,
+  DefineFileSegmentsInput,
+  DefineFileSegmentsResponse,
+  FileSegmentsPayload,
   AdminConflictSummary,
   AdminConflictSweepResponse,
   AdminConflictsResponse,
@@ -1970,6 +1973,36 @@ export function useRelinkSeries() {
       queryClient.invalidateQueries({
         queryKey: ["admin", "series", "needs-review"],
       });
+      queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
+  });
+}
+
+interface DefineFileSegmentsVars extends DefineFileSegmentsInput {
+  seriesId: string;
+}
+
+/**
+ * Map several episodes of a season onto disjoint time windows of one
+ * shared physical file (ADR-030). Invalidates the series detail cache so
+ * the newly-segmented episodes flip to available.
+ */
+export function useDefineFileSegments() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      seriesId,
+      season_number,
+      file_path,
+      segments,
+    }: DefineFileSegmentsVars): Promise<FileSegmentsPayload> => {
+      const resp = await api.post<DefineFileSegmentsResponse>(
+        `/admin/series/${seriesId}/file-segments`,
+        { season_number, file_path, segments },
+      );
+      return resp.data.file_segments;
+    },
+    onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
     },
   });
