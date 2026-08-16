@@ -2159,13 +2159,17 @@ export function Player() {
           <Box
             sx={{
               position: "absolute",
-              bottom: "10%",
+              // Sit just above the controls/progress bar rather than up in
+              // the picture. Rises a little when the controls are visible so
+              // the bar never covers the text.
+              bottom: showControls ? "5.5rem" : "2.5rem",
               left: "50%",
               transform: "translateX(-50%)",
               maxWidth: "82%",
               textAlign: "center",
               pointerEvents: "none",
               zIndex: 5,
+              transition: "bottom 160ms ease",
             }}
           >
             {subtitleCue.split("\n").map((line, i) => (
