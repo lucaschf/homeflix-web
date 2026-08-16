@@ -32,6 +32,7 @@ function toneFor(status: string): BadgeTone {
 }
 
 function HealthRow({ label, status }: { label: string; status: string }) {
+  const { t } = useTranslation();
   const tone = toneFor(status);
   return (
     <Box
@@ -77,7 +78,9 @@ function HealthRow({ label, status }: { label: string; status: string }) {
           {label}
         </Typography>
       </Box>
-      <AdminBadge tone={tone}>{status}</AdminBadge>
+      <AdminBadge tone={tone}>
+        {t(`admin.system.health.status.${status.toLowerCase()}`, { defaultValue: status })}
+      </AdminBadge>
     </Box>
   );
 }

@@ -361,6 +361,7 @@
       "credits": "Créditos",
       "subtitleOcr": "OCR de legendas",
       "requests": "Solicitações",
+      "conflicts": "Conflitos",
       "users": "Usuários",
       "jobs": "Tarefas",
       "hls": "HLS cache",
@@ -582,10 +583,14 @@
         "scheduled": "Agendado"
       },
       "summary": {
-        "movies": "filmes",
-        "episodes": "episódios",
-        "enriched": "enriquecidos",
-        "skipped": "ignorados",
+        "movies_one": "{{count}} filme",
+        "movies_other": "{{count}} filmes",
+        "episodes_one": "{{count}} episódio",
+        "episodes_other": "{{count}} episódios",
+        "enriched_one": "{{count}} enriquecido",
+        "enriched_other": "{{count}} enriquecidos",
+        "skipped_one": "{{count}} ignorado",
+        "skipped_other": "{{count}} ignorados",
         "nothingNew": "Nada novo"
       }
     },
@@ -773,7 +778,21 @@
         "cardSubtitle": "Atualiza a cada 30 s.",
         "lastChecked": "Última checagem às {{at}}",
         "overall": "Geral",
-        "error": "Não foi possível alcançar o endpoint de readiness."
+        "error": "Não foi possível alcançar o endpoint de readiness.",
+        "status": {
+          "healthy": "Saudável",
+          "ready": "Pronto",
+          "ok": "OK",
+          "up": "No ar",
+          "degraded": "Degradado",
+          "warning": "Alerta",
+          "unknown": "Desconhecido",
+          "not_ready": "Não pronto",
+          "unhealthy": "Não saudável",
+          "down": "Fora do ar",
+          "failed": "Falhou",
+          "error": "Erro"
+        }
       }
     },
     "settings": {
@@ -1488,7 +1507,8 @@
       },
       "outcome": {
         "completed": "Concluído",
-        "failed": "Falhou"
+        "failed": "Falhou",
+        "no_image_subtitles": "Sem legendas de imagem"
       },
       "trackOutcome": {
         "extracted": "Extraída",

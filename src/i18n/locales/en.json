@@ -583,10 +583,14 @@
         "scheduled": "Scheduled"
       },
       "summary": {
-        "movies": "movies",
-        "episodes": "episodes",
-        "enriched": "enriched",
-        "skipped": "skipped",
+        "movies_one": "{{count}} movie",
+        "movies_other": "{{count}} movies",
+        "episodes_one": "{{count}} episode",
+        "episodes_other": "{{count}} episodes",
+        "enriched_one": "{{count}} enriched",
+        "enriched_other": "{{count}} enriched",
+        "skipped_one": "{{count}} skipped",
+        "skipped_other": "{{count}} skipped",
         "nothingNew": "Nothing new"
       }
     },
@@ -774,7 +778,21 @@
         "cardSubtitle": "Polled every 30 s.",
         "lastChecked": "Last checked at {{at}}",
         "overall": "Overall",
-        "error": "Couldn't reach the readiness endpoint."
+        "error": "Couldn't reach the readiness endpoint.",
+        "status": {
+          "healthy": "Healthy",
+          "ready": "Ready",
+          "ok": "OK",
+          "up": "Up",
+          "degraded": "Degraded",
+          "warning": "Warning",
+          "unknown": "Unknown",
+          "not_ready": "Not ready",
+          "unhealthy": "Unhealthy",
+          "down": "Down",
+          "failed": "Failed",
+          "error": "Error"
+        }
       }
     },
     "settings": {
@@ -1489,7 +1507,8 @@
       },
       "outcome": {
         "completed": "Completed",
-        "failed": "Failed"
+        "failed": "Failed",
+        "no_image_subtitles": "No image subtitles"
       },
       "trackOutcome": {
         "extracted": "Extracted",
