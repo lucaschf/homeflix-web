@@ -14,6 +14,7 @@ import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   usePlaybackPreferences,
+  type SubtitleAppearance,
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
 import { neutral } from "../theme/colors";
@@ -104,6 +105,77 @@ export function Settings() {
               <MenuItem value="best">{t("settings.qualityOptions.best")}</MenuItem>
               <MenuItem value="1080p">{t("settings.qualityOptions.1080p")}</MenuItem>
               <MenuItem value="720p">{t("settings.qualityOptions.720p")}</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Typography
+            variant="subtitle2"
+            sx={{ mt: 1, color: whiteAlpha(0.6), fontWeight: 600 }}
+          >
+            {t("settings.subtitleAppearance")}
+          </Typography>
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t("settings.subtitleColor")}</InputLabel>
+            <Select
+              value={playbackPrefs.subtitleAppearance.color}
+              onChange={(e) =>
+                setPlaybackPrefs({
+                  subtitleAppearance: {
+                    ...playbackPrefs.subtitleAppearance,
+                    color: e.target.value,
+                  },
+                })
+              }
+              label={t("settings.subtitleColor")}
+            >
+              <MenuItem value="#FFFFFF">{t("settings.colors.white")}</MenuItem>
+              <MenuItem value="#FFFF00">{t("settings.colors.yellow")}</MenuItem>
+              <MenuItem value="#00FF00">{t("settings.colors.green")}</MenuItem>
+              <MenuItem value="#00FFFF">{t("settings.colors.cyan")}</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t("settings.subtitleBackground")}</InputLabel>
+            <Select
+              value={playbackPrefs.subtitleAppearance.background}
+              onChange={(e) =>
+                setPlaybackPrefs({
+                  subtitleAppearance: {
+                    ...playbackPrefs.subtitleAppearance,
+                    background: e.target.value,
+                  },
+                })
+              }
+              label={t("settings.subtitleBackground")}
+            >
+              <MenuItem value="rgba(0, 0, 0, 0.75)">
+                {t("settings.backgrounds.semiTransparent")}
+              </MenuItem>
+              <MenuItem value="rgba(0, 0, 0, 1)">
+                {t("settings.backgrounds.solid")}
+              </MenuItem>
+              <MenuItem value="transparent">
+                {t("settings.backgrounds.none")}
+              </MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t("settings.subtitleSize")}</InputLabel>
+            <Select
+              value={playbackPrefs.subtitleAppearance.fontSize}
+              onChange={(e) =>
+                setPlaybackPrefs({
+                  subtitleAppearance: {
+                    ...playbackPrefs.subtitleAppearance,
+                    fontSize: e.target.value as SubtitleAppearance["fontSize"],
+                  },
+                })
+              }
+              label={t("settings.subtitleSize")}
+            >
+              <MenuItem value="small">{t("settings.sizes.small")}</MenuItem>
+              <MenuItem value="medium">{t("settings.sizes.medium")}</MenuItem>
+              <MenuItem value="large">{t("settings.sizes.large")}</MenuItem>
             </Select>
           </FormControl>
         </Box>

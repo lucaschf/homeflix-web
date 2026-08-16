@@ -10,6 +10,18 @@ export type SubtitleMode = "always" | "foreignOnly" | "forcedOnly" | "off";
 
 export type DefaultQuality = "best" | string;
 
+export type SubtitleFontSize = "small" | "medium" | "large";
+
+/** How subtitles look in the player overlay. */
+export interface SubtitleAppearance {
+  /** Text color — any CSS color value. */
+  color: string;
+  /** Background color behind the text — typically semi-transparent. */
+  background: string;
+  /** Relative font size the player scales to the viewport. */
+  fontSize: SubtitleFontSize;
+}
+
 /**
  * Full set of playback preferences. Uses camelCase field names
  * throughout the frontend; the hook translates to/from the
@@ -21,9 +33,17 @@ export interface PlaybackPreferences {
   subtitleMode: SubtitleMode;
   defaultQuality: DefaultQuality;
   speed: number;
+  subtitleAppearance: SubtitleAppearance;
 }
 
 // ── Defaults ─────────────────────────────────────────────────────
+
+export const DEFAULT_SUBTITLE_APPEARANCE: Readonly<SubtitleAppearance> =
+  Object.freeze({
+    color: "#FFFFFF",
+    background: "rgba(0, 0, 0, 0.75)",
+    fontSize: "medium",
+  });
 
 const DEFAULT_PREFS: Readonly<PlaybackPreferences> = Object.freeze({
   audioLang: "pt-BR",
@@ -31,6 +51,7 @@ const DEFAULT_PREFS: Readonly<PlaybackPreferences> = Object.freeze({
   subtitleMode: "foreignOnly",
   defaultQuality: "best",
   speed: 1,
+  subtitleAppearance: DEFAULT_SUBTITLE_APPEARANCE,
 });
 
 // ── localStorage cache ───────────────────────────────────────────
@@ -63,12 +84,21 @@ function saveCache(prefs: PlaybackPreferences): void {
 // ── snake ↔ camel translation ────────────────────────────────────
 
 function fromApi(data: PlaybackPreferencesData): PlaybackPreferences {
+  const appearance = data.subtitle_appearance;
   return {
     audioLang: data.audio_lang,
     subtitleLang: data.subtitle_lang,
     subtitleMode: data.subtitle_mode as SubtitleMode,
     defaultQuality: data.default_quality,
     speed: data.speed,
+    // Guard against a legacy response predating the appearance field.
+    subtitleAppearance: appearance
+      ? {
+          color: appearance.color,
+          background: appearance.background,
+          fontSize: appearance.font_size,
+        }
+      : { ...DEFAULT_SUBTITLE_APPEARANCE },
   };
 }
 
@@ -81,6 +111,13 @@ function toApi(
   if (update.subtitleMode !== undefined) result.subtitle_mode = update.subtitleMode;
   if (update.defaultQuality !== undefined) result.default_quality = update.defaultQuality;
   if (update.speed !== undefined) result.speed = update.speed;
+  if (update.subtitleAppearance !== undefined) {
+    result.subtitle_appearance = {
+      color: update.subtitleAppearance.color,
+      background: update.subtitleAppearance.background,
+      font_size: update.subtitleAppearance.fontSize,
+    };
+  }
   return result;
 }
 

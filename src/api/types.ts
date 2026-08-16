@@ -1242,12 +1242,19 @@ export interface LibrariesResponse {
 
 // ── Preferences ─────────────────────────────────────────
 
+export interface SubtitleAppearanceData {
+  color: string;
+  background: string;
+  font_size: "small" | "medium" | "large";
+}
+
 export interface PlaybackPreferencesData {
   audio_lang: string;
   subtitle_lang: string;
   subtitle_mode: string;
   default_quality: string;
   speed: number;
+  subtitle_appearance: SubtitleAppearanceData;
 }
 
 export interface PreferencesResponse {
