@@ -157,12 +157,15 @@ export function AdminOverview() {
             xs: "1fr",
             sm: "repeat(2, 1fr)",
             md: "repeat(3, 1fr)",
-            lg: "repeat(6, 1fr)",
+            // Only go single-row (6 across) on genuinely wide screens.
+            // At HD/laptop widths — especially under Windows display
+            // scaling, which lands the viewport in the lg band — 6
+            // columns are too narrow and the value ("637.29 GB") wraps;
+            // 3 columns in two rows keeps the cards comfortably wide.
+            xl: "repeat(6, 1fr)",
           },
-          // Equal-height rows: a card with a two-line value (HLS cache's
-          // "637.29 GB" + usage subline) would otherwise make its whole
-          // wrapped row taller than the others once the grid wraps to
-          // 2/3 columns. 1fr rows keep every stat card the same height.
+          // Keep every stat card the same height regardless of content:
+          // 1fr rows equalize wrapped rows, and StatCard fills its cell.
           gridAutoRows: "1fr",
           gap: 1.5,
           mb: 3,
@@ -1118,6 +1121,7 @@ function SystemHealthPanel() {
 }
 
 function HealthRow({ label, status }: { label: string; status: string }) {
+  const { t } = useTranslation();
   const tone = toneFor(status);
   return (
     <Box
@@ -1171,7 +1175,9 @@ function HealthRow({ label, status }: { label: string; status: string }) {
           {label}
         </Typography>
       </Box>
-      <AdminBadge tone={tone}>{status}</AdminBadge>
+      <AdminBadge tone={tone}>
+        {t(`admin.system.health.status.${status.toLowerCase()}`, { defaultValue: status })}
+      </AdminBadge>
     </Box>
   );
 }

@@ -46,6 +46,10 @@ export function StatCard({
         py: 3,
         px: 3,
         width: "100%",
+        // Fill the (equal-height) grid cell so every card's border lines
+        // up even when one card's value wraps to two lines or carries a
+        // sub-line. Without this the bordered box shrinks to its content.
+        height: "100%",
         transition: "border-color 140ms ease, background-color 140ms ease",
         ...(onClick && {
           cursor: "pointer",
@@ -113,6 +117,7 @@ export function StatCard({
       sx={{
         display: "block",
         width: "100%",
+        height: "100%",
         borderRadius: "8px",
         textAlign: "left",
         "&:focus-visible": {
