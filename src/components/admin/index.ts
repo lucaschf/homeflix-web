@@ -13,6 +13,7 @@ export { AdminDialog } from "./AdminDialog";
 export { AdminEmptyState } from "./AdminEmptyState";
 export { FancyEmpty, type EmptyMotif } from "./FancyEmpty";
 export { CreditsMarkerEditor } from "./CreditsMarkerEditor";
+export { FileSegmentsEditor } from "./FileSegmentsEditor";
 export { AdminFormSection } from "./AdminFormSection";
 export type { FormDensity } from "./FormDensity";
 export { FormDensityContext, useFormDensity } from "./FormDensity";

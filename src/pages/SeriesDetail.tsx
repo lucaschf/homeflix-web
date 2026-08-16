@@ -19,7 +19,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { GalleryHorizontalEnd, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag, CheckCircle2 } from "lucide-react";
+import { GalleryHorizontalEnd, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag, CheckCircle2, Scissors } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useFlagSeriesEnrichment, useIsInWatchlist, useRelatedSeries, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
@@ -30,6 +30,7 @@ import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { CastCard } from "../components/CastCard";
 import { DetailError } from "../components/DetailError";
 import { DetailSkeleton } from "../components/DetailSkeleton";
+import { FileSegmentsEditor } from "../components/admin";
 import { EpisodeCard } from "../components/EpisodeCard";
 import { HorizontalScroller } from "../components/HorizontalScroller";
 import { MediaCard } from "../components/MediaCard";
@@ -84,6 +85,7 @@ export function SeriesDetail() {
   const [selectedSeason, setSelectedSeason] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [trailerOpen, setTrailerOpen] = useState(false);
+  const [segmentsOpen, setSegmentsOpen] = useState(false);
   const [episodeView, setEpisodeView] = useState<EpisodeView>(readStoredView);
   useEffect(() => {
     window.localStorage.setItem(EPISODE_VIEW_STORAGE_KEY, episodeView);
@@ -207,11 +209,19 @@ export function SeriesDetail() {
         </IconButton>
       )}
       {isAdmin &&
-        series.tmdb_id &&
         (() => {
           const flagged = series.needs_enrichment_review || flagEnrichment.isSuccess;
           const actions: OverflowAction[] = [
             {
+              key: "segments",
+              icon: <Scissors size={16} />,
+              label: t("detail.segments.action"),
+              onClick: () => setSegmentsOpen(true),
+              disabled: !currentSeason || currentSeason.episodes.length === 0,
+            },
+          ];
+          if (series.tmdb_id) {
+            actions.push({
               key: "flag",
               icon: <Flag size={16} fill={flagged ? "currentColor" : "none"} />,
               label: flagged
@@ -220,8 +230,8 @@ export function SeriesDetail() {
               onClick: handleFlagEnrichment,
               disabled: flagEnrichment.isPending || flagged,
               active: flagged,
-            },
-          ];
+            });
+          }
           return <OverflowMenu actions={actions} ariaLabel={t("detail.moreActions")} />;
         })()}
     </Box>
@@ -331,6 +341,16 @@ export function SeriesDetail() {
 
       {series.trailer_url && (
         <TrailerDialog open={trailerOpen} onClose={() => setTrailerOpen(false)} url={series.trailer_url} />
+      )}
+
+      {isAdmin && segmentsOpen && currentSeason && (
+        <FileSegmentsEditor
+          open={segmentsOpen}
+          onClose={() => setSegmentsOpen(false)}
+          seriesId={series.id}
+          season={currentSeason}
+          onNotify={(message, severity) => showToast(message, { severity })}
+        />
       )}
 
       {/* Body — ``zIndex: 1`` keeps content above the hero's bleed

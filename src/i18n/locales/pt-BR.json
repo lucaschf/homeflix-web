@@ -213,6 +213,9 @@
       "success": "Enriquecimento marcado — o filme voltou para a fila de revisão.",
       "error": "Não foi possível marcar o enriquecimento. Tente novamente."
     },
+    "segments": {
+      "action": "Definir episódios do arquivo"
+    },
     "subtitleOcr": {
       "tooltip": "Gerar legendas de texto (OCR)",
       "started": "OCR iniciado — as legendas de texto aparecem quando terminar.",
@@ -1494,6 +1497,29 @@
         "no_language_model": "Sem modelo",
         "skipped_language": "Ignorada",
         "failed": "Falhou"
+      }
+    },
+    "segments": {
+      "title": "Arquivo com vários episódios",
+      "subtitle": "Este arquivo contém vários episódios. Defina o início e o fim da janela de cada episódio; cada um passa a reproduzir só a sua faixa — o arquivo não é cortado no disco.",
+      "filePath": "Caminho do arquivo compartilhado",
+      "filePathHelp": "Caminho absoluto do arquivo físico que todos esses episódios compartilham.",
+      "totalDuration": "Duração do arquivo (s)",
+      "totalDurationHelp": "Opcional — duração total do arquivo, usada pra pré-preencher uma divisão igualitária que você ajusta depois.",
+      "splitEvenly": "Dividir igualmente",
+      "episodeLabel": "E{{number}}",
+      "start": "Início (s)",
+      "end": "Fim (s)",
+      "save": "Salvar segmentos",
+      "saving": "Salvando…",
+      "cancel": "Cancelar",
+      "errors": {
+        "range": "O fim deve ser depois do início",
+        "failed": "Não foi possível salvar os segmentos. Confira os valores e tente novamente."
+      },
+      "snack": {
+        "saved": "{{count}} segmento de episódio atribuído.",
+        "saved_other": "{{count}} segmentos de episódio atribuídos."
       }
     },
     "credits": {

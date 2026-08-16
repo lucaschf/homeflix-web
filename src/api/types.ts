@@ -321,6 +321,10 @@ export interface EpisodeOutput {
   file_path: string | null;
   file_size: number | null;
   resolution: string | null;
+  // Present when this episode occupies only a sub-range of a shared
+  // physical file (ADR-030, multi-episode files); null for a whole file.
+  segment_start_seconds: number | null;
+  segment_end_seconds: number | null;
   files: MediaFileOutput[];
   thumbnail_path: string | null;
   scrub_preview_path: string | null;
@@ -1414,6 +1418,40 @@ export type NeedsReviewSeriesResponse = ApiListResponse<NeedsReviewSeries>;
 export type SeriesTmdbSuggestionsResponse = ApiDetailResponse<SeriesTmdbSuggestionsPayload>;
 export type RelinkSeriesResponse = ApiDetailResponse<RelinkSeriesPayload>;
 export type FlagSeriesEnrichmentResponse = ApiDetailResponse<FlagSeriesEnrichmentPayload>;
+
+// --- Multi-episode file segments (ADR-030) -------------------------------
+// Map several episodes onto disjoint time windows of one shared physical
+// file so each streams just its range without splitting the file on disk.
+
+export interface FileSegmentInput {
+  episode_number: number;
+  start_seconds: number;
+  end_seconds: number;
+}
+
+export interface DefineFileSegmentsInput {
+  season_number: number;
+  file_path: string;
+  segments: FileSegmentInput[];
+}
+
+export interface FileSegmentsEpisodePayload {
+  episode_id: string | null;
+  episode_number: number;
+  title: string;
+  start_seconds: number;
+  end_seconds: number;
+  duration_seconds: number;
+}
+
+export interface FileSegmentsPayload {
+  series_id: string;
+  season_number: number;
+  file_path: string;
+  episodes: FileSegmentsEpisodePayload[];
+}
+
+export type DefineFileSegmentsResponse = ApiDetailResponse<FileSegmentsPayload>;
 
 // Cross-type conversion: an admin picked a TV card in the suggestion
 // picker, confirming that the misclassified movie row should be
