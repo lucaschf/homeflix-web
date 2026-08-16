@@ -159,6 +159,11 @@ export function AdminOverview() {
             md: "repeat(3, 1fr)",
             lg: "repeat(6, 1fr)",
           },
+          // Equal-height rows: a card with a two-line value (HLS cache's
+          // "637.29 GB" + usage subline) would otherwise make its whole
+          // wrapped row taller than the others once the grid wraps to
+          // 2/3 columns. 1fr rows keep every stat card the same height.
+          gridAutoRows: "1fr",
           gap: 1.5,
           mb: 3,
         }}
