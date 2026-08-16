@@ -35,15 +35,18 @@ function formatDuration(started: string, finished: string | null): string {
   return remainder === 0 ? `${minutes}m` : `${minutes}m${remainder}s`;
 }
 
-function formatSummary(run: AdminScanRun, t: (k: string) => string): string {
+function formatSummary(
+  run: AdminScanRun,
+  t: (k: string, opts?: { count: number }) => string,
+): string {
   const s = run.summary ?? {};
   if (run.kind === "scan") {
     const movies = (s.movies_created ?? 0) + (s.movies_updated ?? 0);
     const eps = (s.episodes_created ?? 0) + (s.episodes_updated ?? 0);
     if (movies === 0 && eps === 0) return t("admin.history.summary.nothingNew");
     const parts: string[] = [];
-    if (movies > 0) parts.push(`${movies} ${t("admin.history.summary.movies")}`);
-    if (eps > 0) parts.push(`${eps} ${t("admin.history.summary.episodes")}`);
+    if (movies > 0) parts.push(t("admin.history.summary.movies", { count: movies }));
+    if (eps > 0) parts.push(t("admin.history.summary.episodes", { count: eps }));
     return parts.join(" · ");
   }
   // enrich
@@ -51,9 +54,8 @@ function formatSummary(run: AdminScanRun, t: (k: string) => string): string {
   const skipped = s.skipped ?? 0;
   if (enriched === 0 && skipped === 0) return t("admin.history.summary.nothingNew");
   const parts: string[] = [];
-  if (enriched > 0)
-    parts.push(`${enriched} ${t("admin.history.summary.enriched")}`);
-  if (skipped > 0) parts.push(`${skipped} ${t("admin.history.summary.skipped")}`);
+  if (enriched > 0) parts.push(t("admin.history.summary.enriched", { count: enriched }));
+  if (skipped > 0) parts.push(t("admin.history.summary.skipped", { count: skipped }));
   return parts.join(" · ");
 }
 

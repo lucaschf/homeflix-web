@@ -921,7 +921,7 @@ export interface AdminSubtitleOcrRun {
   media_id: string;
   media_title: string;
   file_path: string;
-  /** ``completed`` | ``failed``. */
+  /** ``completed`` | ``failed`` | ``no_image_subtitles``. */
   outcome: string;
   image_track_count: number;
   extracted_count: number;
