@@ -1162,10 +1162,13 @@ export function Player() {
 
   // Subtitle overlay source: hls.js parses the WebVTT into native cues but
   // keeps the track "hidden" (subtitleDisplay: false), so the browser never
-  // draws them. We read the active track's cues on every cuechange and feed
-  // our own overlay, which gives full control over appearance (2.4) that
-  // ::cue could not. Text-tracks are added dynamically by hls.js, so we also
-  // (re)bind on addtrack and recompute on mode changes (track switch / off).
+  // draws them. We read the active track's cues ourselves and feed our own
+  // overlay, which gives full control over appearance (2.4) that ::cue could
+  // not. We drive this off the video's `timeupdate` (fires ~4x/sec during
+  // playback) rather than per-track `cuechange`, because hls.js adds tracks
+  // in a way that does not reliably fire `addtrack`, so a cuechange listener
+  // often never gets bound. `change` catches a track switch / off instantly;
+  // `seeked` handles jumps. setState no-ops when the text is unchanged.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return undefined;
@@ -1189,26 +1192,20 @@ export function Player() {
       setSubtitleCue(lines.join("\n"));
     };
 
-    const bind = (track: TextTrack) =>
-      track.addEventListener("cuechange", renderActiveCues);
-    const unbind = (track: TextTrack) =>
-      track.removeEventListener("cuechange", renderActiveCues);
-
-    for (let i = 0; i < textTracks.length; i++) bind(textTracks[i]);
-
-    const onAddTrack = (e: TrackEvent) => {
-      if (e.track) bind(e.track);
-      renderActiveCues();
-    };
-    textTracks.addEventListener("addtrack", onAddTrack);
+    video.addEventListener("timeupdate", renderActiveCues);
+    video.addEventListener("seeked", renderActiveCues);
     textTracks.addEventListener("change", renderActiveCues);
 
     return () => {
-      for (let i = 0; i < textTracks.length; i++) unbind(textTracks[i]);
-      textTracks.removeEventListener("addtrack", onAddTrack);
+      video.removeEventListener("timeupdate", renderActiveCues);
+      video.removeEventListener("seeked", renderActiveCues);
       textTracks.removeEventListener("change", renderActiveCues);
     };
-  }, []);
+    // Depend on hlsReady, not []: the <video> is mounted only after the
+    // loading overlay clears, so at first mount videoRef.current is null and
+    // an []-effect would early-return forever. Re-running when hlsReady flips
+    // re-attaches against the now-mounted element (and its fresh tracks).
+  }, [hlsReady]);
 
   // Push the persisted volume / muted state into the actual <video> element
   // every time it becomes ready (hlsReady flips when a new media starts) or
