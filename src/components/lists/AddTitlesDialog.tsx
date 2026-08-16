@@ -85,9 +85,7 @@ export function AddTitlesDialog({ open, onClose, listId, existingIds }: AddTitle
             maxHeight: "82vh",
             display: "flex",
             flexDirection: "column",
-            bgcolor: "background.paper",
             borderRadius: "14px",
-            border: `1px solid ${whiteAlpha(0.1)}`,
           },
         },
       }}
