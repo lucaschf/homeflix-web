@@ -130,3 +130,32 @@ export const accentCoral = status.err.fg;
 
 /** Admin accent gold — replaces bare `#F5C46A` (identical to `status.warn.fg`). */
 export const accentGold = status.warn.fg;
+
+// -- Snackbar / toast surface -------------------------------------------------
+
+export type ToastSeverity = "success" | "error" | "warning" | "info";
+
+/**
+ * Shared snackbar/toast surface. Matches the dashboard StatCard and the
+ * dialog surface — solid ``neutral[950]`` base lifted by a flat 2.5% white
+ * overlay — so every toast reads as the same raised panel as the rest of
+ * the UI. Severity is carried by a tinted border instead of a full
+ * background tint, which used to leave toasts colored (and inconsistent)
+ * next to the neutral cards and dialogs. Spread into a toast's ``sx``;
+ * callers keep their own radius/padding.
+ */
+export function toastSurfaceSx(severity: ToastSeverity) {
+  const tone =
+    severity === "error"
+      ? status.err
+      : severity === "warning"
+        ? status.warn
+        : severity === "info"
+          ? status.info
+          : status.ok;
+  return {
+    bgcolor: neutral[950],
+    backgroundImage: `linear-gradient(${whiteAlpha(0.025)}, ${whiteAlpha(0.025)})`,
+    border: `1px solid ${alpha(tone.base, 0.45)}`,
+  };
+}

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Box, Snackbar, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Check, ScanLine, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +16,7 @@ import {
 import { SeriesTmdbSuggestionsDialog } from "../../components/admin/SeriesTmdbSuggestionsDialog";
 import { ReviewTabs } from "./components/ReviewTabs";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { status, whiteAlpha } from "../../theme/tokens";
+import { toastSurfaceSx } from "../../theme/tokens";
 
 type Snack = { message: string; severity: "success" | "error" | "warning" } | null;
 
@@ -181,13 +180,7 @@ export function SeriesReview() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : snack.severity === "error"
-                    ? alpha(status.err.base, 0.18)
-                    : alpha(status.warn.base, 0.15),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

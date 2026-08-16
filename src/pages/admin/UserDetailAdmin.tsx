@@ -7,7 +7,6 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import {
   ArrowLeft,
   Baby,
@@ -38,7 +37,7 @@ import {
   AdminPageHeader,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { status, whiteAlpha } from "../../theme/tokens";
+import { whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 type Role = "admin" | "member";
@@ -288,11 +287,7 @@ export function UserDetailAdmin() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

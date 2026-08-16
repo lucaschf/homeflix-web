@@ -36,7 +36,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
-import { fontFamily, fontSize, inkAlpha, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, fontSize, inkAlpha, peachAlpha, status, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 import { IntroTabs } from "./components/IntroTabs";
 
 type IntroFilter = "all" | "marked" | "unmarked" | "auto" | "low_confidence" | "manual";
@@ -657,11 +657,7 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
         {toast ? (
           <Box
             sx={{
-              bgcolor:
-                toast.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(toast.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

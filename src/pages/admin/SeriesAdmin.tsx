@@ -1,5 +1,4 @@
 import { Box, IconButton, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Eye, ScanLine, Sparkles, Trash2, Tv } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,7 +25,7 @@ import {
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
+import { accentCoral, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -377,13 +376,7 @@ export function SeriesAdmin() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : snack.severity === "error"
-                    ? alpha(status.err.base, 0.18)
-                    : alpha(status.warn.base, 0.15),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

@@ -52,7 +52,7 @@ import {
 } from "../../components/admin";
 import { AdminDialog } from "../../components/admin/AdminDialog";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { fontFamily, inkAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { fontFamily, inkAlpha, status, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 const KB = 1024;
@@ -377,11 +377,7 @@ export function ConflictsAdmin() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,
