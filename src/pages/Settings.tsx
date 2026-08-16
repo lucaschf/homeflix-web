@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Chip,
   FormControl,
   InputLabel,
@@ -13,12 +14,17 @@ import { useHealth } from "../api/hooks";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
+  DEFAULT_SUBTITLE_APPEARANCE,
   usePlaybackPreferences,
   type SubtitleAppearance,
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
 import { neutral } from "../theme/colors";
 import { whiteAlpha } from "../theme/tokens";
+import {
+  subtitlePreviewFontSize,
+  subtitleTextEdgeCss,
+} from "../utils/subtitleStyles";
 
 /**
  * Per-profile settings page surfaced under ``/settings``.
@@ -114,6 +120,41 @@ export function Settings() {
           >
             {t("settings.subtitleAppearance")}
           </Typography>
+          {/* Live preview — mirrors the player overlay so choices are
+              visible without leaving Settings. */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: 72,
+              borderRadius: 1,
+              bgcolor: "rgba(255,255,255,0.04)",
+              border: `1px solid ${whiteAlpha(0.08)}`,
+              p: 1.5,
+            }}
+          >
+            <Box
+              component="span"
+              sx={{
+                color: playbackPrefs.subtitleAppearance.color,
+                backgroundColor: playbackPrefs.subtitleAppearance.background,
+                fontSize:
+                  subtitlePreviewFontSize[
+                    playbackPrefs.subtitleAppearance.fontSize
+                  ],
+                fontWeight: 600,
+                lineHeight: 1.35,
+                px: "0.4em",
+                py: "0.08em",
+                borderRadius: "4px",
+                textShadow:
+                  subtitleTextEdgeCss[playbackPrefs.subtitleAppearance.textEdge],
+              }}
+            >
+              {t("settings.subtitlePreviewText")}
+            </Box>
+          </Box>
           <FormControl size="small" fullWidth>
             <InputLabel>{t("settings.subtitleColor")}</InputLabel>
             <Select
@@ -178,6 +219,37 @@ export function Settings() {
               <MenuItem value="large">{t("settings.sizes.large")}</MenuItem>
             </Select>
           </FormControl>
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t("settings.subtitleTextEdge")}</InputLabel>
+            <Select
+              value={playbackPrefs.subtitleAppearance.textEdge}
+              onChange={(e) =>
+                setPlaybackPrefs({
+                  subtitleAppearance: {
+                    ...playbackPrefs.subtitleAppearance,
+                    textEdge: e.target.value as SubtitleAppearance["textEdge"],
+                  },
+                })
+              }
+              label={t("settings.subtitleTextEdge")}
+            >
+              <MenuItem value="none">{t("settings.edges.none")}</MenuItem>
+              <MenuItem value="shadow">{t("settings.edges.shadow")}</MenuItem>
+              <MenuItem value="outline">{t("settings.edges.outline")}</MenuItem>
+            </Select>
+          </FormControl>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() =>
+              setPlaybackPrefs({
+                subtitleAppearance: { ...DEFAULT_SUBTITLE_APPEARANCE },
+              })
+            }
+            sx={{ alignSelf: "flex-start", mt: 0.5 }}
+          >
+            {t("settings.resetSubtitles")}
+          </Button>
         </Box>
       </SettingsSection>
 

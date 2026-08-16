@@ -2038,6 +2038,14 @@
       "medium": "Medium",
       "large": "Large"
     },
+    "subtitleTextEdge": "Text Edge",
+    "edges": {
+      "none": "None",
+      "shadow": "Drop shadow",
+      "outline": "Outline"
+    },
+    "subtitlePreviewText": "Sample subtitle",
+    "resetSubtitles": "Reset to default",
     "about": "About",
     "version": "Version",
     "apiStatus": "API Status",

@@ -1246,6 +1246,7 @@ export interface SubtitleAppearanceData {
   color: string;
   background: string;
   font_size: "small" | "medium" | "large";
+  text_edge: "none" | "shadow" | "outline";
 }
 
 export interface PlaybackPreferencesData {

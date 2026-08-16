@@ -2038,6 +2038,14 @@
       "medium": "Medio",
       "large": "Grande"
     },
+    "subtitleTextEdge": "Borda do Texto",
+    "edges": {
+      "none": "Nenhuma",
+      "shadow": "Sombra",
+      "outline": "Contorno"
+    },
+    "subtitlePreviewText": "Legenda de exemplo",
+    "resetSubtitles": "Redefinir para o padrao",
     "about": "Sobre",
     "version": "Versao",
     "apiStatus": "Status da API",

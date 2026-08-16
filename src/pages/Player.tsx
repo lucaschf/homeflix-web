@@ -42,10 +42,11 @@ import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeDrawer } from "../components/EpisodeDrawer";
 import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
 import { TitleLogo } from "../components/TitleLogo";
+import { usePlaybackPreferences } from "../hooks/usePlaybackPreferences";
 import {
-  usePlaybackPreferences,
-  type SubtitleFontSize,
-} from "../hooks/usePlaybackPreferences";
+  subtitlePlayerFontSize,
+  subtitleTextEdgeCss,
+} from "../utils/subtitleStyles";
 import { useMovieUpNext, useSeriesUpNext, type UpNextItem } from "../hooks/useUpNext";
 import {
   findFrame,
@@ -373,14 +374,6 @@ function readPersistedMuted(): boolean {
     return false;
   }
 }
-
-// Relative subtitle sizes mapped to a viewport-scaled range so the tier
-// reads the same on a phone and a TV. clamp() keeps a floor/ceiling.
-const SUBTITLE_FONT_SIZE: Record<SubtitleFontSize, string> = {
-  small: "clamp(0.9rem, 2.2vw, 1.6rem)",
-  medium: "clamp(1.1rem, 2.8vw, 2.2rem)",
-  large: "clamp(1.4rem, 3.6vw, 3rem)",
-};
 
 export function Player() {
   const { t, i18n } = useTranslation();
@@ -2187,10 +2180,15 @@ export function Player() {
                   color: playbackPrefs.subtitleAppearance.color,
                   backgroundColor: playbackPrefs.subtitleAppearance.background,
                   fontSize:
-                    SUBTITLE_FONT_SIZE[playbackPrefs.subtitleAppearance.fontSize],
+                    subtitlePlayerFontSize[
+                      playbackPrefs.subtitleAppearance.fontSize
+                    ],
                   fontWeight: 600,
                   lineHeight: 1.35,
-                  textShadow: "0 1px 2px rgba(0,0,0,0.85)",
+                  textShadow:
+                    subtitleTextEdgeCss[
+                      playbackPrefs.subtitleAppearance.textEdge
+                    ],
                   whiteSpace: "pre-wrap",
                 }}
               >
