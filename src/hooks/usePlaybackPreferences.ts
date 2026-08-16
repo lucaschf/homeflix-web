@@ -12,6 +12,8 @@ export type DefaultQuality = "best" | string;
 
 export type SubtitleFontSize = "small" | "medium" | "large";
 
+export type SubtitleTextEdge = "none" | "shadow" | "outline";
+
 /** How subtitles look in the player overlay. */
 export interface SubtitleAppearance {
   /** Text color — any CSS color value. */
@@ -20,6 +22,8 @@ export interface SubtitleAppearance {
   background: string;
   /** Relative font size the player scales to the viewport. */
   fontSize: SubtitleFontSize;
+  /** Glyph edge treatment for legibility over the picture. */
+  textEdge: SubtitleTextEdge;
 }
 
 /**
@@ -43,6 +47,7 @@ export const DEFAULT_SUBTITLE_APPEARANCE: Readonly<SubtitleAppearance> =
     color: "#FFFFFF",
     background: "rgba(0, 0, 0, 0.75)",
     fontSize: "medium",
+    textEdge: "shadow",
   });
 
 const DEFAULT_PREFS: Readonly<PlaybackPreferences> = Object.freeze({
@@ -97,6 +102,7 @@ function fromApi(data: PlaybackPreferencesData): PlaybackPreferences {
           color: appearance.color,
           background: appearance.background,
           fontSize: appearance.font_size,
+          textEdge: appearance.text_edge ?? DEFAULT_SUBTITLE_APPEARANCE.textEdge,
         }
       : { ...DEFAULT_SUBTITLE_APPEARANCE },
   };
@@ -116,6 +122,7 @@ function toApi(
       color: update.subtitleAppearance.color,
       background: update.subtitleAppearance.background,
       font_size: update.subtitleAppearance.fontSize,
+      text_edge: update.subtitleAppearance.textEdge,
     };
   }
   return result;
