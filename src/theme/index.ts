@@ -383,6 +383,22 @@ const themeOptions: ThemeOptions = {
         },
       },
     },
+    // Every modal shares one surface: the dashboard StatCard recipe —
+    // a solid ``neutral[950]`` base lifted by a flat 2.5% white overlay
+    // (via ``backgroundImage``, which also cancels MUI's elevation
+    // gradient) plus the same hairline border. Keeps dialogs from
+    // drifting between the lighter ``background.paper`` and the darker
+    // ``neutral[950]`` they used before. Per-dialog code should no
+    // longer set its own paper ``backgroundColor``.
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: neutral[950],
+          backgroundImage: `linear-gradient(${whiteAlpha(0.025)}, ${whiteAlpha(0.025)})`,
+          border: `1px solid ${whiteAlpha(0.08)}`,
+        },
+      },
+    },
     MuiDrawer: {
       styleOverrides: {
         paper: {
