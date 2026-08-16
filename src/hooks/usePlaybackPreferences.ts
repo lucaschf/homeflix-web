@@ -10,7 +10,7 @@ export type SubtitleMode = "always" | "foreignOnly" | "forcedOnly" | "off";
 
 export type DefaultQuality = "best" | string;
 
-export type SubtitleFontSize = "small" | "medium" | "large";
+export type SubtitleFontSize = "small" | "medium" | "large" | "xlarge";
 
 export type SubtitleTextEdge = "none" | "shadow" | "outline";
 

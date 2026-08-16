@@ -2036,7 +2036,8 @@
     "sizes": {
       "small": "Small",
       "medium": "Medium",
-      "large": "Large"
+      "large": "Large",
+      "xlarge": "Extra Large"
     },
     "subtitleTextEdge": "Text Edge",
     "edges": {
