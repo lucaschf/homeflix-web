@@ -2018,6 +2018,26 @@
       "1080p": "1080p",
       "720p": "720p"
     },
+    "subtitleAppearance": "Aparencia da Legenda",
+    "subtitleColor": "Cor do Texto",
+    "subtitleBackground": "Fundo",
+    "subtitleSize": "Tamanho da Fonte",
+    "colors": {
+      "white": "Branco",
+      "yellow": "Amarelo",
+      "green": "Verde",
+      "cyan": "Ciano"
+    },
+    "backgrounds": {
+      "semiTransparent": "Semi-transparente",
+      "solid": "Preto solido",
+      "none": "Nenhum"
+    },
+    "sizes": {
+      "small": "Pequeno",
+      "medium": "Medio",
+      "large": "Grande"
+    },
     "about": "Sobre",
     "version": "Versao",
     "apiStatus": "Status da API",

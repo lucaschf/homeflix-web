@@ -42,7 +42,10 @@ import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { EpisodeDrawer } from "../components/EpisodeDrawer";
 import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
 import { TitleLogo } from "../components/TitleLogo";
-import { usePlaybackPreferences } from "../hooks/usePlaybackPreferences";
+import {
+  usePlaybackPreferences,
+  type SubtitleFontSize,
+} from "../hooks/usePlaybackPreferences";
 import { useMovieUpNext, useSeriesUpNext, type UpNextItem } from "../hooks/useUpNext";
 import {
   findFrame,
@@ -371,6 +374,14 @@ function readPersistedMuted(): boolean {
   }
 }
 
+// Relative subtitle sizes mapped to a viewport-scaled range so the tier
+// reads the same on a phone and a TV. clamp() keeps a floor/ceiling.
+const SUBTITLE_FONT_SIZE: Record<SubtitleFontSize, string> = {
+  small: "clamp(0.9rem, 2.2vw, 1.6rem)",
+  medium: "clamp(1.1rem, 2.8vw, 2.2rem)",
+  large: "clamp(1.4rem, 3.6vw, 3rem)",
+};
+
 export function Player() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -631,6 +642,9 @@ export function Player() {
   }, []);
 
   const [playing, setPlaying] = useState(false);
+  // Active subtitle text, read from the hidden native track's cues and
+  // drawn by our own overlay (see the cuechange effect below).
+  const [subtitleCue, setSubtitleCue] = useState("");
   const [showBadge, setShowBadge] = useState(false);
   const [nextEpCountdown, setNextEpCountdown] = useState<number | null>(null);
   // Post-play surface: the video shrinks aside and a suggestion panel
@@ -1039,6 +1053,12 @@ export function Player() {
         liveSyncDuration: 0,
         liveMaxLatencyDuration: undefined,
       });
+      // Keep the active subtitle track in mode "hidden": hls.js still parses
+      // the WebVTT and populates native cues (so cuechange fires and
+      // activeCues is readable), but the browser does not draw them. We render
+      // them in our own overlay so appearance is fully controllable — native
+      // ::cue styling is too limited (2.4).
+      hls.subtitleDisplay = false;
       hls.loadSource(hlsUrl);
       hls.attachMedia(video);
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -1139,6 +1159,56 @@ export function Player() {
 
     return undefined;
   }, [hlsUrl]);
+
+  // Subtitle overlay source: hls.js parses the WebVTT into native cues but
+  // keeps the track "hidden" (subtitleDisplay: false), so the browser never
+  // draws them. We read the active track's cues on every cuechange and feed
+  // our own overlay, which gives full control over appearance (2.4) that
+  // ::cue could not. Text-tracks are added dynamically by hls.js, so we also
+  // (re)bind on addtrack and recompute on mode changes (track switch / off).
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return undefined;
+    const textTracks = video.textTracks;
+
+    const renderActiveCues = () => {
+      const lines: string[] = [];
+      for (let i = 0; i < textTracks.length; i++) {
+        const track = textTracks[i];
+        if (track.mode === "disabled") continue;
+        if (track.kind !== "subtitles" && track.kind !== "captions") continue;
+        const cues = track.activeCues;
+        if (!cues) continue;
+        for (let j = 0; j < cues.length; j++) {
+          const cue = cues[j] as VTTCue;
+          // Strip WebVTT inline tags (<i>, <c.foo>, …); appearance is ours.
+          const text = cue.text.replace(/<\/?[^>]+>/g, "").trim();
+          if (text) lines.push(...text.split("\n"));
+        }
+      }
+      setSubtitleCue(lines.join("\n"));
+    };
+
+    const bind = (track: TextTrack) =>
+      track.addEventListener("cuechange", renderActiveCues);
+    const unbind = (track: TextTrack) =>
+      track.removeEventListener("cuechange", renderActiveCues);
+
+    for (let i = 0; i < textTracks.length; i++) bind(textTracks[i]);
+
+    const onAddTrack = (e: TrackEvent) => {
+      if (e.track) bind(e.track);
+      renderActiveCues();
+    };
+    textTracks.addEventListener("addtrack", onAddTrack);
+    textTracks.addEventListener("change", renderActiveCues);
+
+    return () => {
+      for (let i = 0; i < textTracks.length; i++) unbind(textTracks[i]);
+      textTracks.removeEventListener("addtrack", onAddTrack);
+      textTracks.removeEventListener("change", renderActiveCues);
+    };
+  }, []);
 
   // Push the persisted volume / muted state into the actual <video> element
   // every time it becomes ready (hlsReady flips when a new media starts) or
@@ -2090,6 +2160,48 @@ export function Player() {
           ref={videoRef}
           style={{ width: "100%", height: "100%", objectFit: "contain" }}
         />
+
+        {/* Subtitle overlay (2.4). Drawn by us — not the browser's ::cue —
+            from the hidden native track's active cues, styled by the
+            profile's saved appearance. Sits inside the stage wrapper so it
+            rides along in fullscreen; hidden during post-play (no cue). */}
+        {subtitleCue && !postPlayActive && (
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: "10%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              maxWidth: "82%",
+              textAlign: "center",
+              pointerEvents: "none",
+              zIndex: 5,
+            }}
+          >
+            {subtitleCue.split("\n").map((line, i) => (
+              <Box
+                key={i}
+                sx={{
+                  display: "table",
+                  margin: "0.08em auto 0",
+                  px: "0.4em",
+                  py: "0.08em",
+                  borderRadius: "4px",
+                  color: playbackPrefs.subtitleAppearance.color,
+                  backgroundColor: playbackPrefs.subtitleAppearance.background,
+                  fontSize:
+                    SUBTITLE_FONT_SIZE[playbackPrefs.subtitleAppearance.fontSize],
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                  textShadow: "0 1px 2px rgba(0,0,0,0.85)",
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {line}
+              </Box>
+            ))}
+          </Box>
+        )}
 
         {/* End-of-title still — see ``endStillUrl``. Lives inside the
             transform wrapper so it lands exactly where the picture was,
