@@ -217,6 +217,7 @@ export function Settings() {
               <MenuItem value="small">{t("settings.sizes.small")}</MenuItem>
               <MenuItem value="medium">{t("settings.sizes.medium")}</MenuItem>
               <MenuItem value="large">{t("settings.sizes.large")}</MenuItem>
+              <MenuItem value="xlarge">{t("settings.sizes.xlarge")}</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" fullWidth>

@@ -2036,7 +2036,8 @@
     "sizes": {
       "small": "Pequeno",
       "medium": "Medio",
-      "large": "Grande"
+      "large": "Grande",
+      "xlarge": "Extra Grande"
     },
     "subtitleTextEdge": "Borda do Texto",
     "edges": {

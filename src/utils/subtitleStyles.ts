@@ -14,6 +14,7 @@ export const subtitlePlayerFontSize: Record<SubtitleFontSize, string> = {
   small: "clamp(0.9rem, 2.2vw, 1.6rem)",
   medium: "clamp(1.1rem, 2.8vw, 2.2rem)",
   large: "clamp(1.4rem, 3.6vw, 3rem)",
+  xlarge: "clamp(1.8rem, 4.6vw, 4rem)",
 };
 
 // Preview sizes: fixed and modest so all three fit the small Settings box
@@ -22,6 +23,7 @@ export const subtitlePreviewFontSize: Record<SubtitleFontSize, string> = {
   small: "0.95rem",
   medium: "1.25rem",
   large: "1.6rem",
+  xlarge: "2rem",
 };
 
 // Glyph edge treatments via text-shadow so they work on any background: a

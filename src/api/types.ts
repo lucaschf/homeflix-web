@@ -1245,7 +1245,7 @@ export interface LibrariesResponse {
 export interface SubtitleAppearanceData {
   color: string;
   background: string;
-  font_size: "small" | "medium" | "large";
+  font_size: "small" | "medium" | "large" | "xlarge";
   text_edge: "none" | "shadow" | "outline";
 }
 
