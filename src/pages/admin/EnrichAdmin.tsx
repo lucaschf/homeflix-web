@@ -7,7 +7,6 @@ import {
   Switch,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Play, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -27,9 +26,7 @@ import {
   accentGold,
   goldAlpha,
   inkAlpha,
-  status,
-  whiteAlpha,
-} from "../../theme/tokens";
+  toastSurfaceSx } from "../../theme/tokens";
 import { formatElapsed, useElapsedSeconds } from "./components/elapsed";
 import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
 
@@ -273,11 +270,7 @@ export function EnrichAdmin() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

@@ -9,7 +9,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Plus, Trash2, Users as UsersIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -39,7 +38,7 @@ import {
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentCoral, peachAlpha, status, whiteAlpha } from "../../theme/tokens";
+import { accentCoral, peachAlpha, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -297,11 +296,7 @@ export function UsersAdmin() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

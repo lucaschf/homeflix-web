@@ -34,10 +34,8 @@ import {
   goldAlpha,
   inkAlpha,
   peachAlpha,
-  status,
   whiteAlpha,
-} from "../../theme/tokens";
-import { alpha } from "@mui/material/styles";
+  toastSurfaceSx } from "../../theme/tokens";
 import { formatElapsed, useElapsedSeconds } from "./components/elapsed";
 import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
 
@@ -555,11 +553,7 @@ export function ScanAdmin() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

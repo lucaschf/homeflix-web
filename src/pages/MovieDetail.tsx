@@ -9,7 +9,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Play, RefreshCw, Clapperboard, Flag, ScrollText, Captions, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -42,7 +41,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
-import { ACTION_BAR_HEIGHT, fontSize, inkAlpha, panelScrim, peachAlpha, scrim, status, whiteAlpha } from "../theme/tokens";
+import { ACTION_BAR_HEIGHT, fontSize, inkAlpha, panelScrim, peachAlpha, scrim, whiteAlpha, toastSurfaceSx } from "../theme/tokens";
 import { neutral } from "../theme/colors";
 
 export function MovieDetail() {
@@ -625,11 +624,7 @@ export function MovieDetail() {
         {flagSnack ? (
           <Box
             sx={{
-              bgcolor:
-                flagSnack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(flagSnack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

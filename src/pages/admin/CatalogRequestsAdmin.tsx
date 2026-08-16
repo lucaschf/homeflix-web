@@ -1,5 +1,4 @@
 import { Box, IconButton, Snackbar, Tooltip, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Check, ExternalLink, Heart, Inbox, Trash2, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,7 +21,7 @@ import {
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentCoral, status, whiteAlpha } from "../../theme/tokens";
+import { accentCoral, toastSurfaceSx } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -339,11 +338,7 @@ export function CatalogRequestsAdmin() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

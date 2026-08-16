@@ -18,7 +18,6 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { GalleryHorizontalEnd, LayoutGrid, List, Play, RefreshCw, Clapperboard, Flag, CheckCircle2, Scissors } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
@@ -45,7 +44,7 @@ import { WatchlistIconButton } from "../components/WatchlistIconButton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { neutral } from "../theme/colors";
-import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, status, whiteAlpha } from "../theme/tokens";
+import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, whiteAlpha, toastSurfaceSx } from "../theme/tokens";
 
 type EpisodeView = "list" | "cards" | "grid";
 
@@ -582,11 +581,7 @@ export function SeriesDetail() {
         {flagSnack ? (
           <Box
             sx={{
-              bgcolor:
-                flagSnack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(flagSnack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,

@@ -7,8 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { Box, Button, Snackbar } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { status, whiteAlpha } from "../theme/tokens";
+import { toastSurfaceSx } from "../theme/tokens";
 
 type ToastSeverity = "success" | "error" | "info";
 
@@ -56,13 +55,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({ showToast }), [showToast]);
 
-  const tone =
-    toast?.severity === "error"
-      ? status.err
-      : toast?.severity === "info"
-        ? status.info
-        : status.ok;
-
   return (
     <ToastContext.Provider value={value}>
       {children}
@@ -81,8 +73,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               display: "flex",
               alignItems: "center",
               gap: 1.5,
-              bgcolor: alpha(tone.base, 0.15),
-              border: `1px solid ${whiteAlpha(0.1)}`,
+              ...toastSurfaceSx(toast.severity),
               color: "text.primary",
               borderRadius: 1,
               pl: 2,

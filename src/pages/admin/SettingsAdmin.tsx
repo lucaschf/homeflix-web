@@ -1,5 +1,4 @@
 import { Alert, Box, CircularProgress, Grid, Snackbar, Stack, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Rows3, SquareSplitHorizontal } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,7 +13,7 @@ import {
   SegmentedControl,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { status, whiteAlpha } from "../../theme/tokens";
+import { whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 import { SettingsAccordionLayout } from "./components/SettingsAccordionLayout";
 import { SettingsRailLayout } from "./components/SettingsRailLayout";
 import { SETTINGS_SECTIONS } from "./components/settingsSections";
@@ -244,11 +243,7 @@ export function SettingsAdmin() {
         {snack ? (
           <Box
             sx={{
-              bgcolor:
-                snack.severity === "success"
-                  ? alpha(status.ok.base, 0.15)
-                  : alpha(status.err.base, 0.18),
-              border: `1px solid ${whiteAlpha(0.08)}`,
+              ...toastSurfaceSx(snack.severity),
               color: "text.primary",
               borderRadius: 1,
               px: 2,
