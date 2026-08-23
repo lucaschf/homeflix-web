@@ -41,8 +41,6 @@ import { ScanRunHistoryTable } from "./components/ScanRunHistoryTable";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
 
-const PEACH = peach.main;
-
 // Parse a single cron field into a predicate keyed on the
 // numeric value. Handles ``*``, ``5``, ``0-30``, "*/5" (every N)
 // and ``1,3,5`` (lists). Returns ``null`` when the field is
@@ -356,7 +354,7 @@ export function ScanAdmin() {
                           borderColor: active
                             ? peachAlpha(0.35)
                             : whiteAlpha(0.08),
-                          color: active ? PEACH : inkAlpha(0.7),
+                          color: active ? peach.main : inkAlpha(0.7),
                           fontFamily: "inherit",
                           fontSize: "0.78125rem",
                           fontWeight: 500,
@@ -398,8 +396,8 @@ export function ScanAdmin() {
                       height: 16,
                       borderRadius: 0.375,
                       border: "1px solid",
-                      borderColor: scanAll ? PEACH : whiteAlpha(0.25),
-                      bgcolor: scanAll ? PEACH : "transparent",
+                      borderColor: scanAll ? peach.main : whiteAlpha(0.25),
+                      bgcolor: scanAll ? peach.main : "transparent",
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
