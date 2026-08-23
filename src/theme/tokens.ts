@@ -1,5 +1,12 @@
 import { alpha } from "@mui/material/styles";
-import { neutral, peach } from "./colors";
+import {
+  accentFor,
+  fgFor,
+  getScheme,
+  neutral,
+  neutralFor,
+  panel2For,
+} from "./colors";
 
 // Color tokens for values that recur as raw rgba()/hex literals across the UI.
 //
@@ -17,20 +24,20 @@ import { neutral, peach } from "./colors";
 /** White at `o` opacity — replaces `rgba(255,255,255,o)`. Hairlines, hovers and fills on dark surfaces. */
 export const whiteAlpha = (o: number) => alpha("#FFFFFF", o);
 
-/** Warm foreground `#F5F1EB` at `o` — replaces `rgba(245,241,235,o)`. Muted text/icons over dark. */
-export const inkAlpha = (o: number) => alpha("#F5F1EB", o);
+/** Warm foreground (``--fg``) at `o`. Muted text/icons over dark. Follows the active scheme. */
+export const inkAlpha = (o: number) => alpha(fgFor(getScheme()), o);
 
 /** Pure-black scrim at `o` — replaces `rgba(0,0,0,o)`. Gradients and shadows over media. */
 export const scrim = (o: number) => alpha("#000000", o);
 
-/** Near-black panel `#0D0D0D` (neutral 950) at `o` — replaces `rgba(13,13,13,o)`. Translucent dark panels. */
-export const panelScrim = (o: number) => alpha(neutral[950], o);
+/** Page-bg panel (neutral 950) at `o`. Translucent dark panels. Follows the active scheme. */
+export const panelScrim = (o: number) => alpha(neutralFor(getScheme())[950], o);
 
-/** Peach `#D97757` at `o` — replaces `rgba(217,119,87,o)`. Primary-tinted fills and borders. */
-export const peachAlpha = (o: number) => alpha(peach.main, o);
+/** Accent (peach in dark / amber in amber) at `o`. Primary-tinted fills and borders. */
+export const peachAlpha = (o: number) => alpha(accentFor(getScheme()).main, o);
 
-/** Frosted dark surface `#1C1C1C` at `o` — replaces `rgba(28,28,28,o)`. Translucent menu/popover panels (with `backdropFilter`) and raised hover surfaces. */
-export const menuScrim = (o: number) => alpha("#1C1C1C", o);
+/** Frosted panel-2 surface at `o`. Translucent menu/popover panels (with `backdropFilter`) and raised hover surfaces. Follows the active scheme. */
+export const menuScrim = (o: number) => alpha(panel2For(getScheme()), o);
 
 // -- Type-scale steps used outside the `typography` variants -------------------
 //

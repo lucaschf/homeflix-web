@@ -49,7 +49,14 @@ import { SeriesReview } from "./pages/admin/SeriesReview";
 import { SettingsAdmin } from "./pages/admin/SettingsAdmin";
 import { UserDetailAdmin } from "./pages/admin/UserDetailAdmin";
 import { UsersAdmin } from "./pages/admin/UsersAdmin";
-import { theme } from "./theme";
+import { themeForScheme } from "./theme";
+import {
+  getScheme,
+  setActiveScheme,
+  THEME_STORAGE_KEY,
+  type ThemeScheme,
+} from "./theme/colors";
+import { ThemeModeContext } from "./theme/theme-mode";
 import "@fontsource/inter/200.css";
 import "@fontsource/inter/300.css";
 import "@fontsource/inter/400.css";
@@ -85,8 +92,25 @@ function App() {
     }
   };
 
+  // Active color scheme. Initialized from the value ``colors.ts`` already read
+  // out of localStorage at module load, so the first paint matches. Holding it
+  // here (App renders the whole tree inline) means a scheme change re-renders
+  // everything — the direct-import color tokens then resolve to the new palette.
+  const [scheme, setSchemeState] = useState<ThemeScheme>(() => getScheme());
+
+  const setScheme = (next: ThemeScheme) => {
+    // Point the token getters at the new scheme *before* the re-render so the
+    // ensuing render reads the new palette.
+    setActiveScheme(next);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(THEME_STORAGE_KEY, next);
+    }
+    setSchemeState(next);
+  };
+
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeModeContext.Provider value={{ scheme, setScheme }}>
+    <ThemeProvider theme={themeForScheme(scheme)}>
       <CssBaseline />
       <ErrorBoundary>
       {splashOpen && <SplashScreen onDone={handleSplashDone} />}
@@ -184,6 +208,7 @@ function App() {
       </QueryClientProvider>
       </ErrorBoundary>
     </ThemeProvider>
+    </ThemeModeContext.Provider>
   );
 }
 

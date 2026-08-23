@@ -1,6 +1,22 @@
-import { alpha, createTheme, type ThemeOptions } from "@mui/material/styles";
-import { error, info, neutral, peach, success, warning } from "./colors";
-import { border, fontFamily, fontSize, inkAlpha, status, whiteAlpha } from "./tokens";
+import {
+  alpha,
+  createTheme,
+  type Theme,
+  type ThemeOptions,
+} from "@mui/material/styles";
+import {
+  accentFor,
+  error,
+  fgFor,
+  info,
+  mutedFor,
+  neutralFor,
+  success,
+  THEME_SCHEMES,
+  type ThemeScheme,
+  warning,
+} from "./colors";
+import { border, fontFamily, fontSize, status, whiteAlpha } from "./tokens";
 import React from "react";
 
 // -- Overlay token namespace ---------------------------------------------------
@@ -99,12 +115,11 @@ declare module "@mui/material/Typography" {
   }
 }
 
-// Warm matte off-white (``--fg``) to match the body text, instead of pure
-// white which glares. Kept solid (no alpha) because this paints over video
-// frames that can be bright — letting the frame bleed through would hurt
-// legibility. The secondary tier uses the same warm tone at 70%.
-const OVERLAY_TEXT_PRIMARY = "#F5F1EB";
-const OVERLAY_TEXT_SECONDARY = inkAlpha(0.7);
+// Overlay text (heading/time readout over video) uses the scheme's warm matte
+// off-white (``--fg``) instead of pure white which glares. Kept solid (no
+// alpha) for the primary tier because it paints over bright video frames; the
+// secondary tier uses the same warm tone at 70%. Computed per scheme inside the
+// factory below.
 
 // Build a throwaway default theme just to read the canonical breakpoint
 // helper. The breakpoint media query string then tracks any future change to
@@ -124,46 +139,81 @@ const CONTROL_BASE = {
   paddingBlock: "7px",
   paddingInline: "14px",
   transition: "background-color 140ms ease, border-color 140ms ease",
+  // Shared disabled treatment. MUI only dims the *text* (to
+  // ``action.disabled``) for these custom variants and leaves each variant's
+  // own background in place — so a filled ``cta`` kept its bright accent fill
+  // with barely-legible text. Here the text stays a readable muted grey; the
+  // filled ``cta`` also drops its fill below (``&&`` beats MUI's built-in
+  // ``.Mui-disabled`` rule).
+  "&&.Mui-disabled": {
+    color: whiteAlpha(0.4),
+  },
 };
 
-const themeOptions: ThemeOptions = {
+// Build the full ThemeOptions for a scheme. Every scheme-varying color is
+// pinned to that scheme's real hex here (the two resulting theme objects
+// genuinely differ), while the direct-import tokens in ``colors.ts`` /
+// ``tokens.ts`` follow the active scheme at render time for the ~130 call-sites
+// that consume them outside the MUI palette.
+const buildThemeOptions = (scheme: ThemeScheme): ThemeOptions => {
+  const n = neutralFor(scheme);
+  const a = accentFor(scheme);
+  const fg = fgFor(scheme);
+  const muted = mutedFor(scheme);
+
+  // Real accent scale for the MUI palette (peach in "dark", amber in "amber").
+  // Kept a plain object with real hex so MUI can compute channels / hover
+  // states — the ``peach`` proxy export is for call-sites, not the palette.
+  const primary = {
+    lightest: a.lightest,
+    light: a.light,
+    main: a.main,
+    dark: a.dark,
+    darkest: a.darkest,
+    contrastText: a.contrastText,
+    alpha4: alpha(a.main, 0.04),
+    alpha8: alpha(a.main, 0.08),
+    alpha12: alpha(a.main, 0.12),
+    alpha30: alpha(a.main, 0.3),
+    alpha50: alpha(a.main, 0.5),
+  };
+
+  return {
   colorSchemes: {
     dark: {
       palette: {
-        primary: peach,
+        primary,
         error,
         info,
         success,
         warning,
         background: {
-          default: neutral[950],
-          paper: neutral[900],
+          default: n[950],
+          paper: n[900],
         },
         text: {
-          // Warm off-white from the design handoff (``--fg`` = #F5F1EB) at 92%
-          // opacity instead of the near-pure ``neutral[50]`` (#FAFAFA), which
-          // glares against the dark surfaces. The slight transparency lets the
-          // dark background bleed through for a softer / more matte read that's
-          // easier on the eyes for long sessions.
-          primary: inkAlpha(0.92),
-          // ``#8A857E`` matches the admin design's ``--muted`` token
-          // — a warmer / slightly darker tone than ``neutral[400]``
-          // that the spec uses for every "muted" surface: eyebrows,
-          // page subtitles, sidebar inactive items, hint copy.
-          secondary: "#8A857E",
-          disabled: neutral[600],
+          // Warm off-white (``--fg``) at 92% opacity instead of the near-pure
+          // ``neutral[50]``, which glares against the dark surfaces. The slight
+          // transparency lets the dark background bleed through for a softer /
+          // more matte read that's easier on the eyes for long sessions.
+          primary: alpha(fg, 0.92),
+          // The scheme's ``--muted`` tone — a warmer / slightly darker grey
+          // used for every "muted" surface: eyebrows, page subtitles, sidebar
+          // inactive items, hint copy.
+          secondary: muted,
+          disabled: n[600],
         },
-        divider: neutral[700],
+        divider: n[700],
         action: {
-          active: neutral[400],
+          active: n[400],
           hover: `rgba(255, 255, 255, 0.08)`,
           selected: `rgba(255, 255, 255, 0.16)`,
           disabled: `rgba(255, 255, 255, 0.3)`,
           disabledBackground: `rgba(255, 255, 255, 0.12)`,
         },
         overlayText: {
-          primary: OVERLAY_TEXT_PRIMARY,
-          secondary: OVERLAY_TEXT_SECONDARY,
+          primary: fg,
+          secondary: alpha(fg, 0.7),
         },
       },
     },
@@ -308,8 +358,8 @@ const themeOptions: ThemeOptions = {
           fontSize: "19px",
         },
         body: {
-          backgroundColor: neutral[950],
-          scrollbarColor: `${neutral[700]} transparent`,
+          backgroundColor: n[950],
+          scrollbarColor: `${n[700]} transparent`,
         },
       },
     },
@@ -336,6 +386,14 @@ const themeOptions: ThemeOptions = {
             "&:hover": {
               backgroundColor: theme.palette.primary.dark,
               borderColor: theme.palette.primary.dark,
+            },
+            // Disabled: drop the bright accent fill for a muted panel so the
+            // button reads as inactive and the label stays legible (the base
+            // ``CONTROL_BASE`` rule already sets the readable text color).
+            "&&.Mui-disabled": {
+              backgroundColor: whiteAlpha(0.06),
+              borderColor: "transparent",
+              color: whiteAlpha(0.4),
             },
           }),
         },
@@ -379,7 +437,7 @@ const themeOptions: ThemeOptions = {
         root: {
           backgroundImage: "none",
           borderRadius: 12,
-          border: `1px solid ${neutral[700]}`,
+          border: `1px solid ${n[700]}`,
         },
       },
     },
@@ -393,7 +451,7 @@ const themeOptions: ThemeOptions = {
     MuiDialog: {
       styleOverrides: {
         paper: {
-          backgroundColor: neutral[950],
+          backgroundColor: n[950],
           backgroundImage: `linear-gradient(${whiteAlpha(0.025)}, ${whiteAlpha(0.025)})`,
           border: `1px solid ${whiteAlpha(0.08)}`,
         },
@@ -402,21 +460,32 @@ const themeOptions: ThemeOptions = {
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: neutral[900],
-          borderRight: `1px solid ${neutral[700]}`,
+          backgroundColor: n[900],
+          borderRight: `1px solid ${n[700]}`,
         },
       },
     },
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: neutral[900],
+          backgroundColor: n[900],
           backgroundImage: "none",
-          borderBottom: `1px solid ${neutral[700]}`,
+          borderBottom: `1px solid ${n[700]}`,
         },
       },
     },
   },
+  };
 };
 
-export const theme = createTheme(themeOptions);
+// One MUI theme object per scheme. They share everything except the
+// scheme-pinned colors baked in above; ``App`` swaps which one is active.
+const themes = Object.fromEntries(
+  THEME_SCHEMES.map((scheme) => [scheme, createTheme(buildThemeOptions(scheme))]),
+) as Record<ThemeScheme, Theme>;
+
+export const themeForScheme = (scheme: ThemeScheme): Theme =>
+  themes[scheme] ?? themes.dark;
+
+/** Default theme (cold + peach). Kept for consumers that import a static theme. */
+export const theme = themes.dark;

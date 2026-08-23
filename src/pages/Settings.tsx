@@ -8,7 +8,7 @@ import {
   Select,
   Typography,
 } from "@mui/material";
-import { Info, MonitorPlay } from "lucide-react";
+import { Info, MonitorPlay, Palette } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useHealth } from "../api/hooks";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
@@ -19,7 +19,8 @@ import {
   type SubtitleAppearance,
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
-import { neutral } from "../theme/colors";
+import { neutral, THEME_SCHEMES, type ThemeScheme } from "../theme/colors";
+import { useThemeMode } from "../theme/theme-mode";
 import { whiteAlpha } from "../theme/tokens";
 import {
   subtitlePreviewFontSize,
@@ -47,6 +48,7 @@ export function Settings() {
   // hook and consumed by the Player on first play of a new media.
   // The partial-update setter lets each Select be a one-liner.
   const [playbackPrefs, setPlaybackPrefs] = usePlaybackPreferences();
+  const { scheme, setScheme } = useThemeMode();
 
   const apiHealthy = health?.status === "healthy";
 
@@ -58,6 +60,26 @@ export function Settings() {
       >
         {t("settings.title")}
       </Typography>
+
+      {/* ── Appearance ───────────────────────────────────── */}
+      <SettingsSection icon={Palette} title={t("settings.appearance")}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
+          <FormControl size="small" fullWidth>
+            <InputLabel>{t("settings.theme")}</InputLabel>
+            <Select
+              value={scheme}
+              onChange={(e) => setScheme(e.target.value as ThemeScheme)}
+              label={t("settings.theme")}
+            >
+              {THEME_SCHEMES.map((s) => (
+                <MenuItem key={s} value={s}>
+                  {t(`settings.themes.${s}`)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      </SettingsSection>
 
       {/* ── Playback ─────────────────────────────────────── */}
       <SettingsSection icon={MonitorPlay} title={t("settings.playback")}>
