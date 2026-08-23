@@ -53,6 +53,7 @@ export const THEME_SCHEMES = [
   "mono",
   "violet",
   "forest",
+  "warmteal",
 ] as const;
 
 export type ThemeScheme = (typeof THEME_SCHEMES)[number];
@@ -216,6 +217,21 @@ const NEUTRAL: Record<ThemeScheme, Record<NeutralKey, string>> = {
     900: "#101711",
     950: "#0A0F0C",
   },
+  // Warm "darkroom" surfaces (same ramp as amber) paired with a cool teal
+  // accent — the amber + teal combo from the Compose Studio reference.
+  warmteal: {
+    50: "#F2EDE3",
+    100: "#EBE4D8",
+    200: "#DDD4C4",
+    300: "#C7BDA9",
+    400: "#A89E8C",
+    500: "#6F6248",
+    600: "#4A3F2D",
+    700: "#3A3122",
+    800: "#2B241A",
+    900: "#211C15",
+    950: "#17140F",
+  },
 };
 
 const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: string }> = {
@@ -308,7 +324,38 @@ const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: st
     contrastText: "#06120C",
     rgb: "52, 211, 153",
   },
+  // Amber primary on warm surfaces (the "Copiar" button in the reference).
+  // The teal "Rodar" button is the secondary accent — see SECONDARY_ACCENT.
+  warmteal: {
+    lightest: "#F6E6CB",
+    light: "#ECC07F",
+    main: "#E0A44A",
+    dark: "#C4882F",
+    darkest: "#8A5F22",
+    contrastText: "#17140F",
+    rgb: "224, 164, 74",
+  },
 };
+
+// -- Optional secondary accent -------------------------------------------------
+//
+// Most schemes leave the ``hairline`` (secondary) button neutral. A scheme can
+// opt into a colored secondary here; ``warmteal`` uses teal so the theme reads
+// as the reference's amber-primary + teal-secondary duotone.
+export interface SecondaryAccent {
+  main: string;
+  /** Readable label tone on a dark surface. */
+  text: string;
+  rgb: string;
+}
+
+const SECONDARY_ACCENT: Partial<Record<ThemeScheme, SecondaryAccent>> = {
+  warmteal: { main: "#5BC6BD", text: "#86D6CF", rgb: "91, 198, 189" },
+};
+
+export const secondaryAccentFor = (
+  scheme: ThemeScheme,
+): SecondaryAccent | undefined => SECONDARY_ACCENT[scheme];
 
 // Body text (``--fg``) and muted secondary tone (``--muted``) per scheme.
 const FG: Record<ThemeScheme, string> = {
@@ -321,6 +368,7 @@ const FG: Record<ThemeScheme, string> = {
   mono: "#F5F5F5",
   violet: "#EFEAF7",
   forest: "#EAF2EC",
+  warmteal: "#F2EDE3",
 };
 const MUTED: Record<ThemeScheme, string> = {
   dark: "#8A857E",
@@ -332,6 +380,7 @@ const MUTED: Record<ThemeScheme, string> = {
   mono: "#8F8F8F",
   violet: "#A199B8",
   forest: "#96A69A",
+  warmteal: "#A89E8C",
 };
 // Frosted menu/popover surface base (``menuScrim``).
 const PANEL_2: Record<ThemeScheme, string> = {
@@ -344,6 +393,7 @@ const PANEL_2: Record<ThemeScheme, string> = {
   mono: "#1B1B1B",
   violet: "#1F1830",
   forest: "#172018",
+  warmteal: "#2B241A",
 };
 
 // -- Scheme accessors (real hex, for the theme factory) ------------------------
