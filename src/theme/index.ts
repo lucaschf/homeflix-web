@@ -11,6 +11,7 @@ import {
   info,
   mutedFor,
   neutralFor,
+  secondaryAccentFor,
   success,
   THEME_SCHEMES,
   type ThemeScheme,
@@ -160,6 +161,9 @@ const buildThemeOptions = (scheme: ThemeScheme): ThemeOptions => {
   const a = accentFor(scheme);
   const fg = fgFor(scheme);
   const muted = mutedFor(scheme);
+  // Optional colored secondary button (e.g. teal in "warmteal"). When unset the
+  // hairline variant stays neutral.
+  const secondary = secondaryAccentFor(scheme);
 
   // Real accent scale for the MUI palette (peach in "dark", amber in "amber").
   // Kept a plain object with real hex so MUI can compute channels / hover
@@ -399,13 +403,27 @@ const buildThemeOptions = (scheme: ThemeScheme): ThemeOptions => {
         },
         {
           props: { variant: "hairline" },
-          style: ({ theme }) => ({
-            ...CONTROL_BASE,
-            backgroundColor: whiteAlpha(0.04),
-            color: theme.palette.text.primary,
-            border: `1px solid ${border.hairline}`,
-            "&:hover": { backgroundColor: whiteAlpha(0.07) },
-          }),
+          style: ({ theme }) =>
+            secondary
+              ? {
+                  // Colored secondary (teal in "warmteal") — tinted outline so
+                  // it pairs with the amber primary without shouting.
+                  ...CONTROL_BASE,
+                  backgroundColor: alpha(secondary.main, 0.1),
+                  color: secondary.text,
+                  border: `1px solid ${alpha(secondary.main, 0.4)}`,
+                  "&:hover": {
+                    backgroundColor: alpha(secondary.main, 0.16),
+                    borderColor: alpha(secondary.main, 0.55),
+                  },
+                }
+              : {
+                  ...CONTROL_BASE,
+                  backgroundColor: whiteAlpha(0.04),
+                  color: theme.palette.text.primary,
+                  border: `1px solid ${border.hairline}`,
+                  "&:hover": { backgroundColor: whiteAlpha(0.07) },
+                },
         },
         {
           props: { variant: "ghost" },
