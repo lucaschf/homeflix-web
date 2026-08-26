@@ -1,11 +1,15 @@
 import { createContext, useContext } from "react";
-import type { ThemeScheme } from "./colors";
+import type { CtaStyle, ThemeScheme } from "./colors";
 
 export interface ThemeModeValue {
   /** The active scheme ("dark" = cold + peach, "amber" = warm darkroom). */
   scheme: ThemeScheme;
   /** Switch the scheme, persist it, and re-render the app in the new palette. */
   setScheme: (scheme: ThemeScheme) => void;
+  /** Primary-button style: "accent" (theme color) or "neutral" (white). */
+  ctaStyle: CtaStyle;
+  /** Switch the primary-button style, persist it, and re-render. */
+  setCtaStyle: (style: CtaStyle) => void;
 }
 
 export const ThemeModeContext = createContext<ThemeModeValue | null>(null);

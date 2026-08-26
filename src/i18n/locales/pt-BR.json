@@ -2004,6 +2004,11 @@
     "daysAgo": "ha {{count}}d",
     "appearance": "Aparencia",
     "theme": "Tema",
+    "neutralPrimary": "Botoes principais neutros",
+    "neutralPrimaryHint": "Botoes principais em branco; mantem o resto das cores do tema.",
+    "preview": "Previa",
+    "previewPlay": "Assistir",
+    "previewTrailer": "Trailer",
     "themes": {
       "dark": "HomeFlix (Coral)",
       "amber": "Ambar (Darkroom)",
