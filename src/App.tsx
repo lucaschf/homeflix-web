@@ -49,9 +49,13 @@ import { SeriesReview } from "./pages/admin/SeriesReview";
 import { SettingsAdmin } from "./pages/admin/SettingsAdmin";
 import { UserDetailAdmin } from "./pages/admin/UserDetailAdmin";
 import { UsersAdmin } from "./pages/admin/UsersAdmin";
-import { themeForScheme } from "./theme";
+import { themeFor } from "./theme";
 import {
+  CTA_STYLE_STORAGE_KEY,
+  type CtaStyle,
+  DEFAULT_CTA_STYLE,
   getScheme,
+  isCtaStyle,
   setActiveScheme,
   THEME_STORAGE_KEY,
   type ThemeScheme,
@@ -108,9 +112,23 @@ function App() {
     setSchemeState(next);
   };
 
+  // Primary-button style — orthogonal to the scheme, persisted separately.
+  const [ctaStyle, setCtaStyleState] = useState<CtaStyle>(() => {
+    if (typeof window === "undefined") return DEFAULT_CTA_STYLE;
+    const stored = window.localStorage.getItem(CTA_STYLE_STORAGE_KEY);
+    return isCtaStyle(stored) ? stored : DEFAULT_CTA_STYLE;
+  });
+
+  const setCtaStyle = (next: CtaStyle) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(CTA_STYLE_STORAGE_KEY, next);
+    }
+    setCtaStyleState(next);
+  };
+
   return (
-    <ThemeModeContext.Provider value={{ scheme, setScheme }}>
-    <ThemeProvider theme={themeForScheme(scheme)}>
+    <ThemeModeContext.Provider value={{ scheme, setScheme, ctaStyle, setCtaStyle }}>
+    <ThemeProvider theme={themeFor(scheme, ctaStyle)}>
       <CssBaseline />
       <ErrorBoundary>
       {splashOpen && <SplashScreen onDone={handleSplashDone} />}

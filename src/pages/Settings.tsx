@@ -3,12 +3,15 @@ import {
   Button,
   Chip,
   FormControl,
+  FormControlLabel,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
+  Switch,
   Typography,
 } from "@mui/material";
-import { Info, MonitorPlay, Palette } from "lucide-react";
+import { Bookmark, Film, Info, MonitorPlay, Palette, Play } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useHealth } from "../api/hooks";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
@@ -19,9 +22,9 @@ import {
   type SubtitleAppearance,
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
-import { neutral, THEME_SCHEMES, type ThemeScheme } from "../theme/colors";
+import { neutral, peach, THEME_SCHEMES, type ThemeScheme } from "../theme/colors";
 import { useThemeMode } from "../theme/theme-mode";
-import { whiteAlpha } from "../theme/tokens";
+import { peachAlpha, whiteAlpha } from "../theme/tokens";
 import {
   subtitlePreviewFontSize,
   subtitleTextEdgeCss,
@@ -48,7 +51,7 @@ export function Settings() {
   // hook and consumed by the Player on first play of a new media.
   // The partial-update setter lets each Select be a one-liner.
   const [playbackPrefs, setPlaybackPrefs] = usePlaybackPreferences();
-  const { scheme, setScheme } = useThemeMode();
+  const { scheme, setScheme, ctaStyle, setCtaStyle } = useThemeMode();
 
   const apiHealthy = health?.status === "healthy";
 
@@ -78,6 +81,27 @@ export function Settings() {
               ))}
             </Select>
           </FormControl>
+          <FormControlLabel
+            sx={{ ml: 0, justifyContent: "space-between" }}
+            labelPlacement="start"
+            control={
+              <Switch
+                checked={ctaStyle === "neutral"}
+                onChange={(e) => setCtaStyle(e.target.checked ? "neutral" : "accent")}
+              />
+            }
+            label={
+              <Box>
+                <Typography variant="body2" fontWeight={500}>
+                  {t("settings.neutralPrimary")}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {t("settings.neutralPrimaryHint")}
+                </Typography>
+              </Box>
+            }
+          />
+          <ThemePreview />
         </Box>
       </SettingsSection>
 
@@ -344,6 +368,62 @@ function SettingsRow({ label, children }: { label: string; children: React.React
         {label}
       </Typography>
       {children}
+    </Box>
+  );
+}
+
+/**
+ * Compact live sample of the selected theme — a mini media action bar echoing
+ * the detail page: surface + title/meta (fg + muted), a primary CTA (accent or
+ * white), a secondary button (neutral, or teal in "warmteal") and an
+ * accent-tinted bookmark. It renders through the same theme variants/tokens as
+ * the app, so it updates the instant a theme or the neutral-primary toggle
+ * changes.
+ */
+function ThemePreview() {
+  const { t } = useTranslation();
+  return (
+    <Box
+      sx={{
+        mt: 0.5,
+        p: 2,
+        borderRadius: 2,
+        border: `1px solid ${whiteAlpha(0.08)}`,
+        bgcolor: "background.paper",
+      }}
+    >
+      <Typography
+        variant="eyebrow"
+        sx={{ color: "text.secondary", display: "block", mb: 1.25 }}
+      >
+        {t("settings.preview")}
+      </Typography>
+      <Typography variant="h3" sx={{ mb: 0.25 }}>
+        HomeFlix
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.75 }}>
+        2001 · 1h 30min · Thriller
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+        <Button variant="cta" startIcon={<Play size={16} />}>
+          {t("settings.previewPlay")}
+        </Button>
+        <Button variant="hairline" startIcon={<Film size={16} />}>
+          {t("settings.previewTrailer")}
+        </Button>
+        <IconButton
+          aria-hidden
+          tabIndex={-1}
+          sx={{
+            borderRadius: 1.5,
+            border: `1px solid ${peachAlpha(0.4)}`,
+            bgcolor: peachAlpha(0.12),
+            color: peach.main,
+          }}
+        >
+          <Bookmark size={16} />
+        </IconButton>
+      </Box>
     </Box>
   );
 }

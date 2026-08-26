@@ -6,6 +6,7 @@ import {
 } from "@mui/material/styles";
 import {
   accentFor,
+  type CtaStyle,
   error,
   fgFor,
   info,
@@ -13,7 +14,6 @@ import {
   neutralFor,
   secondaryAccentFor,
   success,
-  THEME_SCHEMES,
   type ThemeScheme,
   warning,
 } from "./colors";
@@ -156,7 +156,10 @@ const CONTROL_BASE = {
 // genuinely differ), while the direct-import tokens in ``colors.ts`` /
 // ``tokens.ts`` follow the active scheme at render time for the ~130 call-sites
 // that consume them outside the MUI palette.
-const buildThemeOptions = (scheme: ThemeScheme): ThemeOptions => {
+const buildThemeOptions = (
+  scheme: ThemeScheme,
+  ctaStyle: CtaStyle,
+): ThemeOptions => {
   const n = neutralFor(scheme);
   const a = accentFor(scheme);
   const fg = fgFor(scheme);
@@ -164,6 +167,12 @@ const buildThemeOptions = (scheme: ThemeScheme): ThemeOptions => {
   // Optional colored secondary button (e.g. teal in "warmteal"). When unset the
   // hairline variant stays neutral.
   const secondary = secondaryAccentFor(scheme);
+  // Primary CTA fill. "neutral" swaps the accent for white so the main button
+  // reads neutral while the rest of the theme keeps its colors.
+  const cta =
+    ctaStyle === "neutral"
+      ? { fill: "#FFFFFF", text: "#0A0A0A", hover: "#E2E2E2" }
+      : { fill: a.main, text: a.contrastText, hover: a.dark };
 
   // Real accent scale for the MUI palette (peach in "dark", amber in "amber").
   // Kept a plain object with real hex so MUI can compute channels / hover
@@ -381,15 +390,15 @@ const buildThemeOptions = (scheme: ThemeScheme): ThemeOptions => {
       variants: [
         {
           props: { variant: "cta" },
-          style: ({ theme }) => ({
+          style: () => ({
             ...CONTROL_BASE,
             fontWeight: 600,
-            backgroundColor: theme.palette.primary.main,
-            color: theme.palette.primary.contrastText,
-            border: `1px solid ${theme.palette.primary.main}`,
+            backgroundColor: cta.fill,
+            color: cta.text,
+            border: `1px solid ${cta.fill}`,
             "&:hover": {
-              backgroundColor: theme.palette.primary.dark,
-              borderColor: theme.palette.primary.dark,
+              backgroundColor: cta.hover,
+              borderColor: cta.hover,
             },
             // Disabled: drop the bright accent fill for a muted panel so the
             // button reads as inactive and the label stays legible (the base
@@ -496,14 +505,20 @@ const buildThemeOptions = (scheme: ThemeScheme): ThemeOptions => {
   };
 };
 
-// One MUI theme object per scheme. They share everything except the
-// scheme-pinned colors baked in above; ``App`` swaps which one is active.
-const themes = Object.fromEntries(
-  THEME_SCHEMES.map((scheme) => [scheme, createTheme(buildThemeOptions(scheme))]),
-) as Record<ThemeScheme, Theme>;
+// One MUI theme object per (scheme, ctaStyle) pair, built lazily and memoized.
+// They share everything except the scheme-pinned colors and the primary-button
+// style baked in above; ``App`` swaps which one is active.
+const themeCache = new Map<string, Theme>();
 
-export const themeForScheme = (scheme: ThemeScheme): Theme =>
-  themes[scheme] ?? themes.dark;
+export const themeFor = (scheme: ThemeScheme, ctaStyle: CtaStyle): Theme => {
+  const key = `${scheme}:${ctaStyle}`;
+  let built = themeCache.get(key);
+  if (!built) {
+    built = createTheme(buildThemeOptions(scheme, ctaStyle));
+    themeCache.set(key, built);
+  }
+  return built;
+};
 
-/** Default theme (cold + peach). Kept for consumers that import a static theme. */
-export const theme = themes.dark;
+/** Default theme (cold + peach, accent CTA). For consumers that import a static theme. */
+export const theme = themeFor("dark", "accent");

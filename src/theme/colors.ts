@@ -64,6 +64,19 @@ export const DEFAULT_SCHEME: ThemeScheme = "dark";
 export const isThemeScheme = (v: unknown): v is ThemeScheme =>
   THEME_SCHEMES.includes(v as ThemeScheme);
 
+// -- Primary-button style (orthogonal to the scheme) --------------------------
+//
+// A preference that neutralizes the primary CTA to white while leaving the rest
+// of the active theme (surfaces, accents, colored secondary) untouched — for a
+// more neutral look. Persisted separately from the scheme.
+export type CtaStyle = "accent" | "neutral";
+
+export const CTA_STYLE_STORAGE_KEY = "homeflix-cta-style";
+export const DEFAULT_CTA_STYLE: CtaStyle = "accent";
+
+export const isCtaStyle = (v: unknown): v is CtaStyle =>
+  v === "accent" || v === "neutral";
+
 const readStoredScheme = (): ThemeScheme => {
   if (typeof window === "undefined") return DEFAULT_SCHEME;
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
