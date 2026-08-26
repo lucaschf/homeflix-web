@@ -2177,9 +2177,9 @@ export function Player() {
                 key={i}
                 sx={{
                   display: "table",
-                  margin: "0.08em auto 0",
+                  margin: "0 auto",
                   px: "0.4em",
-                  py: "0.08em",
+                  py: "0.05em",
                   borderRadius: "4px",
                   color: playbackPrefs.subtitleAppearance.color,
                   backgroundColor: playbackPrefs.subtitleAppearance.background,
@@ -2188,7 +2188,9 @@ export function Player() {
                       playbackPrefs.subtitleAppearance.fontSize
                     ],
                   fontWeight: 600,
-                  lineHeight: 1.35,
+                  // Kept tight: each line is its own block, so the box
+                  // padding already adds to the gap between them.
+                  lineHeight: 1.2,
                   textShadow:
                     subtitleTextEdgeCss[
                       playbackPrefs.subtitleAppearance.textEdge

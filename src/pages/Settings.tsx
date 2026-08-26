@@ -190,9 +190,9 @@ export function Settings() {
                     playbackPrefs.subtitleAppearance.fontSize
                   ],
                 fontWeight: 600,
-                lineHeight: 1.35,
+                lineHeight: 1.2,
                 px: "0.4em",
-                py: "0.08em",
+                py: "0.05em",
                 borderRadius: "4px",
                 textShadow:
                   subtitleTextEdgeCss[playbackPrefs.subtitleAppearance.textEdge],
