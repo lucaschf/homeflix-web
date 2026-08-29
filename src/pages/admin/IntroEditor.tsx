@@ -166,6 +166,26 @@ function EditorForm({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
 
+  // Moving the start past the end would leave the marker invalid, so the
+  // end is pushed along instead of the start being pinned to it. That is
+  // also what makes an untouched episode editable at all: with start and
+  // end both seeded to 0, clamping the start to ``[0, end - 1]`` yielded
+  // an empty range that collapsed every value back to 0, so the start
+  // looked frozen until an end had been entered.
+  const applyStart = useCallback(
+    (value: number) => {
+      const ceiling = duration > 0 ? Math.max(0, duration - 1) : Math.max(0, value);
+      const nextStart = clampInt(value, 0, ceiling);
+      setStartSeconds(nextStart);
+      setEndSeconds((prev) =>
+        prev > nextStart
+          ? prev
+          : clampInt(nextStart + 1, nextStart + 1, duration > 0 ? duration : nextStart + 1),
+      );
+    },
+    [duration],
+  );
+
   // Bulk-apply scope: every episode whose marker is either missing
   // or auto-detected. Manual markers are preserved so a confirmed
   // hand-edit never gets clobbered by a season-wide push. Drops
@@ -459,7 +479,7 @@ function EditorForm({
               startSeconds={startSeconds}
               endSeconds={endSeconds}
               onSeek={seekTo}
-              onStartChange={(v) => setStartSeconds(clampInt(v, 0, endSeconds - 1))}
+              onStartChange={applyStart}
               onEndChange={(v) =>
                 setEndSeconds(clampInt(v, startSeconds + 1, duration > 0 ? duration : v))
               }
@@ -489,10 +509,8 @@ function EditorForm({
                 label={t("admin.intros.startLabel")}
                 value={startSeconds}
                 disabled={!episode.file_path}
-                onStep={(d) => setStartSeconds(clampInt(startSeconds + d, 0, endSeconds - 1))}
-                onUseCurrent={() =>
-                  setStartSeconds(clampInt(Math.floor(currentTime), 0, endSeconds - 1))
-                }
+                onStep={(d) => applyStart(startSeconds + d)}
+                onUseCurrent={() => applyStart(Math.floor(currentTime))}
               />
               <TimeField
                 label={t("admin.intros.endLabel")}
