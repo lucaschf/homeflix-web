@@ -6,12 +6,14 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   IconButton,
   Menu,
   MenuItem,
   Snackbar,
   Stack,
+  Switch,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -424,6 +426,10 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
   const reset = useResetSeasonIntroDetection();
   const [activeSeasonNumber, setActiveSeasonNumber] = useState<number | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // Defaults to on: waiting up to a full tick for a redetection the
+  // operator just asked for is the surprising behaviour, not the useful
+  // one. Unchecking falls back to the plain requeue.
+  const [runNow, setRunNow] = useState(true);
   const [toast, setToast] = useState<{ severity: "success" | "error"; message: string } | null>(
     null,
   );
@@ -461,13 +467,15 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
   const onRedetect = () => {
     if (!activeSeason.id) return;
     reset.mutate(
-      { seasonId: activeSeason.id, seriesId: detail.id },
+      { seasonId: activeSeason.id, seriesId: detail.id, runNow },
       {
         onSuccess: (res) => {
           setConfirmOpen(false);
           setToast({
             severity: "success",
-            message: t("admin.intros.redetectQueued", { count: res.data.markers_cleared }),
+            message: res.data.detection_started
+              ? t("admin.intros.redetectStarted", { count: res.data.markers_cleared })
+              : t("admin.intros.redetectQueued", { count: res.data.markers_cleared }),
           });
         },
         onError: () => {
@@ -630,8 +638,25 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
         </DialogTitle>
         <DialogContent sx={{ px: 3, pb: 1 }}>
           <Typography variant="body2" sx={{ fontSize: "1rem", color: inkAlpha(0.72) }}>
-            {t("admin.intros.redetectConfirm", { season: activeSeason.season_number })}
+            {t(runNow ? "admin.intros.redetectConfirmNow" : "admin.intros.redetectConfirm", {
+              season: activeSeason.season_number,
+            })}
           </Typography>
+          <FormControlLabel
+            sx={{ mt: 1.5 }}
+            control={
+              <Switch
+                checked={runNow}
+                onChange={(e) => setRunNow(e.target.checked)}
+                disabled={reset.isPending}
+              />
+            }
+            label={
+              <Typography variant="body2" sx={{ fontSize: "0.9375rem" }}>
+                {t("admin.intros.redetectRunNow")}
+              </Typography>
+            }
+          />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5, pt: 2, gap: 1.25 }}>
           <AdminButton variant="ghost" onClick={() => setConfirmOpen(false)} disabled={reset.isPending}>
