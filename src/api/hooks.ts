@@ -911,10 +911,17 @@ export function useBulkSetEpisodeIntros() {
 interface ResetSeasonIntroVars {
   seasonId: string;
   seriesId: string;
+  /** Start detection right away instead of waiting for the next tick. */
+  runNow?: boolean;
 }
 
 interface ResetSeasonIntroResult {
   markers_cleared: number;
+  /**
+   * Whether a run was actually launched. ``false`` when ``runNow`` was
+   * not asked for, or when this season was already being detected.
+   */
+  detection_started: boolean;
 }
 
 /**
@@ -923,13 +930,18 @@ interface ResetSeasonIntroResult {
  * AUTO_DETECTED markers (MANUAL ones are kept). Used to re-run after
  * switching the detection algorithm or re-tuning — a ``COMPLETED``
  * season would otherwise never be picked up again.
+ *
+ * With ``runNow`` the season does not wait for the tick: the backend
+ * starts detection for it in the background and reports whether the
+ * run was launched. The outcome lands in the season's markers, so the
+ * detail query is refetched by the caller once detection finishes.
  */
 export function useResetSeasonIntroDetection() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ seasonId }: ResetSeasonIntroVars) =>
+    mutationFn: ({ seasonId, runNow }: ResetSeasonIntroVars) =>
       api.post<ApiDetailResponse<ResetSeasonIntroResult>>(
-        `/series/seasons/${seasonId}/intro-detection/reset`,
+        `/series/seasons/${seasonId}/intro-detection/reset${runNow ? "?run_now=true" : ""}`,
       ),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
