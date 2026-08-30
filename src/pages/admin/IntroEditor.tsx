@@ -9,6 +9,8 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  Menu,
+  MenuItem,
   Snackbar,
   Stack,
   Tooltip,
@@ -18,6 +20,9 @@ import Hls from "hls.js";
 import {
   ArrowLeft,
   Ban,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   FastForward,
   MapPin,
   Minus,
@@ -51,7 +56,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { peach } from "../../theme/colors";
-import { fontFamily, fontSize, inkAlpha, peachAlpha, scrim, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
+import { fontFamily, fontSize, inkAlpha, peachAlpha, scrim, status, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 
 function formatHms(totalSeconds: number): string {
   if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "00:00:00";
@@ -77,6 +82,169 @@ function needsIntroReview(episode: {
 }): boolean {
   if (episode.intro_status === "ABSENT") return false;
   return episode.intro === null || episode.intro.source === "AUTO_DETECTED";
+}
+
+/** Ordered (season, episode) coordinates of every episode in a series. */
+interface EpisodeRef {
+  season: number;
+  episode: number;
+  title: string;
+  status: EpisodeOutput["intro_status"];
+}
+
+/**
+ * Flatten a series into one ordered list of episode coordinates.
+ *
+ * Seasons and episodes are sorted explicitly rather than trusted to
+ * arrive ordered, so prev/next always step in broadcast order.
+ */
+function flattenEpisodes(seriesDetail: SeriesDetail): EpisodeRef[] {
+  return [...seriesDetail.seasons]
+    .sort((a, b) => a.season_number - b.season_number)
+    .flatMap((s) =>
+      [...s.episodes]
+        .sort((a, b) => a.episode_number - b.episode_number)
+        .map((ep) => ({
+          season: s.season_number,
+          episode: ep.episode_number,
+          title: ep.title,
+          status: ep.intro_status,
+        })),
+    );
+}
+
+const STATUS_COLOR: Record<EpisodeOutput["intro_status"], string> = {
+  MARKED: status.ok.fg,
+  ABSENT: status.info.fg,
+  PENDING: "transparent",
+};
+
+/** Small dot conveying an episode's intro state inside the menu. */
+function StatusDot({ state }: { state: EpisodeOutput["intro_status"] }) {
+  return (
+    <Box
+      sx={{
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        flexShrink: 0,
+        bgcolor: STATUS_COLOR[state],
+        border: state === "PENDING" ? `1px solid ${whiteAlpha(0.25)}` : "none",
+      }}
+    />
+  );
+}
+
+interface EpisodeNavigatorProps {
+  seriesDetail: SeriesDetail;
+  seasonNumber: number;
+  episodeNumber: number;
+}
+
+/**
+ * Move between episodes without leaving the editor.
+ *
+ * Reviewing intros is a per-episode loop, and previously the only way
+ * to reach another episode was the browser back button plus finding
+ * the series and season again in the picker. Prev/next step through
+ * the whole series in order; the menu jumps anywhere within the
+ * current season and shows each episode's state so the operator can
+ * see what is left.
+ */
+function EpisodeNavigator({
+  seriesDetail,
+  seasonNumber,
+  episodeNumber,
+}: EpisodeNavigatorProps) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+
+  const all = useMemo(() => flattenEpisodes(seriesDetail), [seriesDetail]);
+  const index = all.findIndex(
+    (e) => e.season === seasonNumber && e.episode === episodeNumber,
+  );
+  const prev = index > 0 ? all[index - 1] : null;
+  const next = index >= 0 && index < all.length - 1 ? all[index + 1] : null;
+
+  const seasonEpisodes = useMemo(
+    () => all.filter((e) => e.season === seasonNumber),
+    [all, seasonNumber],
+  );
+
+  const go = (target: EpisodeRef) =>
+    navigate(`/admin/intros/${seriesDetail.id}/${target.season}/${target.episode}`);
+
+  const label = (e: EpisodeRef) =>
+    e.season === seasonNumber
+      ? t("detail.episode", { number: e.episode })
+      : `${t("admin.intros.season", { number: e.season })} · ${t("detail.episode", { number: e.episode })}`;
+
+  return (
+    <Stack direction="row" alignItems="center" spacing={1}>
+      <Tooltip title={prev ? label(prev) : ""}>
+        <span>
+          <AdminButton
+            variant="secondary"
+            icon={<ChevronLeft size={14} />}
+            onClick={() => prev && go(prev)}
+            disabled={!prev}
+          >
+            {t("admin.intros.previousEpisode")}
+          </AdminButton>
+        </span>
+      </Tooltip>
+
+      <AdminButton
+        variant="secondary"
+        endIcon={<ChevronDown size={14} />}
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        sx={{ minWidth: 168, justifyContent: "flex-start", "& .MuiButton-endIcon": { ml: "auto" } }}
+      >
+        {t("detail.episode", { number: episodeNumber })}
+        <Box component="span" sx={{ color: "text.secondary", ml: 0.75 }}>
+          / {seasonEpisodes.length}
+        </Box>
+      </AdminButton>
+      <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={() => setAnchorEl(null)}>
+        {seasonEpisodes.map((e) => (
+          <MenuItem
+            key={`${e.season}-${e.episode}`}
+            selected={e.episode === episodeNumber}
+            onClick={() => {
+              setAnchorEl(null);
+              go(e);
+            }}
+            sx={{ fontSize: fontSize.control, gap: 1.25, maxWidth: 420 }}
+          >
+            <StatusDot state={e.status} />
+            <Box component="span" sx={{ color: "text.secondary", minWidth: 34 }}>
+              {t("detail.episode", { number: e.episode })}
+            </Box>
+            <Box
+              component="span"
+              sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+            >
+              {e.title}
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
+
+      <Tooltip title={next ? label(next) : ""}>
+        <span>
+          <AdminButton
+            variant="secondary"
+            endIcon={<ChevronRight size={14} />}
+            onClick={() => next && go(next)}
+            disabled={!next}
+          >
+            {t("admin.intros.nextEpisode")}
+          </AdminButton>
+        </span>
+      </Tooltip>
+    </Stack>
+  );
 }
 
 export function IntroEditor() {
@@ -120,13 +288,22 @@ export function IntroEditor() {
         title={episode?.title ?? t("admin.intros.editorTitle")}
         subtitle={subtitle}
         primaryCTA={
-          <AdminButton
-            variant="ghost"
-            icon={<ArrowLeft size={14} />}
-            onClick={() => navigate("/admin/intros")}
-          >
-            {t("admin.intros.back")}
-          </AdminButton>
+          <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="wrap">
+            {seriesDetail && (
+              <EpisodeNavigator
+                seriesDetail={seriesDetail}
+                seasonNumber={seasonNumber}
+                episodeNumber={episodeNumber}
+              />
+            )}
+            <AdminButton
+              variant="ghost"
+              icon={<ArrowLeft size={14} />}
+              onClick={() => navigate("/admin/intros")}
+            >
+              {t("admin.intros.back")}
+            </AdminButton>
+          </Stack>
         }
       />
 

@@ -1652,6 +1652,8 @@
       "notMarked": "— not marked",
       "statusPending": "pending",
       "statusNoIntro": "no intro",
+      "previousEpisode": "Previous",
+      "nextEpisode": "Next",
       "season": "Season {{number}}",
       "specials": "Specials",
       "statusNone": "No marker",
