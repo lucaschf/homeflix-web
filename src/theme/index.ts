@@ -31,7 +31,7 @@ import React from "react";
 //
 // When you find yourself reaching for `color="#fff"` or
 // `color="rgba(255,255,255,0.7)"` on a dark surface, use these instead. New
-// overlay components (EpisodeDrawer, SubtitleMenu, etc.) should default to
+// overlay components (EpisodeSelectorPanel, SubtitleMenu, etc.) should default to
 // these tokens.
 //
 // Sub-tokens:

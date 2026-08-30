@@ -327,6 +327,18 @@
     "creditsRolling": "Créditos",
     "markedWatched": "Marcado como assistido",
     "backToMovie": "Voltar ao filme",
+    "episodeSelector": {
+      "viewLabel": "Formato da lista de episódios",
+      "viewList": "Lista",
+      "viewRail": "Carrossel",
+      "seasonLabel": "Temporada",
+      "season": "Temporada {{number}}",
+      "seasonShort": "T{{number}}",
+      "episodeCount": "{{count}} ep",
+      "episodeCount_other": "{{count}} ep",
+      "watchedOf": "{{watched}} de {{total}} assistidos",
+      "nowPlaying": "Reproduzindo · {{percent}}%"
+    },
     "stillWatching": {
       "title": "Ainda está assistindo?",
       "upNext": "A seguir: {{title}}",

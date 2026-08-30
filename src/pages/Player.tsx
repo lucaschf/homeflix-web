@@ -39,9 +39,11 @@ import {
 } from "../api/hooks";
 import type { FileAudioTrack, FileSubtitleTrack, FileTrackVersion } from "../api/types";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
-import { EpisodeDrawer } from "../components/EpisodeDrawer";
+import { EpisodeRail } from "../components/episode-selector/EpisodeRail";
+import { EpisodeSelectorPanel } from "../components/episode-selector/EpisodeSelectorPanel";
 import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
 import { TitleLogo } from "../components/TitleLogo";
+import { useEpisodeSelector } from "../hooks/useEpisodeSelector";
 import { usePlaybackPreferences } from "../hooks/usePlaybackPreferences";
 import {
   subtitlePlayerFontSize,
@@ -690,7 +692,11 @@ export function Player() {
     video.addEventListener("play", onPlay);
     return () => video.removeEventListener("play", onPlay);
   }, [stillWatchingActive]);
-  const [episodeDrawerOpen, setEpisodeDrawerOpen] = useState(false);
+  // Open/closed, Lista vs Carrossel, and the browsed season. Held
+  // above both presentations so switching between them keeps the
+  // season, and so the control bar can stay pinned while the rail
+  // (which renders inside it) is up.
+  const episodeSelector = useEpisodeSelector(seasonNum);
   const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const badgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -823,6 +829,15 @@ export function Player() {
   const knownDuration = isMovie ? (movieData?.duration_seconds ?? 0) : episodeDuration;
   const displayDuration = knownDuration > 0 ? knownDuration : duration;
 
+  // Live position of the episode being played, for the selector's
+  // ``NOW PLAYING · 42%`` label and thumbnail bar. The stored
+  // ``progress_percentage`` on the episode is stale the moment
+  // playback moves, so the playing row reads from the transport.
+  const playingPercent =
+    displayDuration > 0
+      ? Math.min(100, Math.round((currentTime / displayDuration) * 100))
+      : 0;
+
   // Where the post-play panel is expected to appear: the detected
   // credits onset, or a minute before the end when the title has no
   // marker (nothing has scanned it yet, or detection found nothing).
@@ -952,13 +967,22 @@ export function Player() {
     currentTime >= currentIntro.start_seconds &&
     currentTime < currentIntro.end_seconds;
 
+  // The episode rail lives inside the control bar, so auto-hiding the
+  // controls would take the open selector with it.
+  const railOpen = episodeSelector.isRailOpen;
+
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
     if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    if (playing) {
+    if (playing && !railOpen) {
       hideTimerRef.current = setTimeout(() => setShowControls(false), 3000);
     }
-  }, [playing]);
+  }, [playing, railOpen]);
+
+  // While the rail is open the controls are held visible by
+  // derivation rather than by re-arming the timer: a hide already in
+  // flight can still fire, it just doesn't take the selector with it.
+  const controlsVisible = showControls || railOpen;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -1438,6 +1462,20 @@ export function Player() {
     video.addEventListener("pause", saveCurrentProgress);
     return () => video.removeEventListener("pause", saveCurrentProgress);
   }, [saveCurrentProgress]);
+
+  // Picking an episode in the selector: close it, bank the position of
+  // the episode being left, and swap the route. Re-picking the episode
+  // already playing is a no-op beyond closing.
+  const closeEpisodeSelector = episodeSelector.close;
+  const selectEpisode = useCallback(
+    (season: number, episode: number) => {
+      closeEpisodeSelector();
+      if (season === seasonNum && episode === episodeNum) return;
+      saveCurrentProgress();
+      navigate(`/play/episode/${params.seriesId}/${season}/${episode}`, { replace: true });
+    },
+    [closeEpisodeSelector, seasonNum, episodeNum, saveCurrentProgress, navigate, params.seriesId],
+  );
 
   // Save on page unload via `sendBeacon`, which is the only
   // reliable way to get data out during `beforeunload` — a normal
@@ -2120,7 +2158,7 @@ export function Player() {
         // The panel is an affordance the user is meant to point at, so
         // the cursor stays visible while it's up even if the controls
         // have auto-hidden.
-        cursor: showControls || postPlayActive || stillWatchingActive ? "default" : "none",
+        cursor: controlsVisible || postPlayActive || stillWatchingActive ? "default" : "none",
         userSelect: "none",
         WebkitUserSelect: "none",
       }}
@@ -2162,7 +2200,7 @@ export function Player() {
               // Sit just above the controls/progress bar rather than up in
               // the picture. Rises a little when the controls are visible so
               // the bar never covers the text.
-              bottom: showControls ? "5.5rem" : "2.5rem",
+              bottom: controlsVisible ? "5.5rem" : "2.5rem",
               left: "50%",
               transform: "translateX(-50%)",
               maxWidth: "82%",
@@ -2414,9 +2452,9 @@ export function Player() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          opacity: showControls && !postPlayActive ? 1 : 0,
+          opacity: controlsVisible && !postPlayActive ? 1 : 0,
           transition: "opacity 300ms",
-          pointerEvents: showControls && !postPlayActive ? "auto" : "none",
+          pointerEvents: controlsVisible && !postPlayActive ? "auto" : "none",
         }}
       >
         {/* Click row split into three zones. Single tap in any zone
@@ -2472,8 +2510,38 @@ export function Player() {
           />
         </Box>
 
+        {/* Backdrop for the carousel: dims the picture so the cards
+            read against it, and closes on click the way the list
+            panel's backdrop does. Sits after the tap zones (so it
+            takes their clicks) and before the control bar (so the
+            transport and the rail itself stay live). */}
+        {episodeSelector.isRailOpen && (
+          <Box
+            onClick={episodeSelector.close}
+            sx={{ position: "absolute", inset: 0, bgcolor: scrim(0.45) }}
+          />
+        )}
+
         {/* Bottom Controls */}
-        <Box sx={{ px: { xs: 1.5, md: 5 }, pb: { xs: 1.5, md: 3 }, pt: 6, background: `linear-gradient(to top, ${scrim(0.8)}, transparent)` }}>
+        <Box sx={{ position: "relative", px: { xs: 1.5, md: 5 }, pb: { xs: 1.5, md: 3 }, pt: 6, background: `linear-gradient(to top, ${scrim(0.8)}, transparent)` }}>
+          {/* Episode selector — Carrossel. Sits inside the control bar
+              so it shares the bottom gradient and rides above the
+              transport, the way Disney+ and Apple TV+ place it. */}
+          {episodeSelector.isRailOpen && !isMovie && seriesData && (
+            <EpisodeRail
+              series={seriesData}
+              season={episodeSelector.season}
+              onSeasonChange={episodeSelector.setSeason}
+              currentSeason={seasonNum}
+              currentEpisode={episodeNum}
+              playingPercent={playingPercent}
+              view={episodeSelector.view}
+              onViewChange={episodeSelector.setView}
+              onSelect={selectEpisode}
+              onClose={episodeSelector.close}
+            />
+          )}
+
           {/* Title and remaining time above seek bar */}
           <Box sx={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", mb: 0.75, gap: 2 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -2594,8 +2662,13 @@ export function Player() {
 
             {!isMovie && seriesData && (
               <IconButton
-                onClick={() => setEpisodeDrawerOpen((v) => !v)}
-                sx={{ color: episodeDrawerOpen ? "primary.main" : "overlayText.primary", p: { xs: 1, md: 0.75 } }}
+                onClick={() => {
+                  episodeSelector.toggle();
+                  resetHideTimer();
+                }}
+                aria-label={t("player.episodes")}
+                aria-pressed={episodeSelector.open}
+                sx={{ color: episodeSelector.open ? "primary.main" : "overlayText.primary", p: { xs: 1, md: 0.75 } }}
               >
                 <LayoutList size={20} />
               </IconButton>
@@ -2641,9 +2714,9 @@ export function Player() {
           gap: 0.5,
           p: { xs: 1, md: 2 },
           background: `linear-gradient(to bottom, ${scrim(0.7)}, transparent)`,
-          opacity: showControls || postPlayActive ? 1 : 0,
+          opacity: controlsVisible || postPlayActive ? 1 : 0,
           transition: "opacity 300ms",
-          pointerEvents: showControls || postPlayActive ? "auto" : "none",
+          pointerEvents: controlsVisible || postPlayActive ? "auto" : "none",
         }}
       >
         <IconButton onClick={() => navigate(-1)} sx={{ color: "overlayText.primary" }}>
@@ -2858,20 +2931,20 @@ export function Player() {
         />
       )}
 
-      {/* Episode Drawer */}
-      {episodeDrawerOpen && !isMovie && seriesData && (
-        <EpisodeDrawer
+      {/* Episode selector — Lista. The Carrossel presentation of the
+          same selector renders inside the control bar above. */}
+      {episodeSelector.isListOpen && !isMovie && seriesData && (
+        <EpisodeSelectorPanel
           series={seriesData}
+          season={episodeSelector.season}
+          onSeasonChange={episodeSelector.setSeason}
           currentSeason={seasonNum}
           currentEpisode={episodeNum}
-          onSelect={(s, e) => {
-            setEpisodeDrawerOpen(false);
-            if (s !== seasonNum || e !== episodeNum) {
-              saveCurrentProgress();
-              navigate(`/play/episode/${params.seriesId}/${s}/${e}`, { replace: true });
-            }
-          }}
-          onClose={() => setEpisodeDrawerOpen(false)}
+          playingPercent={playingPercent}
+          view={episodeSelector.view}
+          onViewChange={episodeSelector.setView}
+          onSelect={selectEpisode}
+          onClose={episodeSelector.close}
         />
       )}
 
