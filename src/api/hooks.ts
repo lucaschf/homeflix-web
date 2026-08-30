@@ -856,6 +856,25 @@ export function useClearEpisodeIntro() {
   });
 }
 
+/**
+ * Confirm that an episode has no opening sequence at all.
+ *
+ * Distinct from clearing: clearing reopens the question and requeues
+ * the episode for auto-detection, while this records a verdict that
+ * counts as resolved and takes it out of the queue. Any existing
+ * marker is dropped. Idempotent; undo by clearing the intro.
+ */
+export function useMarkEpisodeIntroAbsent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ episodeId }: ClearEpisodeIntroVars) =>
+      api.post(`/series/episodes/${episodeId}/intro/absent`),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["series", vars.seriesId] });
+    },
+  });
+}
+
 interface BulkSetIntroVars {
   /** Episode ids that should receive the same marker. */
   episodeIds: string[];

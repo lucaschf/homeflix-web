@@ -41,7 +41,14 @@ import { peach } from "../../theme/colors";
 import { fontFamily, fontSize, inkAlpha, peachAlpha, status, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 import { IntroTabs } from "./components/IntroTabs";
 
-type IntroFilter = "all" | "marked" | "unmarked" | "auto" | "low_confidence" | "manual";
+type IntroFilter =
+  | "all"
+  | "marked"
+  | "unmarked"
+  | "no_intro"
+  | "auto"
+  | "low_confidence"
+  | "manual";
 type SeriesFilter = "all" | "pending" | "done";
 
 // Confidence threshold below which an auto marker is considered
@@ -67,15 +74,23 @@ function fmtClock(seconds: number): string {
 
 /** A series has full coverage once every episode carries an intro marker. */
 function isSeriesDone(s: SeriesSummary): boolean {
-  return s.total_episodes > 0 && (s.intro_marked_count ?? 0) >= s.total_episodes;
+  // Counts resolved, not marked: an episode confirmed to have no intro
+  // is reviewed and done, and counting only markers would keep such a
+  // series short of full coverage forever.
+  return s.total_episodes > 0 && (s.intro_resolved_count ?? 0) >= s.total_episodes;
 }
 
-function matchesFilter(intro: EpisodeOutput["intro"], filter: IntroFilter): boolean {
+function matchesFilter(episode: EpisodeOutput, filter: IntroFilter): boolean {
+  const intro = episode.intro;
   switch (filter) {
     case "marked":
       return intro !== null;
     case "unmarked":
-      return intro === null;
+      // Only genuinely unreviewed episodes — an episode confirmed to
+      // have no intro also has ``intro === null`` but is not pending.
+      return episode.intro_status === "PENDING";
+    case "no_intro":
+      return episode.intro_status === "ABSENT";
     case "auto":
       return intro?.source === "AUTO_DETECTED";
     case "manual":
@@ -345,7 +360,7 @@ interface SeriesRailItemProps {
 
 function SeriesRailItem({ series, active, onSelect }: SeriesRailItemProps) {
   const done = isSeriesDone(series);
-  const markedCount = series.intro_marked_count ?? 0;
+  const markedCount = series.intro_resolved_count ?? 0;
   const ratio = series.total_episodes > 0 ? markedCount / series.total_episodes : 0;
   return (
     <ButtonBase
@@ -438,6 +453,7 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
     { label: t("admin.intros.filterAll"), value: "all" },
     { label: t("admin.intros.filterMarked"), value: "marked" },
     { label: t("admin.intros.filterUnmarked"), value: "unmarked" },
+    { label: t("admin.intros.filterNoIntro"), value: "no_intro" },
     { label: t("admin.intros.filterAuto"), value: "auto" },
     { label: t("admin.intros.filterLowConfidence"), value: "low_confidence" },
     { label: t("admin.intros.filterManual"), value: "manual" },
@@ -461,8 +477,12 @@ function SeriesEpisodes({ detail, filter, onFilterChange }: SeriesEpisodesProps)
   const totalEpisodes = episodes.length;
   const markedCount = episodes.filter((e) => e.intro !== null).length;
   const manualCount = episodes.filter((e) => e.intro?.source === "MANUAL").length;
-  const pct = totalEpisodes > 0 ? markedCount / totalEpisodes : 0;
-  const visibleEpisodes = episodes.filter((e) => matchesFilter(e.intro, filter));
+  const noIntroCount = episodes.filter((e) => e.intro_status === "ABSENT").length;
+  // Progress tracks resolved episodes so a season containing episodes
+  // without an intro can still reach 100%.
+  const resolvedCount = markedCount + noIntroCount;
+  const pct = totalEpisodes > 0 ? resolvedCount / totalEpisodes : 0;
+  const visibleEpisodes = episodes.filter((e) => matchesFilter(e, filter));
 
   const onRedetect = () => {
     if (!activeSeason.id) return;
@@ -792,6 +812,7 @@ function EpisodeRow({ episode, last, onEdit }: EpisodeRowProps) {
   const { t } = useTranslation();
   const intro = episode.intro;
   const unmarked = intro === null;
+  const noIntro = episode.intro_status === "ABSENT";
   const runtime = episode.duration_seconds || 0;
   const introLeft = !unmarked && runtime > 0 ? intro.start_seconds / runtime : 0;
   const introWidth = !unmarked && runtime > 0 ? (intro.end_seconds - intro.start_seconds) / runtime : 0;
@@ -863,7 +884,7 @@ function EpisodeRow({ episode, last, onEdit }: EpisodeRowProps) {
         sx={{ fontSize: "1rem", textAlign: "right", color: unmarked ? "text.secondary" : inkAlpha(0.85) }}
       >
         {unmarked ? (
-          t("admin.intros.notMarked")
+          noIntro ? t("admin.intros.statusNoIntro") : t("admin.intros.notMarked")
         ) : (
           <>
             <Box component="span" sx={{ color: "text.secondary" }}>
@@ -880,7 +901,7 @@ function EpisodeRow({ episode, last, onEdit }: EpisodeRowProps) {
 
       {/* Source + confidence */}
       <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={2.5}>
-        <IntroBadge intro={intro} />
+        <IntroBadge episode={episode} />
         {!unmarked && intro.source === "AUTO_DETECTED" && intro.confidence !== null && (
           <Typography
             variant="metaMono"
@@ -923,8 +944,12 @@ function EpisodeRow({ episode, last, onEdit }: EpisodeRowProps) {
   );
 }
 
-function IntroBadge({ intro }: { intro: EpisodeOutput["intro"] }) {
+function IntroBadge({ episode }: { episode: EpisodeOutput }) {
   const { t } = useTranslation();
+  const intro = episode.intro;
+  if (episode.intro_status === "ABSENT") {
+    return <AdminBadge tone="ok">{t("admin.intros.statusNoIntro")}</AdminBadge>;
+  }
   if (!intro) {
     return <AdminBadge tone="neutral">{t("admin.intros.statusPending")}</AdminBadge>;
   }
