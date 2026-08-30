@@ -89,7 +89,8 @@ interface EpisodeRef {
   season: number;
   episode: number;
   title: string;
-  status: EpisodeOutput["intro_status"];
+  intro: EpisodeOutput["intro"];
+  intro_status: EpisodeOutput["intro_status"];
 }
 
 /**
@@ -108,7 +109,8 @@ function flattenEpisodes(seriesDetail: SeriesDetail): EpisodeRef[] {
           season: s.season_number,
           episode: ep.episode_number,
           title: ep.title,
-          status: ep.intro_status,
+          intro: ep.intro,
+          intro_status: ep.intro_status,
         })),
     );
 }
@@ -159,6 +161,7 @@ function EpisodeNavigator({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+  const [seasonAnchorEl, setSeasonAnchorEl] = useState<HTMLElement | null>(null);
 
   const all = useMemo(() => flattenEpisodes(seriesDetail), [seriesDetail]);
   const index = all.findIndex(
@@ -172,8 +175,26 @@ function EpisodeNavigator({
     [all, seasonNumber],
   );
 
+  // Each season with how much review it still needs, so the operator
+  // can pick where the work is instead of opening seasons to find out.
+  const seasons = useMemo(() => {
+    const byNumber = new Map<number, { total: number; pending: number }>();
+    for (const e of all) {
+      const entry = byNumber.get(e.season) ?? { total: 0, pending: 0 };
+      entry.total += 1;
+      if (needsIntroReview(e)) entry.pending += 1;
+      byNumber.set(e.season, entry);
+    }
+    return [...byNumber.entries()]
+      .map(([number, counts]) => ({ number, ...counts }))
+      .sort((a, b) => a.number - b.number);
+  }, [all]);
+
   const go = (target: EpisodeRef) =>
     navigate(`/admin/intros/${seriesDetail.id}/${target.season}/${target.episode}`);
+
+  const seasonLabel = (n: number) =>
+    n === 0 ? t("admin.intros.specials") : t("admin.intros.season", { number: n });
 
   const label = (e: EpisodeRef) =>
     e.season === seasonNumber
@@ -198,6 +219,53 @@ function EpisodeNavigator({
       <AdminButton
         variant="secondary"
         endIcon={<ChevronDown size={14} />}
+        onClick={(e) => setSeasonAnchorEl(e.currentTarget)}
+        sx={{ minWidth: 150, justifyContent: "flex-start", "& .MuiButton-endIcon": { ml: "auto" } }}
+      >
+        {seasonLabel(seasonNumber)}
+      </AdminButton>
+      <Menu
+        anchorEl={seasonAnchorEl}
+        open={!!seasonAnchorEl}
+        onClose={() => setSeasonAnchorEl(null)}
+      >
+        {seasons.map((s) => (
+          <MenuItem
+            key={s.number}
+            selected={s.number === seasonNumber}
+            onClick={() => {
+              setSeasonAnchorEl(null);
+              // Land on the first episode still needing review, falling
+              // back to the first one when the season is fully done —
+              // switching season is a "take me to the work" action.
+              const target =
+                all.find((e) => e.season === s.number && needsIntroReview(e)) ??
+                all.find((e) => e.season === s.number);
+              if (target) go(target);
+            }}
+            sx={{ fontSize: fontSize.control, gap: 1.25 }}
+          >
+            <Box component="span" sx={{ minWidth: 96 }}>
+              {seasonLabel(s.number)}
+            </Box>
+            <Box
+              component="span"
+              sx={{
+                color: s.pending > 0 ? peach.main : "text.secondary",
+                fontFamily: fontFamily.mono,
+              }}
+            >
+              {s.pending > 0
+                ? t("admin.intros.seasonPending", { count: s.pending })
+                : t("admin.intros.seasonDone")}
+            </Box>
+          </MenuItem>
+        ))}
+      </Menu>
+
+      <AdminButton
+        variant="secondary"
+        endIcon={<ChevronDown size={14} />}
         onClick={(e) => setAnchorEl(e.currentTarget)}
         sx={{ minWidth: 168, justifyContent: "flex-start", "& .MuiButton-endIcon": { ml: "auto" } }}
       >
@@ -217,7 +285,7 @@ function EpisodeNavigator({
             }}
             sx={{ fontSize: fontSize.control, gap: 1.25, maxWidth: 420 }}
           >
-            <StatusDot state={e.status} />
+            <StatusDot state={e.intro_status} />
             <Box component="span" sx={{ color: "text.secondary", minWidth: 34 }}>
               {t("detail.episode", { number: e.episode })}
             </Box>
