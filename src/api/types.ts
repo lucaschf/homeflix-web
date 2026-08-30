@@ -273,6 +273,9 @@ export interface MovieDetail {
   credits: CreditsMarkerOutput | null;
 }
 
+/** Where an episode stands on having its intro resolved. */
+export type IntroStatus = "PENDING" | "MARKED" | "ABSENT";
+
 export interface IntroMarkerOutput {
   start_seconds: number;
   end_seconds: number;
@@ -330,6 +333,12 @@ export interface EpisodeOutput {
   scrub_preview_path: string | null;
   air_date: string | null;
   intro: IntroMarkerOutput | null;
+  /**
+   * Whether the episode's intro question is settled. ``ABSENT`` means
+   * someone confirmed there is no opening sequence — distinct from
+   * ``PENDING``, which nobody has reviewed. Both have ``intro: null``.
+   */
+  intro_status: IntroStatus;
   credits: CreditsMarkerOutput | null;
   progress_percentage: number | null;
   position_seconds: number | null;
@@ -359,9 +368,13 @@ export interface SeriesSummary {
   backdrop_path: string | null;
   season_count: number;
   total_episodes: number;
-  // Episodes with an intro marker set (auto or manual). Drives the
-  // per-series "skip intro" coverage shown in the admin intro picker.
+  // Episodes with an intro marker set (auto or manual).
   intro_marked_count: number;
+  // Episodes whose intro question is settled — marked or confirmed to
+  // have none. Drives the per-series coverage in the admin intro
+  // picker: intro_marked_count alone can never reach total_episodes on
+  // a series where some episodes genuinely have no intro.
+  intro_resolved_count: number;
   genres: string[];
   // Operator-facing metadata surfaced on the admin Catalog table.
   library_id: string;

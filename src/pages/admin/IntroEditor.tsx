@@ -11,11 +11,13 @@ import {
   FormControlLabel,
   Snackbar,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import Hls from "hls.js";
 import {
   ArrowLeft,
+  Ban,
   FastForward,
   MapPin,
   Minus,
@@ -35,6 +37,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   useBulkSetEpisodeIntros,
   useClearEpisodeIntro,
+  useMarkEpisodeIntroAbsent,
   useSeriesDetail,
   useSetEpisodeIntro,
 } from "../../api/hooks";
@@ -262,6 +265,7 @@ function EditorForm({
 
   const setIntro = useSetEpisodeIntro();
   const clearIntro = useClearEpisodeIntro();
+  const markAbsent = useMarkEpisodeIntroAbsent();
   const bulkSet = useBulkSetEpisodeIntros();
 
   const [toast, setToast] = useState<{ severity: "success" | "error"; message: string } | null>(
@@ -357,6 +361,24 @@ function EditorForm({
       },
     );
   }, [episodeId, clearIntro, seriesId, t]);
+
+  const handleMarkAbsent = useCallback(() => {
+    if (!episodeId) return;
+    markAbsent.mutate(
+      { episodeId, seriesId },
+      {
+        onSuccess: () => {
+          // Any marker was dropped server-side; mirror that locally so
+          // the fields do not keep showing a range that no longer exists.
+          setStartSeconds(0);
+          setEndSeconds(0);
+          setToast({ severity: "success", message: t("admin.intros.markedNoIntro") });
+        },
+        onError: () =>
+          setToast({ severity: "error", message: t("admin.intros.markNoIntroFailed") }),
+      },
+    );
+  }, [episodeId, markAbsent, seriesId, t]);
 
   // ── Transport (custom controls on top of the native ones) ──────────
   const [playing, setPlaying] = useState(false);
@@ -575,12 +597,35 @@ function EditorForm({
               >
                 {t("admin.intros.save")}
               </AdminButton>
+              <Tooltip title={t("admin.intros.markNoIntroHint")}>
+                <span>
+                  <AdminButton
+                    variant="secondary"
+                    icon={<Ban size={13} />}
+                    onClick={handleMarkAbsent}
+                    disabled={
+                      markAbsent.isPending ||
+                      !episodeId ||
+                      episode.intro_status === "ABSENT"
+                    }
+                    fullWidth
+                  >
+                    {episode.intro_status === "ABSENT"
+                      ? t("admin.intros.statusNoIntro")
+                      : t("admin.intros.markNoIntro")}
+                  </AdminButton>
+                </span>
+              </Tooltip>
               <Stack direction="row" spacing={1.25} justifyContent="space-between">
                 <AdminButton
                   variant="danger"
                   icon={<Trash2 size={13} />}
                   onClick={handleClear}
-                  disabled={clearIntro.isPending || !episodeId || !episode.intro}
+                  disabled={
+                    clearIntro.isPending ||
+                    !episodeId ||
+                    (!episode.intro && episode.intro_status !== "ABSENT")
+                  }
                 >
                   {t("admin.intros.clear")}
                 </AdminButton>
