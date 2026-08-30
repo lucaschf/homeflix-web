@@ -62,6 +62,23 @@ function formatHms(totalSeconds: number): string {
   return [hours, minutes, seconds].map((n) => n.toString().padStart(2, "0")).join(":");
 }
 
+/**
+ * Whether an episode still needs a human to look at its intro.
+ *
+ * Pending and auto-detected episodes qualify; MANUAL markers are
+ * confirmed edits, and ABSENT is a confirmed verdict that there is no
+ * intro. Both are deliberate decisions that must not be overwritten by
+ * a bulk apply, nor offered again by auto-advance. ABSENT needs the
+ * explicit check because such an episode also has ``intro === null``.
+ */
+function needsIntroReview(episode: {
+  intro: EpisodeOutput["intro"];
+  intro_status: EpisodeOutput["intro_status"];
+}): boolean {
+  if (episode.intro_status === "ABSENT") return false;
+  return episode.intro === null || episode.intro.source === "AUTO_DETECTED";
+}
+
 export function IntroEditor() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -193,8 +210,7 @@ function EditorForm({
   // or auto-detected. Manual markers are preserved so a confirmed
   // hand-edit never gets clobbered by a season-wide push. Drops
   // episodes with no id since they can't receive a PUT.
-  const isEligible = (e: EpisodeOutput) =>
-    e.id !== null && (e.intro === null || e.intro.source === "AUTO_DETECTED");
+  const isEligible = (e: EpisodeOutput) => e.id !== null && needsIntroReview(e);
 
   const eligibleInSeason = useMemo<EpisodeOutput[]>(() => {
     const season = seriesDetail.seasons.find((s) => s.season_number === seasonNumber);
@@ -206,9 +222,8 @@ function EditorForm({
     [seriesDetail],
   );
 
-  // First episode that still needs review (no marker or
-  // auto-detected) strictly after the current one in
-  // (season ASC, episode ASC) order. Powers auto-advance — null
+  // First episode that still needs review strictly after the current
+  // one in (season ASC, episode ASC) order. Powers auto-advance — null
   // when the editor is already past the last one to review.
   const nextEligible = useMemo<{ season: number; episode: number } | null>(() => {
     const candidates = seriesDetail.seasons.flatMap((s) =>
@@ -216,11 +231,12 @@ function EditorForm({
         season: s.season_number,
         episode: ep.episode_number,
         intro: ep.intro,
+        intro_status: ep.intro_status,
       })),
     );
     const hit = candidates.find(
       (c) =>
-        (c.intro === null || c.intro.source === "AUTO_DETECTED") &&
+        needsIntroReview(c) &&
         (c.season > seasonNumber ||
           (c.season === seasonNumber && c.episode > episodeNumber)),
     );
@@ -373,12 +389,20 @@ function EditorForm({
           setStartSeconds(0);
           setEndSeconds(0);
           setToast({ severity: "success", message: t("admin.intros.markedNoIntro") });
+          // This resolves the episode just as saving does, so it moves
+          // on rather than stranding the operator on a finished episode
+          // with no way forward but the back button.
+          if (autoAdvance && nextEligible) {
+            navigate(
+              `/admin/intros/${seriesId}/${nextEligible.season}/${nextEligible.episode}`,
+            );
+          }
         },
         onError: () =>
           setToast({ severity: "error", message: t("admin.intros.markNoIntroFailed") }),
       },
     );
-  }, [episodeId, markAbsent, seriesId, t]);
+  }, [episodeId, markAbsent, seriesId, autoAdvance, nextEligible, navigate, t]);
 
   // ── Transport (custom controls on top of the native ones) ──────────
   const [playing, setPlaying] = useState(false);
