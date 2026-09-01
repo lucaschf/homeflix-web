@@ -975,6 +975,15 @@
             }
           }
         },
+        "fallback": {
+          "label": "Detector de fallback",
+          "helper": "Roda quando o algoritmo acima não persiste nenhum marcador na temporada — seja porque não achou nada em comum, seja porque não conseguiu analisar episódios suficientes. Os dois detectores são cegos a coisas diferentes, então a segunda passada resolve temporadas que nenhum acha sozinho. Sucesso parcial na primeira passada não dispara retry.",
+          "options": {
+            "none": {
+              "label": "Nenhum (sem retry)"
+            }
+          }
+        },
         "cadence": {
           "label": "Cadência",
           "helper": "Cada temporada analisa todos os episódios; valores acima de 2 podem saturar o host em temporadas grandes."

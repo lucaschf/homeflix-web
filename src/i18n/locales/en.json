@@ -975,6 +975,15 @@
             }
           }
         },
+        "fallback": {
+          "label": "Fallback detector",
+          "helper": "Retried when the algorithm above persists no marker for a season — either it found nothing shared or it could not analyse enough episodes. The two detectors go blind on different material, so the second pass recovers seasons neither finds alone. A partly successful first pass is never retried.",
+          "options": {
+            "none": {
+              "label": "None (no retry)"
+            }
+          }
+        },
         "cadence": {
           "label": "Cadence",
           "helper": "Each season analyses every episode, so values above 2 can saturate the host on large seasons."

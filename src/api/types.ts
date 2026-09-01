@@ -701,6 +701,11 @@ export interface FrameHashTuning {
 export interface IntroDetectionSettings {
   enabled: boolean;
   algorithm: IntroDetectionAlgorithm;
+  /**
+   * Detector retried when ``algorithm`` persists no marker for a
+   * season. ``null`` disables the retry.
+   */
+  fallback_algorithm: IntroDetectionAlgorithm | null;
   batch_size: number;
   interval_minutes: number;
   analysis_window_seconds: number;
