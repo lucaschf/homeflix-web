@@ -221,6 +221,8 @@ export function Home() {
                 imageUrl={item.poster_path ?? undefined}
                 year={item.year}
                 synopsis={item.synopsis ?? undefined}
+                resolution={item.resolution}
+                hdr={item.hdr}
                 mediaId={item.id}
                 mediaType={item.type}
                 onPlay={

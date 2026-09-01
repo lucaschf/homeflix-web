@@ -459,6 +459,8 @@ function FilmographySection({ movies, sort, onSortChange, t, onPlay, onOpen }: F
               year={movie.year}
               imageUrl={movie.poster_path ?? undefined}
               synopsis={movie.synopsis ?? undefined}
+              resolution={movie.resolution}
+              hdr={movie.hdr}
               variant="poster"
               mediaId={movie.id}
               mediaType="movie"

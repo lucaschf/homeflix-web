@@ -9,6 +9,8 @@ export interface MovieSummary {
   poster_path: string | null;
   backdrop_path: string | null;
   resolution: string | null;
+  /** Whether any file variant is HDR. With `resolution`, drives the card badge. */
+  hdr: boolean;
   variant_count: number;
   available_resolutions: string[];
   genres: string[];
@@ -375,6 +377,10 @@ export interface SeriesSummary {
   // picker: intro_marked_count alone can never reach total_episodes on
   // a series where some episodes genuinely have no intro.
   intro_resolved_count: number;
+  // Best resolution across every episode's files (series carry no files
+  // of their own), null when no episode has one yet. Drives the card badge.
+  resolution: string | null;
+  hdr: boolean;
   genres: string[];
   // Operator-facing metadata surfaced on the admin Catalog table.
   library_id: string;
@@ -472,16 +478,26 @@ export interface CatalogItem {
   synopsis: string | null;
   poster_path: string | null;
   backdrop_path: string | null;
+  // Best resolution behind the row — the movie's own best file, or the
+  // best across a series' episodes. Drives the card's quality badge.
+  resolution: string | null;
+  hdr: boolean;
   genres: string[];
 }
 
 export type CatalogByGenreResponse = ApiListResponse<CatalogItem>;
 
+// Search rows are catalog rows minus the quality pair: the FTS query
+// deliberately skips loading file variants (a fan-out of thousands of
+// rows per search, discarded immediately), so `resolution` / `hdr`
+// aren't available and search cards render without a quality badge.
+export type SearchItem = Omit<CatalogItem, "resolution" | "hdr">;
+
 // Search endpoint response — same item shape as the catalog but with
 // a `total` count in metadata instead of pagination cursors.
 export interface SearchResponse {
   type: string;
-  data: CatalogItem[];
+  data: SearchItem[];
   metadata: { total: number };
 }
 

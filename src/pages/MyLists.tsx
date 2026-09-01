@@ -635,6 +635,8 @@ function CustomListDetail({ list, onBack }: { list: CustomListOutput; onBack: ()
                 imageUrl={item.poster_path ?? undefined}
                 year={item.year ?? undefined}
                 progress={item.progress != null ? Math.round(item.progress * 100) : undefined}
+                resolution={item.resolution}
+                hdr={item.hdr}
                 variant="poster"
                 fullWidth
                 onClick={() => nav.open(item.media_id, item.media_type)}

@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import { useContinueWatching, useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
 import { useToast } from "./ToastProvider";
+import { QualityBadge } from "./QualityBadge";
+import { deriveQualityBadge } from "./mediaQuality";
 import { neutral } from "../theme/colors";
 import { whiteAlpha, scrim } from "../theme/tokens";
 import { CARD_WIDTH } from "./mediaCardDimensions";
@@ -18,6 +20,11 @@ interface MediaCardProps {
   progressLabel?: string;
   subtitle?: string;
   synopsis?: string;
+  /** Best resolution name behind this title ("4K", "1080p", …). Feeds
+   *  the corner quality badge; omit on cards with no quality data. */
+  resolution?: string | null;
+  /** Whether any variant behind this title is HDR. */
+  hdr?: boolean;
   variant?: "poster" | "landscape" | "episode";
   fullWidth?: boolean;
   onClick?: () => void;
@@ -38,6 +45,8 @@ export function MediaCard({
   progressLabel,
   subtitle,
   synopsis,
+  resolution,
+  hdr,
   variant = "poster",
   fullWidth = false,
   onClick,
@@ -48,6 +57,7 @@ export function MediaCard({
 }: MediaCardProps) {
   const { t } = useTranslation();
   const aspectRatio = variant === "poster" ? "2/3" : "16/9";
+  const qualityBadge = deriveQualityBadge(resolution, hdr);
   const hasActions = !!mediaId && !!mediaType;
   // A movie card can start playback straight from the carousel. Series
   // need an episode picked first, so their cards only ever open the
@@ -204,6 +214,16 @@ export function MediaCard({
             <Typography variant="body2" color="text.secondary">
               {t("card.noImage")}
             </Typography>
+          </Box>
+        )}
+
+        {/* Quality badge — top-left because the dismiss button owns the
+            top-right corner on list / continue-watching cards. Lives
+            inside the image wrapper, so the hover overlay dims it along
+            with the progress bar. */}
+        {qualityBadge && (
+          <Box sx={{ position: "absolute", top: 6, left: 6, zIndex: 2 }}>
+            <QualityBadge label={qualityBadge.label} kind={qualityBadge.kind} />
           </Box>
         )}
 

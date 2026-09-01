@@ -145,6 +145,8 @@ export function SharedList() {
               title={item.title}
               imageUrl={item.poster_path ?? undefined}
               year={item.year ?? undefined}
+              resolution={item.resolution}
+              hdr={item.hdr}
               variant="poster"
               fullWidth
               onClick={() =>

@@ -100,6 +100,8 @@ export function GenreCarousel({ genre, type }: GenreCarouselProps) {
           year={item.year}
           imageUrl={item.poster_path ?? undefined}
           synopsis={item.synopsis ?? undefined}
+          resolution={item.resolution}
+          hdr={item.hdr}
           variant="poster"
           mediaId={item.id}
           mediaType={item.type}
