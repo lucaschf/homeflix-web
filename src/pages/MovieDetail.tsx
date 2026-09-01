@@ -600,6 +600,8 @@ export function MovieDetail() {
                 year={m.year}
                 imageUrl={m.poster_path ?? undefined}
                 synopsis={m.synopsis ?? undefined}
+                resolution={m.resolution}
+                hdr={m.hdr}
                 variant="poster"
                 mediaId={m.id}
                 mediaType="movie"

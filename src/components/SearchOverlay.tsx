@@ -13,7 +13,7 @@ import { Film, Search, Send, Tv, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../api/hooks";
-import type { CatalogItem } from "../api/types";
+import type { SearchItem } from "../api/types";
 import { neutral } from "../theme/colors";
 import { RequestTitleDialog } from "./RequestTitleDialog";
 
@@ -89,7 +89,7 @@ export function SearchOverlay({ open, onClose }: SearchOverlayProps) {
     localStorage.removeItem(RECENT_STORAGE_KEY);
   }, []);
 
-  const handleSelect = (item: CatalogItem) => {
+  const handleSelect = (item: SearchItem) => {
     saveRecentSearch(item.title);
     onClose();
     navigate(item.type === "movie" ? `/movie/${item.id}` : `/series/${item.id}`);
@@ -244,9 +244,9 @@ function SearchResultRow({
   active,
   onSelect,
 }: {
-  item: CatalogItem;
+  item: SearchItem;
   active: boolean;
-  onSelect: (item: CatalogItem) => void;
+  onSelect: (item: SearchItem) => void;
 }) {
   const { t } = useTranslation();
   const rowRef = useRef<HTMLDivElement>(null);

@@ -562,6 +562,8 @@ export function SeriesDetail() {
                 year={s.start_year}
                 imageUrl={s.poster_path ?? undefined}
                 synopsis={s.synopsis ?? undefined}
+                resolution={s.resolution}
+                hdr={s.hdr}
                 variant="poster"
                 mediaId={s.id}
                 mediaType="series"

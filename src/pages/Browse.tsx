@@ -255,6 +255,8 @@ function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
             imageUrl={movie.poster_path ?? undefined}
             year={movie.year}
             synopsis={movie.synopsis ?? undefined}
+            resolution={movie.resolution}
+            hdr={movie.hdr}
             mediaId={movie.id}
             mediaType="movie"
             onPlay={() => navigate(`/play/movie/${movie.id}`)}
@@ -279,6 +281,8 @@ function RecentlyAddedSection({ type }: { type: CatalogTypeFilter }) {
           imageUrl={series.poster_path ?? undefined}
           year={series.start_year}
           synopsis={series.synopsis ?? undefined}
+          resolution={series.resolution}
+          hdr={series.hdr}
           mediaId={series.id}
           mediaType="series"
           onClick={() => navigate(`/series/${series.id}`)}
@@ -558,6 +562,8 @@ function GenreGrid({
                 year={item.year}
                 imageUrl={item.poster_path ?? undefined}
                 synopsis={item.synopsis ?? undefined}
+                resolution={item.resolution}
+                hdr={item.hdr}
                 variant="poster"
                 fullWidth
                 mediaId={item.id}
