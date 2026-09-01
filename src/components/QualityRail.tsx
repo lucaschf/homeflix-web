@@ -18,14 +18,16 @@ interface DerivedChip {
 function deriveChips(files: MediaFileOutput[], resolution: string | null): DerivedChip[] {
   const chips: DerivedChip[] = [];
 
-  const has4K =
-    (resolution ?? "").includes("2160") ||
-    files.some((f) => f.resolution.includes("2160"));
+  // The API reports resolution *names* ("4K", "1080p", "720p"), never
+  // pixel dimensions — so the old "2160" match could never fire and
+  // every 4K title fell through to the low-emphasis branch, rendering a
+  // dim "4K" chip. Compare against the names the backend actually sends.
+  const has4K = resolution === "4K" || files.some((f) => f.resolution === "4K");
   const hasHDR = files.some((f) => Boolean(f.hdr_format));
 
   if (has4K) {
     chips.push({ label: hasHDR ? "4K HDR" : "4K", kind: "premium" });
-  } else if ((resolution ?? "").includes("1080")) {
+  } else if (resolution === "1080p") {
     chips.push({ label: "1080p", kind: "neutral" });
   } else if (resolution) {
     chips.push({ label: resolution, kind: "low" });
