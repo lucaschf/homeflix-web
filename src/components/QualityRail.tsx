@@ -26,11 +26,22 @@ function deriveChips(files: MediaFileOutput[], resolution: string | null): Deriv
   const hasHDR = files.some((f) => Boolean(f.hdr_format));
 
   if (has4K) {
+    // "4K HDR" stays one chip: it's a recognized label, and it's exactly
+    // what the card badge shows for the same title.
     chips.push({ label: hasHDR ? "4K HDR" : "4K", kind: "premium" });
-  } else if (resolution === "1080p") {
-    chips.push({ label: "1080p", kind: "neutral" });
-  } else if (resolution) {
-    chips.push({ label: resolution, kind: "low" });
+  } else {
+    if (resolution === "1080p") {
+      chips.push({ label: "1080p", kind: "neutral" });
+    } else if (resolution) {
+      chips.push({ label: resolution, kind: "low" });
+    }
+    // HDR below 4K used to be dropped entirely, since hasHDR was only
+    // read inside the 4K branch. It's orthogonal to resolution, so the
+    // rail carries it as its own chip the way it already does for audio
+    // and codec — matching the standalone "HDR" badge on the card.
+    if (hasHDR) {
+      chips.push({ label: "HDR", kind: "premium" });
+    }
   }
 
   const allAudio = files.flatMap((f) => f.audio_tracks);
