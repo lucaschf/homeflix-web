@@ -14,6 +14,11 @@ import { SettingsCardShell } from "./SettingsCardShell";
 
 const ALGORITHM_OPTIONS: IntroDetectionAlgorithm[] = ["frame_hash", "chromaprint"];
 
+/** Sentinel for "no fallback" — AdminSelect values must be strings. */
+const NO_FALLBACK = "none";
+
+type FallbackChoice = IntroDetectionAlgorithm | typeof NO_FALLBACK;
+
 interface Props {
   detail: AdminSettingDetail & { value: IntroDetectionSettings };
   onSuccess: (message: string) => void;
@@ -23,11 +28,14 @@ interface Props {
 /**
  * Intro detection bucket — detector selection + per-algorithm tuning.
  *
- * The active ``algorithm`` decides which tuning section is shown; both
- * the chromaprint and frame_hash buckets are always sent on save so the
- * inactive detector keeps its persisted calibration. The cross-field
- * invariant ``min_intro_seconds < max_intro_seconds`` is enforced on the
- * backend and guarded locally so Save stays disabled while invalid.
+ * A season the primary detector cannot crack is retried with
+ * ``fallback_algorithm``, so both detectors can run in one pass and the
+ * tuning section of each selected one is shown. Both the chromaprint
+ * and frame_hash buckets are always sent on save so a detector that is
+ * currently selected by neither keeps its persisted calibration. The
+ * cross-field invariant ``min_intro_seconds < max_intro_seconds`` is
+ * enforced on the backend and guarded locally so Save stays disabled
+ * while invalid.
  */
 export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props) {
   const { t } = useTranslation();
@@ -37,6 +45,9 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
   // ``updated_at`` changes, so we never need a re-hydrate effect.
   const [enabled, setEnabled] = useState(detail.value.enabled);
   const [algorithm, setAlgorithm] = useState<IntroDetectionAlgorithm>(detail.value.algorithm);
+  const [fallback, setFallback] = useState<FallbackChoice>(
+    detail.value.fallback_algorithm ?? NO_FALLBACK,
+  );
   const [batchSize, setBatchSize] = useState(detail.value.batch_size);
   const [intervalMinutes, setIntervalMinutes] = useState(detail.value.interval_minutes);
   const [analysisWindowSeconds, setAnalysisWindowSeconds] = useState(
@@ -61,9 +72,12 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
   const [maxGapSeconds, setMaxGapSeconds] = useState(detail.value.frame_hash.max_gap_seconds);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const fallbackValue = fallback === NO_FALLBACK ? null : fallback;
+
   const dirty =
     enabled !== detail.value.enabled ||
     algorithm !== detail.value.algorithm ||
+    fallbackValue !== (detail.value.fallback_algorithm ?? null) ||
     batchSize !== detail.value.batch_size ||
     intervalMinutes !== detail.value.interval_minutes ||
     analysisWindowSeconds !== detail.value.analysis_window_seconds ||
@@ -111,9 +125,18 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
     frameToleranceValid &&
     gapValid;
 
+  // A fallback equal to the primary is a no-op on the backend, so
+  // switching the primary onto it clears the pair instead of leaving a
+  // selection that silently does nothing.
+  const onAlgorithmChange = (next: IntroDetectionAlgorithm) => {
+    setAlgorithm(next);
+    if (fallback === next) setFallback(NO_FALLBACK);
+  };
+
   const onReset = () => {
     setEnabled(detail.value.enabled);
     setAlgorithm(detail.value.algorithm);
+    setFallback(detail.value.fallback_algorithm ?? NO_FALLBACK);
     setBatchSize(detail.value.batch_size);
     setIntervalMinutes(detail.value.interval_minutes);
     setAnalysisWindowSeconds(detail.value.analysis_window_seconds);
@@ -138,6 +161,7 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
         payload: {
           enabled,
           algorithm,
+          fallback_algorithm: fallbackValue,
           batch_size: batchSize,
           interval_minutes: intervalMinutes,
           analysis_window_seconds: analysisWindowSeconds,
@@ -206,11 +230,34 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
         <Stack sx={{ maxWidth: 320 }}>
           <AdminSelect<IntroDetectionAlgorithm>
             value={algorithm}
-            onChange={(e) => setAlgorithm(e.target.value as IntroDetectionAlgorithm)}
+            onChange={(e) => onAlgorithmChange(e.target.value as IntroDetectionAlgorithm)}
             options={ALGORITHM_OPTIONS.map((value) => ({
               value,
               label: t(`admin.settings.introDetection.algorithm.options.${value}.label`),
             }))}
+            fullWidth
+          />
+        </Stack>
+      </AdminFormSection>
+
+      <AdminFormSection
+        title={t("admin.settings.introDetection.fallback.label")}
+        helper={t("admin.settings.introDetection.fallback.helper")}
+      >
+        <Stack sx={{ maxWidth: 320 }}>
+          <AdminSelect<FallbackChoice>
+            value={fallback}
+            onChange={(e) => setFallback(e.target.value as FallbackChoice)}
+            options={[
+              {
+                value: NO_FALLBACK,
+                label: t("admin.settings.introDetection.fallback.options.none.label"),
+              },
+              ...ALGORITHM_OPTIONS.filter((value) => value !== algorithm).map((value) => ({
+                value,
+                label: t(`admin.settings.introDetection.algorithm.options.${value}.label`),
+              })),
+            ]}
             fullWidth
           />
         </Stack>
@@ -291,7 +338,7 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
         </Stack>
       </AdminFormSection>
 
-      {algorithm === "chromaprint" ? (
+      {(algorithm === "chromaprint" || fallback === "chromaprint") && (
         <AdminFormSection
           title={t("admin.settings.introDetection.chromaprint.label")}
           helper={t("admin.settings.introDetection.chromaprint.helper")}
@@ -323,7 +370,9 @@ export function IntroDetectionSettingsCard({ detail, onSuccess, onError }: Props
             />
           </Stack>
         </AdminFormSection>
-      ) : (
+      )}
+
+      {(algorithm === "frame_hash" || fallback === "frame_hash") && (
         <AdminFormSection
           title={t("admin.settings.introDetection.frameHash.label")}
           helper={t("admin.settings.introDetection.frameHash.helper")}
