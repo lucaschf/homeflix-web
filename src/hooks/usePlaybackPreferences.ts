@@ -7,13 +7,32 @@ import type { PlaybackPreferencesData } from "../api/types";
 
 export type PreferredLanguage = string;
 
-export type SubtitleMode = "always" | "foreignOnly" | "forcedOnly" | "off";
+/**
+ * When the player turns subtitles on. Ordered least → most restrictive;
+ * the Settings segmented control renders straight from this list.
+ */
+export const SUBTITLE_MODES = [
+  "always",
+  "foreignOnly",
+  "forcedOnly",
+  "off",
+] as const;
+export type SubtitleMode = (typeof SUBTITLE_MODES)[number];
 
 export type DefaultQuality = "best" | string;
 
-export type SubtitleFontSize = "small" | "medium" | "large" | "xlarge";
+/** Caption size tiers, smallest first. */
+export const SUBTITLE_FONT_SIZES = [
+  "small",
+  "medium",
+  "large",
+  "xlarge",
+] as const;
+export type SubtitleFontSize = (typeof SUBTITLE_FONT_SIZES)[number];
 
-export type SubtitleTextEdge = "none" | "shadow" | "outline";
+/** Glyph edge treatments, from lightest to heaviest. */
+export const SUBTITLE_TEXT_EDGES = ["none", "shadow", "outline"] as const;
+export type SubtitleTextEdge = (typeof SUBTITLE_TEXT_EDGES)[number];
 
 /**
  * What the player does when the playhead reaches the opening marker.

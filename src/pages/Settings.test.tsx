@@ -62,6 +62,8 @@ function stubApi(prefs: Partial<PlaybackPreferencesData> = {}) {
   );
 }
 
+const setScheme = vi.fn();
+
 function renderSettings() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -71,7 +73,7 @@ function renderSettings() {
       <ThemeModeContext.Provider
         value={{
           scheme: THEME_SCHEMES[0],
-          setScheme: () => {},
+          setScheme,
           ctaStyle: DEFAULT_CTA_STYLE,
           setCtaStyle: () => {},
         }}
@@ -84,12 +86,14 @@ function renderSettings() {
   );
 }
 
-/** Open a MUI select by its label and click one of its options. */
+/** The segmented control for a setting, addressed by its group label. */
+const segment = (label: string) => screen.getByRole("group", { name: label });
+
+/** Pick an option inside a segmented control. */
 async function choose(label: string, option: string) {
-  const user = userEvent.setup();
-  await user.click(screen.getByLabelText(label));
-  const listbox = await screen.findByRole("listbox");
-  await user.click(within(listbox).getByRole("option", { name: option }));
+  await userEvent
+    .setup()
+    .click(within(segment(label)).getByRole("button", { name: option }));
 }
 
 beforeEach(async () => {
@@ -103,36 +107,45 @@ describe("Settings — playback skip modes", () => {
     stubApi({ intro_skip_mode: "autoAfterFirst", credits_skip_mode: "auto" });
     renderSettings();
 
-    expect(await screen.findByText("Skip from the 2nd episode on")).toBeInTheDocument();
-    expect(screen.getByText("Start the next episode")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        within(segment("Opening")).getByRole("button", { name: "From episode 2" }),
+      ).toHaveAttribute("aria-pressed", "true"),
+    );
+    expect(
+      within(segment("End credits")).getByRole("button", { name: "Play the next one" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
   it("falls back to manual when the backend predates the fields", async () => {
     stubApi({ intro_skip_mode: undefined, credits_skip_mode: undefined });
     renderSettings();
 
-    expect(await screen.findByText("Show the Skip Intro button")).toBeInTheDocument();
-    expect(screen.getByText("Show the next-episode card")).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        within(segment("Opening")).getByRole("button", { name: "Show button" }),
+      ).toHaveAttribute("aria-pressed", "true"),
+    );
+    expect(
+      within(segment("End credits")).getByRole("button", { name: "Next-episode card" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 
-  it("offers all three opening modes", async () => {
+  it("offers all three opening modes at once", async () => {
     renderSettings();
-    await screen.findByText("Show the Skip Intro button");
 
-    await userEvent.setup().click(screen.getByLabelText("Opening"));
-    const options = within(await screen.findByRole("listbox")).getAllByRole("option");
+    const options = within(segment("Opening")).getAllByRole("button");
     expect(options.map((o) => o.textContent)).toEqual([
-      "Show the Skip Intro button",
+      "Show button",
       "Skip automatically",
-      "Skip from the 2nd episode on",
+      "From episode 2",
     ]);
   });
 
   it("sends the opening mode as the API enum, and only that field", async () => {
     renderSettings();
-    await screen.findByText("Show the Skip Intro button");
 
-    await choose("Opening", "Skip from the 2nd episode on");
+    await choose("Opening", "From episode 2");
 
     await waitFor(() =>
       expect(apiPut).toHaveBeenCalledWith("/preferences", {
@@ -143,9 +156,8 @@ describe("Settings — playback skip modes", () => {
 
   it("sends the end-credits mode as the API enum, and only that field", async () => {
     renderSettings();
-    await screen.findByText("Show the next-episode card");
 
-    await choose("End credits", "Start the next episode");
+    await choose("End credits", "Play the next one");
 
     await waitFor(() =>
       expect(apiPut).toHaveBeenCalledWith("/preferences", {
@@ -158,9 +170,79 @@ describe("Settings — playback skip modes", () => {
     await i18n.changeLanguage("pt-BR");
     renderSettings();
 
-    expect(await screen.findByLabelText("Abertura")).toBeInTheDocument();
-    expect(screen.getByLabelText("Créditos finais")).toBeInTheDocument();
-    expect(screen.getByText("Mostrar o botão Pular abertura")).toBeInTheDocument();
-    expect(screen.getByText("Mostrar o card do próximo episódio")).toBeInTheDocument();
+    expect(segment("Abertura")).toBeInTheDocument();
+    expect(segment("Créditos finais")).toBeInTheDocument();
+    expect(
+      within(segment("Abertura")).getByRole("button", { name: "Mostrar botão" }),
+    ).toBeInTheDocument();
+    expect(
+      within(segment("Créditos finais")).getByRole("button", { name: "Card do próximo" }),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("Settings — subtitle appearance", () => {
+  it("writes a swatch pick into the appearance object, keeping the rest", async () => {
+    renderSettings();
+
+    await userEvent.setup().click(screen.getByRole("button", { name: "Yellow" }));
+
+    await waitFor(() =>
+      expect(apiPut).toHaveBeenCalledWith("/preferences", {
+        subtitle_appearance: {
+          color: "#FFFF00",
+          background: "rgba(0, 0, 0, 0.75)",
+          font_size: "medium",
+          text_edge: "shadow",
+        },
+      }),
+    );
+  });
+
+  it("resets only the appearance back to the defaults", async () => {
+    stubApi({
+      subtitle_appearance: {
+        color: "#00FFFF",
+        background: "transparent",
+        font_size: "xlarge",
+        text_edge: "none",
+      },
+    });
+    renderSettings();
+
+    await waitFor(() =>
+      expect(
+        within(segment("Font size")).getByRole("button", { name: "Extra Large" }),
+      ).toHaveAttribute("aria-pressed", "true"),
+    );
+    await userEvent.setup().click(screen.getByRole("button", { name: "Reset to default" }));
+
+    await waitFor(() =>
+      expect(apiPut).toHaveBeenCalledWith("/preferences", {
+        subtitle_appearance: {
+          color: "#FFFFFF",
+          background: "rgba(0, 0, 0, 0.75)",
+          font_size: "medium",
+          text_edge: "shadow",
+        },
+      }),
+    );
+  });
+});
+
+describe("Settings — theme picker", () => {
+  it("shows every scheme as a swatch and switches on click", async () => {
+    renderSettings();
+
+    const swatches = screen.getAllByRole("button", { pressed: false, hidden: false });
+    // Every scheme is visible at once rather than hidden in a dropdown.
+    expect(screen.getByRole("button", { name: /HomeFlix/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(swatches.length).toBeGreaterThan(0);
+
+    await userEvent.setup().click(screen.getByRole("button", { name: /Midnight/ }));
+    expect(setScheme).toHaveBeenCalledWith("midnight");
   });
 });

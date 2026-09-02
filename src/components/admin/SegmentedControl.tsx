@@ -1,5 +1,6 @@
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { ReactNode } from "react";
+import { neutral } from "../../theme/colors";
 import { fontSize, peachAlpha, whiteAlpha } from "../../theme/tokens";
 
 export interface SegmentedOption<V extends string> {
@@ -18,6 +19,13 @@ interface SegmentedControlProps<V extends string> {
   /** Optional mono eyebrow rendered to the left of the group. */
   label?: ReactNode;
   ariaLabel?: string;
+  /**
+   * Let a group that is too wide for its column wrap onto a second line
+   * instead of overflowing — for 4-option groups with wordy labels (the
+   * Settings page). Segments keep their content width and their text
+   * wraps rather than being clipped.
+   */
+  wrap?: boolean;
 }
 
 /**
@@ -37,6 +45,7 @@ export function SegmentedControl<V extends string>({
   onChange,
   label,
   ariaLabel,
+  wrap = false,
 }: SegmentedControlProps<V>) {
   return (
     <Box
@@ -74,20 +83,24 @@ export function SegmentedControl<V extends string>({
           // reads as one clean bar instead of overflowing / wrapping
           // into tall stacked buttons; content-width from ``sm`` up.
           width: { xs: "100%", sm: "auto" },
-          bgcolor: "#0D0D0D",
+          // The scheme's page surface — `#0D0D0D` in the original dark
+          // theme, so this is a no-op there and follows the palette in
+          // the warmer / tinted schemes instead of staying cold grey.
+          bgcolor: neutral[950],
           border: `1px solid ${whiteAlpha(0.08)}`,
           borderRadius: 1,
           p: "3px",
           gap: "2px",
+          flexWrap: wrap ? "wrap" : "nowrap",
           "& .MuiToggleButtonGroup-grouped": {
             m: 0,
             border: 0,
             borderRadius: 0.75,
-            flex: { xs: 1, sm: "0 0 auto" },
+            flex: { xs: wrap ? "1 1 auto" : 1, sm: "0 0 auto" },
             px: 1.5,
             py: 0.75,
             gap: 0.875,
-            whiteSpace: "nowrap",
+            whiteSpace: wrap ? "normal" : "nowrap",
             fontSize: fontSize.control,
             fontWeight: 500,
             lineHeight: 1.2,
