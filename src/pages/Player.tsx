@@ -44,7 +44,9 @@ import { EpisodeSelectorPanel } from "../components/episode-selector/EpisodeSele
 import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
 import { TitleLogo } from "../components/TitleLogo";
 import { useEpisodeSelector } from "../hooks/useEpisodeSelector";
+import { useIntroAutoSkip } from "../hooks/useIntroAutoSkip";
 import { usePlaybackPreferences } from "../hooks/usePlaybackPreferences";
+import { creditsOnsetAction, playbackEndedAction } from "../utils/creditsSkip";
 import {
   subtitlePlayerFontSize,
   subtitleTextEdgeCss,
@@ -69,6 +71,11 @@ const NO_MARKER_ONSET_SECONDS = 60;
 // Lead time on that estimate for the suggestion queries, so the panel
 // opens already populated rather than on a spinner.
 const UP_NEXT_PREFETCH_SECONDS = 45;
+
+// How long the "watch the intro after all" button stays up after an
+// auto-skip. Long enough to notice and reach, short enough that it is
+// gone before the scene the viewer actually came for.
+const WATCH_INTRO_OFFER_MS = 8000;
 
 // How many episodes may auto-advance back-to-back with zero user input
 // before the player stops and asks "are you still watching?" instead of
@@ -653,6 +660,14 @@ export function Player() {
   // Fires the credits trigger at most once per playback; reset when the
   // media changes.
   const creditsHandledRef = useRef(false);
+  // Next-episode card without a countdown — the ``manual`` credits
+  // mode. Distinct from ``nextEpCountdown`` because the same card
+  // renders both, and only one of them ever moves on its own.
+  const [nextEpPromptOpen, setNextEpPromptOpen] = useState(false);
+  // Brief "watch the intro after all" offer shown right after an
+  // auto-skip, so the skip is never a one-way door.
+  const [watchIntroOffer, setWatchIntroOffer] = useState(false);
+  const watchIntroTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Consecutive episodes that auto-advanced with no user input in
   // between. Lives in a ref because it must survive the param-only
   // navigation of auto-advance (the Player never unmounts) and because
@@ -966,6 +981,19 @@ export function Player() {
     !!currentIntro &&
     currentTime >= currentIntro.start_seconds &&
     currentTime < currentIntro.end_seconds;
+
+  // The same slot carries the Skip Intro button and, right after an
+  // automatic skip, the offer to go back — the playhead has left the
+  // window by then, so the two are never both due.
+  const introOverlayVisible = introActive || watchIntroOffer;
+
+  // The click-to-continue card (``credits_skip_mode: manual``) hangs
+  // around until it is answered, but rewinding out of the credits
+  // takes it away: the viewer went back to watching this episode, and
+  // playing forward into the credits again brings it back.
+  const nextEpPromptVisible =
+    nextEpPromptOpen &&
+    (!currentCredits || currentTime >= currentCredits.start_seconds);
 
   // The episode rail lives inside the control bar, so auto-hiding the
   // controls would take the open selector with it.
@@ -1522,6 +1550,7 @@ export function Player() {
       countdownTimerRef.current = null;
     }
     setNextEpCountdown(null);
+    setNextEpPromptOpen(false);
     if (nextEpisode) {
       navigate(`/play/episode/${params.seriesId}/${nextEpisode.season}/${nextEpisode.episode}`, { replace: true });
     } else {
@@ -1585,10 +1614,69 @@ export function Player() {
     [bucketStart, displayDuration],
   );
 
+  /**
+   * Move the playhead past the opening, on the profile's orders.
+   * Also raises the offer to go back, so an auto-skip can always be
+   * undone by the viewer it surprised.
+   */
+  const autoSkipIntro = useCallback(
+    (target: number) => {
+      seekTo(target);
+      setWatchIntroOffer(true);
+      if (watchIntroTimerRef.current) clearTimeout(watchIntroTimerRef.current);
+      watchIntroTimerRef.current = setTimeout(
+        () => setWatchIntroOffer(false),
+        WATCH_INTRO_OFFER_MS,
+      );
+    },
+    [seekTo],
+  );
+
+  // Decides when the opening is skipped on its own. The player still
+  // owns the seek; the hook only says when one is due, and needs to be
+  // told about deliberate seeks so a drag into the opening isn't
+  // undone (see ``userSeekTo``).
+  const introAutoSkip = useIntroAutoSkip({
+    intro: currentIntro,
+    mode: playbackPrefs.introSkipMode,
+    episodeNumber: episodeNum,
+    position: currentTime,
+    active: hlsReady,
+    playbackKey: mediaId,
+    onSkip: autoSkipIntro,
+  });
+
+  /**
+   * Seek the viewer asked for, as opposed to one the player performed.
+   * Every control that moves the playhead on a human's behalf goes
+   * through here: landing inside the opening this way is an explicit
+   * "I want to watch this" and must never be skipped away from.
+   */
+  const userSeekTo = useCallback(
+    (target: number) => {
+      introAutoSkip.notifySeek(target);
+      seekTo(target);
+    },
+    [introAutoSkip, seekTo],
+  );
+
   const skipIntro = useCallback(() => {
     if (!currentIntro) return;
+    // Skipping by hand spends the playback's one skip too — otherwise
+    // seeking back to the opening afterwards could be undone by an
+    // automatic one.
+    introAutoSkip.notifyConsumed();
+    setWatchIntroOffer(false);
     seekTo(currentIntro.end_seconds);
-  }, [currentIntro, seekTo]);
+  }, [currentIntro, introAutoSkip, seekTo]);
+
+  /** Take the offer: back to the top of the opening, and stay there. */
+  const watchIntroAgain = useCallback(() => {
+    if (!currentIntro) return;
+    setWatchIntroOffer(false);
+    if (watchIntroTimerRef.current) clearTimeout(watchIntroTimerRef.current);
+    userSeekTo(currentIntro.start_seconds);
+  }, [currentIntro, userSeekTo]);
 
   // ── Post-play actions ────────────────────────────────────
 
@@ -1599,15 +1687,19 @@ export function Player() {
 
   /**
    * Restart the title from the top. The credits guard is cleared too,
-   * otherwise the panel would never come back on this second viewing.
+   * otherwise the panel would never come back on this second viewing —
+   * and so is the intro machine, since a replay is a new playback and
+   * gets its own single auto-skip.
    */
   const replayFromStart = useCallback(() => {
     creditsHandledRef.current = false;
+    introAutoSkip.reset();
     setPostPlayActive(false);
     setPostPlayEnded(false);
+    setNextEpPromptOpen(false);
     seekTo(0);
     videoRef.current?.play().catch(() => {});
-  }, [seekTo]);
+  }, [introAutoSkip, seekTo]);
 
   /**
    * Open a suggestion. Movies start playing straight away — the click
@@ -1647,6 +1739,7 @@ export function Player() {
       countdownTimerRef.current = null;
     }
     setNextEpCountdown(null);
+    setNextEpPromptOpen(false);
   }, []);
 
   // ── "Are you still watching?" actions ────────────────────
@@ -1733,6 +1826,16 @@ export function Player() {
     }, 1000);
   }, [nextEpisode]);
 
+  /**
+   * The ``manual`` credits mode: same card, no clock. Nothing advances
+   * until the viewer clicks, so the still-watching guard — which only
+   * exists to stop unattended auto-advance — has no part to play here.
+   */
+  const showNextEpisodePrompt = useCallback(() => {
+    if (!nextEpisode) return;
+    setNextEpPromptOpen(true);
+  }, [nextEpisode]);
+
   // Mark the title watched by saving progress at (near) its full
   // duration so the backend's completion threshold flips it to
   // ``completed``. Used when the credits trigger fires.
@@ -1757,24 +1860,40 @@ export function Player() {
     setPostPlayActive(false);
     setPostPlayEnded(false);
     setStillWatchingActive(false);
+    setNextEpPromptOpen(false);
+    setWatchIntroOffer(false);
   }, [mediaId]);
 
   // Credits trigger: once playback passes the detected credits onset,
   // mark the title watched and hand off to whichever end-of-title
-  // surface applies — the auto-next countdown when another episode is
-  // queued up, otherwise the post-play suggestion panel. Fires once per
-  // playback (``creditsHandledRef``). When there is no credits marker
-  // this never runs and the native ``ended`` event remains the fallback.
+  // surface the profile asks for — the auto-next countdown, the
+  // next-episode card that waits for a click, or the post-play
+  // suggestion panel when there is nothing to advance to. Fires once
+  // per playback (``creditsHandledRef``). When there is no credits
+  // marker this never runs and the native ``ended`` event remains the
+  // fallback.
   useEffect(() => {
     if (!currentCredits || creditsHandledRef.current) return;
     if (currentTime < currentCredits.start_seconds) return;
     creditsHandledRef.current = true;
     markWatched();
-    if (isMovie || !nextEpisode) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPostPlayActive(true);
-    } else {
-      startNextEpisodeCountdown();
+    switch (
+      creditsOnsetAction({
+        isMovie,
+        hasNextEpisode: !!nextEpisode,
+        mode: playbackPrefs.creditsSkipMode,
+      })
+    ) {
+      case "postPlay":
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPostPlayActive(true);
+        break;
+      case "autoAdvance":
+        startNextEpisodeCountdown();
+        break;
+      case "prompt":
+        showNextEpisodePrompt();
+        break;
     }
   }, [
     currentTime,
@@ -1782,32 +1901,57 @@ export function Player() {
     isMovie,
     markWatched,
     nextEpisode,
+    playbackPrefs.creditsSkipMode,
+    showNextEpisodePrompt,
     startNextEpisodeCountdown,
   ]);
 
   // End of playback. With another episode queued this starts the
   // countdown (the fallback path when no credits marker fired, or when
   // the credits countdown was cancelled — ``start...`` bails if one is
-  // already running). Otherwise the post-play panel takes the screen,
-  // which is also what keeps a finished movie from parking the viewer
-  // on a frozen black frame.
+  // already running) unless the profile asked for the prompt instead.
+  // On an episode with no marker the mode never had an onset to act
+  // on, so the long-standing end-of-file auto-advance stands. Movies
+  // and last episodes get the post-play panel, which is also what
+  // keeps a finished title from parking the viewer on a frozen frame.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     const onEnded = () => {
       saveCurrentProgress();
-      if (isMovie || !nextEpisode) {
-        setPostPlayEnded(true);
-        setPostPlayActive(true);
-        return;
+      switch (
+        playbackEndedAction({
+          isMovie,
+          hasNextEpisode: !!nextEpisode,
+          mode: playbackPrefs.creditsSkipMode,
+          hasCreditsMarker: !!currentCredits,
+        })
+      ) {
+        case "postPlay":
+          setPostPlayEnded(true);
+          setPostPlayActive(true);
+          break;
+        case "autoAdvance":
+          startNextEpisodeCountdown();
+          break;
+        case "prompt":
+          showNextEpisodePrompt();
+          break;
       }
-      startNextEpisodeCountdown();
     };
 
     video.addEventListener("ended", onEnded);
     return () => video.removeEventListener("ended", onEnded);
-  }, [isMovie, nextEpisode, saveCurrentProgress, startNextEpisodeCountdown]);
+  }, [
+    currentCredits,
+    isMovie,
+    nextEpisode,
+    playbackPrefs.creditsSkipMode,
+    saveCurrentProgress,
+    showNextEpisodePrompt,
+    startNextEpisodeCountdown,
+  ]);
 
   // Navigate when countdown reaches 0. The state-in-effect lint is
   // unavoidable here: `goToNextEpisode` calls `navigate(...)` AND
@@ -1835,6 +1979,7 @@ export function Player() {
       if (badgeTimerRef.current) clearTimeout(badgeTimerRef.current);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
       if (actionTimerRef.current) clearTimeout(actionTimerRef.current);
+      if (watchIntroTimerRef.current) clearTimeout(watchIntroTimerRef.current);
     };
   }, []);
 
@@ -1876,16 +2021,16 @@ export function Player() {
   // keyboard effect can list them as deps without re-binding the
   // listener on every render.
   const seekBackward = useCallback(() => {
-    seekTo(currentTime - BACKWARD_SEEK_SECONDS);
+    userSeekTo(currentTime - BACKWARD_SEEK_SECONDS);
     showAction(<SkipBack size={32} />, `-${BACKWARD_SEEK_SECONDS}s`);
     resetHideTimer();
-  }, [seekTo, currentTime, showAction, resetHideTimer]);
+  }, [userSeekTo, currentTime, showAction, resetHideTimer]);
 
   const seekForward = useCallback(() => {
-    seekTo(currentTime + FORWARD_SEEK_SECONDS);
+    userSeekTo(currentTime + FORWARD_SEEK_SECONDS);
     showAction(<SkipForward size={32} />, `+${FORWARD_SEEK_SECONDS}s`);
     resetHideTimer();
-  }, [seekTo, currentTime, showAction, resetHideTimer]);
+  }, [userSeekTo, currentTime, showAction, resetHideTimer]);
 
   // VLC-style track cycling. Pressing the key advances straight to the
   // next track (and flashes its label) instead of opening a menu —
@@ -2042,10 +2187,10 @@ export function Player() {
     }
   };
 
-  const seek = (displayValue: number) => seekTo(displayValue);
+  const seek = (displayValue: number) => userSeekTo(displayValue);
 
   const skip = (seconds: number) => {
-    seekTo(currentTime + seconds);
+    userSeekTo(currentTime + seconds);
     resetHideTimer();
   };
 
@@ -2729,28 +2874,31 @@ export function Player() {
         )}
       </Box>
 
-      {/* Skip Intro Overlay — shown only while playback is inside the
-          intro window. Anchored to the right edge of the
-          remaining-time label above the seek bar so the button shares
-          a vertical line with it. The next-episode prompt fires near
-          the end of an episode, so the two overlays never share the
-          screen in practice. */}
+      {/* Intro Overlay — the Skip Intro button while playback is inside
+          the intro window, and for a few seconds after an automatic
+          skip, the offer to go back and watch it after all. Anchored to
+          the right edge of the remaining-time label above the seek bar
+          so the button shares a vertical line with it. The next-episode
+          prompt fires near the end of an episode, so the two overlays
+          never share the screen in practice. */}
           <Box
             sx={{
               position: "absolute",
               bottom: { xs: 80, md: 120 },
               right: { xs: 12, md: 40 },
               zIndex: 10,
-              opacity: introActive ? 1 : 0,
+              opacity: introOverlayVisible ? 1 : 0,
               transition: "opacity 300ms",
-              pointerEvents: introActive ? "auto" : "none",
+              pointerEvents: introOverlayVisible ? "auto" : "none",
             }}
           >
             <Button
               variant="contained"
               size="small"
-              onClick={skipIntro}
-              startIcon={<SkipForward size={14} />}
+              onClick={watchIntroOffer ? watchIntroAgain : skipIntro}
+              startIcon={
+                watchIntroOffer ? <SkipBack size={14} /> : <SkipForward size={14} />
+              }
               sx={{
                 minWidth: 140,
                 px: 2.5,
@@ -2761,12 +2909,15 @@ export function Player() {
                 "&:hover": { bgcolor: whiteAlpha(0.85) },
               }}
             >
-              {t("player.skipIntro")}
+              {watchIntroOffer ? t("player.watchIntro") : t("player.skipIntro")}
             </Button>
           </Box>
 
-      {/* Next Episode Overlay */}
-      {nextEpCountdown !== null && nextEpisode && (
+      {/* Next Episode Overlay — a countdown that rolls into the next
+          episode on its own (``credits_skip_mode: auto``, and the
+          end-of-file fallback), or the same card with no clock waiting
+          for the click (``manual``). */}
+      {nextEpisode && (nextEpCountdown !== null || nextEpPromptVisible) && (
         <Box
           sx={{
             position: "absolute",
@@ -2784,7 +2935,9 @@ export function Player() {
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
-              {t("player.nextEpisodeIn", { seconds: nextEpCountdown })}
+              {nextEpCountdown !== null
+                ? t("player.nextEpisodeIn", { seconds: nextEpCountdown })
+                : t("player.upNext")}
             </Typography>
             <Typography variant="body2" color="overlayText.primary" fontWeight={600} noWrap>
               {nextEpisode.title}
@@ -2832,6 +2985,8 @@ export function Player() {
                 inset: 0,
                 bgcolor: scrim(0.15),
                 transformOrigin: "left",
+                // No countdown (the ``manual`` prompt) leaves the bar
+                // empty — nothing is running down towards anything.
                 transform: `scaleX(${1 - (nextEpCountdown ?? 10) / 10})`,
                 transition: "transform 1s linear",
                 zIndex: -1,

@@ -324,6 +324,8 @@
     "episodes": "Episódios",
     "notAvailable": "indisponível",
     "skipIntro": "Pular abertura",
+    "watchIntro": "Voltar para a abertura",
+    "upNext": "A seguir",
     "creditsRolling": "Créditos",
     "markedWatched": "Marcado como assistido",
     "backToMovie": "Voltar ao filme",
@@ -2071,6 +2073,19 @@
       "best": "Melhor disponivel",
       "1080p": "1080p",
       "720p": "720p"
+    },
+    "introSkipMode": "Abertura",
+    "introSkipModeHint": "Vale apenas para episódios com abertura detectada. O player pula uma vez por reprodução — arraste a barra para voltar e assistir.",
+    "introSkipModes": {
+      "manual": "Mostrar o botão Pular abertura",
+      "auto": "Pular automaticamente",
+      "autoAfterFirst": "Pular a partir do 2º episódio"
+    },
+    "creditsSkipMode": "Créditos finais",
+    "creditsSkipModeHint": "O que acontece quando os créditos finais começam. O último episódio da série sempre espera você.",
+    "creditsSkipModes": {
+      "manual": "Mostrar o card do próximo episódio",
+      "auto": "Iniciar o próximo episódio"
     },
     "subtitleAppearance": "Aparencia da Legenda",
     "subtitleColor": "Cor do Texto",

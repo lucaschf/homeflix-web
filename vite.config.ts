@@ -1,8 +1,20 @@
-import { defineConfig } from "vite";
+// ``vitest/config`` re-exports Vite's own ``defineConfig`` plus the
+// ``test`` block, so the suite runs through the same plugin pipeline
+// (JSX, path handling) the app is built with.
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
+  test: {
+    // Components under test render into a DOM; the pure state machines
+    // don't care either way.
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
+    // Explicit imports over ambient globals, so a test file reads the
+    // same as any other module in ``src``.
+    globals: false,
+  },
   server: {
     port: 3000,
     // Bind to all interfaces so the dev server is reachable over the

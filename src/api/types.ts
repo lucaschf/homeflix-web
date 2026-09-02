@@ -1290,6 +1290,19 @@ export interface PlaybackPreferencesData {
   default_quality: string;
   speed: number;
   subtitle_appearance: SubtitleAppearanceData;
+  /**
+   * What the player does at the opening marker: ``manual`` (the Skip
+   * Intro button, nothing moves on its own), ``auto``, or
+   * ``autoAfterFirst`` (manual on episode 1 of the season, auto from
+   * episode 2 on). Absent on a response predating the field.
+   */
+  intro_skip_mode?: string;
+  /**
+   * What the player does at the end-credits onset: ``manual`` (show
+   * the next-episode prompt and wait for the click) or ``auto`` (roll
+   * into the next episode). Absent on a response predating the field.
+   */
+  credits_skip_mode?: string;
 }
 
 export interface PreferencesResponse {
