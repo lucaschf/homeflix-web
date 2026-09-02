@@ -476,6 +476,8 @@ Application configuration page.
 |        |  | Preferred Subtitle:  [Portuguese v]          | |
 |        |  | Subtitle Mode:       [Foreign audio only v]  | |
 |        |  | Default Quality:     [Best available v]      | |
+|        |  | Opening:             [Show Skip Intro v]     | |
+|        |  | End credits:         [Show next-ep card v]   | |
 |        |  +---------------------------------------------+ |
 |        |                                                  |
 |        |  Metadata                                        |
@@ -499,6 +501,13 @@ Application configuration page.
 1. **Libraries** — list of configured libraries with paths. Scan button triggers manual scan. Add library opens modal.
 
 2. **Playback** — default audio/subtitle preferences. Applied when no per-media preference exists.
+   Also carries the two skip modes, stored per profile: **Opening**
+   (`manual` — the Skip Intro button only, `auto`, or `autoAfterFirst`,
+   which plays the theme on episode 1 of a season and skips it from
+   episode 2 on) and **End credits** (`manual` shows the next-episode
+   card and waits for the click; `auto` rolls into the next episode at
+   the credits onset). Both only apply to titles that carry the
+   corresponding marker, and both default to `manual`.
 
 3. **Metadata** — TMDB API key config. Test button validates key. "Enrich All" triggers bulk enrichment.
 

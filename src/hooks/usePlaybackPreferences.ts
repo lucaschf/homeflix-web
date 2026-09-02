@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { useCurrentUser } from "../api/auth";
 import { usePreferencesQuery, useUpdatePreferences } from "../api/hooks";
 import type { PlaybackPreferencesData } from "../api/types";
 
@@ -13,6 +14,24 @@ export type DefaultQuality = "best" | string;
 export type SubtitleFontSize = "small" | "medium" | "large" | "xlarge";
 
 export type SubtitleTextEdge = "none" | "shadow" | "outline";
+
+/**
+ * What the player does when the playhead reaches the opening marker.
+ *
+ * ``autoAfterFirst`` is deliberately stateless: it reads the episode
+ * number rather than counting skips, so "I want to hear the theme once
+ * a season" holds however the viewer wanders through the season.
+ *
+ * The values are the API enum verbatim — the backend rejects anything
+ * outside it, so the Settings select maps over ``INTRO_SKIP_MODES``
+ * instead of spelling the strings out a second time.
+ */
+export const INTRO_SKIP_MODES = ["manual", "auto", "autoAfterFirst"] as const;
+export type IntroSkipMode = (typeof INTRO_SKIP_MODES)[number];
+
+/** What the player does when the end credits start rolling. */
+export const CREDITS_SKIP_MODES = ["manual", "auto"] as const;
+export type CreditsSkipMode = (typeof CREDITS_SKIP_MODES)[number];
 
 /** How subtitles look in the player overlay. */
 export interface SubtitleAppearance {
@@ -38,6 +57,8 @@ export interface PlaybackPreferences {
   defaultQuality: DefaultQuality;
   speed: number;
   subtitleAppearance: SubtitleAppearance;
+  introSkipMode: IntroSkipMode;
+  creditsSkipMode: CreditsSkipMode;
 }
 
 // ── Defaults ─────────────────────────────────────────────────────
@@ -57,6 +78,10 @@ const DEFAULT_PREFS: Readonly<PlaybackPreferences> = Object.freeze({
   defaultQuality: "best",
   speed: 1,
   subtitleAppearance: DEFAULT_SUBTITLE_APPEARANCE,
+  // Both default to "manual": nothing in the player moves on its own
+  // until the viewer asks for it in Settings.
+  introSkipMode: "manual",
+  creditsSkipMode: "manual",
 });
 
 // ── localStorage cache ───────────────────────────────────────────
@@ -64,12 +89,28 @@ const DEFAULT_PREFS: Readonly<PlaybackPreferences> = Object.freeze({
 // the TanStack Query resolves) shows the last-known values instead
 // of the factory defaults. Also acts as an offline fallback if the
 // backend is unreachable.
+//
+// Namespaced by profile: preferences are per-profile server-side, and
+// switching profiles clears the query cache, so a single shared key
+// would hand the incoming viewer the outgoing one's settings for the
+// render or two before ``GET /preferences`` answers. With no active
+// profile yet there is nothing to key on and the factory defaults
+// stand in — one render of "manual" is the safe way to be wrong.
 
-const STORAGE_KEY = "homeflix-playback-prefs";
+const STORAGE_PREFIX = "homeflix-playback-prefs";
 
-function loadCached(): PlaybackPreferences {
+/** Pre-profile key, superseded by the namespaced ones. */
+const LEGACY_STORAGE_KEY = STORAGE_PREFIX;
+
+function storageKey(profileId: string | null | undefined): string | null {
+  return profileId ? `${STORAGE_PREFIX}:${profileId}` : null;
+}
+
+function loadCached(profileId: string | null | undefined): PlaybackPreferences {
+  const key = storageKey(profileId);
+  if (!key) return { ...DEFAULT_PREFS };
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return { ...DEFAULT_PREFS };
     const parsed = JSON.parse(raw) as Partial<PlaybackPreferences>;
     return { ...DEFAULT_PREFS, ...parsed };
@@ -78,15 +119,34 @@ function loadCached(): PlaybackPreferences {
   }
 }
 
-function saveCache(prefs: PlaybackPreferences): void {
+function saveCache(
+  profileId: string | null | undefined,
+  prefs: PlaybackPreferences,
+): void {
+  const key = storageKey(profileId);
+  if (!key) return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    localStorage.setItem(key, JSON.stringify(prefs));
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
   } catch {
     /* best-effort */
   }
 }
 
 // ── snake ↔ camel translation ────────────────────────────────────
+
+/**
+ * Narrow an API enum string to its union, falling back to the default
+ * for anything unexpected — an older backend that omits the field, or
+ * a value added server-side that this build doesn't render yet.
+ */
+function oneOf<T extends string>(
+  allowed: readonly T[],
+  value: string | undefined,
+  fallback: T,
+): T {
+  return allowed.includes(value as T) ? (value as T) : fallback;
+}
 
 function fromApi(data: PlaybackPreferencesData): PlaybackPreferences {
   const appearance = data.subtitle_appearance;
@@ -105,6 +165,16 @@ function fromApi(data: PlaybackPreferencesData): PlaybackPreferences {
           textEdge: appearance.text_edge ?? DEFAULT_SUBTITLE_APPEARANCE.textEdge,
         }
       : { ...DEFAULT_SUBTITLE_APPEARANCE },
+    introSkipMode: oneOf(
+      INTRO_SKIP_MODES,
+      data.intro_skip_mode,
+      DEFAULT_PREFS.introSkipMode,
+    ),
+    creditsSkipMode: oneOf(
+      CREDITS_SKIP_MODES,
+      data.credits_skip_mode,
+      DEFAULT_PREFS.creditsSkipMode,
+    ),
   };
 }
 
@@ -124,6 +194,10 @@ function toApi(
       font_size: update.subtitleAppearance.fontSize,
       text_edge: update.subtitleAppearance.textEdge,
     };
+  }
+  if (update.introSkipMode !== undefined) result.intro_skip_mode = update.introSkipMode;
+  if (update.creditsSkipMode !== undefined) {
+    result.credits_skip_mode = update.creditsSkipMode;
   }
   return result;
 }
@@ -146,7 +220,9 @@ export function usePlaybackPreferences(): [
   (update: Partial<PlaybackPreferences>) => void,
 ] {
   const { data: apiData } = usePreferencesQuery();
+  const { data: user } = useCurrentUser();
   const mutation = useUpdatePreferences();
+  const profileId = user?.active_profile_id ?? null;
 
   // Merge order: API data (source of truth) > localStorage cache
   // > factory defaults. The useMemo keeps the reference stable
@@ -154,23 +230,23 @@ export function usePlaybackPreferences(): [
   const prefs = useMemo<PlaybackPreferences>(() => {
     if (apiData) {
       const converted = fromApi(apiData);
-      saveCache(converted);
+      saveCache(profileId, converted);
       return converted;
     }
-    return loadCached();
-  }, [apiData]);
+    return loadCached(profileId);
+  }, [apiData, profileId]);
 
   const setPrefs = useCallback(
     (update: Partial<PlaybackPreferences>) => {
       // Optimistic local update so the UI feels instant.
       const next = { ...prefs, ...update };
-      saveCache(next);
+      saveCache(profileId, next);
       // Fire the API mutation — the onSuccess handler in
       // useUpdatePreferences sets the query cache so every
       // subscriber picks up the response without a refetch.
       mutation.mutate(toApi(update));
     },
-    [prefs, mutation],
+    [prefs, mutation, profileId],
   );
 
   return [prefs, setPrefs];

@@ -4,6 +4,7 @@ import {
   Chip,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   IconButton,
   InputLabel,
   MenuItem,
@@ -17,8 +18,12 @@ import { useHealth } from "../api/hooks";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
+  CREDITS_SKIP_MODES,
   DEFAULT_SUBTITLE_APPEARANCE,
+  INTRO_SKIP_MODES,
   usePlaybackPreferences,
+  type CreditsSkipMode,
+  type IntroSkipMode,
   type SubtitleAppearance,
   type SubtitleMode,
 } from "../hooks/usePlaybackPreferences";
@@ -158,6 +163,53 @@ export function Settings() {
               <MenuItem value="1080p">{t("settings.qualityOptions.1080p")}</MenuItem>
               <MenuItem value="720p">{t("settings.qualityOptions.720p")}</MenuItem>
             </Select>
+          </FormControl>
+
+          {/* Opening / end-credits behaviour. The option values are the
+              API enum verbatim (mapped from the shared constants, not
+              retyped) — the backend rejects anything outside it rather
+              than quietly ignoring it. */}
+          <FormControl size="small" fullWidth>
+            <InputLabel id="intro-skip-mode-label">
+              {t("settings.introSkipMode")}
+            </InputLabel>
+            <Select
+              labelId="intro-skip-mode-label"
+              id="intro-skip-mode"
+              value={playbackPrefs.introSkipMode}
+              onChange={(e) =>
+                setPlaybackPrefs({ introSkipMode: e.target.value as IntroSkipMode })
+              }
+              label={t("settings.introSkipMode")}
+            >
+              {INTRO_SKIP_MODES.map((mode) => (
+                <MenuItem key={mode} value={mode}>
+                  {t(`settings.introSkipModes.${mode}`)}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{t("settings.introSkipModeHint")}</FormHelperText>
+          </FormControl>
+          <FormControl size="small" fullWidth>
+            <InputLabel id="credits-skip-mode-label">
+              {t("settings.creditsSkipMode")}
+            </InputLabel>
+            <Select
+              labelId="credits-skip-mode-label"
+              id="credits-skip-mode"
+              value={playbackPrefs.creditsSkipMode}
+              onChange={(e) =>
+                setPlaybackPrefs({ creditsSkipMode: e.target.value as CreditsSkipMode })
+              }
+              label={t("settings.creditsSkipMode")}
+            >
+              {CREDITS_SKIP_MODES.map((mode) => (
+                <MenuItem key={mode} value={mode}>
+                  {t(`settings.creditsSkipModes.${mode}`)}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{t("settings.creditsSkipModeHint")}</FormHelperText>
           </FormControl>
 
           <Typography
