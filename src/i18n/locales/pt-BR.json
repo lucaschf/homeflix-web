@@ -2033,22 +2033,25 @@
     "noSearchResults": "Nenhum resultado para \"{{query}}\""
   },
   "settings": {
-    "title": "Configuracoes",
+    "title": "Configurações",
+    "pageHint": "Preferências deste perfil.",
     "neverScanned": "Nunca escaneado",
     "justNow": "agora",
     "minutesAgo": "ha {{count}}m",
     "hoursAgo": "ha {{count}}h",
     "daysAgo": "ha {{count}}d",
-    "appearance": "Aparencia",
+    "appearance": "Aparência",
+    "appearanceHint": "tema e cor dos botões",
     "theme": "Tema",
-    "neutralPrimary": "Botoes principais neutros",
-    "neutralPrimaryHint": "Botoes principais em branco; mantem o resto das cores do tema.",
-    "preview": "Previa",
+    "themeHint": "Define a cor de destaque de toda a interface. A prévia abaixo acompanha a escolha.",
+    "neutralPrimary": "Botões principais neutros",
+    "neutralPrimaryHint": "Botões principais em branco; mantém o resto das cores do tema.",
+    "preview": "Prévia",
     "previewPlay": "Assistir",
     "previewTrailer": "Trailer",
     "themes": {
       "dark": "HomeFlix (Coral)",
-      "amber": "Ambar (Darkroom)",
+      "amber": "Âmbar (Darkroom)",
       "oled": "OLED (Preto)",
       "midnight": "Meia-noite (Azul)",
       "cinema": "Cinema (Vermelho)",
@@ -2058,39 +2061,48 @@
       "forest": "Floresta (Verde)",
       "warmteal": "Âmbar + Teal"
     },
-    "playback": "Reproducao",
-    "preferredAudio": "Audio Preferido",
-    "preferredSubtitle": "Legenda Preferida",
-    "subtitleMode": "Modo de Legenda",
-    "defaultQuality": "Qualidade Padrao",
+    "playback": "Reprodução",
+    "playbackHint": "idioma, qualidade e o que acontece entre episódios",
+    "groups": {
+      "language": "Idioma",
+      "quality": "Qualidade",
+      "betweenEpisodes": "Entre episódios"
+    },
+    "preferredAudio": "Áudio preferido",
+    "preferredSubtitle": "Legenda preferida",
+    "subtitleMode": "Quando mostrar legenda",
+    "subtitleModeHint": "\u201cÁudio estrangeiro\u201d liga a legenda só quando o áudio não está no seu idioma.",
+    "defaultQuality": "Qualidade padrão",
+    "defaultQualityHint": "A melhor disponível usa mais banda.",
     "subtitleModes": {
       "always": "Sempre",
-      "foreignOnly": "Apenas audio estrangeiro",
-      "forcedOnly": "Apenas forcadas",
-      "off": "Desligado"
+      "foreignOnly": "Áudio estrangeiro",
+      "forcedOnly": "Apenas forçadas",
+      "off": "Nunca"
     },
     "qualityOptions": {
-      "best": "Melhor disponivel",
+      "best": "Melhor disponível",
       "1080p": "1080p",
       "720p": "720p"
     },
     "introSkipMode": "Abertura",
     "introSkipModeHint": "Vale apenas para episódios com abertura detectada. O player pula uma vez por reprodução — arraste a barra para voltar e assistir.",
     "introSkipModes": {
-      "manual": "Mostrar o botão Pular abertura",
-      "auto": "Pular automaticamente",
-      "autoAfterFirst": "Pular a partir do 2º episódio"
+      "manual": "Mostrar botão",
+      "auto": "Pular sozinho",
+      "autoAfterFirst": "A partir do 2º"
     },
     "creditsSkipMode": "Créditos finais",
     "creditsSkipModeHint": "O que acontece quando os créditos finais começam. O último episódio da série sempre espera você.",
     "creditsSkipModes": {
-      "manual": "Mostrar o card do próximo episódio",
-      "auto": "Iniciar o próximo episódio"
+      "manual": "Card do próximo",
+      "auto": "Reproduzir sozinho"
     },
-    "subtitleAppearance": "Aparencia da Legenda",
-    "subtitleColor": "Cor do Texto",
+    "subtitleAppearance": "Aparência da legenda",
+    "subtitleAppearanceHint": "ajuste vendo o resultado",
+    "subtitleColor": "Cor do texto",
     "subtitleBackground": "Fundo",
-    "subtitleSize": "Tamanho da Fonte",
+    "subtitleSize": "Tamanho",
     "colors": {
       "white": "Branco",
       "yellow": "Amarelo",
@@ -2099,28 +2111,35 @@
     },
     "backgrounds": {
       "semiTransparent": "Semi-transparente",
-      "solid": "Preto solido",
+      "solid": "Preto sólido",
       "none": "Nenhum"
     },
     "sizes": {
       "small": "Pequeno",
-      "medium": "Medio",
+      "medium": "Médio",
       "large": "Grande",
       "xlarge": "Extra Grande"
     },
-    "subtitleTextEdge": "Borda do Texto",
+    "subtitleTextEdge": "Borda do texto",
     "edges": {
       "none": "Nenhuma",
       "shadow": "Sombra",
       "outline": "Contorno"
     },
     "subtitlePreviewText": "Legenda de exemplo",
-    "resetSubtitles": "Redefinir para o padrao",
+    "subtitlePreviewNote": "Troque a cena para checar a legibilidade da legenda sobre fundos claros e escuros.",
+    "scenes": {
+      "dark": "Cena escura",
+      "light": "Cena clara"
+    },
+    "sceneLabel": "Cena da prévia",
+    "resetSubtitles": "Redefinir para o padrão",
+    "autoSaved": "Alterações salvas automaticamente",
     "about": "Sobre",
-    "version": "Versao",
+    "version": "Versão",
     "apiStatus": "Status da API",
-    "healthy": "Saudavel",
-    "unreachable": "Indisponivel",
+    "healthy": "Saudável",
+    "unreachable": "Indisponível",
     "language": "Idioma"
   }
 }

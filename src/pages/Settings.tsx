@@ -2,425 +2,342 @@ import {
   Box,
   Button,
   Chip,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
   IconButton,
-  InputLabel,
   MenuItem,
   Select,
   Switch,
   Typography,
 } from "@mui/material";
-import { Bookmark, Film, Info, MonitorPlay, Palette, Play } from "lucide-react";
+import { Bookmark, Film, Play } from "lucide-react";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useHealth } from "../api/hooks";
+import { SegmentedControl, type SegmentedOption } from "../components/admin/SegmentedControl";
 import { LanguageSwitch } from "../components/language-switch/LanguageSwitch";
+import {
+  SettingsCard,
+  SettingsCardFooter,
+  SettingsGroupLabel,
+  SettingsRow,
+  SettingsSectionHead,
+  SubtitleColorSwatches,
+  SubtitlePreview,
+  ThemeSwatchGrid,
+} from "../components/settings";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import {
   CREDITS_SKIP_MODES,
   DEFAULT_SUBTITLE_APPEARANCE,
   INTRO_SKIP_MODES,
+  SUBTITLE_FONT_SIZES,
+  SUBTITLE_MODES,
+  SUBTITLE_TEXT_EDGES,
   usePlaybackPreferences,
   type CreditsSkipMode,
   type IntroSkipMode,
   type SubtitleAppearance,
+  type SubtitleFontSize,
   type SubtitleMode,
+  type SubtitleTextEdge,
 } from "../hooks/usePlaybackPreferences";
-import { neutral, peach, THEME_SCHEMES, type ThemeScheme } from "../theme/colors";
+import { peach, type ThemeScheme } from "../theme/colors";
 import { useThemeMode } from "../theme/theme-mode";
 import { peachAlpha, whiteAlpha } from "../theme/tokens";
-import {
-  subtitlePreviewFontSize,
-  subtitleTextEdgeCss,
-} from "../utils/subtitleStyles";
 
 /**
  * Per-profile settings page surfaced under ``/settings``.
  *
  * Scoped to the things a household member can actually change for
- * themselves: playback preferences (audio / subtitle language,
- * default quality, subtitle mode) and a small About panel with the
- * app version + API health + language picker. Library / metadata
- * administration now lives exclusively under ``/admin`` so the
- * admin and member surfaces don't duplicate the same actions
- * (overlap had drifted apart and was a footgun — "scan all from
- * Settings" used the simpler endpoint while ``/admin/scan`` had
- * the richer run history). Settings is now an everyone-page.
+ * themselves: appearance (theme + button style), playback preferences
+ * (audio / subtitle language, default quality, subtitle mode, what
+ * happens between episodes), subtitle appearance, and a small About
+ * panel with the app version + API health + language picker. Library /
+ * metadata administration lives exclusively under ``/admin`` so the
+ * admin and member surfaces don't duplicate the same actions.
+ *
+ * The layout follows ``specs/design_handoff_configuracoes``: sections of
+ * hairline-separated rows, each **label + helper left, control right**,
+ * with the control chosen by the shape of the choice — segmented for a
+ * closed set of 2-4, a select only for the open-ended language lists,
+ * swatches where the value *is* a color. Nothing here is a save form;
+ * every control writes through on change.
  */
 export function Settings() {
   const { t } = useTranslation();
   useDocumentTitle(t("settings.title"));
   const { data: health } = useHealth();
-  // Playback preferences are persisted to localStorage via this
-  // hook and consumed by the Player on first play of a new media.
-  // The partial-update setter lets each Select be a one-liner.
+  // Playback preferences are persisted through the API (with a
+  // localStorage cache) by this hook and consumed by the Player on
+  // first play of a new media. The partial-update setter lets each
+  // control be a one-liner.
   const [playbackPrefs, setPlaybackPrefs] = usePlaybackPreferences();
   const { scheme, setScheme, ctaStyle, setCtaStyle } = useThemeMode();
 
   const apiHealthy = health?.status === "healthy";
+  const appearance = playbackPrefs.subtitleAppearance;
+
+  /** Patch a single field of the subtitle appearance object. */
+  const setAppearance = (patch: Partial<SubtitleAppearance>) =>
+    setPlaybackPrefs({ subtitleAppearance: { ...appearance, ...patch } });
+
+  /** Segmented options for a closed set of API enum values. */
+  const modeOptions = <V extends string>(
+    values: readonly V[],
+    prefix: string,
+  ): SegmentedOption<V>[] =>
+    values.map((value) => ({ value, label: t(`${prefix}.${value}`) }));
 
   return (
-    <Box sx={{ px: { xs: 2, md: 6 }, py: { xs: 3, md: 5 }, maxWidth: 800, mx: "auto" }}>
-      <Typography
-        variant="h1"
-        sx={{ fontSize: { xs: "1.5rem", md: "1.75rem" }, fontWeight: 700, mb: 4 }}
-      >
+    <Box sx={{ px: { xs: 2, md: 3.5 }, py: { xs: 3, md: 5.5 }, maxWidth: 860, mx: "auto" }}>
+      <Typography variant="h1" sx={{ fontSize: { xs: "1.5rem", md: "2rem" }, mb: 0.75 }}>
         {t("settings.title")}
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 4.5 }}>
+        {t("settings.pageHint")}
       </Typography>
 
       {/* ── Appearance ───────────────────────────────────── */}
-      <SettingsSection icon={Palette} title={t("settings.appearance")}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.theme")}</InputLabel>
-            <Select
-              value={scheme}
-              onChange={(e) => setScheme(e.target.value as ThemeScheme)}
-              label={t("settings.theme")}
-            >
-              {THEME_SCHEMES.map((s) => (
-                <MenuItem key={s} value={s}>
-                  {t(`settings.themes.${s}`)}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControlLabel
-            sx={{ ml: 0, justifyContent: "space-between" }}
-            labelPlacement="start"
-            control={
-              <Switch
-                checked={ctaStyle === "neutral"}
-                onChange={(e) => setCtaStyle(e.target.checked ? "neutral" : "accent")}
-              />
-            }
-            label={
-              <Box>
-                <Typography variant="body2" fontWeight={500}>
-                  {t("settings.neutralPrimary")}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {t("settings.neutralPrimaryHint")}
-                </Typography>
-              </Box>
-            }
+      <SettingsSectionHead title={t("settings.appearance")} hint={t("settings.appearanceHint")} />
+      <SettingsCard>
+        <SettingsRow label={t("settings.theme")} description={t("settings.themeHint")} stack>
+          <ThemeSwatchGrid
+            value={scheme}
+            onChange={(next: ThemeScheme) => setScheme(next)}
           />
-          <ThemePreview />
-        </Box>
-      </SettingsSection>
+        </SettingsRow>
+        <SettingsRow
+          label={t("settings.neutralPrimary")}
+          description={t("settings.neutralPrimaryHint")}
+        >
+          <Switch
+            checked={ctaStyle === "neutral"}
+            onChange={(e) => setCtaStyle(e.target.checked ? "neutral" : "accent")}
+            inputProps={{ "aria-label": t("settings.neutralPrimary") }}
+          />
+        </SettingsRow>
+        <ThemePreview />
+      </SettingsCard>
 
       {/* ── Playback ─────────────────────────────────────── */}
-      <SettingsSection icon={MonitorPlay} title={t("settings.playback")}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: 2.5 }}>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.preferredAudio")}</InputLabel>
-            <Select
-              value={playbackPrefs.audioLang}
-              onChange={(e) => setPlaybackPrefs({ audioLang: e.target.value })}
-              label={t("settings.preferredAudio")}
-            >
-              <MenuItem value="pt-BR">Português (Brasil)</MenuItem>
-              <MenuItem value="en">English</MenuItem>
-              <MenuItem value="ja">日本語</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.preferredSubtitle")}</InputLabel>
-            <Select
-              value={playbackPrefs.subtitleLang}
-              onChange={(e) => setPlaybackPrefs({ subtitleLang: e.target.value })}
-              label={t("settings.preferredSubtitle")}
-            >
-              <MenuItem value="pt-BR">Português (Brasil)</MenuItem>
-              <MenuItem value="en">English</MenuItem>
-              <MenuItem value="off">{t("settings.subtitleModes.off")}</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.subtitleMode")}</InputLabel>
-            <Select
-              value={playbackPrefs.subtitleMode}
-              onChange={(e) =>
-                setPlaybackPrefs({ subtitleMode: e.target.value as SubtitleMode })
-              }
-              label={t("settings.subtitleMode")}
-            >
-              <MenuItem value="always">{t("settings.subtitleModes.always")}</MenuItem>
-              <MenuItem value="foreignOnly">{t("settings.subtitleModes.foreignOnly")}</MenuItem>
-              <MenuItem value="forcedOnly">{t("settings.subtitleModes.forcedOnly")}</MenuItem>
-              <MenuItem value="off">{t("settings.subtitleModes.off")}</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.defaultQuality")}</InputLabel>
-            <Select
-              value={playbackPrefs.defaultQuality}
-              onChange={(e) => setPlaybackPrefs({ defaultQuality: e.target.value })}
-              label={t("settings.defaultQuality")}
-            >
-              <MenuItem value="best">{t("settings.qualityOptions.best")}</MenuItem>
-              <MenuItem value="1080p">{t("settings.qualityOptions.1080p")}</MenuItem>
-              <MenuItem value="720p">{t("settings.qualityOptions.720p")}</MenuItem>
-            </Select>
-          </FormControl>
-
-          {/* Opening / end-credits behaviour. The option values are the
-              API enum verbatim (mapped from the shared constants, not
-              retyped) — the backend rejects anything outside it rather
-              than quietly ignoring it. */}
-          <FormControl size="small" fullWidth>
-            <InputLabel id="intro-skip-mode-label">
-              {t("settings.introSkipMode")}
-            </InputLabel>
-            <Select
-              labelId="intro-skip-mode-label"
-              id="intro-skip-mode"
-              value={playbackPrefs.introSkipMode}
-              onChange={(e) =>
-                setPlaybackPrefs({ introSkipMode: e.target.value as IntroSkipMode })
-              }
-              label={t("settings.introSkipMode")}
-            >
-              {INTRO_SKIP_MODES.map((mode) => (
-                <MenuItem key={mode} value={mode}>
-                  {t(`settings.introSkipModes.${mode}`)}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>{t("settings.introSkipModeHint")}</FormHelperText>
-          </FormControl>
-          <FormControl size="small" fullWidth>
-            <InputLabel id="credits-skip-mode-label">
-              {t("settings.creditsSkipMode")}
-            </InputLabel>
-            <Select
-              labelId="credits-skip-mode-label"
-              id="credits-skip-mode"
-              value={playbackPrefs.creditsSkipMode}
-              onChange={(e) =>
-                setPlaybackPrefs({ creditsSkipMode: e.target.value as CreditsSkipMode })
-              }
-              label={t("settings.creditsSkipMode")}
-            >
-              {CREDITS_SKIP_MODES.map((mode) => (
-                <MenuItem key={mode} value={mode}>
-                  {t(`settings.creditsSkipModes.${mode}`)}
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>{t("settings.creditsSkipModeHint")}</FormHelperText>
-          </FormControl>
-
-          <Typography
-            variant="subtitle2"
-            sx={{ mt: 1, color: whiteAlpha(0.6), fontWeight: 600 }}
+      <Box sx={{ mt: 4.25 }}>
+        <SettingsSectionHead title={t("settings.playback")} hint={t("settings.playbackHint")} />
+      </Box>
+      <SettingsCard>
+        <SettingsGroupLabel>{t("settings.groups.language")}</SettingsGroupLabel>
+        <SettingsRow label={t("settings.preferredAudio")} labelId="audio-lang-label">
+          <LanguageSelect
+            labelId="audio-lang-label"
+            value={playbackPrefs.audioLang}
+            onChange={(audioLang) => setPlaybackPrefs({ audioLang })}
           >
-            {t("settings.subtitleAppearance")}
-          </Typography>
-          {/* Live preview — mirrors the player overlay so choices are
-              visible without leaving Settings. */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: 72,
-              borderRadius: 1,
-              bgcolor: "rgba(255,255,255,0.04)",
-              border: `1px solid ${whiteAlpha(0.08)}`,
-              p: 1.5,
-            }}
+            <MenuItem value="pt-BR">Português (Brasil)</MenuItem>
+            <MenuItem value="en">English</MenuItem>
+            <MenuItem value="ja">日本語</MenuItem>
+          </LanguageSelect>
+        </SettingsRow>
+        <SettingsRow label={t("settings.preferredSubtitle")} labelId="subtitle-lang-label">
+          <LanguageSelect
+            labelId="subtitle-lang-label"
+            value={playbackPrefs.subtitleLang}
+            onChange={(subtitleLang) => setPlaybackPrefs({ subtitleLang })}
           >
-            <Box
-              component="span"
-              sx={{
-                color: playbackPrefs.subtitleAppearance.color,
-                backgroundColor: playbackPrefs.subtitleAppearance.background,
-                fontSize:
-                  subtitlePreviewFontSize[
-                    playbackPrefs.subtitleAppearance.fontSize
-                  ],
-                fontWeight: 600,
-                lineHeight: 1.2,
-                px: "0.4em",
-                py: "0.05em",
-                borderRadius: "4px",
-                textShadow:
-                  subtitleTextEdgeCss[playbackPrefs.subtitleAppearance.textEdge],
-              }}
-            >
-              {t("settings.subtitlePreviewText")}
-            </Box>
-          </Box>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.subtitleColor")}</InputLabel>
-            <Select
-              value={playbackPrefs.subtitleAppearance.color}
-              onChange={(e) =>
-                setPlaybackPrefs({
-                  subtitleAppearance: {
-                    ...playbackPrefs.subtitleAppearance,
-                    color: e.target.value,
-                  },
-                })
-              }
-              label={t("settings.subtitleColor")}
-            >
-              <MenuItem value="#FFFFFF">{t("settings.colors.white")}</MenuItem>
-              <MenuItem value="#FFFF00">{t("settings.colors.yellow")}</MenuItem>
-              <MenuItem value="#00FF00">{t("settings.colors.green")}</MenuItem>
-              <MenuItem value="#00FFFF">{t("settings.colors.cyan")}</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.subtitleBackground")}</InputLabel>
-            <Select
-              value={playbackPrefs.subtitleAppearance.background}
-              onChange={(e) =>
-                setPlaybackPrefs({
-                  subtitleAppearance: {
-                    ...playbackPrefs.subtitleAppearance,
-                    background: e.target.value,
-                  },
-                })
-              }
-              label={t("settings.subtitleBackground")}
-            >
-              <MenuItem value="rgba(0, 0, 0, 0.75)">
-                {t("settings.backgrounds.semiTransparent")}
-              </MenuItem>
-              <MenuItem value="rgba(0, 0, 0, 1)">
-                {t("settings.backgrounds.solid")}
-              </MenuItem>
-              <MenuItem value="transparent">
-                {t("settings.backgrounds.none")}
-              </MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.subtitleSize")}</InputLabel>
-            <Select
-              value={playbackPrefs.subtitleAppearance.fontSize}
-              onChange={(e) =>
-                setPlaybackPrefs({
-                  subtitleAppearance: {
-                    ...playbackPrefs.subtitleAppearance,
-                    fontSize: e.target.value as SubtitleAppearance["fontSize"],
-                  },
-                })
-              }
-              label={t("settings.subtitleSize")}
-            >
-              <MenuItem value="small">{t("settings.sizes.small")}</MenuItem>
-              <MenuItem value="medium">{t("settings.sizes.medium")}</MenuItem>
-              <MenuItem value="large">{t("settings.sizes.large")}</MenuItem>
-              <MenuItem value="xlarge">{t("settings.sizes.xlarge")}</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" fullWidth>
-            <InputLabel>{t("settings.subtitleTextEdge")}</InputLabel>
-            <Select
-              value={playbackPrefs.subtitleAppearance.textEdge}
-              onChange={(e) =>
-                setPlaybackPrefs({
-                  subtitleAppearance: {
-                    ...playbackPrefs.subtitleAppearance,
-                    textEdge: e.target.value as SubtitleAppearance["textEdge"],
-                  },
-                })
-              }
-              label={t("settings.subtitleTextEdge")}
-            >
-              <MenuItem value="none">{t("settings.edges.none")}</MenuItem>
-              <MenuItem value="shadow">{t("settings.edges.shadow")}</MenuItem>
-              <MenuItem value="outline">{t("settings.edges.outline")}</MenuItem>
-            </Select>
-          </FormControl>
+            <MenuItem value="pt-BR">Português (Brasil)</MenuItem>
+            <MenuItem value="en">English</MenuItem>
+            <MenuItem value="off">{t("settings.subtitleModes.off")}</MenuItem>
+          </LanguageSelect>
+        </SettingsRow>
+        <SettingsRow
+          label={t("settings.subtitleMode")}
+          description={t("settings.subtitleModeHint")}
+        >
+          <SegmentedControl<SubtitleMode>
+            wrap
+            value={playbackPrefs.subtitleMode}
+            options={modeOptions(SUBTITLE_MODES, "settings.subtitleModes")}
+            onChange={(subtitleMode) => setPlaybackPrefs({ subtitleMode })}
+            ariaLabel={t("settings.subtitleMode")}
+          />
+        </SettingsRow>
+
+        <SettingsGroupLabel>{t("settings.groups.quality")}</SettingsGroupLabel>
+        <SettingsRow
+          label={t("settings.defaultQuality")}
+          description={t("settings.defaultQualityHint")}
+        >
+          <SegmentedControl<string>
+            wrap
+            value={playbackPrefs.defaultQuality}
+            options={modeOptions(QUALITY_OPTIONS, "settings.qualityOptions")}
+            onChange={(defaultQuality) => setPlaybackPrefs({ defaultQuality })}
+            ariaLabel={t("settings.defaultQuality")}
+          />
+        </SettingsRow>
+
+        {/* Opening / end-credits behaviour. The option values are the
+            API enum verbatim (mapped from the shared constants, not
+            retyped) — the backend rejects anything outside it rather
+            than quietly ignoring it. */}
+        <SettingsGroupLabel>{t("settings.groups.betweenEpisodes")}</SettingsGroupLabel>
+        <SettingsRow
+          label={t("settings.introSkipMode")}
+          description={t("settings.introSkipModeHint")}
+        >
+          <SegmentedControl<IntroSkipMode>
+            wrap
+            value={playbackPrefs.introSkipMode}
+            options={modeOptions(INTRO_SKIP_MODES, "settings.introSkipModes")}
+            onChange={(introSkipMode) => setPlaybackPrefs({ introSkipMode })}
+            ariaLabel={t("settings.introSkipMode")}
+          />
+        </SettingsRow>
+        <SettingsRow
+          label={t("settings.creditsSkipMode")}
+          description={t("settings.creditsSkipModeHint")}
+        >
+          <SegmentedControl<CreditsSkipMode>
+            wrap
+            value={playbackPrefs.creditsSkipMode}
+            options={modeOptions(CREDITS_SKIP_MODES, "settings.creditsSkipModes")}
+            onChange={(creditsSkipMode) => setPlaybackPrefs({ creditsSkipMode })}
+            ariaLabel={t("settings.creditsSkipMode")}
+          />
+        </SettingsRow>
+      </SettingsCard>
+
+      {/* ── Subtitle appearance ──────────────────────────── */}
+      <Box sx={{ mt: 4.25 }}>
+        <SettingsSectionHead
+          title={t("settings.subtitleAppearance")}
+          hint={t("settings.subtitleAppearanceHint")}
+        />
+      </Box>
+      <SettingsCard>
+        <SubtitlePreview appearance={appearance} />
+        <SettingsRow label={t("settings.subtitleColor")}>
+          <SubtitleColorSwatches
+            value={appearance.color}
+            onChange={(color) => setAppearance({ color })}
+          />
+        </SettingsRow>
+        <SettingsRow label={t("settings.subtitleBackground")}>
+          <SegmentedControl<string>
+            wrap
+            value={appearance.background}
+            options={SUBTITLE_BACKGROUNDS.map((bg) => ({
+              value: bg.value,
+              label: t(`settings.backgrounds.${bg.labelKey}`),
+            }))}
+            onChange={(background) => setAppearance({ background })}
+            ariaLabel={t("settings.subtitleBackground")}
+          />
+        </SettingsRow>
+        <SettingsRow label={t("settings.subtitleSize")}>
+          <SegmentedControl<SubtitleFontSize>
+            wrap
+            value={appearance.fontSize}
+            options={modeOptions(SUBTITLE_FONT_SIZES, "settings.sizes")}
+            onChange={(fontSize) => setAppearance({ fontSize })}
+            ariaLabel={t("settings.subtitleSize")}
+          />
+        </SettingsRow>
+        <SettingsRow label={t("settings.subtitleTextEdge")}>
+          <SegmentedControl<SubtitleTextEdge>
+            wrap
+            value={appearance.textEdge}
+            options={modeOptions(SUBTITLE_TEXT_EDGES, "settings.edges")}
+            onChange={(textEdge) => setAppearance({ textEdge })}
+            ariaLabel={t("settings.subtitleTextEdge")}
+          />
+        </SettingsRow>
+        <SettingsCardFooter status={t("settings.autoSaved")}>
           <Button
-            size="small"
-            variant="outlined"
+            variant="hairline"
             onClick={() =>
               setPlaybackPrefs({
                 subtitleAppearance: { ...DEFAULT_SUBTITLE_APPEARANCE },
               })
             }
-            sx={{ alignSelf: "flex-start", mt: 0.5 }}
           >
             {t("settings.resetSubtitles")}
           </Button>
-        </Box>
-      </SettingsSection>
+        </SettingsCardFooter>
+      </SettingsCard>
 
       {/* ── About ────────────────────────────────────────── */}
-      <SettingsSection icon={Info} title={t("settings.about")} last>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: 2.5 }}>
-          <SettingsRow label={t("settings.version")}>
-            <Typography variant="body2" fontWeight={500}>
-              0.1.0
-            </Typography>
-          </SettingsRow>
-          <SettingsRow label={t("settings.apiStatus")}>
-            <Chip
-              label={apiHealthy ? t("settings.healthy") : t("settings.unreachable")}
-              size="small"
-              color={apiHealthy ? "success" : "error"}
-              variant="outlined"
-              sx={{ height: 22, fontWeight: 600 }}
-            />
-          </SettingsRow>
-          <SettingsRow label={t("settings.language")}>
-            <LanguageSwitch />
-          </SettingsRow>
-        </Box>
-      </SettingsSection>
+      <Box sx={{ mt: 4.25 }}>
+        <SettingsSectionHead title={t("settings.about")} />
+      </Box>
+      <SettingsCard>
+        <SettingsRow label={t("settings.version")}>
+          <Typography variant="body1" color="text.secondary" fontWeight={600}>
+            0.1.0
+          </Typography>
+        </SettingsRow>
+        <SettingsRow label={t("settings.apiStatus")}>
+          <Chip
+            label={apiHealthy ? t("settings.healthy") : t("settings.unreachable")}
+            size="small"
+            color={apiHealthy ? "success" : "error"}
+            variant="outlined"
+            sx={{ height: 22, fontWeight: 600 }}
+          />
+        </SettingsRow>
+        <SettingsRow label={t("settings.language")}>
+          <LanguageSwitch />
+        </SettingsRow>
+      </SettingsCard>
     </Box>
   );
 }
 
-// ── Shared Components ──────────────────────────────────────────────
+// ── Options ────────────────────────────────────────────────────────
 
-function SettingsSection({
-  icon: Icon,
-  title,
+/** Quality tiers offered in the picker (``DefaultQuality`` is open-ended). */
+const QUALITY_OPTIONS = ["best", "1080p", "720p"] as const;
+
+/**
+ * Caption background fills. The values are CSS colors written straight
+ * into the player overlay, so they stay exactly as previously stored.
+ */
+const SUBTITLE_BACKGROUNDS = [
+  { value: "transparent", labelKey: "none" },
+  { value: "rgba(0, 0, 0, 0.75)", labelKey: "semiTransparent" },
+  { value: "rgba(0, 0, 0, 1)", labelKey: "solid" },
+] as const;
+
+// ── Shared components ──────────────────────────────────────────────
+
+/**
+ * Compact select for the open-ended language lists — the one place a
+ * dropdown still beats a segmented control, since the option set grows
+ * with whatever tracks the library holds.
+ */
+function LanguageSelect({
+  labelId,
+  value,
+  onChange,
   children,
-  last = false,
 }: {
-  icon: React.ComponentType<{ size?: number; color?: string }>;
-  title: string;
-  children: React.ReactNode;
-  last?: boolean;
+  labelId: string;
+  value: string;
+  onChange: (value: string) => void;
+  children: ReactNode;
 }) {
   return (
-    <Box sx={{ mb: last ? 0 : 4 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
-        <Icon size={18} color={neutral[400]} />
-        <Typography variant="h2" sx={{ fontSize: "1.1rem", fontWeight: 600 }}>
-          {title}
-        </Typography>
-      </Box>
-      <Box
-        sx={{
-          bgcolor: whiteAlpha(0.03),
-          borderRadius: 2,
-          border: `1px solid ${whiteAlpha(0.06)}`,
-          overflow: "hidden",
-        }}
-      >
-        {children}
-      </Box>
-    </Box>
-  );
-}
-
-function SettingsRow({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <Typography variant="body2" color="text.secondary">
-        {label}
-      </Typography>
+    <Select
+      size="small"
+      labelId={labelId}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      sx={{
+        width: { xs: "100%", sm: "auto" },
+        minWidth: 210,
+        bgcolor: whiteAlpha(0.03),
+        "& .MuiOutlinedInput-notchedOutline": { borderColor: whiteAlpha(0.08) },
+      }}
+    >
       {children}
-    </Box>
+    </Select>
   );
 }
 
@@ -437,9 +354,10 @@ function ThemePreview() {
   return (
     <Box
       sx={{
-        mt: 0.5,
-        p: 2,
-        borderRadius: 2,
+        mx: { xs: 2, sm: 2.75 },
+        mb: 2.5,
+        p: 2.25,
+        borderRadius: 1.5,
         border: `1px solid ${whiteAlpha(0.08)}`,
         bgcolor: "background.paper",
       }}

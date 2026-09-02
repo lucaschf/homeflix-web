@@ -2034,13 +2034,16 @@
   },
   "settings": {
     "title": "Settings",
+    "pageHint": "Preferences for this profile.",
     "neverScanned": "Never scanned",
     "justNow": "just now",
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
     "daysAgo": "{{count}}d ago",
     "appearance": "Appearance",
+    "appearanceHint": "theme and button color",
     "theme": "Theme",
+    "themeHint": "Sets the accent color used across the interface. The preview below follows your pick.",
     "neutralPrimary": "Neutral primary buttons",
     "neutralPrimaryHint": "White main buttons; keeps the rest of the theme's colors.",
     "preview": "Preview",
@@ -2059,15 +2062,23 @@
       "warmteal": "Amber + Teal"
     },
     "playback": "Playback",
-    "preferredAudio": "Preferred Audio",
-    "preferredSubtitle": "Preferred Subtitle",
-    "subtitleMode": "Subtitle Mode",
-    "defaultQuality": "Default Quality",
+    "playbackHint": "language, quality and what happens between episodes",
+    "groups": {
+      "language": "Language",
+      "quality": "Quality",
+      "betweenEpisodes": "Between episodes"
+    },
+    "preferredAudio": "Preferred audio",
+    "preferredSubtitle": "Preferred subtitle",
+    "subtitleMode": "When to show subtitles",
+    "subtitleModeHint": "\u201cForeign audio\u201d turns subtitles on only when the audio is not in your language.",
+    "defaultQuality": "Default quality",
+    "defaultQualityHint": "Best available uses more bandwidth.",
     "subtitleModes": {
       "always": "Always",
-      "foreignOnly": "Foreign audio only",
+      "foreignOnly": "Foreign audio",
       "forcedOnly": "Forced only",
-      "off": "Off"
+      "off": "Never"
     },
     "qualityOptions": {
       "best": "Best available",
@@ -2077,20 +2088,21 @@
     "introSkipMode": "Opening",
     "introSkipModeHint": "Only affects episodes with a detected opening. The player skips it once per playback — drag the bar back to watch it.",
     "introSkipModes": {
-      "manual": "Show the Skip Intro button",
+      "manual": "Show button",
       "auto": "Skip automatically",
-      "autoAfterFirst": "Skip from the 2nd episode on"
+      "autoAfterFirst": "From episode 2"
     },
     "creditsSkipMode": "End credits",
     "creditsSkipModeHint": "What happens when the closing credits start. The last episode of a series always waits for you.",
     "creditsSkipModes": {
-      "manual": "Show the next-episode card",
-      "auto": "Start the next episode"
+      "manual": "Next-episode card",
+      "auto": "Play the next one"
     },
-    "subtitleAppearance": "Subtitle Appearance",
-    "subtitleColor": "Text Color",
+    "subtitleAppearance": "Subtitle appearance",
+    "subtitleAppearanceHint": "adjust it while watching the result",
+    "subtitleColor": "Text color",
     "subtitleBackground": "Background",
-    "subtitleSize": "Font Size",
+    "subtitleSize": "Font size",
     "colors": {
       "white": "White",
       "yellow": "Yellow",
@@ -2108,17 +2120,24 @@
       "large": "Large",
       "xlarge": "Extra Large"
     },
-    "subtitleTextEdge": "Text Edge",
+    "subtitleTextEdge": "Text edge",
     "edges": {
       "none": "None",
       "shadow": "Drop shadow",
       "outline": "Outline"
     },
     "subtitlePreviewText": "Sample subtitle",
+    "subtitlePreviewNote": "Switch scenes to check how the subtitle reads over bright and dark frames.",
+    "scenes": {
+      "dark": "Dark scene",
+      "light": "Bright scene"
+    },
+    "sceneLabel": "Preview scene",
     "resetSubtitles": "Reset to default",
+    "autoSaved": "Changes are saved automatically",
     "about": "About",
     "version": "Version",
-    "apiStatus": "API Status",
+    "apiStatus": "API status",
     "healthy": "Healthy",
     "unreachable": "Unreachable",
     "language": "Language"
