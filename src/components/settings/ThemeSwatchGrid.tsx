@@ -49,8 +49,11 @@ export function ThemeSwatchGrid({
     <Box
       sx={{
         display: "grid",
-        // Four columns from ``sm`` up so the scheme count divides evenly and
-        // the last row never leaves a lone orphan card.
+        // Four columns from ``sm`` up: the widest count that still leaves each
+        // card room for the "name + qualifier" label pair without truncating.
+        // The last row wraps short whenever the scheme count is not a multiple
+        // of four — that is fine; don't re-tune the column count per theme
+        // added, it only moves the ragged row around.
         gridTemplateColumns: {
           xs: "repeat(2, 1fr)",
           sm: "repeat(4, 1fr)",

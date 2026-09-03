@@ -2065,7 +2065,8 @@
       "dracula": "Dracula",
       "nord": "Nord (Arctic)",
       "sakura": "Sakura (Rosé)",
-      "prestige": "Prestige (Gold)"
+      "prestige": "Prestige (Gold)",
+      "cyberyellow": "Cyberpunk (Yellow)"
     },
     "playback": "Playback",
     "playbackHint": "language, quality and what happens between episodes",

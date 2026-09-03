@@ -60,6 +60,7 @@ export const THEME_SCHEMES = [
   "nord",
   "sakura",
   "prestige",
+  "cyberyellow",
 ] as const;
 
 export type ThemeScheme = (typeof THEME_SCHEMES)[number];
@@ -327,6 +328,22 @@ const NEUTRAL: Record<ThemeScheme, Record<NeutralKey, string>> = {
   },
   // True black rising through near-neutral greys. Kept off the warm brown of
   // the "amber" ramp on purpose: gold on black, not gold on a darkroom.
+  // Cold blue-black — the other half of the cyberpunk pair. Deliberately steel
+  // rather than the indigo-violet of "cyberpunk", so the two schemes differ in
+  // surface as well as accent.
+  cyberyellow: {
+    50: "#F7F8FA",
+    100: "#EEF0F4",
+    200: "#DDE1E8",
+    300: "#BFC5D0",
+    400: "#8E96A6",
+    500: "#5C6472",
+    600: "#3C424E",
+    700: "#23272F",
+    800: "#15181E",
+    900: "#0E1014",
+    950: "#08090C",
+  },
   prestige: {
     50: "#F7F4EF",
     100: "#EFEBE5",
@@ -499,6 +516,17 @@ const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: st
   },
   // Metallic gold — yellower and cooler than the orange-leaning "amber", which
   // together with the true-black surfaces keeps the two apart.
+  // Acid yellow — far more electric and green-leaning than the metallic
+  // "prestige" gold or the orange "amber", and paired with a cyan secondary.
+  cyberyellow: {
+    lightest: "#FEFAC4",
+    light: "#FDF56B",
+    main: "#FCEE0A",
+    dark: "#D9CD00",
+    darkest: "#8A8200",
+    contrastText: "#08090C",
+    rgb: "252, 238, 10",
+  },
   prestige: {
     lightest: "#F7EBC8",
     light: "#E6CE86",
@@ -529,6 +557,8 @@ const SECONDARY_ACCENT: Partial<Record<ThemeScheme, SecondaryAccent>> = {
   // Dracula pink alongside the mauve primary — the pair the palette is known
   // for, and what separates its swatch from the single-accent "violet".
   dracula: { main: "#FF79C6", text: "#FFA6DA", rgb: "255, 121, 198" },
+  // Electric cyan against the acid yellow — the canonical yellow/cyan duo.
+  cyberyellow: { main: "#00E5FF", text: "#7BEEFF", rgb: "0, 229, 255" },
 };
 
 export const secondaryAccentFor = (
@@ -553,6 +583,7 @@ const FG: Record<ThemeScheme, string> = {
   nord: "#ECEFF4",
   sakura: "#F7EFF2",
   prestige: "#F5F1E8",
+  cyberyellow: "#F2F4F8",
 };
 const MUTED: Record<ThemeScheme, string> = {
   dark: "#8A857E",
@@ -571,6 +602,7 @@ const MUTED: Record<ThemeScheme, string> = {
   nord: "#9AA5B8",
   sakura: "#A48C95",
   prestige: "#968F82",
+  cyberyellow: "#8E96A6",
 };
 // Frosted menu/popover surface base (``menuScrim``).
 const PANEL_2: Record<ThemeScheme, string> = {
@@ -590,6 +622,7 @@ const PANEL_2: Record<ThemeScheme, string> = {
   nord: "#3B4252",
   sakura: "#261A20",
   prestige: "#151412",
+  cyberyellow: "#15181E",
 };
 
 // -- Scheme accessors (real hex, for the theme factory) ------------------------
