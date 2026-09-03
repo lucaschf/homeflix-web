@@ -51,5 +51,12 @@ export const LIST_THUMB_WIDTH = 149;
 export const RAIL_CARD_WIDTH = 300;
 /** Rail card width below the `sm` breakpoint. */
 export const RAIL_CARD_WIDTH_COMPACT = 220;
+/**
+ * Gutter the rail's scroll container keeps around its cards. A scroll
+ * container clips on both axes, and a card paints up to 8px outside its
+ * own box — 4px of playing outline (2px wide, 2px offset) plus the 4px
+ * hover lift — so without this the ring and the lifted still get sliced.
+ */
+export const RAIL_GUTTER = 8;
 /** Reserved height of one synopsis line — the slot never reflows. */
 export const SYNOPSIS_LINE_HEIGHT = 17;

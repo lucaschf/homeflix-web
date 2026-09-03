@@ -10,6 +10,7 @@ import { ViewToggle } from "./ViewToggle";
 import {
   RAIL_CARD_WIDTH,
   RAIL_CARD_WIDTH_COMPACT,
+  RAIL_GUTTER,
   episodeStateOf,
   episodeThumbnail,
   watchedCount,
@@ -56,6 +57,8 @@ export function EpisodeRail({
   const theme = useTheme();
   const compact = useMediaQuery(theme.breakpoints.down("sm"));
   const cardWidth = compact ? RAIL_CARD_WIDTH_COMPACT : RAIL_CARD_WIDTH;
+  // Chevrons centre on the still, which the gutter pushes down.
+  const arrowTop = RAIL_GUTTER + Math.round((cardWidth * 9) / 16) / 2;
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const playingCardRef = useRef<HTMLButtonElement>(null);
@@ -170,7 +173,14 @@ export function EpisodeRail({
         </IconButton>
       </Box>
 
-      <Box sx={{ position: "relative", "&:hover .scroll-btn": { opacity: 1 } }}>
+      <Box
+        sx={{
+          position: "relative",
+          mt: `-${RAIL_GUTTER}px`,
+          mx: `-${RAIL_GUTTER}px`,
+          "&:hover .scroll-btn": { opacity: 1 },
+        }}
+      >
         <Box
           ref={scrollRef}
           onScroll={updateArrows}
@@ -180,9 +190,16 @@ export function EpisodeRail({
             display: "flex",
             gap: "18px",
             overflowX: "auto",
+            // Breathing room for what a card paints outside its box —
+            // the wrapper's negative margin cancels it, so the cards
+            // still line up with the header above.
+            pt: `${RAIL_GUTTER}px`,
+            px: `${RAIL_GUTTER}px`,
             pb: "10px",
             scrollSnapType: "x mandatory",
-            scrollPaddingLeft: "2px",
+            // Matches the gutter: a card snapped to the start must
+            // leave room for its own outline, or the snap clips it.
+            scrollPaddingLeft: `${RAIL_GUTTER}px`,
             scrollbarWidth: "none",
             "&::-webkit-scrollbar": { display: "none" },
           }}
@@ -229,8 +246,8 @@ export function EpisodeRail({
             aria-label={t("common.scrollLeft")}
             sx={{
               position: "absolute",
-              left: { xs: 0, md: 8 },
-              top: Math.round((cardWidth * 9) / 16) / 2,
+              left: { xs: RAIL_GUTTER, md: RAIL_GUTTER + 8 },
+              top: arrowTop,
               transform: "translateY(-50%)",
               zIndex: 3,
               color: "overlayText.secondary",
@@ -249,8 +266,8 @@ export function EpisodeRail({
             aria-label={t("common.scrollRight")}
             sx={{
               position: "absolute",
-              right: { xs: 0, md: 8 },
-              top: Math.round((cardWidth * 9) / 16) / 2,
+              right: { xs: RAIL_GUTTER, md: RAIL_GUTTER + 8 },
+              top: arrowTop,
               transform: "translateY(-50%)",
               zIndex: 3,
               color: "overlayText.secondary",
