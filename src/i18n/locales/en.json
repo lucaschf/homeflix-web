@@ -2059,7 +2059,9 @@
       "mono": "Mono (White)",
       "violet": "Violet",
       "forest": "Forest (Green)",
-      "warmteal": "Amber + Teal"
+      "warmteal": "Amber + Teal",
+      "cyberpunk": "Cyberpunk (Neon)",
+      "matrix": "Matrix (Green)"
     },
     "playback": "Playback",
     "playbackHint": "language, quality and what happens between episodes",

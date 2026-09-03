@@ -54,6 +54,8 @@ export const THEME_SCHEMES = [
   "violet",
   "forest",
   "warmteal",
+  "cyberpunk",
+  "matrix",
 ] as const;
 
 export type ThemeScheme = (typeof THEME_SCHEMES)[number];
@@ -245,6 +247,35 @@ const NEUTRAL: Record<ThemeScheme, Record<NeutralKey, string>> = {
     900: "#211C15",
     950: "#17140F",
   },
+  // Indigo-violet "night city" ramp — deep blue-purple page under the neon
+  // magenta + cyan duotone, so the two accents read as light sources.
+  cyberpunk: {
+    50: "#F8F6FC",
+    100: "#F0EDF8",
+    200: "#E1DBEF",
+    300: "#C9C0DF",
+    400: "#A79BC2",
+    500: "#6E5D91",
+    600: "#493A6B",
+    700: "#271C42",
+    800: "#18102B",
+    900: "#100A1E",
+    950: "#0A0614",
+  },
+  // Near-black with a green cast — the terminal the phosphor accent prints on.
+  matrix: {
+    50: "#F1F9F2",
+    100: "#E6F3E8",
+    200: "#D3E7D6",
+    300: "#B3CDB8",
+    400: "#86A98D",
+    500: "#4E7355",
+    600: "#33513A",
+    700: "#1B2C1F",
+    800: "#101B12",
+    900: "#0A120C",
+    950: "#050A06",
+  },
 };
 
 const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: string }> = {
@@ -348,6 +379,28 @@ const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: st
     contrastText: "#17140F",
     rgb: "224, 164, 74",
   },
+  // Neon magenta — bright, but dark enough that the near-black page tone reads
+  // on the fill. Paired with the cyan secondary in SECONDARY_ACCENT.
+  cyberpunk: {
+    lightest: "#FFD9EE",
+    light: "#FF7AC2",
+    main: "#F62E9A",
+    dark: "#D01A7C",
+    darkest: "#7E0F4A",
+    contrastText: "#0A0614",
+    rgb: "246, 46, 154",
+  },
+  // Phosphor green — a pure, yellow-leaning green, deliberately away from the
+  // mint/emerald "forest" accent and the status green.
+  matrix: {
+    lightest: "#D8FDE2",
+    light: "#7CF79B",
+    main: "#2BE85C",
+    dark: "#12C244",
+    darkest: "#0A7A2C",
+    contrastText: "#050A06",
+    rgb: "43, 232, 92",
+  },
 };
 
 // -- Optional secondary accent -------------------------------------------------
@@ -364,6 +417,8 @@ export interface SecondaryAccent {
 
 const SECONDARY_ACCENT: Partial<Record<ThemeScheme, SecondaryAccent>> = {
   warmteal: { main: "#5BC6BD", text: "#86D6CF", rgb: "91, 198, 189" },
+  // The other half of the neon duotone: cyan secondary against the magenta CTA.
+  cyberpunk: { main: "#22D3EE", text: "#7DE7F7", rgb: "34, 211, 238" },
 };
 
 export const secondaryAccentFor = (
@@ -382,6 +437,8 @@ const FG: Record<ThemeScheme, string> = {
   violet: "#EFEAF7",
   forest: "#EAF2EC",
   warmteal: "#F2EDE3",
+  cyberpunk: "#F1ECFA",
+  matrix: "#E4F6E7",
 };
 const MUTED: Record<ThemeScheme, string> = {
   dark: "#8A857E",
@@ -394,6 +451,8 @@ const MUTED: Record<ThemeScheme, string> = {
   violet: "#A199B8",
   forest: "#96A69A",
   warmteal: "#A89E8C",
+  cyberpunk: "#A79BC2",
+  matrix: "#86A98D",
 };
 // Frosted menu/popover surface base (``menuScrim``).
 const PANEL_2: Record<ThemeScheme, string> = {
@@ -407,6 +466,8 @@ const PANEL_2: Record<ThemeScheme, string> = {
   violet: "#1F1830",
   forest: "#172018",
   warmteal: "#2B241A",
+  cyberpunk: "#18102B",
+  matrix: "#101B12",
 };
 
 // -- Scheme accessors (real hex, for the theme factory) ------------------------
