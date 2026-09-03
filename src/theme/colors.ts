@@ -714,6 +714,34 @@ export const warning = withAlphas({
   contrastText: "#0D0D0D",
 });
 
+// -- Per-scheme status override ------------------------------------------------
+//
+// Status tones stay universal on purpose: "warning" should mean the same color
+// in every theme. The single exception is a scheme whose *accent* lands on the
+// warning hue — there a warning chip stops reading as a status and starts
+// reading as the theme's accent.
+//
+// ``cyberyellow``'s acid yellow (#FCEE0A) sits close enough to the amber
+// warning (#FBBF24) for exactly that to happen, so it — and only it — swaps in
+// an orange warning. The orange is picked to stay clear of BOTH the accent and
+// the red error tone, since warning-vs-error is the more costly confusion.
+//
+// ``status.warn`` in ``tokens.ts`` carries the matching override for the admin
+// badge / toast tone; keep the two in step.
+const WARNING_OVERRIDE: Partial<Record<ThemeScheme, ColorScale>> = {
+  cyberyellow: withAlphas({
+    lightest: "#FFE8D1",
+    light: "#FFB870",
+    main: "#FB8B24",
+    dark: "#E06F0A",
+    darkest: "#7A3B05",
+    contrastText: "#0D0D0D",
+  }),
+};
+
+export const warningFor = (scheme: ThemeScheme): ColorScale =>
+  WARNING_OVERRIDE[scheme] ?? warning;
+
 export const error = withAlphas({
   lightest: "#FEE2E2",
   light: "#FCA5A5",
