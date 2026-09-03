@@ -54,6 +54,13 @@ export const THEME_SCHEMES = [
   "violet",
   "forest",
   "warmteal",
+  "cyberpunk",
+  "matrix",
+  "dracula",
+  "nord",
+  "sakura",
+  "prestige",
+  "cyberyellow",
 ] as const;
 
 export type ThemeScheme = (typeof THEME_SCHEMES)[number];
@@ -245,6 +252,111 @@ const NEUTRAL: Record<ThemeScheme, Record<NeutralKey, string>> = {
     900: "#211C15",
     950: "#17140F",
   },
+  // Indigo-violet "night city" ramp — deep blue-purple page under the neon
+  // magenta + cyan duotone, so the two accents read as light sources.
+  cyberpunk: {
+    50: "#F8F6FC",
+    100: "#F0EDF8",
+    200: "#E1DBEF",
+    300: "#C9C0DF",
+    400: "#A79BC2",
+    500: "#6E5D91",
+    600: "#493A6B",
+    700: "#271C42",
+    800: "#18102B",
+    900: "#100A1E",
+    950: "#0A0614",
+  },
+  // Near-black with a green cast — the terminal the phosphor accent prints on.
+  matrix: {
+    50: "#F1F9F2",
+    100: "#E6F3E8",
+    200: "#D3E7D6",
+    300: "#B3CDB8",
+    400: "#86A98D",
+    500: "#4E7355",
+    600: "#33513A",
+    700: "#1B2C1F",
+    800: "#101B12",
+    900: "#0A120C",
+    950: "#050A06",
+  },
+  // Dracula's own ramp. The page (#282A36) sits far lighter than every other
+  // scheme here — that lifted grey-purple surface *is* the theme, so it is
+  // deliberately not pulled down toward the near-black the others share.
+  dracula: {
+    50: "#F8F8F2",
+    100: "#EDEFF5",
+    200: "#D6DAE7",
+    300: "#B5BBD4",
+    400: "#8A94C6",
+    500: "#6272A4",
+    600: "#565A72",
+    700: "#44475A",
+    800: "#343746",
+    900: "#2E3040",
+    950: "#282A36",
+  },
+  // Nord Polar Night — the other lifted-surface scheme: cold desaturated
+  // slate rising into the Snow Storm off-whites.
+  nord: {
+    50: "#ECEFF4",
+    100: "#E5E9F0",
+    200: "#D8DEE9",
+    300: "#C3CBD9",
+    400: "#9AA5B8",
+    500: "#6B7689",
+    600: "#4C566A",
+    700: "#434C5E",
+    800: "#3B4252",
+    900: "#333A47",
+    950: "#2E3440",
+  },
+  // Plum-black — a warm plum cast under the dusty rose accent.
+  sakura: {
+    50: "#F9F4F6",
+    100: "#F2EAED",
+    200: "#E6DADE",
+    300: "#D2C0C6",
+    400: "#A48C95",
+    500: "#7A5B66",
+    600: "#553C46",
+    700: "#38262E",
+    800: "#261A20",
+    900: "#1C1318",
+    950: "#150E12",
+  },
+  // True black rising through near-neutral greys. Kept off the warm brown of
+  // the "amber" ramp on purpose: gold on black, not gold on a darkroom.
+  // Cold blue-black — the other half of the cyberpunk pair. Deliberately steel
+  // rather than the indigo-violet of "cyberpunk", so the two schemes differ in
+  // surface as well as accent.
+  cyberyellow: {
+    50: "#F7F8FA",
+    100: "#EEF0F4",
+    200: "#DDE1E8",
+    300: "#BFC5D0",
+    400: "#8E96A6",
+    500: "#5C6472",
+    600: "#3C424E",
+    700: "#23272F",
+    800: "#15181E",
+    900: "#0E1014",
+    950: "#08090C",
+  },
+  prestige: {
+    50: "#F7F4EF",
+    100: "#EFEBE5",
+    200: "#DFDAD1",
+    300: "#C4BDB1",
+    400: "#968F82",
+    500: "#5D584D",
+    600: "#3B3830",
+    700: "#22201C",
+    800: "#151412",
+    900: "#0B0B0A",
+    950: "#000000",
+  },
 };
 
 const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: string }> = {
@@ -348,6 +460,82 @@ const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: st
     contrastText: "#17140F",
     rgb: "224, 164, 74",
   },
+  // Neon magenta — bright, but dark enough that the near-black page tone reads
+  // on the fill. Paired with the cyan secondary in SECONDARY_ACCENT.
+  cyberpunk: {
+    lightest: "#FFD9EE",
+    light: "#FF7AC2",
+    main: "#F62E9A",
+    dark: "#D01A7C",
+    darkest: "#7E0F4A",
+    contrastText: "#0A0614",
+    rgb: "246, 46, 154",
+  },
+  // Phosphor green — a pure, yellow-leaning green, deliberately away from the
+  // mint/emerald "forest" accent and the status green.
+  matrix: {
+    lightest: "#D8FDE2",
+    light: "#7CF79B",
+    main: "#2BE85C",
+    dark: "#12C244",
+    darkest: "#0A7A2C",
+    contrastText: "#050A06",
+    rgb: "43, 232, 92",
+  },
+  // Dracula mauve, with the pink as the secondary. Close in hue to "violet",
+  // but read against the far lighter Dracula surfaces the two do not collide.
+  dracula: {
+    lightest: "#EBDDFE",
+    light: "#D3B8FB",
+    main: "#BD93F9",
+    dark: "#9C6DF0",
+    darkest: "#6B3FBF",
+    contrastText: "#282A36",
+    rgb: "189, 147, 249",
+  },
+  // Nord Frost — pale and desaturated, the low-glare accent of the set.
+  nord: {
+    lightest: "#DDEBF0",
+    light: "#A7D2DE",
+    main: "#88C0D0",
+    dark: "#6BA5B8",
+    darkest: "#3E6E80",
+    contrastText: "#2E3440",
+    rgb: "136, 192, 208",
+  },
+  // Dusty rose — soft and warm, the counterweight to the neon magenta that
+  // "cyberpunk" already owns.
+  sakura: {
+    lightest: "#FBE0E5",
+    light: "#F0AAB7",
+    main: "#E8899B",
+    dark: "#CC6579",
+    darkest: "#8A3A4A",
+    contrastText: "#150E12",
+    rgb: "232, 137, 155",
+  },
+  // Metallic gold — yellower and cooler than the orange-leaning "amber", which
+  // together with the true-black surfaces keeps the two apart.
+  // Acid yellow — far more electric and green-leaning than the metallic
+  // "prestige" gold or the orange "amber", and paired with a cyan secondary.
+  cyberyellow: {
+    lightest: "#FEFAC4",
+    light: "#FDF56B",
+    main: "#FCEE0A",
+    dark: "#D9CD00",
+    darkest: "#8A8200",
+    contrastText: "#08090C",
+    rgb: "252, 238, 10",
+  },
+  prestige: {
+    lightest: "#F7EBC8",
+    light: "#E6CE86",
+    main: "#D4AF37",
+    dark: "#B4912A",
+    darkest: "#7A611A",
+    contrastText: "#000000",
+    rgb: "212, 175, 55",
+  },
 };
 
 // -- Optional secondary accent -------------------------------------------------
@@ -364,6 +552,13 @@ export interface SecondaryAccent {
 
 const SECONDARY_ACCENT: Partial<Record<ThemeScheme, SecondaryAccent>> = {
   warmteal: { main: "#5BC6BD", text: "#86D6CF", rgb: "91, 198, 189" },
+  // The other half of the neon duotone: cyan secondary against the magenta CTA.
+  cyberpunk: { main: "#22D3EE", text: "#7DE7F7", rgb: "34, 211, 238" },
+  // Dracula pink alongside the mauve primary — the pair the palette is known
+  // for, and what separates its swatch from the single-accent "violet".
+  dracula: { main: "#FF79C6", text: "#FFA6DA", rgb: "255, 121, 198" },
+  // Electric cyan against the acid yellow — the canonical yellow/cyan duo.
+  cyberyellow: { main: "#00E5FF", text: "#7BEEFF", rgb: "0, 229, 255" },
 };
 
 export const secondaryAccentFor = (
@@ -382,6 +577,13 @@ const FG: Record<ThemeScheme, string> = {
   violet: "#EFEAF7",
   forest: "#EAF2EC",
   warmteal: "#F2EDE3",
+  cyberpunk: "#F1ECFA",
+  matrix: "#E4F6E7",
+  dracula: "#F8F8F2",
+  nord: "#ECEFF4",
+  sakura: "#F7EFF2",
+  prestige: "#F5F1E8",
+  cyberyellow: "#F2F4F8",
 };
 const MUTED: Record<ThemeScheme, string> = {
   dark: "#8A857E",
@@ -394,6 +596,13 @@ const MUTED: Record<ThemeScheme, string> = {
   violet: "#A199B8",
   forest: "#96A69A",
   warmteal: "#A89E8C",
+  cyberpunk: "#A79BC2",
+  matrix: "#86A98D",
+  dracula: "#8A94C6",
+  nord: "#9AA5B8",
+  sakura: "#A48C95",
+  prestige: "#968F82",
+  cyberyellow: "#8E96A6",
 };
 // Frosted menu/popover surface base (``menuScrim``).
 const PANEL_2: Record<ThemeScheme, string> = {
@@ -407,6 +616,13 @@ const PANEL_2: Record<ThemeScheme, string> = {
   violet: "#1F1830",
   forest: "#172018",
   warmteal: "#2B241A",
+  cyberpunk: "#18102B",
+  matrix: "#101B12",
+  dracula: "#343746",
+  nord: "#3B4252",
+  sakura: "#261A20",
+  prestige: "#151412",
+  cyberyellow: "#15181E",
 };
 
 // -- Scheme accessors (real hex, for the theme factory) ------------------------

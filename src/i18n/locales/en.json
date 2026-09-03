@@ -2059,7 +2059,14 @@
       "mono": "Mono (White)",
       "violet": "Violet",
       "forest": "Forest (Green)",
-      "warmteal": "Amber + Teal"
+      "warmteal": "Amber + Teal",
+      "cyberpunk": "Cyberpunk (Neon)",
+      "matrix": "Matrix (Green)",
+      "dracula": "Dracula",
+      "nord": "Nord (Arctic)",
+      "sakura": "Sakura (Rosé)",
+      "prestige": "Prestige (Gold)",
+      "cyberyellow": "Cyberpunk (Yellow)"
     },
     "playback": "Playback",
     "playbackHint": "language, quality and what happens between episodes",
