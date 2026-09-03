@@ -109,7 +109,7 @@ describe("Settings — playback skip modes", () => {
 
     await waitFor(() =>
       expect(
-        within(segment("Opening")).getByRole("button", { name: "From episode 2" }),
+        within(segment("Opening")).getByRole("button", { name: "From episode 2 on" }),
       ).toHaveAttribute("aria-pressed", "true"),
     );
     expect(
@@ -138,14 +138,14 @@ describe("Settings — playback skip modes", () => {
     expect(options.map((o) => o.textContent)).toEqual([
       "Show button",
       "Skip automatically",
-      "From episode 2",
+      "From episode 2 on",
     ]);
   });
 
   it("sends the opening mode as the API enum, and only that field", async () => {
     renderSettings();
 
-    await choose("Opening", "From episode 2");
+    await choose("Opening", "From episode 2 on");
 
     await waitFor(() =>
       expect(apiPut).toHaveBeenCalledWith("/preferences", {

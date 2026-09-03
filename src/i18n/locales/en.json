@@ -2086,11 +2086,11 @@
       "720p": "720p"
     },
     "introSkipMode": "Opening",
-    "introSkipModeHint": "Only affects episodes with a detected opening. The player skips it once per playback — drag the bar back to watch it.",
+    "introSkipModeHint": "Only affects episodes with a detected opening. The player skips it once per playback — drag the bar back to watch it. \"From episode 2 on\" skips every episode but the first of each season.",
     "introSkipModes": {
       "manual": "Show button",
       "auto": "Skip automatically",
-      "autoAfterFirst": "From episode 2"
+      "autoAfterFirst": "From episode 2 on"
     },
     "creditsSkipMode": "End credits",
     "creditsSkipModeHint": "What happens when the closing credits start. The last episode of a series always waits for you.",
