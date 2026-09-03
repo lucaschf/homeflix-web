@@ -2086,11 +2086,11 @@
       "720p": "720p"
     },
     "introSkipMode": "Abertura",
-    "introSkipModeHint": "Vale apenas para episódios com abertura detectada. O player pula uma vez por reprodução — arraste a barra para voltar e assistir.",
+    "introSkipModeHint": "Vale apenas para episódios com abertura detectada. O player pula uma vez por reprodução — arraste a barra para voltar e assistir. \"A partir do 2º episódio\" pula em todos menos no 1º de cada temporada.",
     "introSkipModes": {
       "manual": "Mostrar botão",
       "auto": "Pular sozinho",
-      "autoAfterFirst": "A partir do 2º"
+      "autoAfterFirst": "A partir do 2º episódio"
     },
     "creditsSkipMode": "Créditos finais",
     "creditsSkipModeHint": "O que acontece quando os créditos finais começam. O último episódio da série sempre espera você.",
