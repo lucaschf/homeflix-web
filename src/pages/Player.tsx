@@ -721,6 +721,28 @@ export function Player() {
   // representing the already-downloaded portion of the stream.
   const [bufferedEnd, setBufferedEnd] = useState(0);
 
+  // The playhead only means anything for the media that produced it.
+  // Advancing to the next episode is a param-only navigation — the
+  // Player never unmounts — so without this reset ``currentTime`` keeps
+  // the outgoing episode's position until the new stream's first
+  // ``timeupdate``, which is seconds away while HLS comes up. Every
+  // derived end-of-title surface reads that stale value as "already in
+  // the credits" and fires again on an episode that hasn't played a
+  // frame: the credits trigger marks it watched and queues the one
+  // after it, so clicking "Next episode" carries the viewer two
+  // episodes on.
+  //
+  // Reset during render rather than in an effect: the effects of the
+  // commit that delivers the new media all run after this render, so a
+  // reset scheduled from one of them would land a beat too late to
+  // stop the ones that act on the playhead.
+  const [playheadMediaId, setPlayheadMediaId] = useState(mediaId);
+  if (playheadMediaId !== mediaId) {
+    setPlayheadMediaId(mediaId);
+    setCurrentTime(0);
+    setBufferedEnd(0);
+  }
+
   // Keep ``bucketStartRef`` aligned with the latest ``bucketStart`` so
   // long-lived event listeners (timeupdate / progress / save) read the
   // value that's actually in effect for the running HLS session.
@@ -1853,10 +1875,18 @@ export function Player() {
   }, [mediaId, mediaType, displayDuration]);
 
   // Reset the one-shot credits guard + post-play panel whenever the
-  // media changes (next episode, different movie).
+  // media changes (next episode, different movie). The countdown goes
+  // with them: a card raised for the episode being left must never
+  // advance past the one the viewer just chose from the rail, and the
+  // timer survives the swap on its own because nothing unmounts.
   useEffect(() => {
     creditsHandledRef.current = false;
+    if (countdownTimerRef.current) {
+      clearInterval(countdownTimerRef.current);
+      countdownTimerRef.current = null;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNextEpCountdown(null);
     setPostPlayActive(false);
     setPostPlayEnded(false);
     setStillWatchingActive(false);
