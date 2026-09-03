@@ -2061,7 +2061,11 @@
       "forest": "Floresta (Verde)",
       "warmteal": "Âmbar + Teal",
       "cyberpunk": "Cyberpunk (Neon)",
-      "matrix": "Matrix (Verde)"
+      "matrix": "Matrix (Verde)",
+      "dracula": "Dracula",
+      "nord": "Nord (Ártico)",
+      "sakura": "Sakura (Rosé)",
+      "prestige": "Prestige (Ouro)"
     },
     "playback": "Reprodução",
     "playbackHint": "idioma, qualidade e o que acontece entre episódios",

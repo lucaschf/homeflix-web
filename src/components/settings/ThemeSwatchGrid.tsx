@@ -49,10 +49,11 @@ export function ThemeSwatchGrid({
     <Box
       sx={{
         display: "grid",
+        // Four columns from ``sm`` up so the scheme count divides evenly and
+        // the last row never leaves a lone orphan card.
         gridTemplateColumns: {
           xs: "repeat(2, 1fr)",
-          sm: "repeat(3, 1fr)",
-          md: "repeat(5, 1fr)",
+          sm: "repeat(4, 1fr)",
         },
         gap: 1,
       }}
