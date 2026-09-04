@@ -7,7 +7,7 @@ import { ApiError } from "../../../api/client";
 import { useUpdateAdminSetting } from "../../../api/hooks";
 import type { AdminSettingDetail, AvatarSettings } from "../../../api/types";
 import { AdminFormSection, AdminInput } from "../../../components/admin";
-import { accentGold, status } from "../../../theme/tokens";
+import { status } from "../../../theme/tokens";
 import { SettingsCardShell } from "./SettingsCardShell";
 
 interface Props {
@@ -101,7 +101,7 @@ export function AvatarSettingsCard({ detail, onSuccess, onError }: Props) {
             bgcolor: alpha(status.warn.base, 0.04),
             borderColor: alpha(status.warn.base, 0.30),
             color: "text.primary",
-            "& .MuiAlert-icon": { color: accentGold },
+            "& .MuiAlert-icon": { color: status.warn.fg },
           }}
         >
           {t("admin.settings.avatar.subdirMigrationWarning")}

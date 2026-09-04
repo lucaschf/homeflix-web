@@ -15,7 +15,7 @@ import {
   secondaryAccentFor,
   success,
   type ThemeScheme,
-  warning,
+  warningFor,
 } from "./colors";
 import { border, fontFamily, fontSize, status, whiteAlpha } from "./tokens";
 import React from "react";
@@ -199,7 +199,7 @@ const buildThemeOptions = (
         error,
         info,
         success,
-        warning,
+        warning: warningFor(scheme),
         background: {
           default: n[950],
           paper: n[900],

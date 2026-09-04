@@ -6,6 +6,7 @@ import {
   neutral,
   neutralFor,
   panel2For,
+  type ThemeScheme,
 } from "./colors";
 
 // Color tokens for values that recur as raw rgba()/hex literals across the UI.
@@ -120,23 +121,55 @@ export interface StatusTone {
   base: string;
 }
 
-export const status = {
+const BASE_STATUS = {
   ok: { fg: "#7ADF9A", base: "#50B478" }, // base = rgb(80,180,120)
   warn: { fg: "#F5C46A", base: "#F0B450" }, // base = rgb(240,180,80)
   err: { fg: "#FF8A7A", base: "#DC5046" }, // base = rgb(220,80,70)
   info: { fg: "#8AB4F0", base: "#6496DC" }, // base = rgb(100,150,220)
 } satisfies Record<string, StatusTone>;
 
+type StatusKey = keyof typeof BASE_STATUS;
+
+// Mirror of ``WARNING_OVERRIDE`` in ``colors.ts`` for the admin badge / toast
+// tone: the schemes whose accent lands on the gold warn hue get an orange one
+// instead. See that table for the hue measurements and for why ``amber`` is
+// deliberately not in this list. Every other scheme — and every other status
+// tone — stays universal. Keep the two tables in step.
+const ORANGE_WARN: StatusTone = { fg: "#FFB870", base: "#F08A32" };
+
+const WARN_OVERRIDE: Partial<Record<ThemeScheme, StatusTone>> = {
+  cyberyellow: ORANGE_WARN,
+  prestige: ORANGE_WARN,
+};
+
+/**
+ * Admin status tones. ``warn`` is resolved against the active scheme on every
+ * access (same live-getter contract as ``neutral`` / ``peach`` in
+ * ``colors.ts``), so read it at use time — don't hoist it into a module-level
+ * constant or it will freeze to whichever theme was active at load.
+ */
+export const status = new Proxy({} as Record<StatusKey, StatusTone>, {
+  get: (_target, prop) =>
+    prop === "warn"
+      ? (WARN_OVERRIDE[getScheme()] ?? BASE_STATUS.warn)
+      : BASE_STATUS[prop as StatusKey],
+});
+
+// The admin "enrich / scan" gold. It happens to share the default ``warn``
+// hex, but it is an accent rather than a status — so it is pinned here instead
+// of aliasing ``status.warn.fg``, and it does NOT follow the override above.
+const ADMIN_GOLD = "#F5C46A";
+
 /** Gold `#F5C46A` at `o` — replaces `rgba(245,196,106,o)`. Amber fills in enrich/scan cards. */
-export const goldAlpha = (o: number) => alpha("#F5C46A", o);
+export const goldAlpha = (o: number) => alpha(ADMIN_GOLD, o);
 
 // -- Standalone accent foregrounds (used as solid hex, no alpha) ---------------
 
 /** Admin accent coral — replaces bare `#FF8A7A` (identical to `status.err.fg`). */
 export const accentCoral = status.err.fg;
 
-/** Admin accent gold — replaces bare `#F5C46A` (identical to `status.warn.fg`). */
-export const accentGold = status.warn.fg;
+/** Admin accent gold — replaces bare `#F5C46A` (see `ADMIN_GOLD`). */
+export const accentGold = ADMIN_GOLD;
 
 // -- Snackbar / toast surface -------------------------------------------------
 
