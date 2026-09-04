@@ -131,11 +131,15 @@ const BASE_STATUS = {
 type StatusKey = keyof typeof BASE_STATUS;
 
 // Mirror of ``WARNING_OVERRIDE`` in ``colors.ts`` for the admin badge / toast
-// tone: on ``cyberyellow`` the acid-yellow accent collides with the gold warn
-// tone, so that scheme alone gets an orange one. Every other scheme — and every
-// other status tone — stays universal. Keep the two tables in step.
+// tone: the schemes whose accent lands on the gold warn hue get an orange one
+// instead. See that table for the hue measurements and for why ``amber`` is
+// deliberately not in this list. Every other scheme — and every other status
+// tone — stays universal. Keep the two tables in step.
+const ORANGE_WARN: StatusTone = { fg: "#FFB870", base: "#F08A32" };
+
 const WARN_OVERRIDE: Partial<Record<ThemeScheme, StatusTone>> = {
-  cyberyellow: { fg: "#FFB870", base: "#F08A32" },
+  cyberyellow: ORANGE_WARN,
+  prestige: ORANGE_WARN,
 };
 
 /**
