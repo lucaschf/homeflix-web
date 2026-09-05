@@ -161,7 +161,9 @@
   "hero": {
     "play": "Assistir",
     "myList": "Minha Lista",
-    "moreInfo": "Mais Informacoes"
+    "moreInfo": "Mais Informacoes",
+    "becauseYouWatch": "Porque você assiste {{genres}}",
+    "listConjunction": "e"
   },
   "empty": {
     "welcome": "Bem-vindo ao HomeFlix",
