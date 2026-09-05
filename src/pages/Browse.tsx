@@ -117,6 +117,7 @@ export function Browse() {
         logoUrl: f.logo_path,
         contentRating: f.content_rating,
         trailerUrl: f.trailer_url,
+        matchedGenres: f.matched_genres ?? [],
       })),
     [featured],
   );

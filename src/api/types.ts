@@ -1228,6 +1228,13 @@ export interface FeaturedItem {
   logo_path: string | null;
   content_rating: string | null;
   trailer_url: string | null;
+  /**
+   * Genres (already localized via ``lang``) that match the profile's
+   * watch history — the reason this title was recommended. Empty for
+   * random filler and for profiles without history. Optional because
+   * backends predating lucaschf/homeflix#410 omit it entirely.
+   */
+  matched_genres?: string[];
 }
 
 export interface FeaturedResponse {

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { neutral } from "../theme/colors";
 import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim } from "../theme/tokens";
+import { formatGenreList } from "../utils/genreList";
 import { MetaLine } from "./MetaLine";
 import { TitleLogo } from "./TitleLogo";
 import { TrailerDialog } from "./TrailerDialog";
@@ -23,6 +24,12 @@ export interface HeroSlide {
   logoUrl?: string | null;
   contentRating?: string | null;
   trailerUrl?: string | null;
+  /**
+   * Genres (localized) that match the profile's watch history — why
+   * the backend picked this title. Empty / absent means random filler
+   * or a profile without history, and the reason badge stays hidden.
+   */
+  matchedGenres?: string[];
 }
 
 interface HeroBannerProps {
@@ -31,6 +38,26 @@ interface HeroBannerProps {
   onDetails?: (slide: HeroSlide) => void;
   onAddToList?: (slide: HeroSlide) => void;
   autoPlayInterval?: number;
+}
+
+/**
+ * The discreet "why this title" eyebrow above the hero title. Renders
+ * nothing at all (no reserved space) when the slide wasn't picked from
+ * the profile's history, so random hero slides look exactly as before.
+ */
+function RecommendationReason({ genres }: { genres: string[] }) {
+  const { t } = useTranslation();
+  const list = formatGenreList(genres, t("hero.listConjunction"));
+  if (!list) return null;
+  return (
+    <Typography
+      variant="eyebrow"
+      data-testid="hero-recommendation-reason"
+      sx={{ color: "text.secondary", mb: 1.5 }}
+    >
+      {t("hero.becauseYouWatch", { genres: list })}
+    </Typography>
+  );
 }
 
 export function HeroBanner({
@@ -214,6 +241,8 @@ export function HeroBanner({
           zIndex: 1,
         }}
       >
+        <RecommendationReason genres={slide.matchedGenres ?? []} />
+
         <TitleLogo
           logoUrl={slide.logoUrl}
           title={slide.title}
