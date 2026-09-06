@@ -4,7 +4,7 @@ import { Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { neutral } from "../theme/colors";
-import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim } from "../theme/tokens";
+import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim, tallDesktopViewport } from "../theme/tokens";
 import { formatGenreList } from "../utils/genreList";
 import { MetaLine } from "./MetaLine";
 import { TitleLogo } from "./TitleLogo";
@@ -52,14 +52,7 @@ export const HERO_BLEED = 250;
 export const HERO_ROW_OVERLAP = 80;
 /** Minimum gap between the navbar and the top of the content column. */
 const HERO_CONTENT_TOP = "40px";
-/**
- * Viewport height from which the hero keeps its original, roomier
- * geometry (the design was tuned on 1080p+ monitors). Below it —
- * 1366×768 laptops — the column and dots use the compact spacing so
- * everything still fits under the navbar.
- */
-const HERO_TALL_VIEWPORT = "(min-height: 960px)";
-/** Bottom padding of the content column on short (< 960px) desktop viewports. */
+/** Bottom padding of the content column on short desktop viewports (see ``tallDesktopViewport``). */
 const HERO_CONTENT_BOTTOM_COMPACT = "clamp(128px, 13dvh, 152px)";
 /** Original bottom padding of the content column on tall viewports (theme spacing units). */
 const HERO_CONTENT_BOTTOM = 22;
@@ -282,7 +275,7 @@ export function HeroBanner({
       {/* Content — bottom-anchored by the parent's flex column. On
           short desktop viewports the bottom padding is compact (and
           viewport-scaled) so the column fits under the navbar; from
-          ``HERO_TALL_VIEWPORT`` up it is the original 176px, keeping
+          ``tallDesktopViewport`` up it is the original 176px, keeping
           the actions where the design put them on big screens. The
           dots below follow the same split. */}
       <Box
@@ -298,9 +291,7 @@ export function HeroBanner({
           // instead of the column touching the navbar.
           pt: { md: HERO_CONTENT_TOP },
           pb: { xs: 3, md: HERO_CONTENT_BOTTOM_COMPACT },
-          [`${theme.breakpoints.up("md")} and ${HERO_TALL_VIEWPORT}`]: {
-            pb: HERO_CONTENT_BOTTOM,
-          },
+          [tallDesktopViewport(theme)]: { pb: HERO_CONTENT_BOTTOM },
           maxWidth: 600,
           zIndex: 1,
         })}
@@ -382,7 +373,7 @@ export function HeroBanner({
               display: "flex",
               gap: 0.75,
               mt: { xs: 3, md: HERO_DOTS_GAP_COMPACT },
-              [`${theme.breakpoints.up("md")} and ${HERO_TALL_VIEWPORT}`]: { mt: HERO_DOTS_GAP },
+              [tallDesktopViewport(theme)]: { mt: HERO_DOTS_GAP },
             })}
           >
           {slides.map((s, i) => (

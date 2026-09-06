@@ -28,9 +28,11 @@ import { CarouselSkeleton } from "../components/CarouselSkeleton";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
 import { HERO_ROW_OVERLAP, HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
-import { CARD_WIDTH } from "../components/mediaCardDimensions";
+import { CARD_WIDTH, CARD_WIDTH_COMPACT } from "../components/mediaCardDimensions";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import type { Theme } from "@mui/material/styles";
+import { shortDesktopViewport } from "../theme/tokens";
 import { formatDuration } from "../utils/duration";
 import { findResumeEpisode } from "../utils/resumeEpisode";
 
@@ -308,8 +310,18 @@ const GRID_COLUMNS = {
   md: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.md}px, 1fr))`,
   lg: `repeat(auto-fill, minmax(${CARD_WIDTH.poster.lg}px, 1fr))`,
 } as const;
+const GRID_COLUMNS_COMPACT = `repeat(auto-fill, minmax(${CARD_WIDTH_COMPACT.poster}px, 1fr))`;
 const GRID_GAP = 1.5;
 const GRID_PX = { xs: 3, md: 6 } as const;
+// Same rule as the carousel cards: short desktop viewports (1366×768)
+// get the compact poster column so the grid matches the Home cards.
+const gridSx = (theme: Theme) => ({
+  display: "grid",
+  gridTemplateColumns: GRID_COLUMNS,
+  [shortDesktopViewport(theme)]: { gridTemplateColumns: GRID_COLUMNS_COMPACT },
+  gap: GRID_GAP,
+  px: GRID_PX,
+});
 
 interface GenreGridProps {
   genreId: string;
@@ -407,7 +419,7 @@ function GenreSortMenu({
  */
 function GenreGridSkeleton() {
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: GRID_COLUMNS, gap: GRID_GAP, px: GRID_PX }}>
+    <Box sx={gridSx}>
       {Array.from({ length: 18 }, (_, i) => (
         <Skeleton
           key={i}
@@ -548,14 +560,7 @@ function GenreGrid({
         </Box>
       ) : (
         <>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: GRID_COLUMNS,
-              gap: GRID_GAP,
-              px: GRID_PX,
-            }}
-          >
+          <Box sx={gridSx}>
             {items.map((item) => (
               <MediaCard
                 key={`${item.type}:${item.id}`}

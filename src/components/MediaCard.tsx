@@ -8,8 +8,8 @@ import { useToast } from "./ToastProvider";
 import { QualityBadge } from "./QualityBadge";
 import { deriveQualityBadge } from "./mediaQuality";
 import { neutral } from "../theme/colors";
-import { whiteAlpha, scrim } from "../theme/tokens";
-import { CARD_WIDTH } from "./mediaCardDimensions";
+import { whiteAlpha, scrim, shortDesktopViewport } from "../theme/tokens";
+import { CARD_WIDTH, CARD_WIDTH_COMPACT } from "./mediaCardDimensions";
 
 interface MediaCardProps {
   title: string;
@@ -95,8 +95,9 @@ export function MediaCard({
   //
   // Heights below are estimates: card width × aspect + ~44px for the
   // title/year block. Poster (2/3) ≈ width × 1.5; landscape/episode
-  // (16/9) ≈ width × 0.5625. Widths mirror ``CARD_WIDTH`` — keep the
-  // two in sync if the breakpoints change.
+  // (16/9) ≈ width × 0.5625. Widths mirror ``CARD_WIDTH`` /
+  // ``CARD_WIDTH_COMPACT`` — keep them in sync if the steps change.
+  const shape = variant === "poster" ? "poster" : "landscape";
   const intrinsicSize =
     variant === "poster"
       ? {
@@ -111,20 +112,31 @@ export function MediaCard({
           md: "auto 360px auto 246px",
           lg: "auto 400px auto 269px",
         };
+  const compactIntrinsicSize =
+    variant === "poster"
+      ? `auto ${CARD_WIDTH_COMPACT.poster}px auto ${Math.round(CARD_WIDTH_COMPACT.poster * 1.5) + 44}px`
+      : `auto ${CARD_WIDTH_COMPACT.landscape}px auto ${Math.round(CARD_WIDTH_COMPACT.landscape * 0.5625) + 44}px`;
 
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         position: "relative",
         cursor: "pointer",
         flexShrink: 0,
         minWidth: 0,
         overflow: "hidden",
         borderRadius: 1,
-        width: fullWidth ? "100%" : CARD_WIDTH[variant === "poster" ? "poster" : "landscape"],
         ...(fullWidth
-          ? null
-          : { contentVisibility: "auto", containIntrinsicSize: intrinsicSize }),
+          ? { width: "100%" }
+          : {
+              width: CARD_WIDTH[shape],
+              contentVisibility: "auto",
+              containIntrinsicSize: intrinsicSize,
+              [shortDesktopViewport(theme)]: {
+                width: CARD_WIDTH_COMPACT[shape],
+                containIntrinsicSize: compactIntrinsicSize,
+              },
+            }),
         // Hover affordances (image zoom, info overlay, play button,
         // text swap) are gated to pointer devices. On touch there is no
         // hover, so a tap would otherwise get "stuck" revealing the
@@ -142,7 +154,7 @@ export function MediaCard({
             "&:hover .play-overlay": { opacity: 1 },
           }),
         },
-      }}
+      })}
     >
       {/* Image — this is the card's keyboard-focusable navigation
           target (role/button + Enter/Space). It's the image wrapper
