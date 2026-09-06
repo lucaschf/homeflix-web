@@ -50,6 +50,8 @@ export const HERO_BLEED = 250;
  * lands ~48–64px under the dots rather than on top of them.
  */
 export const HERO_ROW_OVERLAP = 80;
+/** Minimum gap between the navbar and the top of the content column. */
+const HERO_CONTENT_TOP = "40px";
 /** Bottom padding of the content column — 128px at 768p, 140px at 1080p. */
 const HERO_CONTENT_BOTTOM = "clamp(128px, 13dvh, 152px)";
 /** Gap between the action bar and the slide dots — 40px at 768p, 49px at 1080p. */
@@ -76,7 +78,10 @@ function RecommendationReason({ genres }: { genres: string[] }) {
     <Typography
       variant="eyebrow"
       data-testid="hero-recommendation-reason"
-      sx={{ color: "text.secondary", mb: 1.5 }}
+      // Most title logos are squarer than the logo box, so they fill
+      // its full height and their ink starts right at the top edge —
+      // the eyebrow needs a real gap, not the 12px a text line would.
+      sx={{ color: "text.secondary", mb: 2.5 }}
     >
       {t("hero.becauseYouWatch", { genres: list })}
     </Typography>
@@ -276,6 +281,11 @@ export function HeroBanner({
           flexDirection: "column",
           justifyContent: "flex-end",
           px: { xs: 3, md: 6 },
+          // Top padding is the guaranteed breathing room between the
+          // navbar and the eyebrow/logo: when the column is taller
+          // than the 75dvh hero, the hero grows by exactly this much
+          // instead of the column touching the navbar.
+          pt: { md: HERO_CONTENT_TOP },
           pb: { xs: 3, md: HERO_CONTENT_BOTTOM },
           maxWidth: 600,
           zIndex: 1,

@@ -71,7 +71,11 @@ export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
           aspectRatio: LOGO_ASPECT_RATIO,
           objectFit: "contain",
           objectPosition: "left",
-          mb: 3,
+          // Logos squarer than the box fill its full height, so the
+          // ink sits flush with the bottom edge — a 32px gap keeps the
+          // meta line from crowding it (wide logos get the same gap
+          // plus their own letterboxing).
+          mb: 4,
           cursor: onClick ? "pointer" : "default",
           ...sx,
         }}
