@@ -13,7 +13,7 @@ import {
 } from "../api/hooks";
 import { CarouselSkeleton } from "../components/CarouselSkeleton";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
-import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
+import { HERO_ROW_OVERLAP, HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { useToast } from "../components/ToastProvider";
@@ -167,7 +167,7 @@ export function Home() {
           sit inside it near the bottom edge, so there's no bleed to
           pull into — a positive gap keeps the first carousel clear of
           the dots while desktop keeps its deep full-bleed overlap. */}
-      <Box sx={{ mt: { xs: 2, md: -10 }, position: "relative", zIndex: 1 }}>
+      <Box sx={{ mt: { xs: 2, md: `-${HERO_ROW_OVERLAP}px` }, position: "relative", zIndex: 1 }}>
         {/* Continue Watching: skeleton while pending so the row
             below it (Recently Added / first genre) doesn't shift
             up by ~250px when the data lands. Empty resolved

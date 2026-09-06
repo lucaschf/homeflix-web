@@ -1,4 +1,5 @@
 import { alpha } from "@mui/material/styles";
+import type { Theme } from "@mui/material/styles";
 import {
   accentFor,
   fgFor,
@@ -76,6 +77,29 @@ export const fontFamily = {
   /** Monospace stack — JetBrains Mono with SF Mono / generic fallbacks. */
   mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
 } as const;
+
+// -- Viewport height regimes ---------------------------------------------------
+//
+// Desktop layouts were tuned on 1080p+ monitors. A 1366×768 laptop has the
+// same *width* breakpoint (``lg``) but ~30% less height, so the hero column
+// spilled under the navbar and a poster card ate 60% of the screen. These
+// helpers split desktop into "short" (< 960px tall) and "tall" (≥ 960px)
+// so components can keep their original geometry on big screens and use a
+// compact variant on laptops. Both are full ``@media`` strings usable as sx
+// keys; pass the theme so the width part stays the real ``md`` breakpoint.
+
+/** Viewport height (px) from which desktop keeps its original geometry. */
+export const TALL_VIEWPORT_MIN_HEIGHT = 960;
+
+/** ``@media`` for a desktop-width viewport shorter than ``TALL_VIEWPORT_MIN_HEIGHT``. */
+export function shortDesktopViewport(theme: Theme): string {
+  return `${theme.breakpoints.up("md")} and (max-height: ${TALL_VIEWPORT_MIN_HEIGHT - 1}px)`;
+}
+
+/** ``@media`` for a desktop-width viewport at least ``TALL_VIEWPORT_MIN_HEIGHT`` tall. */
+export function tallDesktopViewport(theme: Theme): string {
+  return `${theme.breakpoints.up("md")} and (min-height: ${TALL_VIEWPORT_MIN_HEIGHT}px)`;
+}
 
 // -- Control geometry ----------------------------------------------------------
 //

@@ -6,7 +6,7 @@ import { useEpisodeScrubFrame } from "../hooks/useEpisodeScrubFrame";
 import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import type { EpisodeOutput } from "../api/types";
 import { neutral } from "../theme/colors";
-import { fontFamily, inkAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { fontFamily, inkAlpha, scrim, shortDesktopViewport, whiteAlpha } from "../theme/tokens";
 import { formatDuration } from "../utils/duration";
 import { WatchedBadge } from "./WatchedBadge";
 
@@ -32,6 +32,11 @@ interface EpisodeCardProps {
  * ``thumbnail_path`` still get a representative still:
  * ``thumbnail_path`` → scrub-preview frame → series poster → gradient.
  */
+/** Rail card width per width breakpoint (tall desktop viewports keep ``lg``). */
+const EPISODE_CARD_WIDTH = { xs: 210, sm: 280, md: 320, lg: 380 } as const;
+/** Rail card width on desktop viewports under 960px tall (see ``shortDesktopViewport``). */
+const EPISODE_CARD_WIDTH_COMPACT = 300;
+
 export function EpisodeCard({
   episode,
   seriesId,
@@ -86,13 +91,17 @@ export function EpisodeCard({
             }
           : undefined
       }
-      sx={{
+      sx={(theme) => ({
         flex: "0 0 auto",
         // 16:9 landscape card, one step smaller than the Continue
         // Watching card (MediaCard variant="landscape") so the episode
         // list stays denser while sharing the same visual language. In
         // the grid view the card fills the MUI Grid cell instead.
-        width: fullWidth ? "100%" : { xs: 210, sm: 280, md: 320, lg: 380 },
+        width: fullWidth ? "100%" : EPISODE_CARD_WIDTH,
+        // Short desktop viewports (1366×768) get the compact step, one
+        // notch under the compact landscape MediaCard (330px) — the
+        // same split the hero and the catalog cards use.
+        ...(fullWidth ? null : { [shortDesktopViewport(theme)]: { width: EPISODE_CARD_WIDTH_COMPACT } }),
         cursor: isAvailable ? "pointer" : "default",
         "&:hover .ep-card-thumb": isAvailable ? { transform: "scale(1.03)" } : {},
         "&:hover .ep-play-overlay": isAvailable ? { opacity: 1 } : {},
@@ -107,7 +116,7 @@ export function EpisodeCard({
               borderRadius: 8,
             }
           : {},
-      }}
+      })}
     >
       <Box
         sx={{

@@ -1,21 +1,16 @@
 import { Box, Skeleton, Typography } from "@mui/material";
-import { CARD_WIDTH } from "./mediaCardDimensions";
+import { cardWidthSx } from "./mediaCardDimensions";
 
 /**
  * Card geometry for the two card variants ``MediaCard`` exposes.
- * Widths come from the shared ``CARD_WIDTH`` source that ``MediaCard``
- * also reads, so the skeleton and the real card can never drift apart.
- * Only the aspect ratio lives here (it's the skeleton's own concern).
+ * Widths come from the shared ``cardWidthSx`` rule that ``MediaCard``
+ * also uses (including the compact step for short desktop viewports),
+ * so the skeleton and the real card can never drift apart. Only the
+ * aspect ratio lives here (it's the skeleton's own concern).
  */
 const CARD_DIMS = {
-  poster: {
-    width: CARD_WIDTH.poster,
-    aspectRatio: "2/3",
-  },
-  landscape: {
-    width: CARD_WIDTH.landscape,
-    aspectRatio: "16/9",
-  },
+  poster: { aspectRatio: "2/3" },
+  landscape: { aspectRatio: "16/9" },
 } as const;
 
 interface CarouselSkeletonProps {
@@ -109,11 +104,11 @@ export function CarouselSkeleton({
         {Array.from({ length: cardCount }, (_, index) => (
           <Box
             key={index}
-            sx={{
+            sx={(theme) => ({
               flexShrink: 0,
-              width: dims.width,
+              ...cardWidthSx(variant, theme),
               aspectRatio: dims.aspectRatio,
-            }}
+            })}
           >
             <Skeleton
               variant="rounded"

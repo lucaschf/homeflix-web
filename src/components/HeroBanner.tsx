@@ -4,7 +4,7 @@ import { Play, Clapperboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { neutral } from "../theme/colors";
-import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim } from "../theme/tokens";
+import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim, tallDesktopViewport } from "../theme/tokens";
 import { formatGenreList } from "../utils/genreList";
 import { MetaLine } from "./MetaLine";
 import { TitleLogo } from "./TitleLogo";
@@ -32,6 +32,35 @@ export interface HeroSlide {
   matchedGenres?: string[];
 }
 
+/**
+ * Desktop hero geometry. Everything here is in one place because the
+ * pieces constrain each other: the hero must be at least tall enough
+ * for its bottom-anchored column on a 768px-tall window, the bleed
+ * decides how far the backdrop reaches under the rows, and the row
+ * pull-up (used by Home / Browse) must stay smaller than the content
+ * bottom padding or the first heading collides with the dots.
+ */
+/** Preferred hero height; the banner grows past it when its column needs more room. */
+export const HERO_MIN_HEIGHT = "max(75dvh, 500px)";
+/** How far (px) the backdrop and its scrims extend below the hero box. */
+export const HERO_BLEED = 250;
+/**
+ * Negative top margin the first row applies to sit over the bleed.
+ * Kept below every value of ``HERO_CONTENT_BOTTOM`` so the heading
+ * lands ~48–64px under the dots rather than on top of them.
+ */
+export const HERO_ROW_OVERLAP = 80;
+/** Minimum gap between the navbar and the top of the content column. */
+const HERO_CONTENT_TOP = "40px";
+/** Bottom padding of the content column on short desktop viewports (see ``tallDesktopViewport``). */
+const HERO_CONTENT_BOTTOM_COMPACT = "clamp(128px, 13dvh, 152px)";
+/** Original bottom padding of the content column on tall viewports (theme spacing units). */
+const HERO_CONTENT_BOTTOM = 22;
+/** Gap between the action bar and the dots on short desktop viewports. */
+const HERO_DOTS_GAP_COMPACT = "clamp(40px, 4.5dvh, 56px)";
+/** Original action-bar → dots gap on tall viewports (theme spacing units). */
+const HERO_DOTS_GAP = 12;
+
 interface HeroBannerProps {
   slides: HeroSlide[];
   onPlay?: (slide: HeroSlide) => void;
@@ -53,7 +82,10 @@ function RecommendationReason({ genres }: { genres: string[] }) {
     <Typography
       variant="eyebrow"
       data-testid="hero-recommendation-reason"
-      sx={{ color: "text.secondary", mb: 1.5 }}
+      // Most title logos are squarer than the logo box, so they fill
+      // its full height and their ink starts right at the top edge —
+      // the eyebrow needs a real gap, not the 12px a text line would.
+      sx={{ color: "text.secondary", mb: 2.5 }}
     >
       {t("hero.becauseYouWatch", { genres: list })}
     </Typography>
@@ -141,10 +173,10 @@ export function HeroBanner({
   // When ``slides`` is still empty (the parent's featured query is
   // pending) we render a placeholder at the final dimensions
   // instead of returning null. Matches the live banner's
-  // ``75dvh`` / ``minHeight: 500`` so the rows below don't shift
-  // up by ~600px when the data arrives — the swap is a content
-  // change, not a layout change. Subtle vertical gradient avoids
-  // a flat black slab while staying out of the way visually.
+  // ``HERO_MIN_HEIGHT`` so the rows below don't shift up by ~600px
+  // when the data arrives — the swap is a content change, not a
+  // layout change. Subtle vertical gradient avoids a flat black
+  // slab while staying out of the way visually.
   if (count === 0) {
     return (
       <Box
@@ -153,8 +185,7 @@ export function HeroBanner({
           position: "relative",
           width: "100%",
           aspectRatio: { xs: "4 / 5", md: "auto" },
-          height: { md: "75dvh" },
-          minHeight: { md: 500 },
+          minHeight: { md: HERO_MIN_HEIGHT },
           background:
             `linear-gradient(180deg, ${neutral[900]} 0%, ${panelScrim(1)} 70%, ${panelScrim(1)} 100%)`,
         }}
@@ -170,8 +201,16 @@ export function HeroBanner({
         position: "relative",
         width: "100%",
         aspectRatio: { xs: "4 / 5", md: "auto" },
-        height: { md: "75dvh" },
-        minHeight: { md: 500 },
+        // ``minHeight`` (not ``height``): the banner is 75dvh on the
+        // viewports it was designed for, but when the bottom-anchored
+        // column (eyebrow + logo + meta + synopsis + actions + dots)
+        // is taller than that — 1366×768 laptops — the hero grows to
+        // fit instead of the column overflowing upward and the
+        // eyebrow/logo disappearing under the sticky navbar.
+        minHeight: { md: HERO_MIN_HEIGHT },
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
       }}
     >
       {/* Backdrop — extends beyond container to bleed under content below */}
@@ -183,7 +222,7 @@ export function HeroBanner({
             top: 0,
             left: 0,
             right: 0,
-            bottom: { xs: 0, md: -250 },
+            bottom: { xs: 0, md: -HERO_BLEED },
             opacity: i === current ? 1 : 0,
             transition: "opacity 800ms ease-in-out",
           }}
@@ -206,7 +245,7 @@ export function HeroBanner({
           top: 0,
           left: 0,
           right: 0,
-          bottom: { xs: 0, md: -250 },
+          bottom: { xs: 0, md: -HERO_BLEED },
           background: {
             xs: `linear-gradient(to right, ${panelScrim(0.97)} 0%, ${panelScrim(0.75)} 50%, ${panelScrim(0.3)} 100%)`,
             md: `linear-gradient(to right, ${panelScrim(0.95)} 0%, ${panelScrim(0.6)} 40%, transparent 70%)`,
@@ -219,27 +258,43 @@ export function HeroBanner({
           top: 0,
           left: 0,
           right: 0,
-          bottom: { xs: 0, md: -250 },
+          bottom: { xs: 0, md: -HERO_BLEED },
           background: {
             xs: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(0.95)} 8%, ${panelScrim(0.78)} 20%, ${panelScrim(0.5)} 35%, ${panelScrim(0.2)} 55%, transparent 75%)`,
-            md: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(0.92)} 8%, ${panelScrim(0.7)} 18%, ${panelScrim(0.4)} 32%, ${panelScrim(0.15)} 50%, transparent 70%)`,
+            // The bottom stops are in px so the strip where the first
+            // carousel lands (the ``HERO_BLEED`` below the hero plus
+            // the row's pull-up overlap) reads on solid page bg at
+            // every viewport height. With %-only stops a 768px-tall
+            // window left the row heading over a ~35% scrim, i.e.
+            // sitting on the raw backdrop.
+            md: `linear-gradient(to top, ${panelScrim(1)} 0px, ${panelScrim(1)} 200px, ${panelScrim(0.85)} 330px, ${panelScrim(0.5)} 45%, ${panelScrim(0.15)} 62%, transparent 78%)`,
           },
         }}
       />
 
-      {/* Content */}
+      {/* Content — bottom-anchored by the parent's flex column. On
+          short desktop viewports the bottom padding is compact (and
+          viewport-scaled) so the column fits under the navbar; from
+          ``tallDesktopViewport`` up it is the original 176px, keeping
+          the actions where the design put them on big screens. The
+          dots below follow the same split. */}
       <Box
-        sx={{
+        sx={(theme) => ({
           position: "relative",
-          height: "100%",
           display: "flex",
           flexDirection: "column",
           justifyContent: "flex-end",
           px: { xs: 3, md: 6 },
-          pb: { xs: 3, md: 22 },
+          // Top padding is the guaranteed breathing room between the
+          // navbar and the eyebrow/logo: when the column is taller
+          // than the 75dvh hero, the hero grows by exactly this much
+          // instead of the column touching the navbar.
+          pt: { md: HERO_CONTENT_TOP },
+          pb: { xs: 3, md: HERO_CONTENT_BOTTOM_COMPACT },
+          [tallDesktopViewport(theme)]: { pb: HERO_CONTENT_BOTTOM },
           maxWidth: 600,
           zIndex: 1,
-        }}
+        })}
       >
         <RecommendationReason genres={slide.matchedGenres ?? []} />
 
@@ -309,9 +364,18 @@ export function HeroBanner({
           )}
         </Box>
 
-        {/* Dot Indicators — positioned near the first list below */}
+        {/* Dot Indicators — sit between the actions and the first
+            list below; compact gap on short desktop viewports, the
+            original 96px on tall ones. */}
         {count > 1 && (
-          <Box sx={{ display: "flex", gap: 0.75, mt: { xs: 3, md: 12 } }}>
+          <Box
+            sx={(theme) => ({
+              display: "flex",
+              gap: 0.75,
+              mt: { xs: 3, md: HERO_DOTS_GAP_COMPACT },
+              [tallDesktopViewport(theme)]: { mt: HERO_DOTS_GAP },
+            })}
+          >
           {slides.map((s, i) => (
             <Box
               key={s.id}
