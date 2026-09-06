@@ -14,7 +14,10 @@ import type { SxProps, Theme } from "@mui/material/styles";
 // the same horizontal footprint — wide logos fill the width, compact
 // ones are centered within the derived height — and low-res PNGs are
 // scaled up to fill rather than rendering at their tiny native size.
-const LOGO_WIDTH = { xs: 260, sm: 400, md: 560 } as const;
+// ``md`` (900–1535px, which includes 1366×768 laptops) gets a smaller
+// step than ``xl`` so the hero column — eyebrow, logo, meta, synopsis,
+// actions — fits a 768px-tall window without crowding the navbar.
+const LOGO_WIDTH = { xs: 260, sm: 400, md: 480, xl: 560 } as const;
 const LOGO_MAX_WIDTH = "100%";
 const LOGO_ASPECT_RATIO = "432 / 130";
 const FALLBACK_FONT_SIZE = { xs: "1.25rem", sm: "1.75rem", md: "2.5rem" } as const;

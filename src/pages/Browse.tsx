@@ -26,7 +26,7 @@ import {
 } from "../api/hooks";
 import { CarouselSkeleton } from "../components/CarouselSkeleton";
 import { LazyGenreCarousel } from "../components/GenreCarousel";
-import { HeroBanner, type HeroSlide } from "../components/HeroBanner";
+import { HERO_ROW_OVERLAP, HeroBanner, type HeroSlide } from "../components/HeroBanner";
 import { MediaCard } from "../components/MediaCard";
 import { CARD_WIDTH } from "../components/mediaCardDimensions";
 import { MediaCarousel } from "../components/MediaCarousel";
@@ -168,7 +168,7 @@ export function Browse() {
           // keeps the first carousel ("Adicionados Recentemente") clear
           // of the dots while desktop keeps its deep full-bleed overlap
           // (matches Home).
-          mt: genreFilter ? 4 : { xs: 2, md: -10 },
+          mt: genreFilter ? 4 : { xs: 2, md: `-${HERO_ROW_OVERLAP}px` },
           position: "relative",
           zIndex: 1,
         }}
