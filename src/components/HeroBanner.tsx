@@ -52,10 +52,21 @@ export const HERO_BLEED = 250;
 export const HERO_ROW_OVERLAP = 80;
 /** Minimum gap between the navbar and the top of the content column. */
 const HERO_CONTENT_TOP = "40px";
-/** Bottom padding of the content column — 128px at 768p, 140px at 1080p. */
-const HERO_CONTENT_BOTTOM = "clamp(128px, 13dvh, 152px)";
-/** Gap between the action bar and the slide dots — 40px at 768p, 49px at 1080p. */
-const HERO_DOTS_GAP = "clamp(40px, 4.5dvh, 56px)";
+/**
+ * Viewport height from which the hero keeps its original, roomier
+ * geometry (the design was tuned on 1080p+ monitors). Below it —
+ * 1366×768 laptops — the column and dots use the compact spacing so
+ * everything still fits under the navbar.
+ */
+const HERO_TALL_VIEWPORT = "(min-height: 960px)";
+/** Bottom padding of the content column on short (< 960px) desktop viewports. */
+const HERO_CONTENT_BOTTOM_COMPACT = "clamp(128px, 13dvh, 152px)";
+/** Original bottom padding of the content column on tall viewports (theme spacing units). */
+const HERO_CONTENT_BOTTOM = 22;
+/** Gap between the action bar and the dots on short desktop viewports. */
+const HERO_DOTS_GAP_COMPACT = "clamp(40px, 4.5dvh, 56px)";
+/** Original action-bar → dots gap on tall viewports (theme spacing units). */
+const HERO_DOTS_GAP = 12;
 
 interface HeroBannerProps {
   slides: HeroSlide[];
@@ -268,14 +279,14 @@ export function HeroBanner({
         }}
       />
 
-      {/* Content — bottom-anchored by the parent's flex column. The
-          desktop bottom padding scales with the viewport (clamped)
-          so the actions sit at the same relative height on a 768px
-          laptop and a 1080p monitor, and so the dots keep a
-          consistent gap to the first row that is pulled up over
-          the bleed (``HERO_ROW_OVERLAP``). */}
+      {/* Content — bottom-anchored by the parent's flex column. On
+          short desktop viewports the bottom padding is compact (and
+          viewport-scaled) so the column fits under the navbar; from
+          ``HERO_TALL_VIEWPORT`` up it is the original 176px, keeping
+          the actions where the design put them on big screens. The
+          dots below follow the same split. */}
       <Box
-        sx={{
+        sx={(theme) => ({
           position: "relative",
           display: "flex",
           flexDirection: "column",
@@ -286,10 +297,13 @@ export function HeroBanner({
           // than the 75dvh hero, the hero grows by exactly this much
           // instead of the column touching the navbar.
           pt: { md: HERO_CONTENT_TOP },
-          pb: { xs: 3, md: HERO_CONTENT_BOTTOM },
+          pb: { xs: 3, md: HERO_CONTENT_BOTTOM_COMPACT },
+          [`${theme.breakpoints.up("md")} and ${HERO_TALL_VIEWPORT}`]: {
+            pb: HERO_CONTENT_BOTTOM,
+          },
           maxWidth: 600,
           zIndex: 1,
-        }}
+        })}
       >
         <RecommendationReason genres={slide.matchedGenres ?? []} />
 
@@ -360,9 +374,17 @@ export function HeroBanner({
         </Box>
 
         {/* Dot Indicators — sit between the actions and the first
-            list below, with a viewport-scaled gap on desktop. */}
+            list below; compact gap on short desktop viewports, the
+            original 96px on tall ones. */}
         {count > 1 && (
-          <Box sx={{ display: "flex", gap: 0.75, mt: { xs: 3, md: HERO_DOTS_GAP } }}>
+          <Box
+            sx={(theme) => ({
+              display: "flex",
+              gap: 0.75,
+              mt: { xs: 3, md: HERO_DOTS_GAP_COMPACT },
+              [`${theme.breakpoints.up("md")} and ${HERO_TALL_VIEWPORT}`]: { mt: HERO_DOTS_GAP },
+            })}
+          >
           {slides.map((s, i) => (
             <Box
               key={s.id}
