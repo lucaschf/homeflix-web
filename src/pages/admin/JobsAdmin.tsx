@@ -243,47 +243,48 @@ export function JobsAdmin() {
         />
       </Box>
 
-      <AdminCard padding={0} sx={{ overflow: "hidden" }}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 2,
-            px: "20px",
-            borderBottom: `1px solid ${whiteAlpha(0.08)}`,
-            // The tab bar draws its own hairline; let the card strip own it.
-            "& .MuiTabs-root": { borderBottom: "none" },
-          }}
+      {/* Tab bar sits outside the card, like the other admin views:
+          just the underline hairline, no surface around it. */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          gap: 2,
+          mb: 2.5,
+          borderBottom: `1px solid ${whiteAlpha(0.08)}`,
+          "& .MuiTabs-root": { borderBottom: "none" },
+        }}
+      >
+        <AdminTabs
+          tabs={[
+            {
+              key: "jobs",
+              label: t("admin.jobs.overview.title"),
+              active: activeTab === "jobs",
+              onClick: () => changeTab("jobs"),
+            },
+            {
+              key: "history",
+              label: t("admin.jobs.history.title"),
+              active: activeTab === "history",
+              onClick: () => changeTab("history"),
+            },
+          ]}
+        />
+        <Typography
+          variant="cardSubtitle"
+          color="text.secondary"
+          noWrap
+          sx={{ display: { xs: "none", md: "block" }, minWidth: 0, pb: 1.25 }}
         >
-          <AdminTabs
-            tabs={[
-              {
-                key: "jobs",
-                label: t("admin.jobs.overview.title"),
-                active: activeTab === "jobs",
-                onClick: () => changeTab("jobs"),
-              },
-              {
-                key: "history",
-                label: t("admin.jobs.history.title"),
-                active: activeTab === "history",
-                onClick: () => changeTab("history"),
-              },
-            ]}
-          />
-          <Typography
-            variant="cardSubtitle"
-            color="text.secondary"
-            noWrap
-            sx={{ display: { xs: "none", md: "block" }, minWidth: 0 }}
-          >
-            {activeTab === "jobs"
-              ? t("admin.jobs.overview.subtitle")
-              : t("admin.jobs.history.subtitle")}
-          </Typography>
-        </Box>
+          {activeTab === "jobs"
+            ? t("admin.jobs.overview.subtitle")
+            : t("admin.jobs.history.subtitle")}
+        </Typography>
+      </Box>
 
+      <AdminCard padding={0} sx={{ overflow: "hidden" }}>
         {activeTab === "jobs" ? (
           overview.isLoading ? (
             <Typography variant="body2" color="text.secondary" sx={{ p: 2.5 }}>
