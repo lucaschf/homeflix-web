@@ -61,6 +61,18 @@ export const THEME_SCHEMES = [
   "sakura",
   "prestige",
   "cyberyellow",
+  "nightcity",
+  "breach",
+  "touge",
+  "pause",
+  "sinner",
+  "retrogreen",
+  "retroblue",
+  "retropurple",
+  "retrogrey",
+  "retroorange",
+  "retroteal",
+  "retromustard",
 ] as const;
 
 export type ThemeScheme = (typeof THEME_SCHEMES)[number];
@@ -108,6 +120,28 @@ export const setActiveScheme = (scheme: ThemeScheme): void => {
 type NeutralKey = 50 | 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900 | 950;
 
 // -- Per-scheme raw palettes (real hex) ---------------------------------------
+
+// Printed-ink black with a paper warmth — the stock every "retro print" scheme
+// (``touge`` and the ``retro*`` family) is printed on. Greener and flatter than
+// "nightcity" so the two warm blacks read as different stock. Only the ink
+// (accent) changes across the family; the paper, cream and body tones are
+// shared below.
+const RETRO_PAPER: Record<NeutralKey, string> = {
+  50: "#F5EEE0",
+  100: "#EDE4D2",
+  200: "#E0D5C1",
+  300: "#C9BCA6",
+  400: "#9A8D7A",
+  500: "#675D4E",
+  600: "#433D33",
+  700: "#29261F",
+  800: "#1B1915",
+  900: "#131210",
+  950: "#0C0C0A",
+};
+const RETRO_FG = "#EFE6D5";
+const RETRO_MUTED = "#9A8D7A";
+const RETRO_PANEL_2 = "#1B1915";
 
 const NEUTRAL: Record<ThemeScheme, Record<NeutralKey, string>> = {
   dark: {
@@ -357,6 +391,74 @@ const NEUTRAL: Record<ThemeScheme, Record<NeutralKey, string>> = {
     900: "#0B0B0A",
     950: "#000000",
   },
+  // Warm brown-black — the Opera GX "Cyberpunk 2077" mod chrome. Darker and
+  // redder than the "amber" darkroom ramp, so the two warm schemes stay apart.
+  nightcity: {
+    50: "#F5F2EB",
+    100: "#EDE8DE",
+    200: "#DDD6C9",
+    300: "#C2B9AA",
+    400: "#948A7A",
+    500: "#61574A",
+    600: "#3F362C",
+    700: "#27201A",
+    800: "#191410",
+    900: "#110D0B",
+    950: "#0B0907",
+  },
+  // Maroon-tinged navy — the breach-protocol HUD backdrop: a red-black gradient
+  // that bottoms out in a cold near-black.
+  breach: {
+    50: "#F6F1F2",
+    100: "#EEE6E8",
+    200: "#DED3D6",
+    300: "#C4B6BA",
+    400: "#98868C",
+    500: "#66525A",
+    600: "#43353D",
+    700: "#2A2029",
+    800: "#1B1620",
+    900: "#12111A",
+    950: "#0B0D15",
+  },
+  touge: RETRO_PAPER,
+  // Blue-black — the pause-menu corridor behind the red glitch panel. Violet-
+  // leaning rather than the steel of "cyberyellow" or the indigo of "cyberpunk".
+  pause: {
+    50: "#F5F4F8",
+    100: "#ECEAF1",
+    200: "#DAD6E3",
+    300: "#BFBACD",
+    400: "#8F8AA3",
+    500: "#5C5670",
+    600: "#3A3548",
+    700: "#221F2E",
+    800: "#151420",
+    900: "#0E0D18",
+    950: "#080712",
+  },
+  // Grainy poster black — near-neutral with the faintest warmth, so the pastel
+  // pink is the only color on the page.
+  sinner: {
+    50: "#F6F3F3",
+    100: "#EEEAEA",
+    200: "#DFDADA",
+    300: "#C6C0C0",
+    400: "#979090",
+    500: "#666161",
+    600: "#423F3F",
+    700: "#2A2828",
+    800: "#1C1B1B",
+    900: "#141313",
+    950: "#0E0D0D",
+  },
+  retrogreen: RETRO_PAPER,
+  retroblue: RETRO_PAPER,
+  retropurple: RETRO_PAPER,
+  retrogrey: RETRO_PAPER,
+  retroorange: RETRO_PAPER,
+  retroteal: RETRO_PAPER,
+  retromustard: RETRO_PAPER,
 };
 
 const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: string }> = {
@@ -536,6 +638,140 @@ const ACCENT: Record<ThemeScheme, Omit<ColorScale, `alpha${string}`> & { rgb: st
     contrastText: "#000000",
     rgb: "212, 175, 55",
   },
+  // GX olive-yellow — the mod's highlight color. Duller and greener than the
+  // acid "cyberyellow", closer to the 2077 logo as printed than as lit.
+  nightcity: {
+    lightest: "#F6F2BF",
+    light: "#E6DC55",
+    main: "#D2C61A",
+    dark: "#ADA30F",
+    darkest: "#6E680C",
+    contrastText: "#0B0907",
+    rgb: "210, 198, 26",
+  },
+  // Coral — the HUD's "ATTENTION" tone: warmer and lighter than the "cinema"
+  // red, and paired with the slate-teal panels in SECONDARY_ACCENT.
+  breach: {
+    lightest: "#FBDAD9",
+    light: "#F08E8B",
+    main: "#E0625F",
+    dark: "#BE4643",
+    darkest: "#7C2A2A",
+    contrastText: "#0B0D15",
+    rgb: "224, 98, 95",
+  },
+  // Brick vermilion — a printed, desaturated red. Cream label instead of the
+  // near-black the brighter accents use: ink on red stock, not neon.
+  touge: {
+    lightest: "#F7D8CE",
+    light: "#E07A62",
+    main: "#C8482F",
+    dark: "#A63A25",
+    darkest: "#6B2416",
+    contrastText: "#F5EEE0",
+    rgb: "200, 72, 47",
+  },
+  // The pause-menu red — the menu-item text tone, hot and slightly orange.
+  // Paired with the logo yellow in SECONDARY_ACCENT.
+  pause: {
+    lightest: "#FFD9D6",
+    light: "#FF8078",
+    main: "#F4483F",
+    dark: "#D3302A",
+    darkest: "#7E1B17",
+    contrastText: "#080712",
+    rgb: "244, 72, 63",
+  },
+  // Bubblegum pink — lighter, cooler and more pastel than the dusty "sakura"
+  // rose, and set on a neutral black instead of sakura's plum.
+  sinner: {
+    lightest: "#FCE6ED",
+    light: "#F7C3D2",
+    main: "#F2A6BC",
+    dark: "#E07F9B",
+    darkest: "#A34C68",
+    contrastText: "#0E0D0D",
+    rgb: "242, 166, 188",
+  },
+  // The rest of the retro-print family: the same paper as ``touge``, a
+  // different ink. Every ink is a mid-dark printed tone with the cream label —
+  // deliberately duller than the neon accents of the "cyberpunk" schemes and
+  // darker than the pastel ones, so the family reads as print, not screen.
+  //
+  // Printed forest green — deeper than the mint "forest" accent.
+  retrogreen: {
+    lightest: "#D6EBDA",
+    light: "#6FAE7E",
+    main: "#3E8050",
+    dark: "#2F6740",
+    darkest: "#1E4429",
+    contrastText: "#F5EEE0",
+    rgb: "62, 128, 80",
+  },
+  // Printed cobalt — desaturated and mid-dark, away from the sky "midnight" blue.
+  retroblue: {
+    lightest: "#D9E5F2",
+    light: "#6E9CCB",
+    main: "#3A6EA5",
+    dark: "#2D578A",
+    darkest: "#1D3A5C",
+    contrastText: "#F5EEE0",
+    rgb: "58, 110, 165",
+  },
+  // Printed plum-violet — far darker than the pastel "violet" and "dracula".
+  retropurple: {
+    lightest: "#E6DEF1",
+    light: "#A48BC8",
+    main: "#7A5AA6",
+    dark: "#62488A",
+    darkest: "#41305C",
+    contrastText: "#F5EEE0",
+    rgb: "122, 90, 166",
+  },
+  // Graphite — a warm-grey ink with a faint green lean, like old newsprint.
+  // Unlike "mono" the CTA is a dark block with a cream label, not white.
+  retrogrey: {
+    lightest: "#E0E1DC",
+    light: "#9A9E96",
+    main: "#6B6F68",
+    dark: "#52564F",
+    darkest: "#363933",
+    contrastText: "#F5EEE0",
+    rgb: "107, 111, 104",
+  },
+  // Burnt orange / terracotta — deep enough for the cream label. 24° hue keeps
+  // it ~19° from the gold warning, so no override (see WARNING_OVERRIDE).
+  retroorange: {
+    lightest: "#F6DDCB",
+    light: "#DB8A55",
+    main: "#B85C22",
+    dark: "#984A1A",
+    darkest: "#633011",
+    contrastText: "#F5EEE0",
+    rgb: "184, 92, 34",
+  },
+  // Printed teal — darker and greyer than the cyan "teal" scheme.
+  retroteal: {
+    lightest: "#D3EAEA",
+    light: "#5FAAAA",
+    main: "#2E7F80",
+    dark: "#24686A",
+    darkest: "#174546",
+    contrastText: "#F5EEE0",
+    rgb: "46, 127, 128",
+  },
+  // Mustard — the one ink light enough that the label flips to ink-black,
+  // like the poster's data-card boxes. Sits on the warning hue, so it takes
+  // the orange warning override.
+  retromustard: {
+    lightest: "#F4E8C6",
+    light: "#DBB85E",
+    main: "#C49A2F",
+    dark: "#A37E22",
+    darkest: "#6B5316",
+    contrastText: "#0C0C0A",
+    rgb: "196, 154, 47",
+  },
 };
 
 // -- Optional secondary accent -------------------------------------------------
@@ -550,6 +786,12 @@ export interface SecondaryAccent {
   rgb: string;
 }
 
+const RETRO_CREAM: SecondaryAccent = {
+  main: "#D9C4A0",
+  text: "#EAD9BC",
+  rgb: "217, 196, 160",
+};
+
 const SECONDARY_ACCENT: Partial<Record<ThemeScheme, SecondaryAccent>> = {
   warmteal: { main: "#5BC6BD", text: "#86D6CF", rgb: "91, 198, 189" },
   // The other half of the neon duotone: cyan secondary against the magenta CTA.
@@ -559,6 +801,21 @@ const SECONDARY_ACCENT: Partial<Record<ThemeScheme, SecondaryAccent>> = {
   dracula: { main: "#FF79C6", text: "#FFA6DA", rgb: "255, 121, 198" },
   // Electric cyan against the acid yellow — the canonical yellow/cyan duo.
   cyberyellow: { main: "#00E5FF", text: "#7BEEFF", rgb: "0, 229, 255" },
+  // Opera GX's own red beside the mod's yellow — the brand pair the mod ships in.
+  nightcity: { main: "#FA1E4E", text: "#FF7A92", rgb: "250, 30, 78" },
+  // The HUD's slate-teal panel tone, lifted to a usable accent.
+  breach: { main: "#4E8A96", text: "#8CC3CC", rgb: "78, 138, 150" },
+  // The poster's paper cream — the second ink on every retro print.
+  touge: RETRO_CREAM,
+  retrogreen: RETRO_CREAM,
+  retroblue: RETRO_CREAM,
+  retropurple: RETRO_CREAM,
+  retrogrey: RETRO_CREAM,
+  retroorange: RETRO_CREAM,
+  retroteal: RETRO_CREAM,
+  retromustard: RETRO_CREAM,
+  // The 2077 logo yellow over the red glitch panel.
+  pause: { main: "#FCEE0A", text: "#FFF56B", rgb: "252, 238, 10" },
 };
 
 export const secondaryAccentFor = (
@@ -584,6 +841,18 @@ const FG: Record<ThemeScheme, string> = {
   sakura: "#F7EFF2",
   prestige: "#F5F1E8",
   cyberyellow: "#F2F4F8",
+  nightcity: "#F3EFE6",
+  breach: "#F5EEEF",
+  touge: RETRO_FG,
+  pause: "#F1EFF7",
+  sinner: "#F6EEF1",
+  retrogreen: RETRO_FG,
+  retroblue: RETRO_FG,
+  retropurple: RETRO_FG,
+  retrogrey: RETRO_FG,
+  retroorange: RETRO_FG,
+  retroteal: RETRO_FG,
+  retromustard: RETRO_FG,
 };
 const MUTED: Record<ThemeScheme, string> = {
   dark: "#8A857E",
@@ -603,6 +872,18 @@ const MUTED: Record<ThemeScheme, string> = {
   sakura: "#A48C95",
   prestige: "#968F82",
   cyberyellow: "#8E96A6",
+  nightcity: "#948A7A",
+  breach: "#98868C",
+  touge: RETRO_MUTED,
+  pause: "#8F8AA3",
+  sinner: "#979090",
+  retrogreen: RETRO_MUTED,
+  retroblue: RETRO_MUTED,
+  retropurple: RETRO_MUTED,
+  retrogrey: RETRO_MUTED,
+  retroorange: RETRO_MUTED,
+  retroteal: RETRO_MUTED,
+  retromustard: RETRO_MUTED,
 };
 // Frosted menu/popover surface base (``menuScrim``).
 const PANEL_2: Record<ThemeScheme, string> = {
@@ -623,6 +904,18 @@ const PANEL_2: Record<ThemeScheme, string> = {
   sakura: "#261A20",
   prestige: "#151412",
   cyberyellow: "#15181E",
+  nightcity: "#191410",
+  breach: "#1B1620",
+  touge: RETRO_PANEL_2,
+  pause: "#151420",
+  sinner: "#1C1B1B",
+  retrogreen: RETRO_PANEL_2,
+  retroblue: RETRO_PANEL_2,
+  retropurple: RETRO_PANEL_2,
+  retrogrey: RETRO_PANEL_2,
+  retroorange: RETRO_PANEL_2,
+  retroteal: RETRO_PANEL_2,
+  retromustard: RETRO_PANEL_2,
 };
 
 // -- Scheme accessors (real hex, for the theme factory) ------------------------
@@ -636,6 +929,14 @@ export const accentFor = (scheme: ThemeScheme) => ACCENT[scheme];
 export const fgFor = (scheme: ThemeScheme) => FG[scheme];
 export const mutedFor = (scheme: ThemeScheme) => MUTED[scheme];
 export const panel2For = (scheme: ThemeScheme) => PANEL_2[scheme];
+
+/**
+ * Whether a scheme is one of the retro-print family — derived from the
+ * palette table (it is printed on ``RETRO_PAPER``), not from a per-theme
+ * list, so a new ink joins the family by using the shared paper.
+ */
+export const isRetroPrint = (scheme: ThemeScheme): boolean =>
+  NEUTRAL[scheme] === RETRO_PAPER;
 
 // -- Live token objects (getters read the active scheme at render) -------------
 
@@ -727,7 +1028,14 @@ export const warning = withAlphas({
 //
 //   prestige     #D4AF37  46°  ->  3° from warning, 17° from orange  — fixed
 //   cyberyellow  #FCEE0A  56°  -> 13° from warning, 27° from orange  — fixed
+//   nightcity    #D2C61A  56°  -> 13° from warning, 27° from orange  — fixed
+//   retromustard #C49A2F  43°  ->  0° from warning, 14° from orange  — fixed
+//   retroorange  #B85C22  24°  -> 19° from warning,  5° from orange  — NOT fixed
 //   amber        #E0A44A  36°  ->  7° from warning,  7° from orange  — NOT fixed
+//
+// ``pause`` is fixed for its *secondary* accent (the logo yellow, same hue as
+// ``cyberyellow``): a gold warning chip beside a yellow hairline button reads
+// as the theme, not as a status.
 //
 // ``amber`` is deliberately absent: its accent sits between the two, so the
 // orange only swaps which side the 7° gap falls on. Don't "complete" this table
@@ -747,6 +1055,9 @@ const ORANGE_WARNING = withAlphas({
 const WARNING_OVERRIDE: Partial<Record<ThemeScheme, ColorScale>> = {
   cyberyellow: ORANGE_WARNING,
   prestige: ORANGE_WARNING,
+  nightcity: ORANGE_WARNING,
+  pause: ORANGE_WARNING,
+  retromustard: ORANGE_WARNING,
 };
 
 export const warningFor = (scheme: ThemeScheme): ColorScale =>
