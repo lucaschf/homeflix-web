@@ -9,15 +9,16 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { useJobRuns, useJobs, useTriggerJob } from "../../api/hooks";
 import type { JobRunRecord, JobSummary } from "../../api/types";
 import {
   AdminBadge,
   AdminButton,
   AdminCard,
-  AdminCardHeader,
   AdminPageHeader,
   AdminTablePagination,
+  AdminTabs,
   FancyEmpty,
   StatCard,
   type BadgeTone,
@@ -40,6 +41,16 @@ const HIST_GRID = "minmax(220px, 1.5fr) 120px 84px minmax(0, 1.4fr) 168px";
 // How long an optimistic "Running" badge survives after a manual
 // trigger before we trust the polled state again.
 const OPTIMISTIC_RUN_MS = 30_000;
+
+// The two tables live in tabs; the active one is carried in the URL
+// (``?tab=history``) so refresh, back and deep links from the failure
+// tile all land on the right table. Absent/unknown = jobs.
+type TabKey = "jobs" | "history";
+const TAB_PARAM = "tab";
+
+function parseTab(raw: string | null): TabKey {
+  return raw === "history" ? "history" : "jobs";
+}
 
 function statusTone(status: string): BadgeTone {
   switch (status) {
@@ -112,7 +123,7 @@ function formatDuration(ms: number | null): string {
  * Admin Jobs dashboard — every background scheduler job with its live
  * schedule (humanized + next run), a run-health strip of recent
  * outcomes, last execution, and a "run now" trigger, plus a paginated
- * execution history and 24-hour summary tiles. Answers "is anything
+ * execution history in a second tab and 24-hour summary tiles. Answers "is anything
  * running / did the backfill actually run / why did it fail" without
  * grepping logs.
  */
@@ -121,6 +132,14 @@ export function JobsAdmin() {
   const locale = i18n.language;
   useDocumentTitle(t("admin.jobs.title"));
   const overview = useJobs();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = parseTab(searchParams.get(TAB_PARAM));
+  const changeTab = (key: TabKey) => {
+    const next = new URLSearchParams(searchParams);
+    if (key === "jobs") next.delete(TAB_PARAM);
+    else next.set(TAB_PARAM, key);
+    setSearchParams(next, { replace: true });
+  };
   const [pageSize, setPageSize] = useState(10);
   const runs = useJobRuns({}, { pageSize });
   const triggerJob = useTriggerJob();
@@ -214,6 +233,7 @@ export function JobsAdmin() {
           value={failures}
           icon={AlertTriangle}
           alert={failures > 0}
+          onClick={failures > 0 ? () => changeTab("history") : undefined}
           sub={
             failures > 0
               ? t("admin.jobs.summary.failuresPresent", { count: failures })
@@ -223,55 +243,78 @@ export function JobsAdmin() {
         />
       </Box>
 
-      {/* Scheduled jobs */}
-      <AdminCard padding={0} sx={{ overflow: "hidden", mb: 3.5 }}>
-        <Box sx={{ p: "18px 20px 16px", borderBottom: `1px solid ${whiteAlpha(0.08)}` }}>
-          <AdminCardHeader
-            icon={ListChecks}
-            title={t("admin.jobs.overview.title")}
-            subtitle={t("admin.jobs.overview.subtitle")}
-          />
-        </Box>
-        {overview.isLoading ? (
-          <Typography variant="body2" color="text.secondary" sx={{ p: 2.5 }}>
-            {t("admin.jobs.loading")}
-          </Typography>
-        ) : overview.isError ? (
-          <Typography variant="body2" color="error" sx={{ p: 2.5 }}>
-            {t("admin.jobs.error")}
-          </Typography>
-        ) : jobs.length === 0 ? (
-          <Box sx={{ p: 2.5 }}>
-            <FancyEmpty icon={ListChecks} motif="rows" title={t("admin.jobs.empty")} />
-          </Box>
-        ) : (
-          <>
-            <ScheduledHeader t={t} />
-            {jobs.map((job, i) => (
-              <JobRow
-                key={job.job_id}
-                job={job}
-                locale={locale}
-                t={t}
-                isLast={i === jobs.length - 1}
-                optimisticRunning={isOptimisticallyRunning(job, pendingRuns[job.job_id])}
-                onRunNow={() => handleRunNow(job)}
-              />
-            ))}
-          </>
-        )}
-      </AdminCard>
+      {/* Tab bar sits outside the card, like the other admin views:
+          just the underline hairline, no surface around it. */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "space-between",
+          gap: 2,
+          mb: 2.5,
+          borderBottom: `1px solid ${whiteAlpha(0.08)}`,
+          "& .MuiTabs-root": { borderBottom: "none" },
+        }}
+      >
+        <AdminTabs
+          tabs={[
+            {
+              key: "jobs",
+              label: t("admin.jobs.overview.title"),
+              active: activeTab === "jobs",
+              onClick: () => changeTab("jobs"),
+            },
+            {
+              key: "history",
+              label: t("admin.jobs.history.title"),
+              active: activeTab === "history",
+              onClick: () => changeTab("history"),
+            },
+          ]}
+        />
+        <Typography
+          variant="cardSubtitle"
+          color="text.secondary"
+          noWrap
+          sx={{ display: { xs: "none", md: "block" }, minWidth: 0, pb: 1.25 }}
+        >
+          {activeTab === "jobs"
+            ? t("admin.jobs.overview.subtitle")
+            : t("admin.jobs.history.subtitle")}
+        </Typography>
+      </Box>
 
-      {/* Run history */}
       <AdminCard padding={0} sx={{ overflow: "hidden" }}>
-        <Box sx={{ p: "18px 20px 16px", borderBottom: `1px solid ${whiteAlpha(0.08)}` }}>
-          <AdminCardHeader
-            icon={History}
-            title={t("admin.jobs.history.title")}
-            subtitle={t("admin.jobs.history.subtitle")}
-          />
-        </Box>
-        {runs.isLoading ? (
+        {activeTab === "jobs" ? (
+          overview.isLoading ? (
+            <Typography variant="body2" color="text.secondary" sx={{ p: 2.5 }}>
+              {t("admin.jobs.loading")}
+            </Typography>
+          ) : overview.isError ? (
+            <Typography variant="body2" color="error" sx={{ p: 2.5 }}>
+              {t("admin.jobs.error")}
+            </Typography>
+          ) : jobs.length === 0 ? (
+            <Box sx={{ p: 2.5 }}>
+              <FancyEmpty icon={ListChecks} motif="rows" title={t("admin.jobs.empty")} />
+            </Box>
+          ) : (
+            <>
+              <ScheduledHeader t={t} />
+              {jobs.map((job, i) => (
+                <JobRow
+                  key={job.job_id}
+                  job={job}
+                  locale={locale}
+                  t={t}
+                  isLast={i === jobs.length - 1}
+                  optimisticRunning={isOptimisticallyRunning(job, pendingRuns[job.job_id])}
+                  onRunNow={() => handleRunNow(job)}
+                />
+              ))}
+            </>
+          )
+        ) : runs.isLoading ? (
           <Typography variant="body2" color="text.secondary" sx={{ p: 2.5 }}>
             {t("admin.jobs.loading")}
           </Typography>
