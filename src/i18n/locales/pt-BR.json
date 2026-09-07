@@ -2068,7 +2068,23 @@
       "nord": "Nord (Ártico)",
       "sakura": "Sakura (Rosé)",
       "prestige": "Prestige (Ouro)",
-      "cyberyellow": "Cyberpunk (Amarelo)"
+      "cyberyellow": "Cyberpunk (Amarelo)",
+      "nightcity": "Night City (GX)",
+      "breach": "Breach (HUD)",
+      "touge": "Touge (Retrô)",
+      "pause": "Cyberpunk (Pause)",
+      "sinner": "Sinner (Rosa)",
+      "retrogreen": "Retrô (Verde)",
+      "retroblue": "Retrô (Azul)",
+      "retropurple": "Retrô (Roxo)",
+      "retrogrey": "Retrô (Cinza)",
+      "retroorange": "Retrô (Laranja)",
+      "retroteal": "Retrô (Teal)",
+      "retromustard": "Retrô (Mostarda)"
+    },
+    "themeGroups": {
+      "retro": "Impressão retrô",
+      "retroHint": "Mesmo papel, tinta diferente"
     },
     "playback": "Reprodução",
     "playbackHint": "idioma, qualidade e o que acontece entre episódios",

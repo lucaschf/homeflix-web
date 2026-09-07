@@ -164,6 +164,9 @@ const ORANGE_WARN: StatusTone = { fg: "#FFB870", base: "#F08A32" };
 const WARN_OVERRIDE: Partial<Record<ThemeScheme, StatusTone>> = {
   cyberyellow: ORANGE_WARN,
   prestige: ORANGE_WARN,
+  nightcity: ORANGE_WARN,
+  pause: ORANGE_WARN,
+  retromustard: ORANGE_WARN,
 };
 
 /**
