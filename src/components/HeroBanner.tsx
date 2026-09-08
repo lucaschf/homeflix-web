@@ -60,6 +60,12 @@ const HERO_CONTENT_BOTTOM = 22;
 const HERO_DOTS_GAP_COMPACT = "clamp(40px, 4.5dvh, 56px)";
 /** Original action-bar → dots gap on tall viewports (theme spacing units). */
 const HERO_DOTS_GAP = 12;
+/**
+ * Base fill under the backdrops. Also what the pending placeholder
+ * shows, so a banner whose image is still downloading looks like the
+ * loading state it just replaced rather than a dead black slab.
+ */
+const HERO_BASE_BACKGROUND = `linear-gradient(180deg, ${neutral[900]} 0%, ${panelScrim(1)} 70%, ${panelScrim(1)} 100%)`;
 
 interface HeroBannerProps {
   slides: HeroSlide[];
@@ -107,6 +113,15 @@ export function HeroBanner({
   const { showToast } = useToast();
 
   const count = slides.length;
+
+  // Backdrop URLs that have finished downloading. A slide's backdrop
+  // only becomes visible once its image is decoded, so a slow link
+  // fades the picture in over the base gradient instead of leaving
+  // an invisible, half-transferred <img> where the artwork should be.
+  const [loadedBackdrops, setLoadedBackdrops] = useState<Set<string>>(() => new Set());
+  const markBackdropLoaded = useCallback((url: string) => {
+    setLoadedBackdrops((prev) => (prev.has(url) ? prev : new Set(prev).add(url)));
+  }, []);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -186,12 +201,23 @@ export function HeroBanner({
           width: "100%",
           aspectRatio: { xs: "4 / 5", md: "auto" },
           minHeight: { md: HERO_MIN_HEIGHT },
-          background:
-            `linear-gradient(180deg, ${neutral[900]} 0%, ${panelScrim(1)} 70%, ${panelScrim(1)} 100%)`,
+          background: HERO_BASE_BACKGROUND,
         }}
       />
     );
   }
+
+  // Only the current slide and its two neighbours keep a backdrop
+  // <img> mounted. Every backdrop is served at the provider's
+  // "original" size (hundreds of KB to a few MB each) through the
+  // same host as the API, so mounting all of them at once made the
+  // visible one queue behind five invisible downloads — on a slow
+  // link the hero sat empty for seconds. The next slide is still
+  // fetched ahead of time so the autoplay crossfade stays seamless,
+  // and the previous one stays mounted while it fades out.
+  const prevIndex = (current - 1 + count) % count;
+  const nextIndex = (current + 1) % count;
+  const hasMountedBackdrop = (i: number) => i === current || i === prevIndex || i === nextIndex;
 
   return (
     <Box
@@ -211,32 +237,51 @@ export function HeroBanner({
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
+        background: HERO_BASE_BACKGROUND,
       }}
     >
       {/* Backdrop — extends beyond container to bleed under content below */}
-      {slides.map((s, i) => (
-        <Box
-          key={s.id}
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: { xs: 0, md: -HERO_BLEED },
-            opacity: i === current ? 1 : 0,
-            transition: "opacity 800ms ease-in-out",
-          }}
-        >
-          {s.backdropUrl && (
-            <Box
-              component="img"
-              src={s.backdropUrl}
-              alt=""
-              sx={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
-            />
-          )}
-        </Box>
-      ))}
+      {slides.map((s, i) => {
+        const url = s.backdropUrl ?? null;
+        const isCurrent = i === current;
+        const visible = isCurrent && url !== null && loadedBackdrops.has(url);
+        return (
+          <Box
+            key={s.id}
+            data-testid="hero-backdrop"
+            data-visible={visible ? "true" : "false"}
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: { xs: 0, md: -HERO_BLEED },
+              opacity: visible ? 1 : 0,
+              transition: "opacity 800ms ease-in-out",
+            }}
+          >
+            {url && hasMountedBackdrop(i) && (
+              <Box
+                component="img"
+                src={url}
+                alt=""
+                // The visible slide is the biggest paint on the page —
+                // let it jump the queue ahead of the posters below, and
+                // keep the multi-megapixel decode off the main thread.
+                fetchPriority={isCurrent ? "high" : "low"}
+                decoding="async"
+                onLoad={() => markBackdropLoaded(url)}
+                // A cached image can be complete before React attaches
+                // ``onLoad``; catch that on mount so it never stays hidden.
+                ref={(el: HTMLImageElement | null) => {
+                  if (el?.complete && el.naturalWidth > 0) markBackdropLoaded(url);
+                }}
+                sx={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+              />
+            )}
+          </Box>
+        );
+      })}
 
       {/* Gradient Overlays — extend with the backdrop */}
       <Box

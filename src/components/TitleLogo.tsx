@@ -39,38 +39,41 @@ interface TitleLogoProps {
  * cases: the backend has no ``logo_path`` for this title, or the
  * image fails to load (network blip, deleted asset).
  *
+ * While the logo is still downloading the title is shown as text
+ * *inside* the logo's reserved box, so the header never reads as
+ * nameless on a slow link and nothing shifts when the image arrives.
+ *
  * Used by the hero carousel and the detail-page header — both render
  * a large title at the top of a backdrop and benefit from the logo's
  * branding when available. Sizing is uniform across every surface
  * (see ``LOGO_WIDTH`` / ``LOGO_ASPECT_RATIO`` / ``FALLBACK_FONT_SIZE``).
  */
 export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
-  // ``imageFailed`` flips when ``onError`` fires so a 404 / network
-  // failure on the logo asset transparently falls back to text on the
-  // same render path. Reset is implicit — ``logoUrl`` changing
-  // remounts the ``<img>`` via the ``key`` prop below.
-  const [imageFailed, setImageFailed] = useState(false);
+  // Load / failure bookkeeping is keyed by URL rather than a bare
+  // boolean: the hero renders one ``TitleLogo`` for every slide, so a
+  // flag would leak a failed (or loaded) state from one title into
+  // the next. ``loadedUrls`` remembers every logo that has decoded so
+  // cycling back to a slide doesn't flash its text fallback again.
+  const [loadedUrls, setLoadedUrls] = useState<Set<string>>(() => new Set());
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
-  const showLogo = Boolean(logoUrl) && !imageFailed;
+  const markLoaded = (url: string) =>
+    setLoadedUrls((prev) => (prev.has(url) ? prev : new Set(prev).add(url)));
 
-  if (showLogo) {
+  const showLogo = Boolean(logoUrl) && failedUrl !== logoUrl;
+
+  if (showLogo && logoUrl) {
+    const loaded = loadedUrls.has(logoUrl);
     return (
       <Box
-        component="img"
-        // Force remount when the URL changes so a previously-failed
-        // attempt for an old slide doesn't poison the new one.
-        key={logoUrl}
-        src={logoUrl ?? undefined}
-        alt={title}
-        onError={() => setImageFailed(true)}
         onClick={onClick}
         sx={{
-          display: "block",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
           width: LOGO_WIDTH,
           maxWidth: LOGO_MAX_WIDTH,
           aspectRatio: LOGO_ASPECT_RATIO,
-          objectFit: "contain",
-          objectPosition: "left",
           // Logos squarer than the box fill its full height, so the
           // ink sits flush with the bottom edge — a 32px gap keeps the
           // meta line from crowding it (wide logos get the same gap
@@ -79,7 +82,44 @@ export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
           cursor: onClick ? "pointer" : "default",
           ...sx,
         }}
-      />
+      >
+        <Box
+          component="img"
+          // Force remount when the URL changes so a previously-failed
+          // attempt for an old slide doesn't poison the new one.
+          key={logoUrl}
+          src={logoUrl}
+          alt={title}
+          decoding="async"
+          onLoad={() => markLoaded(logoUrl)}
+          onError={() => setFailedUrl(logoUrl)}
+          // A cached image can be complete before React attaches
+          // ``onLoad``; catch that on mount so it never stays hidden.
+          ref={(el: HTMLImageElement | null) => {
+            if (el?.complete && el.naturalWidth > 0) markLoaded(logoUrl);
+          }}
+          sx={{
+            display: "block",
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            objectPosition: "left",
+            opacity: loaded ? 1 : 0,
+            transition: "opacity 300ms ease-out",
+          }}
+        />
+        {!loaded && (
+          <Typography
+            variant="h1"
+            data-testid="title-logo-pending"
+            sx={{ fontSize: FALLBACK_FONT_SIZE, fontWeight: 700 }}
+          >
+            {title}
+          </Typography>
+        )}
+      </Box>
     );
   }
 
