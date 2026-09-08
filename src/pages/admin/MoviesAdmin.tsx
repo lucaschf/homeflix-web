@@ -27,6 +27,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { accentCoral, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
+import { artworkUrl } from "../../utils/artwork";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -412,7 +413,7 @@ function PosterCell({ url, title }: { url: string | null; title: string }) {
       {url ? (
         <Box
           component="img"
-          src={url}
+          src={artworkUrl(url, 342)}
           alt={title}
           sx={{ width: "100%", height: "100%", objectFit: "cover" }}
         />

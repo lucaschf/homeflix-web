@@ -17,6 +17,7 @@ import { useCatalogLookup, useMovieTmdbSuggestions } from "../../api/hooks";
 import type { TmdbSuggestion } from "../../api/types";
 import { neutral } from "../../theme/colors";
 import { AdminDialog } from "./AdminDialog";
+import { artworkUrl } from "../../utils/artwork";
 
 interface TmdbSuggestionsDialogProps {
   open: boolean;
@@ -260,7 +261,7 @@ function SuggestionCard({ suggestion, onSelect, disabled }: SuggestionCardProps)
         {suggestion.poster_url ? (
           <Box
             component="img"
-            src={suggestion.poster_url}
+            src={artworkUrl(suggestion.poster_url, 342)}
             alt={suggestion.title}
             sx={{ width: "100%", height: "100%", objectFit: "cover" }}
           />

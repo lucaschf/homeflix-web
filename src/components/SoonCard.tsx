@@ -11,6 +11,10 @@ import {
   scrim,
   whiteAlpha,
 } from "../theme/tokens";
+import { artworkSrcSet, sizesFor } from "../utils/artwork";
+
+/** Grid cells are ``minmax(150px, 1fr)`` (``md``: 210px); the ceiling errs upward. */
+const SOON_POSTER_SIZES = sizesFor({ xs: 200, md: 260 });
 
 // Fallback poster-gradient seeds for rows that have no snapshot yet.
 const TONES = ["#3a2f4a", "#2f3a4a", "#4a3a2f", "#2f4a3a", "#4a2f3f", "#2f444a"];
@@ -65,7 +69,8 @@ export function SoonCard({ request, pending = false, onToggle }: SoonCardProps) 
           <Box
             component="img"
             className="soon-poster"
-            src={request.poster_url}
+            {...artworkSrcSet(request.poster_url, "poster")}
+            sizes={SOON_POSTER_SIZES}
             alt={request.title ?? ""}
             sx={{
               position: "absolute",

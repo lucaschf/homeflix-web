@@ -3,6 +3,7 @@ import { Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { QualityChip, type QualityChipKind } from "../QualityChip";
 import { fontFamily, inkAlpha, scrim, whiteAlpha } from "../../theme/tokens";
+import { artworkUrl } from "../../utils/artwork";
 
 export interface QueueCardItem {
   media_id: string;
@@ -67,7 +68,7 @@ export function QueueCard({ item, index, onOpen, onPlay, onRemove }: QueueCardPr
           backgroundColor: "background.default",
           ...(item.poster_path
             ? {
-                backgroundImage: `url(${item.poster_path})`,
+                backgroundImage: `url(${artworkUrl(item.poster_path, 500)})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }

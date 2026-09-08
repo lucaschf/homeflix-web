@@ -65,6 +65,7 @@ import { fontFamily, inkAlpha, peachAlpha, whiteAlpha } from "../theme/tokens";
 import { formatRelativeServerTime } from "../utils/datetime";
 import { formatDuration } from "../utils/duration";
 import { mediaQuality } from "../utils/quality";
+import { artworkUrl } from "../utils/artwork";
 
 const MAX_LISTS = 10;
 
@@ -810,7 +811,7 @@ function ListRow({
           flexShrink: 0,
           bgcolor: whiteAlpha(0.04),
           ...(posterPath
-            ? { backgroundImage: `url(${posterPath})`, backgroundSize: "cover", backgroundPosition: "center" }
+            ? { backgroundImage: `url(${artworkUrl(posterPath, 342)})`, backgroundSize: "cover", backgroundPosition: "center" }
             : {}),
         }}
       />
