@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { theme } from "../theme";
 import { TitleLogo } from "./TitleLogo";
+import { artworkSrcSet } from "../utils/artwork";
 
 const LOGO_A = "https://image.tmdb.org/t/p/original/a.png";
 const LOGO_B = "https://image.tmdb.org/t/p/original/b.png";
@@ -28,7 +29,10 @@ describe("TitleLogo — loading states", () => {
   it("shows the title as text while the logo is still downloading", () => {
     renderLogo(LOGO_A);
 
-    expect(screen.getByRole("img", { name: "Duna" })).toHaveAttribute("src", LOGO_A);
+    expect(screen.getByRole("img", { name: "Duna" })).toHaveAttribute(
+      "src",
+      artworkSrcSet(LOGO_A, "logo").src,
+    );
     expect(pendingText()).toHaveTextContent("Duna");
   });
 
@@ -61,6 +65,9 @@ describe("TitleLogo — loading states", () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByRole("img", { name: "Duna" })).toHaveAttribute("src", LOGO_B);
+    expect(screen.getByRole("img", { name: "Duna" })).toHaveAttribute(
+      "src",
+      artworkSrcSet(LOGO_B, "logo").src,
+    );
   });
 });

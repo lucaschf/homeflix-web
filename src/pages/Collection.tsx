@@ -23,6 +23,7 @@ import { DetailSkeleton } from "../components/DetailSkeleton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { fontFamily, fontSize, inkAlpha, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { neutral } from "../theme/colors";
+import { artworkSrcSet } from "../utils/artwork";
 
 /**
  * Collection Detail page — opens when the user clicks the "Parte
@@ -342,7 +343,8 @@ function CollectionHero({
         {collection.backdrop_url ? (
           <Box
             component="img"
-            src={collection.backdrop_url}
+            {...artworkSrcSet(collection.backdrop_url, "backdrop")}
+            sizes="100vw"
             alt=""
             sx={{
               position: "absolute",

@@ -10,6 +10,13 @@ import { deriveQualityBadge } from "./mediaQuality";
 import { neutral } from "../theme/colors";
 import { whiteAlpha, scrim, shortDesktopViewport } from "../theme/tokens";
 import { CARD_WIDTH, CARD_WIDTH_COMPACT } from "./mediaCardDimensions";
+import { artworkSrcSet, sizesFor } from "../utils/artwork";
+
+/** ``sizes`` per card shape, from the same width steps as the card itself. */
+const CARD_SIZES = {
+  poster: sizesFor(CARD_WIDTH.poster),
+  landscape: sizesFor(CARD_WIDTH.landscape),
+} as const;
 
 interface MediaCardProps {
   title: string;
@@ -27,6 +34,8 @@ interface MediaCardProps {
   hdr?: boolean;
   variant?: "poster" | "landscape" | "episode";
   fullWidth?: boolean;
+  /** ``sizes`` for a ``fullWidth`` card, whose width the caller's grid decides. */
+  sizes?: string;
   onClick?: () => void;
   /** When set, enables hover overlay with info and actions */
   mediaId?: string;
@@ -49,6 +58,7 @@ export function MediaCard({
   hdr,
   variant = "poster",
   fullWidth = false,
+  sizes,
   onClick,
   mediaId,
   mediaType,
@@ -196,7 +206,8 @@ export function MediaCard({
           <Box
             component="img"
             className="media-image"
-            src={imageUrl}
+            {...artworkSrcSet(imageUrl, variant === "poster" ? "poster" : "backdrop")}
+            sizes={fullWidth ? (sizes ?? "50vw") : CARD_SIZES[shape]}
             alt={title}
             // Defer offscreen fetches and hand decoding to a
             // background thread so a freshly-appended page of cards

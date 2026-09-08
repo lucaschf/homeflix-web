@@ -9,6 +9,7 @@ import { neutral } from "../theme/colors";
 import { fontFamily, inkAlpha, scrim, shortDesktopViewport, whiteAlpha } from "../theme/tokens";
 import { formatDuration } from "../utils/duration";
 import { WatchedBadge } from "./WatchedBadge";
+import { artworkSrcSet, sizesFor } from "../utils/artwork";
 
 interface EpisodeCardProps {
   episode: EpisodeOutput;
@@ -36,6 +37,8 @@ interface EpisodeCardProps {
 const EPISODE_CARD_WIDTH = { xs: 210, sm: 280, md: 320, lg: 380 } as const;
 /** Rail card width on desktop viewports under 960px tall (see ``shortDesktopViewport``). */
 const EPISODE_CARD_WIDTH_COMPACT = 300;
+/** ``sizes`` for the card still — the width steps above (compact errs upward). */
+const EPISODE_CARD_SIZES = sizesFor(EPISODE_CARD_WIDTH);
 
 export function EpisodeCard({
   episode,
@@ -144,7 +147,8 @@ export function EpisodeCard({
           {episode.thumbnail_path ? (
             <Box
               component="img"
-              src={episode.thumbnail_path}
+              {...artworkSrcSet(episode.thumbnail_path, "still")}
+              sizes={EPISODE_CARD_SIZES}
               alt=""
               sx={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
@@ -153,7 +157,8 @@ export function EpisodeCard({
           ) : seriesPoster ? (
             <Box
               component="img"
-              src={seriesPoster}
+              {...artworkSrcSet(seriesPoster, "poster")}
+              sizes={EPISODE_CARD_SIZES}
               alt=""
               sx={{ width: "100%", height: "100%", objectFit: "cover" }}
             />

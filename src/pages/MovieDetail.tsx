@@ -43,6 +43,10 @@ import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { ACTION_BAR_HEIGHT, fontSize, inkAlpha, panelScrim, peachAlpha, scrim, whiteAlpha, toastSurfaceSx } from "../theme/tokens";
 import { neutral } from "../theme/colors";
+import { artworkSrcSet, sizesFor } from "../utils/artwork";
+
+/** The header poster (shown when a title has no logo) — same steps as its box. */
+const HEADER_POSTER_SIZES = sizesFor({ xs: 100, sm: 140, md: 200 });
 
 export function MovieDetail() {
   const { t } = useTranslation();
@@ -342,7 +346,11 @@ export function MovieDetail() {
           {(movie.backdrop_path || movie.poster_path) && (
             <Box
               component="img"
-              src={movie.backdrop_path ?? movie.poster_path ?? undefined}
+              {...artworkSrcSet(
+                (movie.backdrop_path ?? movie.poster_path)!,
+                movie.backdrop_path ? "backdrop" : "poster",
+              )}
+              sizes="100vw"
               alt=""
               sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
             />
@@ -369,7 +377,8 @@ export function MovieDetail() {
         {movie.backdrop_path && (
           <Box
             component="img"
-            src={movie.backdrop_path}
+            {...artworkSrcSet(movie.backdrop_path, "backdrop")}
+            sizes="100vw"
             alt=""
             sx={{
               position: "absolute",
@@ -408,7 +417,8 @@ export function MovieDetail() {
             // the poster so the header still feels rich.
             <Box
               component="img"
-              src={movie.poster_path}
+              {...artworkSrcSet(movie.poster_path, "poster")}
+              sizes={HEADER_POSTER_SIZES}
               alt={movie.title}
               sx={{
                 width: { xs: 100, sm: 140, md: 200 },

@@ -59,6 +59,7 @@ import {
 } from "../hooks/useScrubThumbnails";
 import { neutral, peach } from "../theme/colors";
 import { menuScrim, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
+import { artworkSrcSet } from "../utils/artwork";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -2424,7 +2425,8 @@ export function Player() {
         {postPlayEnded && endStillUrl && (
           <Box
             component="img"
-            src={endStillUrl}
+            {...artworkSrcSet(endStillUrl, "backdrop")}
+            sizes="100vw"
             alt=""
             sx={{
               position: "absolute",

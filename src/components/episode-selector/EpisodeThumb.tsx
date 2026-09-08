@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { neutral } from "../../theme/colors";
 import { inkAlpha, scrim } from "../../theme/tokens";
 import type { EpisodeState } from "./state";
+import { artworkSrcSet } from "../../utils/artwork";
 
 interface EpisodeThumbProps {
   src: string | null;
@@ -57,7 +58,8 @@ export function EpisodeThumb({
       {src && (
         <Box
           component="img"
-          src={src}
+          {...artworkSrcSet(src, "still")}
+          sizes={`${width}px`}
           alt=""
           loading="lazy"
           sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}

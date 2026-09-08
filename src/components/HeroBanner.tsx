@@ -11,6 +11,7 @@ import { TitleLogo } from "./TitleLogo";
 import { TrailerDialog } from "./TrailerDialog";
 import { useToast } from "./ToastProvider";
 import { WatchlistIconButton } from "./WatchlistIconButton";
+import { artworkSrcSet } from "../utils/artwork";
 
 export interface HeroSlide {
   id: string;
@@ -263,7 +264,8 @@ export function HeroBanner({
             {url && hasMountedBackdrop(i) && (
               <Box
                 component="img"
-                src={url}
+                {...artworkSrcSet(url, "backdrop")}
+                sizes="100vw"
                 alt=""
                 // The visible slide is the biggest paint on the page —
                 // let it jump the queue ahead of the posters below, and
