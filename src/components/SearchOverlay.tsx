@@ -16,6 +16,7 @@ import { useSearch } from "../api/hooks";
 import type { SearchItem } from "../api/types";
 import { neutral } from "../theme/colors";
 import { RequestTitleDialog } from "./RequestTitleDialog";
+import { artworkUrl } from "../utils/artwork";
 
 const RECENT_STORAGE_KEY = "homeflix-recent-searches";
 const MAX_RECENT = 5;
@@ -291,7 +292,7 @@ function SearchResultRow({
         {item.poster_path ? (
           <Box
             component="img"
-            src={item.poster_path}
+            src={artworkUrl(item.poster_path, 342)}
             alt=""
             sx={{ width: "100%", height: "100%", objectFit: "cover" }}
           />

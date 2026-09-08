@@ -54,6 +54,7 @@ import {
   whiteAlpha,
 } from "../../theme/tokens";
 import { parseServerTime } from "../../utils/datetime";
+import { artworkUrl } from "../../utils/artwork";
 
 type TFn = (key: string, vars?: Record<string, unknown>) => string;
 
@@ -387,7 +388,7 @@ function SessionRow({ session, last }: { session: NowPlayingSession; last: boole
         {session.poster_url && (
           <Box
             component="img"
-            src={session.poster_url}
+            src={artworkUrl(session.poster_url, 342)}
             alt=""
             sx={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
@@ -585,7 +586,7 @@ function PosterTile({ item }: { item: CatalogItem }) {
         {item.poster_path ? (
           <Box
             component="img"
-            src={item.poster_path}
+            src={artworkUrl(item.poster_path, 342)}
             alt=""
             sx={{
               position: "absolute",

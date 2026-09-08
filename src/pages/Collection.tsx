@@ -23,7 +23,10 @@ import { DetailSkeleton } from "../components/DetailSkeleton";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { fontFamily, fontSize, inkAlpha, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { neutral } from "../theme/colors";
-import { artworkSrcSet } from "../utils/artwork";
+import { artworkSrcSet, sizesFor } from "../utils/artwork";
+
+/** Film-row poster column (``xs`` 96 / ``md`` 200). */
+const PART_POSTER_SIZES = sizesFor({ xs: 96, md: 200 });
 
 /**
  * Collection Detail page — opens when the user clicks the "Parte
@@ -801,7 +804,8 @@ function FilmRow({ part, index, isLast, collectionTmdbId }: FilmRowProps) {
         {posterSrc ? (
           <Box
             component="img"
-            src={posterSrc}
+            {...artworkSrcSet(posterSrc, "poster")}
+            sizes={PART_POSTER_SIZES}
             alt={part.title}
             sx={{
               width: "100%",

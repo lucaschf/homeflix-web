@@ -6,6 +6,7 @@ import { useCustomListItems } from "../../api/hooks";
 import type { CustomListOutput } from "../../api/types";
 import { formatRelativeServerTime } from "../../utils/datetime";
 import { fontFamily, scrim, whiteAlpha } from "../../theme/tokens";
+import { artworkUrl } from "../../utils/artwork";
 
 interface ListCardProps {
   list: CustomListOutput;
@@ -79,7 +80,7 @@ export function ListCard({ list, onOpen, onPlay, onRename, onDelete }: ListCardP
               bgcolor: whiteAlpha(0.03),
               ...(posters[i]
                 ? {
-                    backgroundImage: `url(${posters[i]})`,
+                    backgroundImage: `url(${artworkUrl(posters[i], 342)})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                   }

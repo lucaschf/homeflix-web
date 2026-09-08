@@ -26,6 +26,7 @@ import {
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
 import { accentCoral, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
+import { artworkUrl } from "../../utils/artwork";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -158,7 +159,7 @@ export function SeriesAdmin() {
           {s.poster_path && (
             <Box
               component="img"
-              src={s.poster_path}
+              src={artworkUrl(s.poster_path, 342)}
               alt={s.title}
               sx={{ width: "100%", height: "100%", objectFit: "cover" }}
             />

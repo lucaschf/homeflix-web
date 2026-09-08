@@ -6,6 +6,7 @@ import { useAddItemToCustomList, useSearch } from "../../api/hooks";
 import { AdminButton } from "../admin/AdminButton";
 import { neutral } from "../../theme/colors";
 import { fontFamily, inkAlpha, peachAlpha, scrim, whiteAlpha } from "../../theme/tokens";
+import { artworkUrl } from "../../utils/artwork";
 
 type Filter = "all" | "movie" | "series";
 
@@ -272,7 +273,7 @@ function ResultCard({
           borderColor: picked ? "primary.main" : undefined,
           backgroundColor: "background.default",
           ...(item.poster_path
-            ? { backgroundImage: `url(${item.poster_path})`, backgroundSize: "cover", backgroundPosition: "center" }
+            ? { backgroundImage: `url(${artworkUrl(item.poster_path, 342)})`, backgroundSize: "cover", backgroundPosition: "center" }
             : {}),
         }}
       >

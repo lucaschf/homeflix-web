@@ -23,6 +23,7 @@ import { alpha } from "@mui/material/styles";
 import type { CatalogLookupCandidate } from "../api/types";
 import { success } from "../theme/colors";
 import { whiteAlpha, status } from "../theme/tokens";
+import { artworkUrl } from "../utils/artwork";
 
 interface RequestTitleDialogProps {
   open: boolean;
@@ -256,7 +257,7 @@ function CandidateRow({
         {candidate.poster_url && (
           <Box
             component="img"
-            src={candidate.poster_url}
+            src={artworkUrl(candidate.poster_url, 342)}
             alt=""
             sx={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
