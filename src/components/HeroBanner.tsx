@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { neutral } from "../theme/colors";
 import { ACTION_BAR_HEIGHT, whiteAlpha, panelScrim, tallDesktopViewport } from "../theme/tokens";
-import { formatGenreList } from "../utils/genreList";
 import { MetaLine } from "./MetaLine";
 import { TitleLogo } from "./TitleLogo";
 import { TrailerDialog } from "./TrailerDialog";
@@ -28,7 +27,8 @@ export interface HeroSlide {
   /**
    * Genres (localized) that match the profile's watch history — why
    * the backend picked this title. Empty / absent means random filler
-   * or a profile without history, and the reason badge stays hidden.
+   * or a profile without history. Not rendered at the moment; kept so
+   * the slide still carries the backend's reason for future surfaces.
    */
   matchedGenres?: string[];
 }
@@ -74,29 +74,6 @@ interface HeroBannerProps {
   onDetails?: (slide: HeroSlide) => void;
   onAddToList?: (slide: HeroSlide) => void;
   autoPlayInterval?: number;
-}
-
-/**
- * The discreet "why this title" eyebrow above the hero title. Renders
- * nothing at all (no reserved space) when the slide wasn't picked from
- * the profile's history, so random hero slides look exactly as before.
- */
-function RecommendationReason({ genres }: { genres: string[] }) {
-  const { t } = useTranslation();
-  const list = formatGenreList(genres, t("hero.listConjunction"));
-  if (!list) return null;
-  return (
-    <Typography
-      variant="eyebrow"
-      data-testid="hero-recommendation-reason"
-      // Most title logos are squarer than the logo box, so they fill
-      // its full height and their ink starts right at the top edge —
-      // the eyebrow needs a real gap, not the 12px a text line would.
-      sx={{ color: "text.secondary", mb: 2.5 }}
-    >
-      {t("hero.becauseYouWatch", { genres: list })}
-    </Typography>
-  );
 }
 
 export function HeroBanner({
@@ -230,10 +207,10 @@ export function HeroBanner({
         aspectRatio: { xs: "4 / 5", md: "auto" },
         // ``minHeight`` (not ``height``): the banner is 75dvh on the
         // viewports it was designed for, but when the bottom-anchored
-        // column (eyebrow + logo + meta + synopsis + actions + dots)
+        // column (logo + meta + synopsis + actions + dots)
         // is taller than that — 1366×768 laptops — the hero grows to
         // fit instead of the column overflowing upward and the
-        // eyebrow/logo disappearing under the sticky navbar.
+        // logo disappearing under the sticky navbar.
         minHeight: { md: HERO_MIN_HEIGHT },
         display: "flex",
         flexDirection: "column",
@@ -333,7 +310,7 @@ export function HeroBanner({
           justifyContent: "flex-end",
           px: { xs: 3, md: 6 },
           // Top padding is the guaranteed breathing room between the
-          // navbar and the eyebrow/logo: when the column is taller
+          // navbar and the logo: when the column is taller
           // than the 75dvh hero, the hero grows by exactly this much
           // instead of the column touching the navbar.
           pt: { md: HERO_CONTENT_TOP },
@@ -343,8 +320,6 @@ export function HeroBanner({
           zIndex: 1,
         })}
       >
-        <RecommendationReason genres={slide.matchedGenres ?? []} />
-
         <TitleLogo
           logoUrl={slide.logoUrl}
           title={slide.title}
