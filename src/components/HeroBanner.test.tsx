@@ -1,9 +1,8 @@
 import { ThemeProvider } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import "../i18n";
-import i18n from "../i18n";
 import { theme } from "../theme";
 import { HeroBanner, type HeroSlide } from "./HeroBanner";
 import { ToastProvider } from "./ToastProvider";
@@ -37,10 +36,6 @@ const BASE_SLIDE: HeroSlide = {
   trailerUrl: null,
 };
 
-function renderHero(slide: HeroSlide) {
-  return renderSlides([slide]);
-}
-
 function renderSlides(slides: HeroSlide[]) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -55,60 +50,6 @@ function renderSlides(slides: HeroSlide[]) {
     </QueryClientProvider>,
   );
 }
-
-const reason = () => screen.queryByTestId("hero-recommendation-reason");
-
-beforeEach(async () => {
-  await i18n.changeLanguage("pt-BR");
-});
-
-describe("HeroBanner — recommendation reason", () => {
-  it("shows the badge for a single matched genre", () => {
-    renderHero({ ...BASE_SLIDE, matchedGenres: ["Ficção científica"] });
-
-    expect(reason()).toHaveTextContent("Porque você assiste Ficção científica");
-    // The title itself is untouched — the badge is additive.
-    expect(screen.getByText("Duna")).toBeInTheDocument();
-  });
-
-  it("joins several matched genres with commas and a final conjunction", () => {
-    renderHero({
-      ...BASE_SLIDE,
-      matchedGenres: ["Ficção científica", "Aventura", "Drama"],
-    });
-
-    expect(reason()).toHaveTextContent(
-      "Porque você assiste Ficção científica, Aventura e Drama",
-    );
-  });
-
-  it("joins exactly two matched genres with the conjunction only", () => {
-    renderHero({ ...BASE_SLIDE, matchedGenres: ["Ficção científica", "Aventura"] });
-
-    expect(reason()).toHaveTextContent("Porque você assiste Ficção científica e Aventura");
-  });
-
-  it("renders nothing when the matched list is empty", () => {
-    renderHero({ ...BASE_SLIDE, matchedGenres: [] });
-
-    expect(reason()).not.toBeInTheDocument();
-    expect(screen.queryByText(/Porque você assiste/)).not.toBeInTheDocument();
-  });
-
-  it("renders nothing when the field is absent (older backend)", () => {
-    renderHero(BASE_SLIDE);
-
-    expect(reason()).not.toBeInTheDocument();
-    expect(screen.getByText("Duna")).toBeInTheDocument();
-  });
-
-  it("follows the active language", async () => {
-    await i18n.changeLanguage("en");
-    renderHero({ ...BASE_SLIDE, matchedGenres: ["Sci-fi", "Adventure"] });
-
-    expect(reason()).toHaveTextContent("Because you watch Sci-fi and Adventure");
-  });
-});
 
 describe("HeroBanner — backdrops", () => {
   const backdrop = (n: number) => `https://image.tmdb.org/t/p/original/bd${n}.jpg`;
