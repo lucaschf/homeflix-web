@@ -45,6 +45,12 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { neutral } from "../theme/colors";
 import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, whiteAlpha, toastSurfaceSx } from "../theme/tokens";
+import { artworkSrcSet, sizesFor } from "../utils/artwork";
+
+/** The header poster (shown when a title has no logo) — same steps as its box. */
+const HEADER_POSTER_SIZES = sizesFor({ xs: 100, sm: 140, md: 200 });
+/** Episode-list still — same steps as its box. */
+const EPISODE_ROW_THUMB_SIZES = sizesFor({ xs: 110, sm: 140, md: 200 });
 
 type EpisodeView = "list" | "cards" | "grid";
 
@@ -254,7 +260,11 @@ export function SeriesDetail() {
           {(series.backdrop_path || series.poster_path) && (
             <Box
               component="img"
-              src={series.backdrop_path ?? series.poster_path ?? undefined}
+              {...artworkSrcSet(
+                (series.backdrop_path ?? series.poster_path)!,
+                series.backdrop_path ? "backdrop" : "poster",
+              )}
+              sizes="100vw"
               alt=""
               sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
             />
@@ -285,7 +295,8 @@ export function SeriesDetail() {
           <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh" }}>
             <Box
               component="img"
-              src={series.backdrop_path}
+              {...artworkSrcSet(series.backdrop_path, "backdrop")}
+              sizes="100vw"
               alt=""
               sx={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
             />
@@ -301,7 +312,8 @@ export function SeriesDetail() {
             // visual identity at the top of the hero.
             <Box
               component="img"
-              src={series.poster_path}
+              {...artworkSrcSet(series.poster_path, "poster")}
+              sizes={HEADER_POSTER_SIZES}
               alt={series.title}
               sx={{
                 width: { xs: 100, sm: 140, md: 200 },
@@ -685,7 +697,16 @@ function EpisodeRow({
           }}
         >
           {(episode.thumbnail_path || seriesPoster) ? (
-            <Box component="img" src={episode.thumbnail_path ?? seriesPoster!} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <Box
+              component="img"
+              {...artworkSrcSet(
+                episode.thumbnail_path ?? seriesPoster!,
+                episode.thumbnail_path ? "still" : "poster",
+              )}
+              sizes={EPISODE_ROW_THUMB_SIZES}
+              alt=""
+              sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
           ) : (
             <Box sx={{ width: "100%", height: "100%", background: `linear-gradient(135deg, ${neutral[800]} 0%, ${neutral[700]} 100%)` }} />
           )}

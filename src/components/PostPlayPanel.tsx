@@ -4,6 +4,12 @@ import { useTranslation } from "react-i18next";
 import type { UpNextItem } from "../hooks/useUpNext";
 import { neutral } from "../theme/colors";
 import { ACTION_BAR_HEIGHT, panelScrim, peachAlpha, scrim } from "../theme/tokens";
+import { artworkSrcSet, sizesFor } from "../utils/artwork";
+
+/** Hero still width steps (``xs`` 148 / ``md`` 300). */
+const POSTPLAY_HERO_SIZES = sizesFor({ xs: 148, md: 300 });
+/** Grid cells are ``minmax(180px, 1fr)``; 260px errs upward on wide panels. */
+const POSTPLAY_GRID_SIZES = "(min-width:600px) 260px, 50vw";
 
 /** The single highlighted suggestion at the top of the panel. */
 export interface PostPlayHero {
@@ -309,7 +315,8 @@ function HeroCard({ hero }: { hero: PostPlayHero }) {
           <Box
             component="img"
             className="postplay-hero-img"
-            src={hero.imageUrl}
+            {...artworkSrcSet(hero.imageUrl, "backdrop")}
+            sizes={POSTPLAY_HERO_SIZES}
             alt=""
             sx={{
               width: "100%",
@@ -464,7 +471,8 @@ function SuggestionCard({
         {item.posterUrl && (
           <Box
             component="img"
-            src={item.posterUrl}
+            {...artworkSrcSet(item.posterUrl, "poster")}
+            sizes={POSTPLAY_GRID_SIZES}
             alt=""
             loading="lazy"
             decoding="async"

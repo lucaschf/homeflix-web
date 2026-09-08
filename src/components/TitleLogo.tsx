@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
+import { artworkSrcSet, sizesFor } from "../utils/artwork";
 
 /**
  * Canonical sizing for the title logo, shared by every surface that
@@ -21,6 +22,8 @@ const LOGO_WIDTH = { xs: 260, sm: 400, md: 480, xl: 560 } as const;
 const LOGO_MAX_WIDTH = "100%";
 const LOGO_ASPECT_RATIO = "432 / 130";
 const FALLBACK_FONT_SIZE = { xs: "1.25rem", sm: "1.75rem", md: "2.5rem" } as const;
+/** ``sizes`` for the logo ``<img>``, from the same width steps as its box. */
+const LOGO_SIZES = sizesFor(LOGO_WIDTH);
 
 interface TitleLogoProps {
   /** TMDB-hosted transparent PNG URL, or ``null`` when not available. */
@@ -88,7 +91,8 @@ export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
           // Force remount when the URL changes so a previously-failed
           // attempt for an old slide doesn't poison the new one.
           key={logoUrl}
-          src={logoUrl}
+          {...artworkSrcSet(logoUrl, "logo")}
+          sizes={LOGO_SIZES}
           alt={title}
           decoding="async"
           onLoad={() => markLoaded(logoUrl)}

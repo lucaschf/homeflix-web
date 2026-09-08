@@ -7,6 +7,7 @@ import i18n from "../i18n";
 import { theme } from "../theme";
 import { HeroBanner, type HeroSlide } from "./HeroBanner";
 import { ToastProvider } from "./ToastProvider";
+import { artworkSrcSet } from "../utils/artwork";
 
 // The banner reaches the backend only through the watchlist hooks; stub
 // the client so those queries resolve quietly and the rest runs for real.
@@ -111,6 +112,8 @@ describe("HeroBanner — recommendation reason", () => {
 
 describe("HeroBanner — backdrops", () => {
   const backdrop = (n: number) => `https://image.tmdb.org/t/p/original/bd${n}.jpg`;
+  // ``src`` is the largest ladder variant, not the URL the slide carries.
+  const backdropSrc = (n: number) => artworkSrcSet(backdrop(n), "backdrop").src;
   const slidesWithBackdrops = (n: number): HeroSlide[] =>
     Array.from({ length: n }, (_, i) => ({
       ...BASE_SLIDE,
@@ -125,7 +128,7 @@ describe("HeroBanner — backdrops", () => {
     renderSlides(slidesWithBackdrops(6));
 
     const srcs = Array.from(document.querySelectorAll("img")).map((img) => img.getAttribute("src"));
-    expect(srcs).toEqual([backdrop(0), backdrop(1), backdrop(5)]);
+    expect(srcs).toEqual([backdropSrc(0), backdropSrc(1), backdropSrc(5)]);
   });
 
   it("keeps a single slide's backdrop mounted", () => {
@@ -139,11 +142,11 @@ describe("HeroBanner — backdrops", () => {
     const [first] = screen.getAllByTestId("hero-backdrop");
     expect(first).toHaveAttribute("data-visible", "false");
 
-    fireEvent.load(document.querySelector(`img[src="${backdrop(0)}"]`)!);
+    fireEvent.load(document.querySelector(`img[src="${backdropSrc(0)}"]`)!);
 
     expect(first).toHaveAttribute("data-visible", "true");
     // Neighbours stay hidden even once fetched — only the current slide shows.
-    fireEvent.load(document.querySelector(`img[src="${backdrop(1)}"]`)!);
+    fireEvent.load(document.querySelector(`img[src="${backdropSrc(1)}"]`)!);
     expect(screen.getAllByTestId("hero-backdrop")[1]).toHaveAttribute("data-visible", "false");
   });
 });
