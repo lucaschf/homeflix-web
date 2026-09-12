@@ -264,25 +264,31 @@ export function useFileTracks(params: {
  * ``options.type`` restricts the merged stream to one side — the
  * Movies and Series tabs pass the filter through so a single-type
  * carousel never mixes in the other media type.
+ *
+ * ``options.pageSize`` overrides the default page size. The genre
+ * carousels ask for a bigger page because they only render each
+ * title's primary genre, so a page of 20 would resolve to a handful
+ * of cards and force an immediate second round-trip.
  */
 export function useByGenre(
   genreId: string,
-  options: CatalogQueryOptions & { sort?: CatalogSort } = {},
+  options: CatalogQueryOptions & { sort?: CatalogSort; pageSize?: number } = {},
 ) {
   const { i18n } = useTranslation();
   const lang = i18n.language;
-  const { type, sort } = options;
+  const { type, sort, pageSize = BY_GENRE_PAGE_SIZE } = options;
   const query = useInfiniteQuery({
-    // `type` and `sort` are in the key so each filter/order combination
+    // `type`, `sort` and `pageSize` are in the key so each combination
     // keeps an independent cache — otherwise a Movies-tab or title-desc
     // request would serve its page to an All-tab / default-order
-    // consumer and vice versa. `sort ?? null` keeps the no-sort key
-    // identical to before this option existed.
-    queryKey: ["catalog", "by-genre", genreId, lang, type ?? null, sort ?? null],
+    // consumer and vice versa, and a cursor minted for one page size
+    // would be replayed under another. `sort ?? null` keeps the no-sort
+    // key identical to before this option existed.
+    queryKey: ["catalog", "by-genre", genreId, lang, type ?? null, sort ?? null, pageSize],
     queryFn: async ({ pageParam }: { pageParam: string | null }) => {
       const params: Record<string, string> = {
         lang,
-        limit: String(BY_GENRE_PAGE_SIZE),
+        limit: String(pageSize),
       };
       if (pageParam) params.cursor = pageParam;
       if (type) params.type = type;
@@ -306,6 +312,11 @@ export function useByGenre(
 
   return {
     items,
+    // How many pages are loaded. Consumers that show a filtered subset
+    // of the listing (the genre carousels keep only each title's
+    // primary genre) use it to bound how far they walk the listing
+    // hunting for rows to show.
+    pageCount: query.data?.pages.length ?? 0,
     isLoading: query.isLoading,
     isFetchingNextPage: query.isFetchingNextPage,
     hasNextPage: !!query.hasNextPage,
