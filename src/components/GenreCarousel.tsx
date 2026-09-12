@@ -2,11 +2,38 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { useByGenre, type CatalogTypeFilter } from "../api/hooks";
+import { useByGenre, useGenres, type CatalogTypeFilter } from "../api/hooks";
 import type { Genre } from "../api/types";
+import { genreNameSet, selectGenreRowItems } from "../utils/genreRows";
 import { CarouselSkeleton } from "./CarouselSkeleton";
 import { MediaCard } from "./MediaCard";
 import { MediaCarousel } from "./MediaCarousel";
+
+/**
+ * Page size for one carousel's listing. Deliberately bigger than the
+ * grid's default: the row only renders the titles whose *primary*
+ * genre it is (see `utils/genreRows`), so a 20-item page would resolve
+ * to a handful of cards and immediately need a second round-trip. At 40
+ * a single request fills the row for every genre in a typical library.
+ */
+const CAROUSEL_PAGE_SIZE = 40;
+
+/**
+ * Cards a row aims for before it stops borrowing titles it merely
+ * shares — roughly a desktop row's visible width. Genres that are
+ * almost never a title's primary (Mistério: 71 titles in this library,
+ * 7 of them primary) still read as a row instead of a stub.
+ */
+const MIN_ROW_SIZE = 8;
+
+/**
+ * Pages one carousel walks at most. A row is a teaser, not the genre —
+ * past this the user goes to "See all", which lists the genre whole and
+ * unfiltered. The cap also bounds the thin-row case: a row too short to
+ * scroll keeps its right-edge sentinel permanently in view, which would
+ * otherwise drain the entire listing on mount.
+ */
+const MAX_CAROUSEL_PAGES = 3;
 
 interface GenreCarouselProps {
   genre: Genre;
@@ -27,6 +54,13 @@ interface GenreCarouselProps {
  * sentinel — see `MediaCarousel`'s `onLoadMore` prop for how the
  * IntersectionObserver is wired against the inner scroll container.
  *
+ * The row shows the titles this genre is the *primary* genre of, not
+ * everything tagged with it: a title averages 2.8 genres, so rendering
+ * the raw listing repeated the same posters down the whole page. See
+ * `utils/genreRows` for the rule, and for the top-up that keeps genres
+ * nobody is primarily tagged with on the page. "See all" still opens
+ * the genre whole — the grid at `/browse?genre=` does no such filtering.
+ *
  * Render states:
  * - Initial load: `<CarouselSkeleton title=... />` mimicking the
  *   final layout, so the transition is a content swap rather than a
@@ -43,8 +77,35 @@ interface GenreCarouselProps {
 export function GenreCarousel({ genre, type }: GenreCarouselProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { items, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useByGenre(genre.id, { type });
+  const { items, pageCount, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useByGenre(genre.id, { type, pageSize: CAROUSEL_PAGE_SIZE });
+
+  // The same genres list the page laid its rows out from — React Query
+  // serves it straight from cache, since the parent already fetched it
+  // to know which carousels to mount. It tells the row which labels own
+  // a row on this page, which is all the primary-genre rule needs.
+  const { data: genres } = useGenres({ type });
+  const knownGenreNames = useMemo(() => genreNameSet(genres), [genres]);
+
+  // Whether this row still has listing left to walk, which gates both
+  // the sentinel below and the top-up: borrowing before the walk is
+  // done would show cards the next page then pushes back out of the
+  // row, and a card vanishing under the pointer is worse than a row
+  // that grows while it loads.
+  const willLoadMore = hasNextPage && pageCount < MAX_CAROUSEL_PAGES;
+  const rowItems = useMemo(
+    () =>
+      selectGenreRowItems(items, genre.name, knownGenreNames, willLoadMore ? 0 : MIN_ROW_SIZE),
+    [items, genre.name, knownGenreNames, willLoadMore],
+  );
+
+  // The sentinel that pulls the next page lives inside MediaCarousel,
+  // at the right edge of the scroll row — so a row with nothing to show
+  // yet has nothing to trigger it, and would sit on its skeleton
+  // forever. Drive that one case from here; the page cap bounds it.
+  useEffect(() => {
+    if (rowItems.length === 0 && willLoadMore && !isFetchingNextPage) void fetchNextPage();
+  }, [rowItems.length, willLoadMore, isFetchingNextPage, fetchNextPage]);
 
   // Stable callback for the carousel's IntersectionObserver. Without
   // useCallback the parent re-render hands MediaCarousel a brand-new
@@ -82,7 +143,12 @@ export function GenreCarousel({ genre, type }: GenreCarouselProps) {
     );
   }
 
-  if (items.length === 0) return null;
+  // Nothing to show yet: keep the skeleton up while the row is still
+  // hunting for the titles it owns, and drop the row only once the walk
+  // is over with nothing to render.
+  if (rowItems.length === 0) {
+    return willLoadMore ? <CarouselSkeleton title={genre.name} /> : null;
+  }
 
   return (
     <MediaCarousel
@@ -90,10 +156,10 @@ export function GenreCarousel({ genre, type }: GenreCarouselProps) {
       seeAllHref={seeAllHref}
       seeAllAriaLabel={t("browse.seeAllAria", { genre: genre.name })}
       onLoadMore={handleLoadMore}
-      hasMore={hasNextPage}
+      hasMore={willLoadMore}
       loadingMore={isFetchingNextPage}
     >
-      {items.map((item) => (
+      {rowItems.map((item) => (
         <MediaCard
           key={`${item.type}:${item.id}`}
           title={item.title}
