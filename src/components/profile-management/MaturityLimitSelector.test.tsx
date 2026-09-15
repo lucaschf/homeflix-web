@@ -208,8 +208,8 @@ describe("MaturityLimitSelector — what the profile sees", () => {
 
 describe("MaturityLimitSelector — how it works", () => {
   it.each([
-    ["en", "How it works", [/PG and PG-13 = 13\b/, /R and TV-MA = 17\b/, /NC-17 = 18\b/, /TV-PG = 10 and TV-14 = 14\b/, /Unrated titles only show up on unrestricted profiles/, /parental PIN/]],
-    ["pt-BR", "Como funciona", [/PG e PG-13 = 13\b/, /R e TV-MA = 17\b/, /NC-17 = 18\b/, /TV-PG = 10 e TV-14 = 14\b/, /Títulos sem classificação só aparecem em perfil irrestrito/, /PIN parental/]],
+    ["en", "How it works", [/PG and PG-13 = 13\b/, /R and TV-MA = 17\b/, /NC-17 = 18\b/, /TV-PG = 10 and TV-14 = 14\b/, /Unrated titles count as age 18/, /parental PIN/]],
+    ["pt-BR", "Como funciona", [/PG e PG-13 = 13\b/, /R e TV-MA = 17\b/, /NC-17 = 18\b/, /TV-PG = 10 e TV-14 = 14\b/, /Títulos sem classificação contam como 18 anos/, /PIN parental/]],
   ])("states the US conversion, the unrated rule and the PIN (%s)", async (language, title, facts) => {
     await i18n.changeLanguage(language);
     renderSelector();
