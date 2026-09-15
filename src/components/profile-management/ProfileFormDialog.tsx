@@ -13,9 +13,6 @@ import {
   FormControlLabel,
   FormGroup,
   FormHelperText,
-  FormLabel,
-  Radio,
-  RadioGroup,
   TextField,
   Typography,
 } from "@mui/material";
@@ -29,6 +26,7 @@ import type { CreateProfileInput, Library, Profile } from "../../api/types";
 import { PARENTAL_CONTROLS_ENABLED } from "../../config/featureFlags";
 import { Avatar } from "../auth/Avatar";
 import { initialsForName, toneForProfile } from "../auth/avatarUtils";
+import { MaturityLimitSelector } from "./MaturityLimitSelector";
 
 export interface ProfileFormSubmit {
   name: string;
@@ -40,19 +38,6 @@ export interface ProfileFormSubmit {
    */
   maturity_limit?: number | null;
 }
-
-/**
- * Age steps the selector offers besides "unrestricted" (ADR-035, D7):
- * ``0`` is "L" (all audiences), then the age ratings up to 16. The API
- * accepts any age from 0 to 21.
- */
-const MATURITY_LIMIT_AGES = [0, 10, 12, 14, 16];
-
-/** Radio value for "no limit"; the ages use their decimal string. */
-const UNRESTRICTED = "unrestricted";
-
-const limitToRadio = (limit: number | null) => (limit === null ? UNRESTRICTED : String(limit));
-const radioToLimit = (value: string) => (value === UNRESTRICTED ? null : Number(value));
 
 interface ProfileFormDialogProps {
   open: boolean;
@@ -85,12 +70,13 @@ interface ProfileFormDialogProps {
  * pick what a household member sees rather than auto-grant
  * everything.
  *
- * The maturity limit selector (ADR-035) only renders while
- * ``PARENTAL_CONTROLS_ENABLED`` is on. It offers "unrestricted" and the
- * D7 age steps; a limit set outside those steps through the API is
- * listed too, so the stored value is always the selected one. It warns
- * that the limit does not cover video segments the server already
- * cached, which stay reachable by direct link until ADR-036.
+ * The maturity limit selector (ADR-035, ``MaturityLimitSelector``) only
+ * renders while ``PARENTAL_CONTROLS_ENABLED`` is on. It offers
+ * "unrestricted" and the D7 age steps; a limit set outside those steps
+ * through the API is listed too, so the stored value is always the
+ * selected one. It warns that the limit does not cover video segments
+ * the server already cached, which stay reachable by direct link until
+ * ADR-036.
  *
  * Submit emits ``{ name, allowed_library_ids }`` plus
  * ``maturity_limit`` ONLY when the operator changed it: an unchanged
@@ -122,10 +108,6 @@ export function ProfileFormDialog({
   // ``undefined`` from a backend without the field reads as unrestricted.
   const initialLimit = profile?.maturity_limit ?? null;
   const [limit, setLimit] = useState<number | null>(initialLimit);
-  const limitAges =
-    initialLimit === null || MATURITY_LIMIT_AGES.includes(initialLimit)
-      ? MATURITY_LIMIT_AGES
-      : [...MATURITY_LIMIT_AGES, initialLimit].sort((a, b) => a - b);
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(profile?.allowed_library_ids ?? []),
   );
@@ -338,40 +320,12 @@ export function ProfileFormDialog({
         />
 
         {PARENTAL_CONTROLS_ENABLED && (
-          <FormControl
-            component="fieldset"
+          <MaturityLimitSelector
+            value={limit}
+            storedLimit={initialLimit}
+            onChange={setLimit}
             disabled={submitting}
-            sx={{ mt: 2, display: "flex" }}
-          >
-            <FormLabel component="legend" sx={{ typography: "body2", fontWeight: 600 }}>
-              {t("profileManagement.fields.maturityLimit")}
-            </FormLabel>
-            <RadioGroup
-              row
-              value={limitToRadio(limit)}
-              onChange={(e) => setLimit(radioToLimit(e.target.value))}
-            >
-              <FormControlLabel
-                value={UNRESTRICTED}
-                control={<Radio />}
-                label={t("profileManagement.fields.maturityLimitUnrestricted")}
-              />
-              {limitAges.map((age) => (
-                <FormControlLabel
-                  key={age}
-                  value={String(age)}
-                  control={<Radio />}
-                  label={age === 0 ? "L" : String(age)}
-                />
-              ))}
-            </RadioGroup>
-            <FormHelperText sx={{ ml: 0 }}>
-              {t("profileManagement.fields.maturityLimitHelp")}
-            </FormHelperText>
-            <FormHelperText sx={{ ml: 0 }}>
-              {t("profileManagement.fields.maturityLimitCacheNote")}
-            </FormHelperText>
-          </FormControl>
+          />
         )}
 
         <Divider sx={{ my: 3, borderColor: whiteAlpha(0.08) }} />
