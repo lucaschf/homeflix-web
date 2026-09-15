@@ -116,6 +116,10 @@
     "addProfile": "Novo perfil",
     "deleteTitle": "Apagar perfil",
     "deleteConfirm": "Tem certeza que deseja apagar o perfil \"{{name}}\"? Histórico, listas e preferências dele serão arquivados.",
+    "sections": {
+      "basics": "Dados do perfil",
+      "maturity": "Controle parental"
+    },
     "fields": {
       "name": "Nome",
       "maturityLimit": "Limite de idade",

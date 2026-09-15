@@ -11,7 +11,13 @@ function renderSelector({
   value = null,
   storedLimit = value,
   disabled = false,
-}: { value?: number | null; storedLimit?: number | null; disabled?: boolean } = {}) {
+  columns,
+}: {
+  value?: number | null;
+  storedLimit?: number | null;
+  disabled?: boolean;
+  columns?: number;
+} = {}) {
   const onChange = vi.fn<(limit: number | null) => void>();
   // The form owns the value; mirror that so a pick shows up as selected.
   function Harness() {
@@ -21,6 +27,7 @@ function renderSelector({
         value={limit}
         storedLimit={storedLimit}
         disabled={disabled}
+        columns={columns}
         onChange={(next) => {
           onChange(next);
           setLimit(next);
@@ -151,6 +158,17 @@ describe("MaturityLimitSelector — options", () => {
 
     for (const radio of screen.getAllByRole("radio")) expect(radio).toBeDisabled();
   });
+
+  it.each([
+    [undefined, "repeat(1, minmax(0, 1fr))"],
+    [2, "repeat(2, minmax(0, 1fr))"],
+  ])("lays the options out in a grid of %s columns", (columns, template) => {
+    renderSelector({ columns });
+
+    expect(screen.getByRole("radiogroup", { name: "Age limit" })).toHaveStyle({
+      gridTemplateColumns: template,
+    });
+  });
 });
 
 describe("MaturityLimitSelector — what the profile sees", () => {
@@ -218,6 +236,30 @@ describe("MaturityLimitSelector — how it works", () => {
     for (const fact of facts) expect(note).toHaveTextContent(fact);
     // The line-keeping markup renders as elements, never as literal tags.
     expect(note.textContent).not.toMatch(/<\/?pair>/);
+  });
+
+  it("starts collapsed and opens from its title button, by pointer or keyboard", async () => {
+    renderSelector();
+
+    const toggle = screen.getByRole("button", { name: "How it works" });
+    const note = screen.getByRole("note", { name: "How it works" });
+    const pinFact = within(note).getByText(/parental PIN/);
+    expect(note).toContainElement(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(pinFact).not.toBeVisible();
+
+    await userEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(document.getElementById(toggle.getAttribute("aria-controls")!)).toContainElement(
+      pinFact,
+    );
+    expect(pinFact).toBeVisible();
+
+    await userEvent.keyboard("{Enter}");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await userEvent.keyboard(" ");
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
 
   it("keeps the cached-video caveat in the note", () => {

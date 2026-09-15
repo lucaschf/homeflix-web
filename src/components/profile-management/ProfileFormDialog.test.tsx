@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@mui/material";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createQueryClient } from "../../api/queryClient";
@@ -136,12 +136,26 @@ describe("ProfileFormDialog — maturity limit", () => {
     });
   });
 
-  it("warns that the limit does not cover already cached video", () => {
+  it("warns that the limit does not cover already cached video", async () => {
     renderDialog(profileWithLimit(null));
+
+    await userEvent.click(screen.getByRole("button", { name: "How it works" }));
 
     expect(
       screen.getByText(/video the server has already cached can still be reached/),
-    ).toBeInTheDocument();
+    ).toBeVisible();
+  });
+
+  it("lays the form out as a basics section and an age limit section, at the md width", () => {
+    renderDialog(profileWithLimit(14));
+
+    const basics = screen.getByRole("region", { name: "Profile details" });
+    const maturity = screen.getByRole("region", { name: "Parental controls" });
+    expect(within(basics).getByLabelText("Name")).toBeInTheDocument();
+    expect(within(basics).getByRole("checkbox", { name: /Shows/ })).toBeInTheDocument();
+    expect(within(basics).queryByRole("radio")).not.toBeInTheDocument();
+    expect(within(maturity).getByRole("radiogroup", { name: "Age limit" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveClass("MuiDialog-paperWidthMd");
   });
 
   it("renders no kids switch", () => {
@@ -164,6 +178,15 @@ describe("ProfileFormDialog — parental controls flag off", () => {
     expect(screen.queryByText("Age limit")).not.toBeInTheDocument();
     expect(screen.queryByText(/already cached/)).not.toBeInTheDocument();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+  });
+
+  it("renders only the basics section, at the sm width", () => {
+    renderDialog(profileWithLimit(14));
+
+    expect(screen.getAllByRole("region").map((region) => region.getAttribute("aria-label"))).toEqual([
+      "Profile details",
+    ]);
+    expect(screen.getByRole("dialog")).toHaveClass("MuiDialog-paperWidthSm");
   });
 
   it("never writes the limit of a limited profile", async () => {

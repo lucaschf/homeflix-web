@@ -116,6 +116,10 @@
     "addProfile": "New profile",
     "deleteTitle": "Delete profile",
     "deleteConfirm": "Are you sure you want to delete the profile \"{{name}}\"? Their history, lists and preferences will be archived.",
+    "sections": {
+      "basics": "Profile details",
+      "maturity": "Parental controls"
+    },
     "fields": {
       "name": "Name",
       "maturityLimit": "Age limit",
