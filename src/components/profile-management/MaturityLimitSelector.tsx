@@ -1,33 +1,26 @@
-import { useId, useState, type ReactNode } from "react";
 import {
-  Box,
-  ButtonBase,
-  Collapse,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
-  Radio,
-  RadioGroup,
-  Typography,
-} from "@mui/material";
-import type { Breakpoint } from "@mui/material/styles";
-import { ChevronDown, Circle, CircleCheck, Globe, Info } from "lucide-react";
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
+import { Box, ButtonBase, Collapse, Typography, useMediaQuery, useTheme } from "@mui/material";
+import type { TFunction } from "i18next";
+import { ChevronDown, Info, Infinity as InfinityIcon } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { border, whiteAlpha } from "../../theme/tokens";
 import { ContentRatingBadge } from "../ContentRatingBadge";
+import { selectionAccent } from "./selectionAccent";
 
 /**
- * Age steps the selector offers besides "unrestricted" (ADR-035, D7):
- * ``0`` is "L" (all audiences), then the age ratings up to 16. The API
- * accepts any age from 0 to 21.
+ * Age steps the ladder offers below "unrestricted" (ADR-035, D7): ``0`` is
+ * "L" (all audiences), then the age ratings up to 16. The API accepts any
+ * age from 0 to 21.
  */
 const MATURITY_LIMIT_AGES = [0, 10, 12, 14, 16];
-
-/** Radio value for "no limit"; the ages use their decimal string. */
-const UNRESTRICTED = "unrestricted";
-
-const limitToRadio = (limit: number | null) => (limit === null ? UNRESTRICTED : String(limit));
-const radioToLimit = (value: string) => (value === UNRESTRICTED ? null : Number(value));
 
 /**
  * The age a title without a rating requires: the backend resolves it to
@@ -35,7 +28,7 @@ const radioToLimit = (value: string) => (value === UNRESTRICTED ? null : Number(
  */
 const UNRATED_AGE = 18;
 
-/** The ClassInd scale the summary strip draws, with the age each rating requires. */
+/** The ClassInd scale, with the age each rating requires. */
 const CLASSIND_RATINGS = [
   { label: "L", age: 0 },
   { label: "10", age: 10 },
@@ -45,7 +38,7 @@ const CLASSIND_RATINGS = [
   { label: "18", age: 18 },
 ];
 
-/** Description per offered step; any other stored age reads as a custom limit. */
+/** Description per offered step; any other age reads as a custom limit. */
 const STEP_DESCRIPTION_KEYS: Record<number, string> = {
   0: "profileManagement.fields.maturityLimitAllAgesDescription",
   10: "profileManagement.fields.maturityLimitUpTo10Description",
@@ -54,21 +47,28 @@ const STEP_DESCRIPTION_KEYS: Record<number, string> = {
   16: "profileManagement.fields.maturityLimitUpTo16Description",
 };
 
-const BADGE_SIZE = 28;
-const SUMMARY_BADGE_SIZE = 22;
+/** Tile side on the ladder and in the detail row; below ``md`` the ladder uses the compact one. */
+const TILE_SIZE = 40;
+const COMPACT_TILE_SIZE = 28;
 
-/** Kept in the accessibility tree, out of sight. */
-const VISUALLY_HIDDEN = {
+/**
+ * Room the rail leaves on each side of a tile: the selection ring's reach
+ * (2px offset + 2px width), so the rail meets the ring instead of crossing it.
+ */
+const RAIL_TILE_GAP = 4;
+
+/** Kept in the accessibility tree and focusable, out of sight. */
+const VISUALLY_HIDDEN: CSSProperties = {
   position: "absolute",
-  width: "1px",
-  height: "1px",
-  p: 0,
-  m: "-1px",
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
   overflow: "hidden",
   clip: "rect(0 0 0 0)",
   whiteSpace: "nowrap",
   border: 0,
-} as const;
+};
 
 /**
  * Whether a profile limited to ``limit`` sees a title requiring ``age``,
@@ -76,316 +76,450 @@ const VISUALLY_HIDDEN = {
  */
 const allows = (limit: number | null, age: number) => limit === null || age <= limit;
 
-/** Option grid columns: one count, or a count per breakpoint. */
-type Columns = number | Partial<Record<Breakpoint, number>>;
+/**
+ * The ladder's steps, lowest first: the offered ages plus any other age
+ * given (a limit stored outside the steps), in order, then ``null`` for
+ * unrestricted.
+ */
+function ladderSteps(...extraAges: (number | null)[]): (number | null)[] {
+  const ages = new Set(MATURITY_LIMIT_AGES);
+  for (const age of extraAges) if (age !== null) ages.add(age);
+  return [...[...ages].sort((a, b) => a - b), null];
+}
 
-const repeatColumns = (count: number) => `repeat(${count}, minmax(0, 1fr))`;
+const stepKey = (limit: number | null) => (limit === null ? "unrestricted" : String(limit));
 
-const gridTemplateColumns = (columns: Columns) =>
-  typeof columns === "number"
-    ? repeatColumns(columns)
-    : Object.fromEntries(
-        Object.entries(columns).map(([breakpoint, count]) => [breakpoint, repeatColumns(count)]),
-      );
+/** "Unrestricted", "All ages" or "Up to age 12": the step's name and the slider's value text. */
+const stepTitle = (t: TFunction, limit: number | null) =>
+  limit === null
+    ? t("profileManagement.fields.maturityLimitUnrestricted")
+    : limit === 0
+      ? t("profileManagement.fields.maturityLimitAllAges")
+      : t("profileManagement.fields.maturityLimitUpTo", { age: limit });
+
+/** The short label under a ladder tile. */
+const stepCaption = (t: TFunction, limit: number | null) =>
+  limit === null
+    ? t("profileManagement.fields.maturityLimitUnrestricted")
+    : limit === 0
+      ? t("profileManagement.fields.maturityLimitAllAges")
+      : String(limit);
+
+const stepDescription = (t: TFunction, limit: number | null) =>
+  t(
+    limit === null
+      ? "profileManagement.fields.maturityLimitUnrestrictedDescription"
+      : (STEP_DESCRIPTION_KEYS[limit] ?? "profileManagement.fields.maturityLimitCustomDescription"),
+  );
+
+/**
+ * What a limit keeps out of the catalog: the ClassInd ratings above it and
+ * unrated titles, or the whole catalog for a limit from 18 up. Unrestricted
+ * has no line, its description already says it.
+ */
+function catalogReach(t: TFunction, limit: number | null): string | null {
+  if (limit === null) return null;
+  if (allows(limit, UNRATED_AGE)) return t("profileManagement.fields.maturityLimitSeesAll");
+  const blocked = CLASSIND_RATINGS.filter((rating) => !allows(limit, rating.age))
+    .map((rating) => rating.label)
+    .join(", ");
+  return t("profileManagement.fields.maturityLimitBlocked", { blocked });
+}
+
+/** The step a key moves the selection to, or ``null`` when the key does not move it. */
+function stepAfterKey(key: string, index: number, last: number): number | null {
+  switch (key) {
+    case "ArrowLeft":
+    case "ArrowDown":
+    case "PageDown":
+      return Math.max(index - 1, 0);
+    case "ArrowRight":
+    case "ArrowUp":
+    case "PageUp":
+      return Math.min(index + 1, last);
+    case "Home":
+      return 0;
+    case "End":
+      return last;
+    default:
+      return null;
+  }
+}
 
 interface MaturityLimitSelectorProps {
   /** The selected limit: a minimum age, or ``null`` for unrestricted. */
   value: number | null;
   /**
    * The limit the profile has stored. An age outside the offered steps
-   * (set through the API) is listed as an extra option, so it stays
-   * visible and selectable after the operator picks another one.
+   * (set through the API) is placed on the ladder as an extra step, so it
+   * shows as selected and stays reachable after the operator picks another.
    */
   storedLimit: number | null;
   onChange: (limit: number | null) => void;
   disabled?: boolean;
-  /**
-   * Columns of the option grid, as a count or a count per breakpoint
-   * (``{ xs: 1, md: 2 }``). Cards fill it row by row in option order,
-   * so arrow keys still walk the options in reading order.
-   */
-  columns?: Columns;
 }
 
 /**
  * Maturity limit picker for the profile form (ADR-035).
  *
- * A radio group rendered as option cards — rating badge, title and a
- * short description — followed by a strip of the ClassInd ratings the
- * selected limit lets through and a "how it works" note explaining how US
- * ratings map to ages, that unrated titles need an unrestricted profile,
- * that loosening the limit asks for the parental PIN, and that video the
- * server already cached is not covered. The note starts collapsed behind
- * a disclosure button so the choice itself stays compact.
+ * A ladder of the ClassInd badges from L to 16 ending in "unrestricted":
+ * the operator drags, clicks a step or uses the arrow keys, Home and End
+ * to pick the highest rating the profile may watch. The rail is filled up
+ * to the selection and the steps beyond it are dimmed, which is what the
+ * profile stops seeing. Under the ladder, a detail row names the selected
+ * step and lists what stays out, and a "how ratings work" note (collapsed
+ * at first) explains how US ratings map to ages, that unrated titles need
+ * an 18+ or unrestricted profile, that loosening the limit asks for the
+ * parental PIN, and that video the server already cached is not covered.
  *
- * The component only reports the chosen limit through ``onChange``;
- * deciding whether that is a change worth writing stays with the form.
+ * For assistive technology the ladder is one native range input named
+ * after the heading, whose value text is the step title and whose
+ * description is the detail row; the drawing itself is hidden.
+ *
+ * The component only reports the chosen limit through ``onChange``, and
+ * only when it differs from ``value``; deciding whether that is a change
+ * worth writing stays with the form.
  */
 export function MaturityLimitSelector({
   value,
   storedLimit,
   onChange,
   disabled = false,
-  columns = 1,
 }: MaturityLimitSelectorProps) {
   const { t } = useTranslation();
-  const legendId = useId();
-  const ages =
-    storedLimit === null || MATURITY_LIMIT_AGES.includes(storedLimit)
-      ? MATURITY_LIMIT_AGES
-      : [...MATURITY_LIMIT_AGES, storedLimit].sort((a, b) => a - b);
-  const selected = limitToRadio(value);
+  const labelId = useId();
+  const descriptionId = useId();
+  const reachId = useId();
+  const steps = ladderSteps(storedLimit, value);
+  const selectedIndex = steps.indexOf(value);
+  const reach = catalogReach(t, value);
+
+  const select = (index: number) => {
+    const next = steps[index];
+    if (next !== value) onChange(next);
+  };
 
   return (
     <Box>
-      <FormControl component="fieldset" disabled={disabled} sx={{ display: "flex" }}>
-        <FormLabel
-          id={legendId}
-          component="legend"
-          sx={{ typography: "body2", fontWeight: 600, mb: 1 }}
-        >
-          {t("profileManagement.fields.maturityLimit")}
-        </FormLabel>
-        <RadioGroup
-          aria-labelledby={legendId}
-          value={selected}
-          onChange={(e) => onChange(radioToLimit(e.target.value))}
-          sx={{ display: "grid", gridTemplateColumns: gridTemplateColumns(columns), gap: 0.75 }}
-        >
-          <OptionCard
-            value={UNRESTRICTED}
-            checked={selected === UNRESTRICTED}
-            badge={
-              <NeutralTile>
-                <Globe size={16} />
-              </NeutralTile>
-            }
-            title={t("profileManagement.fields.maturityLimitUnrestricted")}
-            description={t("profileManagement.fields.maturityLimitUnrestrictedDescription")}
-          />
-          {ages.map((age) => {
-            const descriptionKey = STEP_DESCRIPTION_KEYS[age];
-            return (
-              <OptionCard
-                key={age}
-                value={String(age)}
-                checked={selected === String(age)}
-                badge={
-                  descriptionKey ? (
-                    <ContentRatingBadge rating={age === 0 ? "L" : String(age)} size={BADGE_SIZE} />
-                  ) : (
-                    <NeutralTile>{age}</NeutralTile>
-                  )
-                }
-                title={
-                  age === 0
-                    ? t("profileManagement.fields.maturityLimitAllAges")
-                    : t("profileManagement.fields.maturityLimitUpTo", { age })
-                }
-                description={t(
-                  descriptionKey ?? "profileManagement.fields.maturityLimitCustomDescription",
-                )}
-              />
-            );
-          })}
-        </RadioGroup>
-      </FormControl>
-      <MaturitySummary limit={value} />
-      <HowItWorks />
-    </Box>
-  );
-}
-
-interface OptionCardProps {
-  value: string;
-  checked: boolean;
-  badge: ReactNode;
-  title: string;
-  description: string;
-}
-
-/**
- * One option: the whole card is the radio's label, and the radio itself
- * is the trailing check. The accessible name is the title alone and the
- * description is attached as such, so the badge text does not leak into
- * either.
- */
-function OptionCard({ value, checked, badge, title, description }: OptionCardProps) {
-  const id = useId();
-  const titleId = `${id}-title`;
-  const descriptionId = `${id}-description`;
-
-  return (
-    <FormControlLabel
-      value={value}
-      labelPlacement="start"
-      control={
-        <Radio
-          disableRipple
-          icon={<Circle size={20} />}
-          checkedIcon={<CircleCheck size={20} />}
-          slotProps={{
-            input: { "aria-labelledby": titleId, "aria-describedby": descriptionId },
-          }}
+      <Typography id={labelId} variant="body2" sx={{ fontWeight: 600 }}>
+        {t("profileManagement.fields.maturityLimit")}
+      </Typography>
+      <Typography variant="caption" sx={{ display: "block", color: "text.secondary", mt: 0.25 }}>
+        {t("profileManagement.fields.maturityLimitHelp")}
+      </Typography>
+      <Box
+        sx={{
+          mt: 1.5,
+          px: { xs: 1.5, md: 2.5 },
+          pt: { xs: 2, md: 2.5 },
+          pb: 2,
+          borderRadius: 1.5,
+          border: `1px solid ${border.hairlineStrong}`,
+          bgcolor: whiteAlpha(0.02),
+        }}
+      >
+        <MaturityLadder
+          steps={steps}
+          selectedIndex={selectedIndex}
+          onSelect={select}
+          disabled={disabled}
+          labelId={labelId}
+          describedBy={reach ? `${descriptionId} ${reachId}` : descriptionId}
+          valueText={stepTitle(t, value)}
         />
-      }
-      label={
-        <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-          <Box component="span" aria-hidden sx={{ display: "flex", flexShrink: 0 }}>
-            {badge}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 1.5,
+            mt: 2,
+            pt: 2,
+            borderTop: `1px solid ${border.hairline}`,
+          }}
+        >
+          <Box aria-hidden sx={{ display: "flex", flexShrink: 0 }}>
+            <StepTile limit={value} size={TILE_SIZE} />
           </Box>
-          <Box component="span" sx={{ minWidth: 0 }}>
-            <Typography
-              id={titleId}
-              component="span"
-              variant="body2"
-              sx={{ display: "block", fontWeight: 600, color: "text.primary" }}
-            >
-              {title}
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="body2" sx={{ fontWeight: 700, color: "text.primary" }}>
+              {stepTitle(t, value)}
             </Typography>
             <Typography
               id={descriptionId}
               variant="caption"
               sx={{ display: "block", color: "text.secondary" }}
             >
-              {description}
+              {stepDescription(t, value)}
             </Typography>
+            {reach && (
+              <Typography
+                id={reachId}
+                variant="caption"
+                sx={{ display: "block", color: "text.secondary", mt: 0.25 }}
+              >
+                {reach}
+              </Typography>
+            )}
           </Box>
         </Box>
-      }
-      sx={{
-        m: 0,
-        gap: 0.5,
-        py: 1,
-        pl: 1.25,
-        pr: 0.75,
-        borderRadius: 1.25,
-        border: "1px solid",
-        borderColor: checked ? "primary.main" : border.hairlineStrong,
-        bgcolor: checked ? "primary.alpha8" : whiteAlpha(0.02),
-        transition: "border-color 120ms ease, background-color 120ms ease",
-        "&:hover": {
-          borderColor: checked ? "primary.main" : whiteAlpha(0.24),
-          bgcolor: checked ? "primary.alpha12" : whiteAlpha(0.04),
-        },
-        "&:has(.Mui-focusVisible)": {
-          outline: (theme) => `2px solid ${theme.palette.primary.main}`,
-          outlineOffset: 2,
-        },
-        "&.Mui-disabled": { cursor: "default", opacity: 0.6 },
-        "& .MuiFormControlLabel-label": { flex: 1, minWidth: 0 },
-        "& .MuiRadio-root": { p: 0.25 },
-      }}
-    />
+      </Box>
+      <HowItWorks />
+    </Box>
   );
 }
 
-/** Badge-sized tile for options without an official rating color. */
-function NeutralTile({ children }: { children: ReactNode }) {
+interface MaturityLadderProps {
+  steps: (number | null)[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+  disabled: boolean;
+  labelId: string;
+  describedBy: string;
+  valueText: string;
+}
+
+/**
+ * The slider: a visually hidden range input over the step indexes, which
+ * owns focus and the keyboard, and the drawn ladder, which takes the
+ * pointer. A press on a tile picks that step; a press or drag anywhere
+ * else snaps to the column under the pointer.
+ */
+function MaturityLadder({
+  steps,
+  selectedIndex,
+  onSelect,
+  disabled,
+  labelId,
+  describedBy,
+  valueText,
+}: MaturityLadderProps) {
+  const { t } = useTranslation();
+  const theme = useTheme();
+  const compact = useMediaQuery(theme.breakpoints.down("md"));
+  const tileSize = compact ? COMPACT_TILE_SIZE : TILE_SIZE;
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const columnsRef = useRef<HTMLDivElement | null>(null);
+  const dragging = useRef(false);
+  const last = steps.length - 1;
+  const accent = selectionAccent(theme);
+
+  /** The step whose column holds ``clientX``, or ``null`` while nothing is laid out. */
+  const indexAt = (clientX: number) => {
+    const rect = columnsRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0) return null;
+    const column = Math.floor(((clientX - rect.left) / rect.width) * steps.length);
+    return Math.min(Math.max(column, 0), last);
+  };
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (disabled || event.button !== 0) return;
+    const tile = (event.target as Element).closest<HTMLElement>("[data-step-index]");
+    const index = tile ? Number(tile.dataset.stepIndex) : indexAt(event.clientX);
+    // No text selection while dragging, and the keyboard picks up from here.
+    event.preventDefault();
+    inputRef.current?.focus({ preventScroll: true });
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    dragging.current = true;
+    if (index !== null) onSelect(index);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    const index = indexAt(event.clientX);
+    if (index !== null) onSelect(index);
+  };
+
+  const endDrag = () => {
+    dragging.current = false;
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    const index = stepAfterKey(event.key, selectedIndex, last);
+    if (index === null) return;
+    event.preventDefault();
+    onSelect(index);
+  };
+
   return (
     <Box
-      component="span"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       sx={{
-        width: BADGE_SIZE,
-        height: BADGE_SIZE,
-        borderRadius: "4px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: whiteAlpha(0.08),
-        border: `1px solid ${whiteAlpha(0.16)}`,
-        color: "text.primary",
-        fontWeight: 800,
-        fontSize: BADGE_SIZE * 0.46,
-        lineHeight: 1,
+        position: "relative",
+        py: 0.5,
+        borderRadius: 1,
+        cursor: disabled ? "default" : "pointer",
+        // Horizontal drags move the slider; vertical ones still scroll the dialog.
+        touchAction: "pan-y",
+        userSelect: "none",
+        opacity: disabled ? 0.6 : 1,
+        "&:has(input:focus-visible)": { outline: `2px solid ${accent}`, outlineOffset: 6 },
       }}
     >
-      {children}
+      <input
+        ref={inputRef}
+        type="range"
+        min={0}
+        max={last}
+        step={1}
+        value={selectedIndex}
+        disabled={disabled}
+        aria-labelledby={labelId}
+        aria-describedby={describedBy}
+        aria-valuetext={valueText}
+        onChange={(event) => onSelect(Number(event.target.value))}
+        onKeyDown={handleKeyDown}
+        style={VISUALLY_HIDDEN}
+      />
+      <Box
+        ref={columnsRef}
+        aria-hidden
+        sx={{ display: "grid", gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }}
+      >
+        {steps.map((limit, index) => {
+          const selected = index === selectedIndex;
+          const dimmed = index > selectedIndex;
+          return (
+            <Box
+              key={stepKey(limit)}
+              data-step={stepKey(limit)}
+              data-step-index={index}
+              data-selected={selected || undefined}
+              data-dimmed={dimmed || undefined}
+              sx={{
+                minWidth: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  position: "relative",
+                  alignSelf: "stretch",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              >
+                {index > 0 && (
+                  <RailSegment side="left" filled={index <= selectedIndex} tileSize={tileSize} />
+                )}
+                {index < last && (
+                  <RailSegment side="right" filled={index < selectedIndex} tileSize={tileSize} />
+                )}
+                <Box
+                  sx={{
+                    display: "flex",
+                    borderRadius: "4px",
+                    outline: selected ? `2px solid ${accent}` : "none",
+                    outlineOffset: 2,
+                    opacity: dimmed ? 0.35 : 1,
+                    filter: dimmed ? "grayscale(1)" : "none",
+                    transition: "opacity 150ms ease, filter 150ms ease",
+                  }}
+                >
+                  <StepTile limit={limit} size={tileSize} />
+                </Box>
+              </Box>
+              <Typography
+                component="span"
+                variant="caption"
+                sx={{
+                  lineHeight: 1.2,
+                  whiteSpace: "nowrap",
+                  fontWeight: selected ? 700 : 500,
+                  color: selected ? "text.primary" : "text.secondary",
+                  opacity: dimmed ? 0.6 : 1,
+                  // Narrow screens name only the selected step; at the ends
+                  // it is anchored to the edge so it never leaves the ladder.
+                  display: { xs: selected ? "block" : "none", md: "block" },
+                  alignSelf: {
+                    xs: index === 0 ? "flex-start" : index === last ? "flex-end" : "center",
+                    md: "center",
+                  },
+                }}
+              >
+                {stepCaption(t, limit)}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
     </Box>
   );
 }
 
 /**
- * "This profile sees": the ClassInd ratings in full color when the limit
- * lets them through and dimmed otherwise, plus an "unrated" chip. The
- * drawing is hidden from assistive technology, which reads one sentence
- * listing what is seen and what is not.
+ * Half of the rail inside one column, from the column edge to just short
+ * of the tile, so it never shows through a dimmed tile. Neighbouring halves
+ * meet at the column boundary.
  */
-function MaturitySummary({ limit }: { limit: number | null }) {
-  const { t } = useTranslation();
-  const ratings = CLASSIND_RATINGS.map((rating) => ({
-    ...rating,
-    allowed: allows(limit, rating.age),
-  }));
-  const unratedAllowed = allows(limit, UNRATED_AGE);
-  const allowed = ratings.filter((r) => r.allowed).map((r) => r.label).join(", ");
-  const blocked = ratings.filter((r) => !r.allowed).map((r) => r.label).join(", ");
-  // Unrated titles require 18, the top of the strip: when they are hidden,
-  // so is at least the 18 badge, and when they are seen every badge is.
-  const sentence = unratedAllowed
-    ? t("profileManagement.fields.maturityLimitSummaryAll", { allowed })
-    : t("profileManagement.fields.maturityLimitSummaryPartial", { allowed, blocked });
-
+function RailSegment({
+  side,
+  filled,
+  tileSize,
+}: {
+  side: "left" | "right";
+  filled: boolean;
+  tileSize: number;
+}) {
+  const towardTile = `calc(50% + ${tileSize / 2 + RAIL_TILE_GAP}px)`;
   return (
-    <Box sx={{ mt: 1.5 }}>
-      <Box
-        aria-hidden
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          columnGap: 1.25,
-          rowGap: 0.75,
-        }}
-      >
-        <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 600 }}>
-          {t("profileManagement.fields.maturityLimitSummaryLabel")}
-        </Typography>
-        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5 }}>
-          {ratings.map((rating) => (
-            <Box
-              key={rating.label}
-              sx={{
-                display: "flex",
-                borderRadius: "4px",
-                // A hairline ring keeps the shape readable where the badge
-                // color is close to the surface (18) or faded out.
-                boxShadow: `0 0 0 1px ${whiteAlpha(0.14)}`,
-                "& > *": {
-                  opacity: rating.allowed ? 1 : 0.3,
-                  filter: rating.allowed ? "none" : "grayscale(1)",
-                  transition: "opacity 120ms ease",
-                },
-              }}
-            >
-              <ContentRatingBadge rating={rating.label} size={SUMMARY_BADGE_SIZE} />
-            </Box>
-          ))}
-          <Box
-            component="span"
-            sx={{
-              ml: 0.5,
-              px: 0.75,
-              height: SUMMARY_BADGE_SIZE,
-              display: "inline-flex",
-              alignItems: "center",
-              borderRadius: "4px",
-              border: "1px solid",
-              borderColor: unratedAllowed ? whiteAlpha(0.24) : border.hairlineStrong,
-              typography: "caption",
-              whiteSpace: "nowrap",
-              color: unratedAllowed ? "text.primary" : "text.secondary",
-              opacity: unratedAllowed ? 1 : 0.6,
-              textDecoration: unratedAllowed ? "none" : "line-through",
-            }}
-          >
-            {t("profileManagement.fields.maturityLimitUnrated")}
-          </Box>
-        </Box>
-      </Box>
-      <Box component="span" sx={VISUALLY_HIDDEN}>
-        {sentence}
-      </Box>
+    <Box
+      sx={(theme) => ({
+        position: "absolute",
+        top: "50%",
+        height: 3,
+        mt: "-1.5px",
+        left: side === "left" ? 0 : towardTile,
+        right: side === "left" ? towardTile : 0,
+        bgcolor: filled ? selectionAccent(theme) : whiteAlpha(0.12),
+        transition: "background-color 150ms ease",
+      })}
+    />
+  );
+}
+
+/** The ClassInd badge for an offered age, or a neutral tile for unrestricted and custom ages. */
+function StepTile({ limit, size }: { limit: number | null; size: number }) {
+  if (limit === null) {
+    return (
+      <NeutralTile size={size}>
+        <InfinityIcon size={Math.round(size * 0.55)} />
+      </NeutralTile>
+    );
+  }
+  if (STEP_DESCRIPTION_KEYS[limit]) {
+    return <ContentRatingBadge rating={limit === 0 ? "L" : String(limit)} size={size} />;
+  }
+  return <NeutralTile size={size}>{limit}</NeutralTile>;
+}
+
+/** Badge-sized tile for steps without an official rating color. */
+function NeutralTile({ size, children }: { size: number; children: ReactNode }) {
+  return (
+    <Box
+      component="span"
+      sx={{
+        width: size,
+        height: size,
+        borderRadius: "4px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        bgcolor: whiteAlpha(0.08),
+        border: `1px solid ${whiteAlpha(0.16)}`,
+        color: "text.primary",
+        fontWeight: 800,
+        fontSize: size * 0.46,
+        lineHeight: 1,
+      }}
+    >
+      {children}
     </Box>
   );
 }
