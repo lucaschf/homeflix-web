@@ -24,7 +24,7 @@ import {
   useUpdateProfile,
 } from "../api/auth";
 import { useLibraries } from "../api/hooks";
-import { ApiError } from "../api/client";
+import { apiErrorCode } from "../api/errors";
 import type { Profile } from "../api/types";
 import { AuthShell } from "../components/auth/AuthShell";
 import { Avatar } from "../components/auth/Avatar";
@@ -34,6 +34,12 @@ import {
   type ProfileFormSubmit,
 } from "../components/profile-management/ProfileFormDialog";
 import { Logo } from "../components/Logo";
+import { ParentalPinSection } from "../components/parental/ParentalPinSection";
+import {
+  isParentalChallengeCancelled,
+  useParentalUnlock,
+} from "../components/parental/useParentalUnlock";
+import { PARENTAL_CONTROLS_ENABLED } from "../config/featureFlags";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 /**
@@ -46,6 +52,12 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
  * Reuses ``ProfileFormDialog`` for create/edit and translates
  * the backend's 409 ("can't delete the last profile") into a
  * friendly inline message in the confirm dialog.
+ *
+ * Create, update and delete run through ``useParentalUnlock().run``
+ * (ADR-035): a 403 ``PARENTAL_PIN_REQUIRED`` opens the PIN challenge and
+ * the request is sent once more after the unlock. Errors are reported by
+ * code, never by the backend's message. While ``PARENTAL_CONTROLS_ENABLED``
+ * is on, the screen also sets, changes and removes the parental PIN.
  */
 export function ManageProfiles() {
   const { t } = useTranslation();
@@ -57,6 +69,7 @@ export function ManageProfiles() {
   const createProfile = useCreateProfile();
   const updateProfile = useUpdateProfile();
   const deleteProfile = useDeleteProfile();
+  const { run } = useParentalUnlock();
 
   const [editing, setEditing] = useState<Profile | null>(null);
   const [creating, setCreating] = useState(false);
@@ -106,24 +119,30 @@ export function ManageProfiles() {
       body.maturity_limit !== undefined ? { maturity_limit: body.maturity_limit } : {};
     try {
       if (editing) {
-        await updateProfile.mutateAsync({
-          profileId: editing.id,
-          input: {
+        await run(() =>
+          updateProfile.mutateAsync({
+            profileId: editing.id,
+            input: {
+              name: body.name,
+              allowed_library_ids: body.allowed_library_ids,
+              ...limit,
+            },
+          }),
+        );
+      } else {
+        await run(() =>
+          createProfile.mutateAsync({
             name: body.name,
             allowed_library_ids: body.allowed_library_ids,
             ...limit,
-          },
-        });
-      } else {
-        await createProfile.mutateAsync({
-          name: body.name,
-          allowed_library_ids: body.allowed_library_ids,
-          ...limit,
-        });
+          }),
+        );
       }
       closeDialog();
-    } catch {
-      setFormError(t("profileManagement.errors.saveFailed"));
+    } catch (err) {
+      // Closing the PIN challenge leaves the form as it was.
+      if (isParentalChallengeCancelled(err)) return;
+      setFormError(t(saveErrorKey(err)));
     }
   };
 
@@ -144,14 +163,11 @@ export function ManageProfiles() {
     if (!confirmDelete) return;
     setDeleteError(null);
     try {
-      await deleteProfile.mutateAsync(confirmDelete.id);
+      await run(() => deleteProfile.mutateAsync(confirmDelete.id));
       setConfirmDelete(null);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setDeleteError(t("profileManagement.errors.cannotDeleteLast"));
-      } else {
-        setDeleteError(t("profileManagement.errors.deleteFailed"));
-      }
+      if (isParentalChallengeCancelled(err)) return;
+      setDeleteError(t(deleteErrorKey(err)));
     }
   };
 
@@ -224,6 +240,8 @@ export function ManageProfiles() {
             <NewProfileTile onClick={openCreate} disabled={submitting || deleting} />
           </Box>
         )}
+
+        {PARENTAL_CONTROLS_ENABLED && !profilesQuery.isLoading && <ParentalPinSection />}
       </Box>
 
       <Box sx={{ px: 3, pb: { xs: 3, sm: 5 }, display: "flex", justifyContent: "center" }}>
@@ -309,6 +327,37 @@ export function ManageProfiles() {
       </Dialog>
     </AuthShell>
   );
+}
+
+/** Copy for a failed create or update, chosen by the error code. */
+function saveErrorKey(err: unknown): string {
+  switch (apiErrorCode(err)) {
+    // A limit on an account without a PIN: point at the PIN section.
+    case "PARENTAL_PIN_NOT_CONFIGURED":
+      return "profileManagement.errors.pinNotConfigured";
+    // Refused again after the unlock (or with parental controls off).
+    case "PARENTAL_PIN_REQUIRED":
+      return "parental.errors.pinRequired";
+    // Another request changed the limit first.
+    case "DOMAIN_CONFLICT":
+      return "profileManagement.errors.conflict";
+    default:
+      return "profileManagement.errors.saveFailed";
+  }
+}
+
+/** Copy for a failed delete, chosen by the error code. */
+function deleteErrorKey(err: unknown): string {
+  switch (apiErrorCode(err)) {
+    case "CANNOT_DELETE_LAST_PROFILE":
+      return "profileManagement.errors.cannotDeleteLast";
+    case "PARENTAL_PIN_REQUIRED":
+      return "parental.errors.pinRequired";
+    case "DOMAIN_CONFLICT":
+      return "profileManagement.errors.conflict";
+    default:
+      return "profileManagement.errors.deleteFailed";
+  }
 }
 
 interface ProfileTileProps {

@@ -138,7 +138,9 @@
     "errors": {
       "saveFailed": "Couldn't save the profile. Try again.",
       "deleteFailed": "Couldn't delete the profile. Try again.",
-      "cannotDeleteLast": "You must have at least one active profile. Create another one before deleting this."
+      "cannotDeleteLast": "You must have at least one active profile. Create another one before deleting this.",
+      "pinNotConfigured": "Set a parental PIN before giving a profile an age limit. Set it in the Parental PIN section below first, then set the limit.",
+      "conflict": "This profile was changed at the same time on another device. Close the form and try again."
     },
     "avatar": {
       "change": "Change photo",
@@ -149,6 +151,53 @@
         "unsupported": "Unsupported format. Use PNG, JPEG or WebP.",
         "uploadFailed": "Couldn't upload the photo. Try again.",
         "removeFailed": "Couldn't remove the photo. Try again."
+      }
+    }
+  },
+  "parental": {
+    "challenge": {
+      "title": "Parental PIN required",
+      "body": "Enter the 6-digit parental PIN to continue.",
+      "pinLabel": "Parental PIN",
+      "submit": "Unlock",
+      "submitting": "Checking…",
+      "cancel": "Cancel",
+      "invalid": "Wrong PIN. Try again.",
+      "locked": "Too many wrong attempts. Try again in {{time}}.",
+      "lockedAnnouncement_one": "Too many wrong attempts. The PIN is locked for {{count}} minute.",
+      "lockedAnnouncement_other": "Too many wrong attempts. The PIN is locked for {{count}} minutes.",
+      "lockedNoWait": "Too many wrong attempts. Wait a moment and try again.",
+      "notConfigured": "This account has no parental PIN yet. Set one in Manage profiles.",
+      "pinFormat": "The PIN must be exactly 6 digits.",
+      "failed": "Couldn't check the PIN. Try again.",
+      "repeatAction": "Unlocked for 5 minutes on this device. Repeat the action."
+    },
+    "errors": {
+      "pinRequired": "This needs the parental PIN. Try again."
+    },
+    "setup": {
+      "title": "Parental PIN",
+      "statusConfigured": "A parental PIN is set. It protects age limits and admin changes on this account.",
+      "statusMissing": "No parental PIN yet. Set one before giving a profile an age limit.",
+      "set": "Set PIN",
+      "change": "Change PIN",
+      "remove": "Remove PIN",
+      "setTitle": "Set the parental PIN",
+      "changeTitle": "Change the parental PIN",
+      "removeTitle": "Remove the parental PIN",
+      "guidance": "Type your account password away from the child. Anyone who knows it can change or remove the PIN.",
+      "passwordLabel": "Account password",
+      "pinLabel": "New 6-digit PIN",
+      "save": "Save PIN",
+      "confirmRemove": "Remove PIN",
+      "cancel": "Cancel",
+      "saved": "Parental PIN saved.",
+      "removed": "Parental PIN removed.",
+      "errors": {
+        "passwordInvalid": "Wrong account password.",
+        "pinInUse": "Remove the age limit from every profile before removing the PIN.",
+        "pinFormat": "The PIN must be exactly 6 digits.",
+        "failed": "Couldn't update the parental PIN. Try again."
       }
     }
   },
@@ -371,8 +420,10 @@
     "locked": {
       "title": "Admin is locked on this profile",
       "body": "Admin tools are unavailable while this session is under an age limit. Switch to an unrestricted profile to manage the server.",
+      "bodyWithPin": "Admin tools are unavailable while this session is under an age limit. Enter the parental PIN for 5 minutes of admin access on this device, or switch to an unrestricted profile.",
       "switchProfile": "Switch profile",
-      "backHome": "Back to home"
+      "backHome": "Back to home",
+      "unlock": "Unlock with PIN"
     },
     "nav": {
       "overview": "Overview",

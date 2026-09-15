@@ -1,7 +1,12 @@
-import { hashKey, QueryCache, QueryClient } from "@tanstack/react-query";
+import { hashKey, MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 import { authKeys } from "./auth";
 import { ApiError } from "./client";
 import { apiErrorCode } from "./errors";
+import {
+  isParentalGateHandledByCaller,
+  isParentalPinRequired,
+  PARENTAL_PIN_REQUIRED_EVENT,
+} from "./parentalGate";
 
 /** TanStack Query's own browser default, kept for transient failures. */
 const MAX_QUERY_RETRIES = 3;
@@ -48,11 +53,34 @@ function handleQueryError(client: QueryClient, error: unknown, queryHash: string
   );
 }
 
+/**
+ * Global reaction to a failed mutation.
+ *
+ * A 403 ``PARENTAL_PIN_REQUIRED`` on a write the user started (an admin
+ * write under an account with a limited profile, ADR-035 D10) asks
+ * ``ParentalPinProvider``, through ``PARENTAL_PIN_REQUIRED_EVENT``, to
+ * open the PIN challenge. After the unlock the provider tells the user
+ * to repeat the action. The mutation is never sent again from here: this
+ * handler has no way to know the write is safe to replay.
+ *
+ * A mutation marked ``PARENTAL_GATE_HANDLED_BY_CALLER`` is skipped, since
+ * ``useParentalUnlock().run`` already challenges and retries it.
+ */
+function handleMutationError(error: unknown, meta: Record<string, unknown> | undefined): void {
+  if (!isParentalPinRequired(error)) return;
+  if (isParentalGateHandledByCaller(meta)) return;
+  window.dispatchEvent(new CustomEvent(PARENTAL_PIN_REQUIRED_EVENT));
+}
+
 /** The app's query client. Tests build theirs here to get the same policy. */
 export function createQueryClient(): QueryClient {
   const client: QueryClient = new QueryClient({
     queryCache: new QueryCache({
       onError: (error, query) => handleQueryError(client, error, query.queryHash),
+    }),
+    mutationCache: new MutationCache({
+      onError: (error, _variables, _context, mutation) =>
+        handleMutationError(error, mutation.meta),
     }),
     defaultOptions: { queries: { retry: shouldRetry } },
   });

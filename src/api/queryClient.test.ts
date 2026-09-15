@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { authKeys } from "./auth";
 import { ApiError } from "./client";
+import { PARENTAL_GATE_HANDLED_BY_CALLER, PARENTAL_PIN_REQUIRED_EVENT } from "./parentalGate";
 import { createQueryClient, shouldRetry } from "./queryClient";
 
 const apiError = (status: number) => new ApiError(status, "", null);
@@ -92,5 +93,74 @@ describe("query error handling", () => {
     await failQuery(client, authKeys.currentUser, gateError("PARENTAL_PIN_REQUIRED"));
 
     expect(invalidate).not.toHaveBeenCalled();
+  });
+});
+
+describe("mutation error handling", () => {
+  const gateError = (code: string) =>
+    new ApiError(403, "Forbidden", { code, message: "", type: "forbidden", details: [] });
+
+  /** Runs one mutation through the cache, as ``useMutation`` would. */
+  async function failMutation(client: QueryClient, error: Error, meta?: Record<string, unknown>) {
+    const mutationFn = vi.fn().mockRejectedValue(error);
+    const mutation = client.getMutationCache().build(client, { mutationFn, meta });
+    await expect(mutation.execute(undefined)).rejects.toBe(error);
+    return mutationFn;
+  }
+
+  /** Counts ``PARENTAL_PIN_REQUIRED_EVENT`` dispatches. */
+  function listen() {
+    const listener = vi.fn();
+    window.addEventListener(PARENTAL_PIN_REQUIRED_EVENT, listener);
+    return {
+      listener,
+      stop: () => window.removeEventListener(PARENTAL_PIN_REQUIRED_EVENT, listener),
+    };
+  }
+
+  it("asks for the challenge once on PARENTAL_PIN_REQUIRED and never re-sends the mutation", async () => {
+    const client = createQueryClient();
+    const { listener, stop } = listen();
+
+    const mutationFn = await failMutation(client, gateError("PARENTAL_PIN_REQUIRED"));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    stop();
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(mutationFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays out of a mutation whose caller handles the parental gate", async () => {
+    const client = createQueryClient();
+    const { listener, stop } = listen();
+
+    await failMutation(client, gateError("PARENTAL_PIN_REQUIRED"), PARENTAL_GATE_HANDLED_BY_CALLER);
+    stop();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("ignores every other mutation error", async () => {
+    const client = createQueryClient();
+    const { listener, stop } = listen();
+
+    await failMutation(client, gateError("ADMIN_REQUIRED"));
+    await failMutation(client, new ApiError(500, "Server Error", null));
+    stop();
+
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("asks for no challenge when a query is refused with PARENTAL_PIN_REQUIRED", async () => {
+    const client = createQueryClient();
+    const { listener, stop } = listen();
+    const error = gateError("PARENTAL_PIN_REQUIRED");
+
+    await expect(
+      client.fetchQuery({ queryKey: ["admin", "jobs"], queryFn: () => Promise.reject(error) }),
+    ).rejects.toBe(error);
+    stop();
+
+    expect(listener).not.toHaveBeenCalled();
   });
 });

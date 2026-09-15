@@ -22,6 +22,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { ApiError, api } from "./client";
+import { PARENTAL_GATE_HANDLED_BY_CALLER } from "./parentalGate";
 import type {
   CreateProfileInput,
   LoginInput,
@@ -212,6 +213,8 @@ export function useLogout() {
 export function useSwitchProfile() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
+    // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
+    meta: PARENTAL_GATE_HANDLED_BY_CALLER,
     mutationFn: async (profileId) => {
       await api.post<void>(`/profiles/${profileId}/switch`);
     },
@@ -245,6 +248,8 @@ export function useUpdateProfile() {
     { profileId: string; input: UpdateProfileInput },
     { before: Profile | undefined }
   >({
+    // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
+    meta: PARENTAL_GATE_HANDLED_BY_CALLER,
     // Snapshot before the request so ``onSuccess`` compares the
     // server's answer against the profile the session was using.
     onMutate: ({ profileId }) => ({
@@ -277,6 +282,8 @@ export function useUpdateProfile() {
 export function useCreateProfile() {
   const queryClient = useQueryClient();
   return useMutation<Profile, Error, CreateProfileInput>({
+    // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
+    meta: PARENTAL_GATE_HANDLED_BY_CALLER,
     mutationFn: async (input) => {
       const res = await api.post<ProfileResponse>("/profiles", input);
       return res.data;
@@ -299,6 +306,8 @@ export function useCreateProfile() {
 export function useDeleteProfile() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
+    // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
+    meta: PARENTAL_GATE_HANDLED_BY_CALLER,
     mutationFn: async (profileId) => {
       await api.del(`/profiles/${profileId}`);
     },

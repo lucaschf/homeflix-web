@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Box, Button, ButtonBase, CircularProgress, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
@@ -7,6 +7,7 @@ import { MonoButton } from "../components/MonoButton";
 import { error as errorPalette } from "../theme/colors";
 import { useNavigate } from "react-router-dom";
 import { useLogout, useProfiles, useSwitchProfile } from "../api/auth";
+import { isParentalPinRequired } from "../api/parentalGate";
 import {
   AuthShell,
   Avatar,
@@ -14,6 +15,10 @@ import {
   toneForProfile,
 } from "../components/auth";
 import { Logo } from "../components/Logo";
+import {
+  isParentalChallengeCancelled,
+  useParentalUnlock,
+} from "../components/parental/useParentalUnlock";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import type { Profile } from "../api/types";
 
@@ -27,8 +32,14 @@ import type { Profile } from "../api/types";
  *   useful — backend has no public signup yet).
  * - 1 profile → auto-skip: switch + navigate home without rendering
  *   the picker. Saves a click for the most common case (single
- *   household account).
+ *   household account). A switch that needs the parental PIN opens the
+ *   challenge; if the switch still fails (or the challenge is closed),
+ *   the picker renders with that one profile, never an empty screen.
  * - 2+ profiles → render the picker.
+ *
+ * Every switch runs through ``useParentalUnlock().run`` (ADR-035): a 403
+ * ``PARENTAL_PIN_REQUIRED`` opens the PIN challenge and the switch is
+ * sent once more after the unlock.
  *
  * "+ Gerenciar perfis" is shown but disabled — the profile
  * management screen lands in a follow-up PR.
@@ -40,24 +51,38 @@ export function Profiles() {
   const profilesQuery = useProfiles();
   const switchProfile = useSwitchProfile();
   const logout = useLogout();
+  const { run } = useParentalUnlock();
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Set when the one-profile auto-skip did not reach the catalog, so the
+  // picker renders instead of an empty screen.
+  const [autoSkipFailed, setAutoSkipFailed] = useState(false);
+  // The profile the auto-skip already tried, so a re-run of the effect
+  // (StrictMode, a refetched list) cannot send a second switch that would
+  // find the unlock already consumed.
+  const autoSkipTried = useRef<string | null>(null);
 
   // Anonymous visitors are bounced to ``/login`` by the route-level
   // ``RequireAuth`` guard before this component ever mounts, so no
   // in-page redirect effect is needed.
 
   // Auto-skip when the household has exactly one profile. The
-  // effect runs once profiles resolve; ``switchProfile`` carries
-  // its own loading state so the next render shows nothing useful
-  // and that's fine — the navigate happens immediately after.
+  // effect runs once profiles resolve and shows a spinner meanwhile
+  // (the PIN challenge, when needed, opens over it). A failure lands
+  // on the picker with the error, so there is always something to do.
   useEffect(() => {
     if (profilesQuery.data && profilesQuery.data.length === 1) {
       const only = profilesQuery.data[0]!;
-      switchProfile.mutate(only.id, {
-        onSuccess: () => navigate("/", { replace: true }),
-      });
+      if (autoSkipTried.current === only.id) return;
+      autoSkipTried.current = only.id;
+      run(() => switchProfile.mutateAsync(only.id)).then(
+        () => navigate("/", { replace: true }),
+        (err: unknown) => {
+          if (!isParentalChallengeCancelled(err)) setError(t(switchErrorKey(err)));
+          setAutoSkipFailed(true);
+        },
+      );
     }
     // ``switchProfile`` is stable (TanStack Query memoises mutations
     // by query key), but excluding it from deps to avoid the auto-
@@ -68,10 +93,12 @@ export function Profiles() {
   async function pickProfile(profile: Profile) {
     setError(null);
     try {
-      await switchProfile.mutateAsync(profile.id);
+      await run(() => switchProfile.mutateAsync(profile.id));
       navigate("/", { replace: true });
-    } catch {
-      setError(t("auth.picker.switchError"));
+    } catch (err) {
+      // Closing the PIN challenge is a choice, not a failure.
+      if (isParentalChallengeCancelled(err)) return;
+      setError(t(switchErrorKey(err)));
     }
   }
 
@@ -85,6 +112,8 @@ export function Profiles() {
 
   const loading = profilesQuery.isLoading;
   const profiles = profilesQuery.data ?? [];
+  const autoSkipping = profiles.length === 1 && !autoSkipFailed;
+  const showPicker = profiles.length > 1 || (profiles.length === 1 && autoSkipFailed);
 
   return (
     <AuthShell>
@@ -118,13 +147,13 @@ export function Profiles() {
           px: 3,
         }}
       >
-        {loading && <CircularProgress sx={{ color: "primary.main" }} />}
+        {(loading || autoSkipping) && <CircularProgress sx={{ color: "primary.main" }} />}
 
         {!loading && profiles.length === 0 && (
           <EmptyProfileState />
         )}
 
-        {!loading && profiles.length > 1 && (
+        {!loading && showPicker && (
           <>
             <Typography
               variant="h1"
@@ -251,6 +280,11 @@ export function Profiles() {
       </Box>
     </AuthShell>
   );
+}
+
+/** Copy for a failed switch, chosen by the error code. */
+function switchErrorKey(err: unknown): string {
+  return isParentalPinRequired(err) ? "parental.errors.pinRequired" : "auth.picker.switchError";
 }
 
 function EmptyProfileState() {

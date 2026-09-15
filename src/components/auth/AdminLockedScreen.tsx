@@ -2,7 +2,9 @@ import { Box, Button, Typography } from "@mui/material";
 import { Lock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { PARENTAL_CONTROLS_ENABLED } from "../../config/featureFlags";
 import { whiteAlpha } from "../../theme/tokens";
+import { useParentalUnlock } from "../parental/useParentalUnlock";
 import { AuthShell } from "./AuthShell";
 
 /**
@@ -14,14 +16,23 @@ import { AuthShell } from "./AuthShell";
  * admin shell's queries (sidebar review badges, page data, polling)
  * fire and collect 403s while authority is suspended.
  *
- * This is where the parental PIN challenge belongs: an unlock action
- * that, once it succeeds and ``/users/me`` comes back ``"granted"``,
- * lets ``RequireAdmin`` render the admin routes in its place. Until
- * then the screen only offers ways out.
+ * While ``PARENTAL_CONTROLS_ENABLED`` is on it offers "Unlock with PIN":
+ * the PIN challenge unlocks this device, ``useUnlockParental`` refetches
+ * ``/users/me``, and once ``admin_access`` comes back ``"granted"``
+ * ``RequireAdmin`` renders the admin routes in place of this screen.
+ * There is no gated request to retry here, so it opens the challenge
+ * with ``unlock()`` rather than ``run(fn)``.
  */
 export function AdminLockedScreen() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { unlock } = useParentalUnlock();
+
+  const handleUnlock = () => {
+    // ``unlock()`` only rejects when the challenge is closed (a wrong PIN or
+    // a lock stays inside the dialog), which keeps this screen as it is.
+    unlock().catch(() => {});
+  };
 
   return (
     <AuthShell>
@@ -56,9 +67,14 @@ export function AdminLockedScreen() {
           {t("admin.locked.title")}
         </Typography>
         <Typography color="text.secondary" sx={{ maxWidth: 480 }}>
-          {t("admin.locked.body")}
+          {t(PARENTAL_CONTROLS_ENABLED ? "admin.locked.bodyWithPin" : "admin.locked.body")}
         </Typography>
         <Box sx={{ display: "flex", gap: 1, mt: 1, flexWrap: "wrap", justifyContent: "center" }}>
+          {PARENTAL_CONTROLS_ENABLED && (
+            <Button variant="contained" onClick={handleUnlock}>
+              {t("admin.locked.unlock")}
+            </Button>
+          )}
           <Button variant="outlined" onClick={() => navigate("/profiles")}>
             {t("admin.locked.switchProfile")}
           </Button>

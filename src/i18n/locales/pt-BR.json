@@ -138,7 +138,9 @@
     "errors": {
       "saveFailed": "Não foi possível salvar o perfil. Tente novamente.",
       "deleteFailed": "Não foi possível apagar o perfil. Tente novamente.",
-      "cannotDeleteLast": "Você precisa ter ao menos um perfil ativo. Crie outro antes de apagar este."
+      "cannotDeleteLast": "Você precisa ter ao menos um perfil ativo. Crie outro antes de apagar este.",
+      "pinNotConfigured": "Defina um PIN parental antes de dar um limite de idade a um perfil. Defina-o primeiro na seção PIN parental abaixo e depois defina o limite.",
+      "conflict": "Este perfil foi alterado ao mesmo tempo em outro dispositivo. Feche o formulário e tente novamente."
     },
     "avatar": {
       "change": "Trocar foto",
@@ -149,6 +151,53 @@
         "unsupported": "Formato não suportado. Use PNG, JPEG ou WebP.",
         "uploadFailed": "Não foi possível enviar a foto. Tente novamente.",
         "removeFailed": "Não foi possível remover a foto. Tente novamente."
+      }
+    }
+  },
+  "parental": {
+    "challenge": {
+      "title": "PIN parental necessário",
+      "body": "Digite o PIN parental de 6 dígitos para continuar.",
+      "pinLabel": "PIN parental",
+      "submit": "Desbloquear",
+      "submitting": "Verificando…",
+      "cancel": "Cancelar",
+      "invalid": "PIN incorreto. Tente novamente.",
+      "locked": "Muitas tentativas erradas. Tente novamente em {{time}}.",
+      "lockedAnnouncement_one": "Muitas tentativas erradas. O PIN ficou bloqueado por {{count}} minuto.",
+      "lockedAnnouncement_other": "Muitas tentativas erradas. O PIN ficou bloqueado por {{count}} minutos.",
+      "lockedNoWait": "Muitas tentativas erradas. Aguarde um pouco e tente novamente.",
+      "notConfigured": "Esta conta ainda não tem PIN parental. Defina um em Gerenciar perfis.",
+      "pinFormat": "O PIN deve ter exatamente 6 dígitos.",
+      "failed": "Não foi possível verificar o PIN. Tente novamente.",
+      "repeatAction": "Desbloqueado por 5 minutos neste dispositivo. Repita a ação."
+    },
+    "errors": {
+      "pinRequired": "Isto precisa do PIN parental. Tente novamente."
+    },
+    "setup": {
+      "title": "PIN parental",
+      "statusConfigured": "Um PIN parental está definido. Ele protege os limites de idade e as mudanças no admin desta conta.",
+      "statusMissing": "Ainda não há PIN parental. Defina um antes de dar um limite de idade a um perfil.",
+      "set": "Definir PIN",
+      "change": "Trocar PIN",
+      "remove": "Remover PIN",
+      "setTitle": "Definir o PIN parental",
+      "changeTitle": "Trocar o PIN parental",
+      "removeTitle": "Remover o PIN parental",
+      "guidance": "Digite a senha da conta longe da criança. Quem souber a senha pode trocar ou remover o PIN.",
+      "passwordLabel": "Senha da conta",
+      "pinLabel": "Novo PIN de 6 dígitos",
+      "save": "Salvar PIN",
+      "confirmRemove": "Remover PIN",
+      "cancel": "Cancelar",
+      "saved": "PIN parental salvo.",
+      "removed": "PIN parental removido.",
+      "errors": {
+        "passwordInvalid": "Senha da conta incorreta.",
+        "pinInUse": "Remova o limite de idade de todos os perfis antes de remover o PIN.",
+        "pinFormat": "O PIN deve ter exatamente 6 dígitos.",
+        "failed": "Não foi possível atualizar o PIN parental. Tente novamente."
       }
     }
   },
@@ -371,8 +420,10 @@
     "locked": {
       "title": "Admin bloqueado neste perfil",
       "body": "As ferramentas de administração ficam indisponíveis enquanto esta sessão está sob um limite de idade. Troque para um perfil sem limite para gerenciar o servidor.",
+      "bodyWithPin": "As ferramentas de administração ficam indisponíveis enquanto esta sessão está sob um limite de idade. Digite o PIN parental para ter 5 minutos de acesso ao admin neste dispositivo ou troque para um perfil sem limite.",
       "switchProfile": "Trocar de perfil",
-      "backHome": "Voltar ao início"
+      "backHome": "Voltar ao início",
+      "unlock": "Desbloquear com PIN"
     },
     "nav": {
       "overview": "Visão geral",
