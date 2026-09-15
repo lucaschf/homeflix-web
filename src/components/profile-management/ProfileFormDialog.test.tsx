@@ -68,7 +68,7 @@ describe("ProfileFormDialog — maturity limit", () => {
   it("renames a limited profile without writing is_kids or the limit", async () => {
     const onSubmit = renderDialog(profileWithLimit(14));
 
-    expect(screen.getByRole("radio", { name: "14" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Up to age 14" })).toBeChecked();
     const name = screen.getByLabelText("Name");
     await userEvent.clear(name);
     await userEvent.type(name, "Kiddo");
@@ -91,11 +91,11 @@ describe("ProfileFormDialog — maturity limit", () => {
 
   it.each([
     ["Unrestricted", null],
-    ["L", 0],
-    ["10", 10],
-    ["12", 12],
-    ["14", 14],
-    ["16", 16],
+    ["All ages", 0],
+    ["Up to age 10", 10],
+    ["Up to age 12", 12],
+    ["Up to age 14", 14],
+    ["Up to age 16", 16],
   ])("maps the %s step to maturity_limit %s", async (label, value) => {
     // 18 is outside the steps, so every step is a change.
     const onSubmit = renderDialog(profileWithLimit(18));
@@ -109,7 +109,7 @@ describe("ProfileFormDialog — maturity limit", () => {
   it("lists a limit set outside the steps as the selected one", () => {
     renderDialog(profileWithLimit(18));
 
-    expect(screen.getByRole("radio", { name: "18" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Up to age 18" })).toBeChecked();
     expect(screen.getAllByRole("radio")).toHaveLength(7);
   });
 
@@ -126,7 +126,7 @@ describe("ProfileFormDialog — maturity limit", () => {
     ]);
     expect(screen.getByRole("radio", { name: "Unrestricted" })).toBeChecked();
     await userEvent.type(screen.getByLabelText("Name"), "Kid");
-    await userEvent.click(screen.getByRole("radio", { name: "12" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Up to age 12" }));
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
 
     expect(submitted(onSubmit)).toEqual({

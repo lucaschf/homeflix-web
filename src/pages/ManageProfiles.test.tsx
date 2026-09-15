@@ -299,7 +299,7 @@ describe("ManageProfiles — maturity limit payload", () => {
     renderManage();
 
     await openEdit("Kid");
-    await userEvent.click(screen.getByRole("radio", { name: "L" }));
+    await userEvent.click(screen.getByRole("radio", { name: "All ages" }));
     const [, body] = await save();
 
     expect(wire(body)).toHaveProperty("maturity_limit", 0);
@@ -309,7 +309,7 @@ describe("ManageProfiles — maturity limit payload", () => {
     renderManage();
 
     await createNamed("Teen");
-    await userEvent.click(screen.getByRole("radio", { name: "16" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Up to age 16" }));
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
     await settled();
 
@@ -532,7 +532,7 @@ describe("ManageProfiles — errors by code", () => {
     renderManage();
 
     await openEdit("Bob");
-    await userEvent.click(screen.getByRole("radio", { name: "12" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Up to age 12" }));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(
@@ -549,7 +549,7 @@ describe("ManageProfiles — errors by code", () => {
     renderManage();
 
     await openEdit("Kid");
-    await userEvent.click(screen.getByRole("radio", { name: "16" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Up to age 16" }));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
     expect(
