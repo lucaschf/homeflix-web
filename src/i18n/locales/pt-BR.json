@@ -206,6 +206,11 @@
     "movieEyebrow": "Filme",
     "errorTitle": "Não foi possível carregar este título",
     "errorBody": "Ele pode ter sido removido do catálogo ou o link está incorreto.",
+    "restricted": {
+      "title": "Este título não está disponível neste perfil",
+      "maturityBody": "A classificação indicativa dele está acima do limite definido para este perfil.",
+      "unratedBody": "Ele ainda não tem classificação indicativa, então fica bloqueado para perfis com limite de idade."
+    },
     "back": "Voltar",
     "flagEnrichment": {
       "tooltip": "Marcar enriquecimento como incorreto",

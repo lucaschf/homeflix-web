@@ -15,7 +15,12 @@
 // makes the ``homeflix_session`` cookie roundtrip — these hooks
 // never touch tokens directly.
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { ApiError, api } from "./client";
 import type {
   CreateProfileInput,
@@ -40,6 +45,54 @@ export const authKeys = {
   currentUser: ["auth", "currentUser"] as const,
   profiles: ["auth", "profiles"] as const,
 };
+
+/**
+ * Drops every cached query that depends on the active profile and
+ * refetches the auth slice.
+ *
+ * Everything outside ``["auth", ...]`` is profile-scoped: the catalog,
+ * Continue Watching, the watchlist and lists follow the profile's ACL
+ * and maturity limit, and ``["libraries"]`` returns ``paths`` only
+ * while the session holds admin read authority. Those queries are
+ * removed rather than invalidated so no screen renders the previous
+ * profile's data while the refetch is in flight. The auth slice is
+ * refetched instead, which keeps the route guards from flashing a
+ * spinner and brings back the new ``active_profile_id``.
+ */
+export async function resetProfileScopedCache(queryClient: QueryClient): Promise<void> {
+  queryClient.removeQueries({
+    predicate: (query) => query.queryKey[0] !== authKeys.all[0],
+  });
+  await queryClient.invalidateQueries({ queryKey: authKeys.all });
+}
+
+/** Library ids a profile may see, order-insensitive. */
+function sameLibraries(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(a);
+  return b.every((id) => set.has(id));
+}
+
+/**
+ * Whether an update changed what the profile may watch: its library
+ * ACL or its maturity limit. ``maturity_limit`` is read loosely so this
+ * compiles and behaves (as "unchanged") against a backend that does
+ * not send the field yet. An unknown previous state counts as changed.
+ */
+function viewingPolicyChanged(before: Profile | undefined, after: Profile): boolean {
+  if (!before) return true;
+  const limit = (profile: Profile) =>
+    (profile as Profile & { maturity_limit?: number | null }).maturity_limit ?? null;
+  return (
+    !sameLibraries(before.allowed_library_ids, after.allowed_library_ids) ||
+    limit(before) !== limit(after)
+  );
+}
+
+/** Whether ``profileId`` is the profile bound to the current session. */
+function isActiveProfile(queryClient: QueryClient, profileId: string): boolean {
+  return queryClient.getQueryData<User | null>(authKeys.currentUser)?.active_profile_id === profileId;
+}
 
 // ── Queries ─────────────────────────────────────────────
 
@@ -164,10 +217,10 @@ export function useSwitchProfile() {
       await api.post<void>(`/profiles/${profileId}/switch`);
     },
     onSuccess: async () => {
-      // Auth slice plus the entire catalog — every list/detail
-      // query is now scoped to a different profile_id, and the
-      // refetched ``/me`` carries the new ``active_profile_id``.
-      queryClient.clear();
+      // Every list/detail query is now scoped to a different
+      // profile_id, and the refetched ``/me`` carries the new
+      // ``active_profile_id``.
+      await resetProfileScopedCache(queryClient);
     },
   });
 }
@@ -178,15 +231,40 @@ export function useSwitchProfile() {
  * The backend's PATCH-style semantics live verbatim in
  * ``UpdateProfileInput``: ``null``/omitted = leave alone, explicit
  * value = replace.
+ *
+ * Narrowing or widening what the ACTIVE profile may watch (its
+ * libraries or maturity limit) resets the profile-scoped cache, so the
+ * catalog, Continue Watching and lists refetch under the new policy.
+ * Any other edit, or an edit to another profile, only refreshes the
+ * profile list.
  */
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
-  return useMutation<Profile, Error, { profileId: string; input: UpdateProfileInput }>({
+  return useMutation<
+    Profile,
+    Error,
+    { profileId: string; input: UpdateProfileInput },
+    { before: Profile | undefined }
+  >({
+    // Snapshot before the request so ``onSuccess`` compares the
+    // server's answer against the profile the session was using.
+    onMutate: ({ profileId }) => ({
+      before: queryClient
+        .getQueryData<Profile[]>(authKeys.profiles)
+        ?.find((profile) => profile.id === profileId),
+    }),
     mutationFn: async ({ profileId, input }) => {
       const res = await api.put<ProfileResponse>(`/profiles/${profileId}`, input);
       return res.data;
     },
-    onSuccess: async () => {
+    onSuccess: async (updated, { profileId }, snapshot) => {
+      if (
+        isActiveProfile(queryClient, profileId) &&
+        viewingPolicyChanged(snapshot?.before, updated)
+      ) {
+        await resetProfileScopedCache(queryClient);
+        return;
+      }
       await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
     },
   });
@@ -215,6 +293,9 @@ export function useCreateProfile() {
  * leave the user without any active profile — callers should
  * surface that as a friendly "you can't delete the last profile"
  * message rather than letting the generic ``ApiError`` bubble.
+ *
+ * Deleting the ACTIVE profile resets the profile-scoped cache: nothing
+ * cached for it is valid any more.
  */
 export function useDeleteProfile() {
   const queryClient = useQueryClient();
@@ -222,7 +303,11 @@ export function useDeleteProfile() {
     mutationFn: async (profileId) => {
       await api.del(`/profiles/${profileId}`);
     },
-    onSuccess: async () => {
+    onSuccess: async (_data, profileId) => {
+      if (isActiveProfile(queryClient, profileId)) {
+        await resetProfileScopedCache(queryClient);
+        return;
+      }
       await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
     },
   });

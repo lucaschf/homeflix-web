@@ -41,6 +41,7 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
+import { restrictedContentKeys } from "../utils/restrictedContent";
 import { ACTION_BAR_HEIGHT, fontSize, inkAlpha, panelScrim, peachAlpha, scrim, whiteAlpha, toastSurfaceSx } from "../theme/tokens";
 import { neutral } from "../theme/colors";
 import { artworkSrcSet, sizesFor } from "../utils/artwork";
@@ -52,7 +53,7 @@ export function MovieDetail() {
   const { t } = useTranslation();
   const { movieId } = useParams<{ movieId: string }>();
   const navigate = useNavigate();
-  const { data: movie, isLoading, isError } = useMovie(movieId!);
+  const { data: movie, isLoading, isError, error } = useMovie(movieId!);
   const { data: relatedMovies } = useRelatedMovies(movieId);
   const { data: progress } = useProgress(movieId!);
   // Tab title flips from the bare app name to the movie name once
@@ -164,7 +165,7 @@ export function MovieDetail() {
   }
 
   if (isError || !movie) {
-    return <DetailError />;
+    return <DetailError {...restrictedContentKeys(error)} />;
   }
 
   const qualityRail = (
