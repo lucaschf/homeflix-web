@@ -138,7 +138,14 @@ describe("RequireAdmin — unlock from the lock screen", () => {
     await userEvent.type(within(dialog).getByLabelText("Parental PIN"), "123456");
     await userEvent.click(within(dialog).getByRole("button", { name: "Unlock" }));
 
-    expect(await screen.findByRole("link", { name: "Overview" })).toBeInTheDocument();
+    // The challenge closes only after the ``/users/me`` refetch, and the
+    // admin shell stays aria-hidden until the dialog's exit transition ends.
+    // Wait for that with a cheap check: a ``findByRole`` here would compute
+    // every admin link's accessible name on each DOM mutation, and that jsdom
+    // work starves the transition's timer past findBy's 1 s timeout under
+    // full-suite load.
+    await waitFor(() => expect(dialog).not.toBeInTheDocument());
+    expect(screen.getByRole("link", { name: "Overview" })).toBeInTheDocument();
     expect(apiPost).toHaveBeenCalledWith("/parental/unlock", { pin: "123456" });
     expect(meCalls()).toBe(2);
     expect(screen.queryByText("Admin is locked on this profile")).not.toBeInTheDocument();

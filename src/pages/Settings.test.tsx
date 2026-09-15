@@ -107,14 +107,19 @@ describe("Settings — playback skip modes", () => {
     stubApi({ intro_skip_mode: "autoAfterFirst", credits_skip_mode: "auto" });
     renderSettings();
 
-    await waitFor(() =>
-      expect(
-        within(segment("Opening")).getByRole("button", { name: "From episode 2 on" }),
-      ).toHaveAttribute("aria-pressed", "true"),
-    );
-    expect(
-      within(segment("End credits")).getByRole("button", { name: "Play the next one" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    // The controls render at once with the defaults and keep their buttons
+    // when the stored modes arrive, so look the buttons up once and poll only
+    // their state. Polling ``segment()`` would compute every group's
+    // accessible name on each check, and that jsdom work starves the
+    // preferences render past waitFor's 1 s timeout under full-suite load.
+    const fromEpisode2 = within(segment("Opening")).getByRole("button", {
+      name: "From episode 2 on",
+    });
+    const playNext = within(segment("End credits")).getByRole("button", {
+      name: "Play the next one",
+    });
+    await waitFor(() => expect(fromEpisode2).toHaveAttribute("aria-pressed", "true"));
+    expect(playNext).toHaveAttribute("aria-pressed", "true");
   });
 
   it("falls back to manual when the backend predates the fields", async () => {
