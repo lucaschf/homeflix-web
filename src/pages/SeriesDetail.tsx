@@ -46,6 +46,7 @@ import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { neutral } from "../theme/colors";
 import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, whiteAlpha, toastSurfaceSx } from "../theme/tokens";
 import { artworkSrcSet, sizesFor } from "../utils/artwork";
+import { restrictedContentKeys } from "../utils/restrictedContent";
 
 /** The header poster (shown when a title has no logo) — same steps as its box. */
 const HEADER_POSTER_SIZES = sizesFor({ xs: 100, sm: 140, md: 200 });
@@ -71,7 +72,7 @@ export function SeriesDetail() {
   const { t } = useTranslation();
   const { seriesId } = useParams<{ seriesId: string }>();
   const navigate = useNavigate();
-  const { data: series, isLoading, isError } = useSeriesDetail(seriesId!);
+  const { data: series, isLoading, isError, error } = useSeriesDetail(seriesId!);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   useDocumentTitle(series?.title);
@@ -123,7 +124,7 @@ export function SeriesDetail() {
   }
 
   if (isError || !series) {
-    return <DetailError />;
+    return <DetailError {...restrictedContentKeys(error)} />;
   }
 
   const currentSeason = series.seasons[selectedSeason];

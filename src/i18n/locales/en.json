@@ -206,6 +206,11 @@
     "movieEyebrow": "Movie",
     "errorTitle": "Couldn't load this title",
     "errorBody": "It may have been removed from the catalog, or the link is wrong.",
+    "restricted": {
+      "title": "This title isn't available on this profile",
+      "maturityBody": "Its age rating is above the limit set for this profile.",
+      "unratedBody": "It doesn't have an age rating yet, so it stays hidden from profiles with an age limit."
+    },
     "back": "Back",
     "flagEnrichment": {
       "tooltip": "Flag enrichment as wrong",

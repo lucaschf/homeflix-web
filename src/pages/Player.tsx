@@ -39,6 +39,7 @@ import {
 } from "../api/hooks";
 import type { FileAudioTrack, FileSubtitleTrack, FileTrackVersion } from "../api/types";
 import { ContentRatingBadge } from "../components/ContentRatingBadge";
+import { DetailError } from "../components/DetailError";
 import { EpisodeRail } from "../components/episode-selector/EpisodeRail";
 import { EpisodeSelectorPanel } from "../components/episode-selector/EpisodeSelectorPanel";
 import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
@@ -60,6 +61,7 @@ import {
 import { neutral, peach } from "../theme/colors";
 import { menuScrim, peachAlpha, scrim, whiteAlpha } from "../theme/tokens";
 import { artworkSrcSet } from "../utils/artwork";
+import { restrictedContentKeys } from "../utils/restrictedContent";
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2];
 
@@ -402,8 +404,12 @@ export function Player() {
     : `epi_${params.seriesId}_${params.season}_${params.episode}`;
   const mediaType = isMovie ? "movie" : "episode";
 
-  const { data: movieData, isLoading: movieLoading } = useMovie(params.movieId ?? "");
-  const { data: seriesData, isLoading: seriesLoading } = useSeriesDetail(params.seriesId ?? "");
+  const { data: movieData, isLoading: movieLoading, error: movieError } = useMovie(
+    params.movieId ?? "",
+  );
+  const { data: seriesData, isLoading: seriesLoading, error: seriesError } = useSeriesDetail(
+    params.seriesId ?? "",
+  );
 
   // Per-file track metadata (language + structured dub/version label).
   // Joined to the hls.js renditions below to build localized menu labels.
@@ -416,6 +422,12 @@ export function Player() {
   });
   const { data: savedProgress, isPending: progressPending } = useProgress(mediaId);
   const mediaLoading = isMovie ? movieLoading : seriesLoading;
+  // Metadata that failed with nothing loaded to fall back on (a 403 from
+  // the profile gate, a 404, a 5xx after its retries). A background
+  // refetch that fails mid-playback keeps the data it had, so it does
+  // not interrupt the stream.
+  const mediaData = isMovie ? movieData : seriesData;
+  const mediaError = mediaData ? null : isMovie ? movieError : seriesError;
 
   // User-level playback preferences from localStorage. The Player
   // reads most prefs (audio/sub/quality) and writes back `speed`
@@ -447,6 +459,11 @@ export function Player() {
     : isMovie
       ? `/api/v1/stream/movie/${params.movieId}/hls/playlist.m3u8${startQuery}`
       : `/api/v1/stream/episode/${params.seriesId}/${params.season}/${params.episode}/hls/playlist.m3u8${startQuery}`;
+
+  // Playlist URL the server refused for good (403 or 404 on the
+  // manifest). Keyed by URL, so another title, episode or resume bucket
+  // gets its own attempt.
+  const [refusedHlsUrl, setRefusedHlsUrl] = useState<string | null>(null);
 
   const seasonNum = isMovie ? 0 : Number(params.season);
   const episodeNum = isMovie ? 0 : Number(params.episode);
@@ -1199,6 +1216,19 @@ export function Player() {
           setHlsReady(false);
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
+              // The manifest route is the one behind the profile gate and
+              // the title lookup, so a 403 or 404 there is final: reloading
+              // every 3s would loop forever. Renditions and segments are
+              // served by the cache route, which has neither, and keep the
+              // retry.
+              if (
+                data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR &&
+                (data.response?.code === 403 || data.response?.code === 404)
+              ) {
+                hls.destroy();
+                setRefusedHlsUrl(hlsUrl);
+                break;
+              }
               retryTimeout = setTimeout(() => hls.startLoad(), 3000);
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
@@ -2301,6 +2331,18 @@ export function Player() {
     return (
       <Box sx={{ position: "fixed", inset: 0, bgcolor: "common.black", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <CircularProgress color="primary" />
+      </Box>
+    );
+  }
+
+  // Nothing to play: explain why (restricted titles get their own copy)
+  // instead of leaving the viewer on an endless spinner. The copy reads
+  // the raw query error: a refused manifest can follow a refetch that
+  // failed on the gate while the cached metadata was kept.
+  if (mediaError || refusedHlsUrl === hlsUrl) {
+    return (
+      <Box sx={{ position: "fixed", inset: 0, bgcolor: "common.black", overflowY: "auto" }}>
+        <DetailError {...restrictedContentKeys(mediaError ?? (isMovie ? movieError : seriesError))} />
       </Box>
     );
   }

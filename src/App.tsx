@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { ThemeProvider, CssBaseline } from "@mui/material";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { createQueryClient } from "./api/queryClient";
 import { AdminLayout } from "./components/admin";
 import { Layout } from "./components/Layout";
 import {
@@ -74,7 +75,7 @@ import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
 import "./i18n";
 
-const queryClient = new QueryClient();
+const queryClient = createQueryClient();
 
 const SPLASH_SESSION_KEY = "homeflix:splash-shown";
 
