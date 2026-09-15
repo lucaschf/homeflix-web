@@ -20,11 +20,13 @@ export const SHARE_ENABLED = true;
 /**
  * Per-profile maturity limit and parental PIN (ADR-035).
  *
- * Off until the backend that stores the limit and gates it behind the
- * PIN is deployed and migrated. While off, the profile form renders no
- * limit selector and never sends ``maturity_limit``. Admin gating on
- * ``admin_access`` does not depend on this flag: without a PIN the
- * backend reports the same authority as the role. Flip to ``true``
- * once the contract is live.
+ * On: the profile form offers the age limit, the PIN challenge guards
+ * profile changes and admin writes, and the PIN can be set up in
+ * profile management. Requires the backend that stores the limit and
+ * gates it behind the PIN to be deployed and migrated. While off, the
+ * profile form renders no limit selector and never sends
+ * ``maturity_limit``. Admin gating on ``admin_access`` does not depend
+ * on this flag: without a PIN the backend reports the same authority
+ * as the role.
  */
-export const PARENTAL_CONTROLS_ENABLED = false;
+export const PARENTAL_CONTROLS_ENABLED = true;
