@@ -12,6 +12,7 @@ import {
   RequireAuth,
 } from "./components/auth";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { ParentalPinProvider } from "./components/parental/ParentalPinProvider";
 import { SplashScreen } from "./components/SplashScreen";
 import { ToastProvider } from "./components/ToastProvider";
 import { Actor } from "./pages/Actor";
@@ -135,6 +136,10 @@ function App() {
       {splashOpen && <SplashScreen onDone={handleSplashDone} />}
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
+        {/* The parental PIN challenge (ADR-035): ``useParentalUnlock`` for
+            profile and lock-screen flows, plus the query client's event
+            for admin writes refused with PARENTAL_PIN_REQUIRED. */}
+        <ParentalPinProvider>
         <BrowserRouter>
           {/* Listens for the global auth-expired event from
               ``api/client.ts`` and redirects to /login. Sits
@@ -223,6 +228,7 @@ function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        </ParentalPinProvider>
         </ToastProvider>
       </QueryClientProvider>
       </ErrorBoundary>
