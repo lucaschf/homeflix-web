@@ -22,7 +22,6 @@ import { GalleryHorizontalEnd, LayoutGrid, List, Play, RefreshCw, Clapperboard, 
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useContinueWatching, useEnrichSeries, useFlagSeriesEnrichment, useIsInWatchlist, useRelatedSeries, useSeriesDetail, useToggleWatchlist } from "../api/hooks";
-import { useCurrentUser } from "../api/auth";
 import type { ContinueWatchingItem, EpisodeOutput, SeriesDetail as SeriesDetailType } from "../api/types";
 import { formatDuration } from "../utils/duration";
 import { formatLanguage, uniqueLanguages } from "../utils/languages";
@@ -41,6 +40,7 @@ import { useToast } from "../components/ToastProvider";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { WatchedBadge } from "../components/WatchedBadge";
 import { WatchlistIconButton } from "../components/WatchlistIconButton";
+import { useAdminCapability } from "../hooks/useAdminCapability";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { neutral } from "../theme/colors";
@@ -78,8 +78,7 @@ export function SeriesDetail() {
   useDocumentTitle(series?.title);
   const enrichMutation = useEnrichSeries();
   const flagEnrichment = useFlagSeriesEnrichment();
-  const { data: currentUser } = useCurrentUser();
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin = useAdminCapability() === "granted";
   const [flagSnack, setFlagSnack] = useState<
     { message: string; severity: "success" | "error" } | null
   >(null);

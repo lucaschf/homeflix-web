@@ -22,7 +22,6 @@ import {
   useToggleWatchlist,
   useTriggerSubtitleOcr,
 } from "../api/hooks";
-import { useCurrentUser } from "../api/auth";
 import { CreditsMarkerEditor } from "../components/admin";
 import { CastCard } from "../components/CastCard";
 import { DetailError } from "../components/DetailError";
@@ -37,6 +36,7 @@ import { QualityRail } from "../components/QualityRail";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
 import { WatchlistIconButton } from "../components/WatchlistIconButton";
+import { useAdminCapability } from "../hooks/useAdminCapability";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { useWatchedToggle } from "../hooks/useWatchedToggle";
 import { formatDuration } from "../utils/duration";
@@ -63,8 +63,7 @@ export function MovieDetail() {
   const enrichMutation = useEnrichMovie();
   const flagEnrichment = useFlagMovieEnrichment();
   const triggerOcr = useTriggerSubtitleOcr();
-  const { data: currentUser } = useCurrentUser();
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin = useAdminCapability() === "granted";
   const [flagSnack, setFlagSnack] = useState<
     { message: string; severity: "success" | "error" } | null
   >(null);

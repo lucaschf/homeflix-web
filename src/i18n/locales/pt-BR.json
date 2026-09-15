@@ -118,8 +118,10 @@
     "deleteConfirm": "Tem certeza que deseja apagar o perfil \"{{name}}\"? Histórico, listas e preferências dele serão arquivados.",
     "fields": {
       "name": "Nome",
-      "isKids": "Modo infantil",
-      "isKidsHelp": "Marca o perfil como kids — usado pela UI como dica visual; o controle de acesso real está nas bibliotecas permitidas abaixo.",
+      "maturityLimit": "Limite de idade",
+      "maturityLimitUnrestricted": "Irrestrito",
+      "maturityLimitHelp": "A maior classificação indicativa que este perfil pode assistir. L é livre para todos os públicos. Títulos sem classificação ficam ocultos para perfis com limite.",
+      "maturityLimitCacheNote": "O limite esconde títulos e bloqueia a reprodução, mas vídeos que o servidor já tem em cache ainda podem ser acessados por link direto.",
       "libraries": "Bibliotecas permitidas",
       "librariesHelp": "Selecione quais bibliotecas este perfil pode ver no catálogo. Sem nenhuma marcada, o perfil verá um catálogo vazio.",
       "noLibraries": "Nenhuma biblioteca cadastrada ainda. Cadastre uma biblioteca acima antes de configurar este perfil.",
@@ -366,6 +368,12 @@
   },
   "admin": {
     "title": "Admin",
+    "locked": {
+      "title": "Admin bloqueado neste perfil",
+      "body": "As ferramentas de administração ficam indisponíveis enquanto esta sessão está sob um limite de idade. Troque para um perfil sem limite para gerenciar o servidor.",
+      "switchProfile": "Trocar de perfil",
+      "backHome": "Voltar ao início"
+    },
     "nav": {
       "overview": "Visão geral",
       "libraries": "Bibliotecas",

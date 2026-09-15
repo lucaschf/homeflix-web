@@ -99,21 +99,26 @@ export function ManageProfiles() {
 
   const handleSubmit = async (body: ProfileFormSubmit) => {
     setFormError(null);
+    // Forward the limit only when the form emitted one. On update an
+    // omitted key leaves the stored limit alone, while ``null`` removes
+    // it, so the two must never collapse into each other.
+    const limit =
+      body.maturity_limit !== undefined ? { maturity_limit: body.maturity_limit } : {};
     try {
       if (editing) {
         await updateProfile.mutateAsync({
           profileId: editing.id,
           input: {
             name: body.name,
-            is_kids: body.is_kids,
             allowed_library_ids: body.allowed_library_ids,
+            ...limit,
           },
         });
       } else {
         await createProfile.mutateAsync({
           name: body.name,
-          is_kids: body.is_kids,
           allowed_library_ids: body.allowed_library_ids,
+          ...limit,
         });
       }
       closeDialog();
