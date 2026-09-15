@@ -1,6 +1,8 @@
-import { useId, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import {
   Box,
+  ButtonBase,
+  Collapse,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -8,7 +10,8 @@ import {
   RadioGroup,
   Typography,
 } from "@mui/material";
-import { Circle, CircleCheck, Globe, Info } from "lucide-react";
+import type { Breakpoint } from "@mui/material/styles";
+import { ChevronDown, Circle, CircleCheck, Globe, Info } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { border, whiteAlpha } from "../../theme/tokens";
 import { ContentRatingBadge } from "../ContentRatingBadge";
@@ -73,6 +76,18 @@ const VISUALLY_HIDDEN = {
  */
 const allows = (limit: number | null, age: number) => limit === null || age <= limit;
 
+/** Option grid columns: one count, or a count per breakpoint. */
+type Columns = number | Partial<Record<Breakpoint, number>>;
+
+const repeatColumns = (count: number) => `repeat(${count}, minmax(0, 1fr))`;
+
+const gridTemplateColumns = (columns: Columns) =>
+  typeof columns === "number"
+    ? repeatColumns(columns)
+    : Object.fromEntries(
+        Object.entries(columns).map(([breakpoint, count]) => [breakpoint, repeatColumns(count)]),
+      );
+
 interface MaturityLimitSelectorProps {
   /** The selected limit: a minimum age, or ``null`` for unrestricted. */
   value: number | null;
@@ -84,17 +99,24 @@ interface MaturityLimitSelectorProps {
   storedLimit: number | null;
   onChange: (limit: number | null) => void;
   disabled?: boolean;
+  /**
+   * Columns of the option grid, as a count or a count per breakpoint
+   * (``{ xs: 1, md: 2 }``). Cards fill it row by row in option order,
+   * so arrow keys still walk the options in reading order.
+   */
+  columns?: Columns;
 }
 
 /**
  * Maturity limit picker for the profile form (ADR-035).
  *
  * A radio group rendered as option cards — rating badge, title and a
- * one-line description — followed by a strip of the ClassInd ratings the
+ * short description — followed by a strip of the ClassInd ratings the
  * selected limit lets through and a "how it works" note explaining how US
  * ratings map to ages, that unrated titles need an unrestricted profile,
  * that loosening the limit asks for the parental PIN, and that video the
- * server already cached is not covered.
+ * server already cached is not covered. The note starts collapsed behind
+ * a disclosure button so the choice itself stays compact.
  *
  * The component only reports the chosen limit through ``onChange``;
  * deciding whether that is a change worth writing stays with the form.
@@ -104,6 +126,7 @@ export function MaturityLimitSelector({
   storedLimit,
   onChange,
   disabled = false,
+  columns = 1,
 }: MaturityLimitSelectorProps) {
   const { t } = useTranslation();
   const legendId = useId();
@@ -114,7 +137,7 @@ export function MaturityLimitSelector({
   const selected = limitToRadio(value);
 
   return (
-    <Box sx={{ mt: 2 }}>
+    <Box>
       <FormControl component="fieldset" disabled={disabled} sx={{ display: "flex" }}>
         <FormLabel
           id={legendId}
@@ -127,7 +150,7 @@ export function MaturityLimitSelector({
           aria-labelledby={legendId}
           value={selected}
           onChange={(e) => onChange(radioToLimit(e.target.value))}
-          sx={{ gap: 0.75 }}
+          sx={{ display: "grid", gridTemplateColumns: gridTemplateColumns(columns), gap: 0.75 }}
         >
           <OptionCard
             value={UNRESTRICTED}
@@ -207,7 +230,7 @@ function OptionCard({ value, checked, badge, title, description }: OptionCardPro
         />
       }
       label={
-        <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
           <Box component="span" aria-hidden sx={{ display: "flex", flexShrink: 0 }}>
             {badge}
           </Box>
@@ -232,10 +255,10 @@ function OptionCard({ value, checked, badge, title, description }: OptionCardPro
       }
       sx={{
         m: 0,
-        gap: 1,
+        gap: 0.5,
         py: 1,
-        pl: 1.5,
-        pr: 1,
+        pl: 1.25,
+        pr: 0.75,
         borderRadius: 1.25,
         border: "1px solid",
         borderColor: checked ? "primary.main" : border.hairlineStrong,
@@ -251,7 +274,7 @@ function OptionCard({ value, checked, badge, title, description }: OptionCardPro
         },
         "&.Mui-disabled": { cursor: "default", opacity: 0.6 },
         "& .MuiFormControlLabel-label": { flex: 1, minWidth: 0 },
-        "& .MuiRadio-root": { p: 0.5 },
+        "& .MuiRadio-root": { p: 0.25 },
       }}
     />
   );
@@ -367,10 +390,16 @@ function MaturitySummary({ limit }: { limit: number | null }) {
   );
 }
 
-/** How limits apply, kept next to the choice, with the cache caveat last. */
+/**
+ * How limits apply, kept next to the choice, with the cache caveat last.
+ * The title is a disclosure button (collapsed at first) and the body stays
+ * mounted, so the note keeps its name and text while it is closed.
+ */
 function HowItWorks() {
   const { t } = useTranslation();
   const titleId = useId();
+  const panelId = useId();
+  const [open, setOpen] = useState(false);
 
   return (
     <Box
@@ -378,51 +407,86 @@ function HowItWorks() {
       aria-labelledby={titleId}
       sx={{
         mt: 1.5,
-        p: 1.5,
         borderRadius: 1.25,
         border: `1px solid ${border.hairline}`,
         bgcolor: whiteAlpha(0.03),
       }}
     >
-      <Box
-        sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 0.75, color: "text.secondary" }}
-      >
-        <Info size={14} />
-        <Typography id={titleId} variant="caption" sx={{ fontWeight: 600, color: "text.primary" }}>
-          {t("profileManagement.fields.maturityLimitHowItWorks")}
-        </Typography>
-      </Box>
-      <Box
-        component="ul"
-        sx={{ m: 0, pl: 2.25, display: "flex", flexDirection: "column", gap: 0.5 }}
-      >
-        <Typography component="li" variant="body2" sx={{ color: "text.secondary" }}>
-          {/* Each "rating = age" pair stays on one line on narrow screens. */}
-          <Trans
-            i18nKey="profileManagement.fields.maturityLimitHowUsRatings"
-            components={{ pair: <Box component="span" sx={{ whiteSpace: "nowrap" }} /> }}
-          />
-        </Typography>
-        <Typography component="li" variant="body2" sx={{ color: "text.secondary" }}>
-          {t("profileManagement.fields.maturityLimitHowUnrated")}
-        </Typography>
-        <Typography component="li" variant="body2" sx={{ color: "text.secondary" }}>
-          {t("profileManagement.fields.maturityLimitHowPin")}
-        </Typography>
-      </Box>
-      <Typography
-        variant="caption"
+      <ButtonBase
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={() => setOpen((current) => !current)}
         sx={{
-          display: "block",
-          mt: 1,
-          pt: 1,
-          borderTop: `1px solid ${border.hairline}`,
+          width: "100%",
+          justifyContent: "flex-start",
+          gap: 0.75,
+          px: 1.5,
+          py: 1,
+          borderRadius: 1.25,
           color: "text.secondary",
-          fontWeight: 400,
+          "&:hover": { bgcolor: whiteAlpha(0.03) },
+          "&.Mui-focusVisible": {
+            outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+            outlineOffset: 2,
+          },
         }}
       >
-        {t("profileManagement.fields.maturityLimitCacheNote")}
-      </Typography>
+        <Info size={14} />
+        <Typography
+          id={titleId}
+          component="span"
+          variant="caption"
+          sx={{ fontWeight: 600, color: "text.primary" }}
+        >
+          {t("profileManagement.fields.maturityLimitHowItWorks")}
+        </Typography>
+        <Box
+          component="span"
+          sx={{
+            display: "flex",
+            ml: "auto",
+            transform: open ? "rotate(180deg)" : "none",
+            transition: "transform 150ms ease",
+          }}
+        >
+          <ChevronDown size={16} />
+        </Box>
+      </ButtonBase>
+      <Collapse in={open} id={panelId}>
+        <Box sx={{ px: 1.5, pb: 1.5 }}>
+          <Box
+            component="ul"
+            sx={{ m: 0, pl: 2.25, display: "flex", flexDirection: "column", gap: 0.5 }}
+          >
+            <Typography component="li" variant="body2" sx={{ color: "text.secondary" }}>
+              {/* Each "rating = age" pair stays on one line on narrow screens. */}
+              <Trans
+                i18nKey="profileManagement.fields.maturityLimitHowUsRatings"
+                components={{ pair: <Box component="span" sx={{ whiteSpace: "nowrap" }} /> }}
+              />
+            </Typography>
+            <Typography component="li" variant="body2" sx={{ color: "text.secondary" }}>
+              {t("profileManagement.fields.maturityLimitHowUnrated")}
+            </Typography>
+            <Typography component="li" variant="body2" sx={{ color: "text.secondary" }}>
+              {t("profileManagement.fields.maturityLimitHowPin")}
+            </Typography>
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              display: "block",
+              mt: 1,
+              pt: 1,
+              borderTop: `1px solid ${border.hairline}`,
+              color: "text.secondary",
+              fontWeight: 400,
+            }}
+          >
+            {t("profileManagement.fields.maturityLimitCacheNote")}
+          </Typography>
+        </Box>
+      </Collapse>
     </Box>
   );
 }

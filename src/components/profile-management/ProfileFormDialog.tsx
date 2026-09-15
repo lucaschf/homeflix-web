@@ -78,6 +78,12 @@ interface ProfileFormDialogProps {
  * the server already cached, which stay reachable by direct link until
  * ADR-036.
  *
+ * The body is two labelled sections. With the selector, the dialog is
+ * ``md`` wide and, from that breakpoint up, puts the profile basics
+ * (avatar, name, libraries) beside the limit, whose cards form a
+ * two-column grid; on narrower screens the sections stack. Without the
+ * selector there is only the basics section, at the ``sm`` width.
+ *
  * Submit emits ``{ name, allowed_library_ids }`` plus
  * ``maturity_limit`` ONLY when the operator changed it: an unchanged
  * limit is never written, so a rename or a library edit cannot clear
@@ -195,7 +201,12 @@ export function ProfileFormDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth={PARENTAL_CONTROLS_ENABLED ? "md" : "sm"}
+      fullWidth
+    >
       <DialogTitle>
         {isEdit ? t("profileManagement.editTitle") : t("profileManagement.createTitle")}
       </DialogTitle>
@@ -216,186 +227,214 @@ export function ProfileFormDialog({
           </Typography>
         )}
 
-        {isEdit && profile && (
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2.5,
-              mb: 2,
-              pb: 2,
-              borderBottom: `1px solid ${whiteAlpha(0.08)}`,
-            }}
-          >
-            <Box sx={{ position: "relative" }}>
-              <Avatar
-                initials={initialsForName(profile.name)}
-                tone={toneForProfile(profile.id)}
-                avatarUrl={avatarUrl}
-                size={80}
-                shape="circle"
-              />
-              {avatarBusy && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: "50%",
-                    bgcolor: scrim(0.55),
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <CircularProgress size={22} sx={{ color: "primary.main" }} />
-                </Box>
-              )}
-            </Box>
-            <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Button
-                  onClick={openFilePicker}
-                  disabled={avatarBusy || submitting}
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    textTransform: "none",
-                    borderColor: whiteAlpha(0.15),
-                    color: "text.primary",
-                    "&:hover": {
-                      borderColor: whiteAlpha(0.3),
-                      bgcolor: whiteAlpha(0.04),
-                    },
-                  }}
-                >
-                  {t("profileManagement.avatar.change")}
-                </Button>
-                {avatarUrl && (
-                  <Button
-                    onClick={handleRemoveAvatar}
-                    disabled={avatarBusy || submitting}
-                    size="small"
-                    color="inherit"
-                    sx={{
-                      textTransform: "none",
-                      color: whiteAlpha(0.6),
-                      "&:hover": { color: "text.primary", bgcolor: whiteAlpha(0.04) },
-                    }}
-                  >
-                    {t("profileManagement.avatar.remove")}
-                  </Button>
-                )}
-              </Box>
-              <Typography variant="caption" color="text.secondary">
-                {t("profileManagement.avatar.hint")}
-              </Typography>
-              {avatarError && (
-                <Typography
-                  variant="caption"
-                  sx={{ color: alpha(errorColor.light, 0.95), mt: 0.25 }}
-                >
-                  {avatarError}
-                </Typography>
-              )}
-            </Box>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              hidden
-              onChange={handleFileChange}
-            />
-          </Box>
-        )}
-
-        <TextField
-          autoFocus
-          fullWidth
-          label={t("profileManagement.fields.name")}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          margin="normal"
-          slotProps={{ htmlInput: { maxLength: 50 } }}
-          disabled={submitting}
-        />
-
-        {PARENTAL_CONTROLS_ENABLED && (
-          <MaturityLimitSelector
-            value={limit}
-            storedLimit={initialLimit}
-            onChange={setLimit}
-            disabled={submitting}
-          />
-        )}
-
-        <Divider sx={{ my: 3, borderColor: whiteAlpha(0.08) }} />
-
-        <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-          {t("profileManagement.fields.libraries")}
-        </Typography>
-        <FormHelperText sx={{ ml: 0, mb: 2 }}>
-          {t("profileManagement.fields.librariesHelp")}
-        </FormHelperText>
-
-        {libraries.length === 0 ? (
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
-            {t("profileManagement.fields.noLibraries")}
-          </Typography>
-        ) : (
-          <FormControl component="fieldset" disabled={submitting}>
-            <FormGroup>
-              {libraries.map((lib) => (
-                <FormControlLabel
-                  key={lib.id}
-                  control={
-                    <Checkbox
-                      checked={selected.has(lib.id)}
-                      onChange={() => toggle(lib.id)}
-                    />
-                  }
-                  label={
-                    <Box sx={{ display: "flex", flexDirection: "column" }}>
-                      <Typography variant="body2" fontWeight={500}>
-                        {lib.name}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {lib.paths.join(", ")}
-                      </Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "minmax(0, 1fr)",
+              md: PARENTAL_CONTROLS_ENABLED ? "minmax(0, 2fr) minmax(0, 3fr)" : "minmax(0, 1fr)",
+            },
+            columnGap: 4,
+            alignItems: "start",
+          }}
+        >
+          <Box component="section" aria-label={t("profileManagement.sections.basics")}>
+            {isEdit && profile && (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2.5,
+                  mb: 2,
+                  pb: 2,
+                  borderBottom: `1px solid ${whiteAlpha(0.08)}`,
+                }}
+              >
+                <Box sx={{ position: "relative" }}>
+                  <Avatar
+                    initials={initialsForName(profile.name)}
+                    tone={toneForProfile(profile.id)}
+                    avatarUrl={avatarUrl}
+                    size={80}
+                    shape="circle"
+                  />
+                  {avatarBusy && (
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        inset: 0,
+                        borderRadius: "50%",
+                        bgcolor: scrim(0.55),
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <CircularProgress size={22} sx={{ color: "primary.main" }} />
                     </Box>
-                  }
-                />
-              ))}
-            </FormGroup>
-          </FormControl>
-        )}
-
-        {orphanIds.length > 0 && (
-          <>
-            <Divider sx={{ my: 2, borderColor: whiteAlpha(0.08) }} />
-            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-              {t("profileManagement.fields.orphanLibraries")}
-            </Typography>
-            <FormGroup>
-              {orphanIds.map((id) => (
-                <FormControlLabel
-                  key={id}
-                  control={
-                    <Checkbox
-                      checked
-                      onChange={() => toggle(id)}
-                      disabled={submitting}
-                    />
-                  }
-                  label={
-                    <Typography variant="body2" sx={{ fontFamily: fontFamily.mono, opacity: 0.7 }}>
-                      {id}
+                  )}
+                </Box>
+                <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Button
+                      onClick={openFilePicker}
+                      disabled={avatarBusy || submitting}
+                      variant="outlined"
+                      size="small"
+                      sx={{
+                        textTransform: "none",
+                        borderColor: whiteAlpha(0.15),
+                        color: "text.primary",
+                        "&:hover": {
+                          borderColor: whiteAlpha(0.3),
+                          bgcolor: whiteAlpha(0.04),
+                        },
+                      }}
+                    >
+                      {t("profileManagement.avatar.change")}
+                    </Button>
+                    {avatarUrl && (
+                      <Button
+                        onClick={handleRemoveAvatar}
+                        disabled={avatarBusy || submitting}
+                        size="small"
+                        color="inherit"
+                        sx={{
+                          textTransform: "none",
+                          color: whiteAlpha(0.6),
+                          "&:hover": { color: "text.primary", bgcolor: whiteAlpha(0.04) },
+                        }}
+                      >
+                        {t("profileManagement.avatar.remove")}
+                      </Button>
+                    )}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("profileManagement.avatar.hint")}
+                  </Typography>
+                  {avatarError && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: alpha(errorColor.light, 0.95), mt: 0.25 }}
+                    >
+                      {avatarError}
                     </Typography>
-                  }
+                  )}
+                </Box>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  hidden
+                  onChange={handleFileChange}
                 />
-              ))}
-            </FormGroup>
-          </>
-        )}
+              </Box>
+            )}
+
+            <TextField
+              autoFocus
+              fullWidth
+              label={t("profileManagement.fields.name")}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              margin="normal"
+              slotProps={{ htmlInput: { maxLength: 50 } }}
+              disabled={submitting}
+            />
+
+            <Divider sx={{ my: 3, borderColor: whiteAlpha(0.08) }} />
+
+            <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
+              {t("profileManagement.fields.libraries")}
+            </Typography>
+            <FormHelperText sx={{ ml: 0, mb: 2 }}>
+              {t("profileManagement.fields.librariesHelp")}
+            </FormHelperText>
+
+            {libraries.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic" }}>
+                {t("profileManagement.fields.noLibraries")}
+              </Typography>
+            ) : (
+              <FormControl component="fieldset" disabled={submitting}>
+                <FormGroup>
+                  {libraries.map((lib) => (
+                    <FormControlLabel
+                      key={lib.id}
+                      control={
+                        <Checkbox
+                          checked={selected.has(lib.id)}
+                          onChange={() => toggle(lib.id)}
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: "flex", flexDirection: "column" }}>
+                          <Typography variant="body2" fontWeight={500}>
+                            {lib.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {lib.paths.join(", ")}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  ))}
+                </FormGroup>
+              </FormControl>
+            )}
+
+            {orphanIds.length > 0 && (
+              <>
+                <Divider sx={{ my: 2, borderColor: whiteAlpha(0.08) }} />
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                  {t("profileManagement.fields.orphanLibraries")}
+                </Typography>
+                <FormGroup>
+                  {orphanIds.map((id) => (
+                    <FormControlLabel
+                      key={id}
+                      control={
+                        <Checkbox
+                          checked
+                          onChange={() => toggle(id)}
+                          disabled={submitting}
+                        />
+                      }
+                      label={
+                        <Typography variant="body2" sx={{ fontFamily: fontFamily.mono, opacity: 0.7 }}>
+                          {id}
+                        </Typography>
+                      }
+                    />
+                  ))}
+                </FormGroup>
+              </>
+            )}
+          </Box>
+
+          {PARENTAL_CONTROLS_ENABLED && (
+            <Box
+              component="section"
+              aria-label={t("profileManagement.sections.maturity")}
+              sx={{
+                // Stacked under the basics on narrow screens, with a hairline
+                // between the two; beside them from ``md`` up, where the top
+                // padding lines the legend up with the name field.
+                mt: { xs: 3, md: 0 },
+                pt: { xs: 3, md: 2 },
+                borderTop: { xs: `1px solid ${whiteAlpha(0.08)}`, md: "none" },
+              }}
+            >
+              <MaturityLimitSelector
+                value={limit}
+                storedLimit={initialLimit}
+                onChange={setLimit}
+                disabled={submitting}
+                columns={{ xs: 1, md: 2 }}
+              />
+            </Box>
+          )}
+        </Box>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between", px: 3, py: 2 }}>
         {isEdit && onDelete ? (
