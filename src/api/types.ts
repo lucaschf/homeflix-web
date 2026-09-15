@@ -587,6 +587,8 @@ export interface AdminProfileSummary {
   name: string;
   avatar_url: string | null;
   is_kids: boolean;
+  /** See ``Profile.maturity_limit``. */
+  maturity_limit?: number | null;
   allowed_library_ids: string[];
   created_at: string;
   updated_at: string;
@@ -1334,14 +1336,30 @@ export interface User {
   // renders profile-scoped UI (navbar avatar chip, "active profile"
   // marker, etc.) reads this and skips its branch when null.
   active_profile_id: string | null;
+  // Whether the account has a parental PIN (ADR-035). Optional so the
+  // type still describes a backend that predates the field.
+  parental_pin_configured?: boolean;
+  // Admin authority of THIS session as the parental gate decides it:
+  // ``"suspended"`` for an admin whose session is under an age-limited
+  // profile. Optional for the same reason; read it through
+  // ``useAdminCapability``, which falls back to ``role`` when absent.
+  admin_access?: AdminAccess;
 }
+
+/** ``/users/me`` ``admin_access`` values. */
+export type AdminAccess = "none" | "granted" | "suspended";
 
 export interface Profile {
   id: string;
   user_id: string;
   name: string;
   avatar_url: string | null;
+  // Derived by the backend from ``maturity_limit``; read-only.
   is_kids: boolean;
+  // Highest minimum age the profile may watch (0 = "L", all ages), or
+  // ``null`` for unrestricted (ADR-035). Optional so the type still
+  // describes a backend that predates the field.
+  maturity_limit?: number | null;
   // Default-deny: empty list means the profile may not see any
   // library. Backfilled to a snapshot of every active library at
   // PR #176 migration time, so legacy households keep their
@@ -1363,20 +1381,23 @@ export interface LoginInput {
 
 export interface UpdateProfileInput {
   name?: string;
-  is_kids?: boolean;
   avatar_url?: string | null;
   // ``null`` means "leave the ACL alone" (PATCH-style); an explicit
   // ``[]`` revokes every library; a list replaces.
   allowed_library_ids?: string[] | null;
+  // Unlike the fields above, ``null`` is meaningful here: it REMOVES
+  // the limit. Omit the key to leave the limit alone.
+  maturity_limit?: number | null;
 }
 
 export interface CreateProfileInput {
   name: string;
-  is_kids?: boolean;
   avatar_url?: string | null;
   // Default-deny on the backend when omitted. Pass an explicit list
   // to grant access at creation time.
   allowed_library_ids?: string[] | null;
+  // Omitted or ``null`` creates an unrestricted profile.
+  maturity_limit?: number | null;
 }
 
 // =============================================================================

@@ -15,7 +15,7 @@ import {
 import { Bookmark, CalendarClock, Film, Home, Search, Tv, Wrench } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { useCurrentUser } from "../api/auth";
+import { useAdminCapability } from "../hooks/useAdminCapability";
 import { panelScrim } from "../theme/tokens";
 import { AccountMenu } from "./AccountMenu";
 import { Logo } from "./Logo";
@@ -29,9 +29,10 @@ interface NavItem {
   desktopOnly?: boolean;
   mobileOnly?: boolean;
   /**
-   * When set, the item is only rendered for users carrying the
-   * matching role. Used to keep the wrench / admin entry out of a
-   * household member's navbar — the underlying ``/admin/*`` routes
+   * When set, the item is only rendered while the session holds that
+   * authority (``useAdminCapability`` reports ``"granted"``). Used to
+   * keep the wrench / admin entry out of a household member's navbar
+   * and out of a suspended admin's — the underlying ``/admin/*`` routes
    * are gated by ``<RequireAdmin />`` independently, so a member
    * who reaches them by URL still gets bounced back to "/".
    */
@@ -63,8 +64,7 @@ export function Navbar() {
   const listsActive = location.pathname.startsWith("/lists");
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [searchOpen, setSearchOpen] = useState(false);
-  const { data: currentUser } = useCurrentUser();
-  const isAdmin = currentUser?.role === "admin";
+  const isAdmin = useAdminCapability() === "granted";
 
   // Drop role-gated items the current user does not qualify for.
   // Computed every render off ``isAdmin`` so a logout / switch

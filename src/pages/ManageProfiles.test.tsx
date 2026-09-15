@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@mui/material";
 import { type QueryKey, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,15 +11,25 @@ import i18n from "../i18n";
 import { theme } from "../theme";
 import { ManageProfiles } from "./ManageProfiles";
 
-const { apiGet, apiPut, apiDel } = vi.hoisted(() => ({
+const { apiGet, apiPost, apiPut, apiDel } = vi.hoisted(() => ({
   apiGet: vi.fn(),
+  apiPost: vi.fn(),
   apiPut: vi.fn(),
   apiDel: vi.fn(),
 }));
 
 vi.mock("../api/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../api/client")>()),
-  api: { get: apiGet, post: vi.fn(), put: apiPut, patch: vi.fn(), del: apiDel },
+  api: { get: apiGet, post: apiPost, put: apiPut, patch: vi.fn(), del: apiDel },
+}));
+
+// The flag is a build-time constant; a getter lets each test pick its value.
+const flags = vi.hoisted(() => ({ parentalControls: true }));
+vi.mock("../config/featureFlags", () => ({
+  SHARE_ENABLED: true,
+  get PARENTAL_CONTROLS_ENABLED() {
+    return flags.parentalControls;
+  },
 }));
 
 const USER: User = {
@@ -44,6 +54,7 @@ const profile = (id: string, name: string): Profile => ({
 
 const ALICE = profile("prf_alice", "Alice");
 const BOB = profile("prf_bob", "Bob");
+const KID: Profile = { ...profile("prf_kid", "Kid"), is_kids: true, maturity_limit: 14 };
 
 const LIBRARIES = [
   { id: "lib_movies", name: "Movies", paths: ["/media/movies"] },
@@ -61,14 +72,17 @@ const PROFILE_SCOPED_KEYS: QueryKey[] = [
 function stubApi() {
   apiGet.mockImplementation((path: string) => {
     if (path === "/users/me") return Promise.resolve({ data: USER });
-    if (path === "/profiles") return Promise.resolve({ data: [ALICE, BOB] });
+    if (path === "/profiles") return Promise.resolve({ data: [ALICE, BOB, KID] });
     if (path === "/libraries") return Promise.resolve({ data: LIBRARIES });
     return new Promise(() => {});
   });
   apiPut.mockImplementation((path: string, body: Partial<Profile>) => {
-    const target = path.endsWith(ALICE.id) ? ALICE : BOB;
+    const target = [ALICE, BOB, KID].find((p) => path.endsWith(p.id))!;
     return Promise.resolve({ data: { ...target, ...body } });
   });
+  apiPost.mockImplementation((_path: string, body: Partial<Profile>) =>
+    Promise.resolve({ data: { ...profile("prf_new", "New"), ...body } }),
+  );
   apiDel.mockResolvedValue(undefined);
 }
 
@@ -111,6 +125,7 @@ async function settled() {
 
 beforeEach(async () => {
   vi.clearAllMocks();
+  flags.parentalControls = true;
   await i18n.changeLanguage("en");
   stubApi();
 });
@@ -195,8 +210,8 @@ describe("ManageProfiles — profile-scoped cache", () => {
   });
 
   it("drops profile-scoped queries when only the active profile's maturity limit changes", async () => {
-    // The dialog does not edit the limit yet, so the server's answer is
-    // what moves it: same name and libraries, a limit where there was none.
+    // The form sends no limit; the server's answer is what moves it:
+    // same name and libraries, a limit where there was none.
     apiPut.mockImplementation((_path: string, body: Partial<Profile>) =>
       Promise.resolve({ data: { ...ALICE, ...body, maturity_limit: 12 } }),
     );
@@ -213,5 +228,115 @@ describe("ManageProfiles — profile-scoped cache", () => {
     for (const key of [...PROFILE_SCOPED_KEYS, ["libraries"]]) {
       expect(removed).toContainEqual(key);
     }
+  });
+});
+
+/** The object ``client.ts`` puts on the wire: ``JSON.stringify`` of the body. */
+const wire = (body: unknown) => JSON.parse(JSON.stringify(body)) as Record<string, unknown>;
+
+async function save() {
+  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  await settled();
+  expect(apiPut).toHaveBeenCalledTimes(1);
+  return apiPut.mock.calls[0];
+}
+
+async function createNamed(name: string) {
+  await userEvent.click(await screen.findByRole("button", { name: "New profile" }));
+  await userEvent.type(await screen.findByLabelText("Name"), name);
+}
+
+describe("ManageProfiles — maturity limit payload", () => {
+  it("renames a limited profile without sending is_kids or maturity_limit", async () => {
+    renderManage();
+
+    await openEdit("Kid");
+    const name = screen.getByLabelText("Name");
+    await userEvent.clear(name);
+    await userEvent.type(name, "Kiddo");
+    const [path, body] = await save();
+
+    expect(path).toBe("/profiles/prf_kid");
+    expect(wire(body)).toEqual({ name: "Kiddo", allowed_library_ids: ["lib_movies"] });
+  });
+
+  it("changes a limited profile's libraries without sending maturity_limit", async () => {
+    renderManage();
+
+    await openEdit("Kid");
+    await userEvent.click(screen.getByRole("checkbox", { name: /Shows/ }));
+    const [, body] = await save();
+
+    expect(wire(body)).toEqual({
+      name: "Kid",
+      allowed_library_ids: ["lib_movies", "lib_shows"],
+    });
+  });
+
+  it("sends an explicit null, kept by JSON serialization, when Unrestricted is chosen", async () => {
+    renderManage();
+
+    await openEdit("Kid");
+    await userEvent.click(screen.getByRole("radio", { name: "Unrestricted" }));
+    const [, body] = await save();
+
+    expect(JSON.stringify(body)).toContain('"maturity_limit":null');
+    expect(wire(body)).toEqual({
+      name: "Kid",
+      allowed_library_ids: ["lib_movies"],
+      maturity_limit: null,
+    });
+  });
+
+  it("sends the chosen step when the limit changes", async () => {
+    renderManage();
+
+    await openEdit("Kid");
+    await userEvent.click(screen.getByRole("radio", { name: "L" }));
+    const [, body] = await save();
+
+    expect(wire(body)).toHaveProperty("maturity_limit", 0);
+  });
+
+  it("creates a profile with the chosen limit", async () => {
+    renderManage();
+
+    await createNamed("Teen");
+    await userEvent.click(screen.getByRole("radio", { name: "16" }));
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+    await settled();
+
+    expect(apiPost).toHaveBeenCalledTimes(1);
+    const [path, body] = apiPost.mock.calls[0];
+    expect(path).toBe("/profiles");
+    expect(wire(body)).toEqual({ name: "Teen", allowed_library_ids: [], maturity_limit: 16 });
+  });
+});
+
+describe("ManageProfiles — parental controls flag off", () => {
+  beforeEach(() => {
+    flags.parentalControls = false;
+  });
+
+  it("edits a limited profile with no selector and no maturity_limit", async () => {
+    renderManage();
+
+    const dialog = await openEdit("Kid");
+    expect(within(dialog).queryByRole("radio")).not.toBeInTheDocument();
+    const [, body] = await save();
+
+    expect(wire(body)).toEqual({ name: "Kid", allowed_library_ids: ["lib_movies"] });
+  });
+
+  it("creates a profile with no maturity_limit", async () => {
+    renderManage();
+
+    await createNamed("Teen");
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+    await settled();
+
+    expect(apiPost).toHaveBeenCalledTimes(1);
+    expect(wire(apiPost.mock.calls[0][1])).toEqual({ name: "Teen", allowed_library_ids: [] });
   });
 });

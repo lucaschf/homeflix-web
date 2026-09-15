@@ -75,14 +75,13 @@ function sameLibraries(a: readonly string[], b: readonly string[]): boolean {
 
 /**
  * Whether an update changed what the profile may watch: its library
- * ACL or its maturity limit. ``maturity_limit`` is read loosely so this
- * compiles and behaves (as "unchanged") against a backend that does
- * not send the field yet. An unknown previous state counts as changed.
+ * ACL or its maturity limit. A missing ``maturity_limit`` (a backend
+ * that does not send the field yet) reads as unrestricted, so it
+ * behaves as "unchanged". An unknown previous state counts as changed.
  */
 function viewingPolicyChanged(before: Profile | undefined, after: Profile): boolean {
   if (!before) return true;
-  const limit = (profile: Profile) =>
-    (profile as Profile & { maturity_limit?: number | null }).maturity_limit ?? null;
+  const limit = (profile: Profile) => profile.maturity_limit ?? null;
   return (
     !sameLibraries(before.allowed_library_ids, after.allowed_library_ids) ||
     limit(before) !== limit(after)
@@ -226,11 +225,11 @@ export function useSwitchProfile() {
 }
 
 /**
- * Partial profile update. Used by future profile-management UI to
- * grant/revoke library access, rename, toggle the kids flag, etc.
+ * Partial profile update. Used by the profile-management UI to
+ * grant/revoke library access, rename, set the maturity limit, etc.
  * The backend's PATCH-style semantics live verbatim in
- * ``UpdateProfileInput``: ``null``/omitted = leave alone, explicit
- * value = replace.
+ * ``UpdateProfileInput``: omitted = leave alone, explicit value =
+ * replace, and ``maturity_limit: null`` removes the limit.
  *
  * Narrowing or widening what the ACTIVE profile may watch (its
  * libraries or maturity limit) resets the profile-scoped cache, so the
@@ -271,9 +270,9 @@ export function useUpdateProfile() {
 }
 
 /**
- * Create a new profile owned by the current user. ``is_kids`` and
- * ``allowed_library_ids`` default to the backend's defaults when
- * omitted (``false`` and ``[]`` respectively — default-deny ACL).
+ * Create a new profile owned by the current user. ``maturity_limit``
+ * and ``allowed_library_ids`` default to the backend's defaults when
+ * omitted (unrestricted and ``[]`` respectively — default-deny ACL).
  */
 export function useCreateProfile() {
   const queryClient = useQueryClient();

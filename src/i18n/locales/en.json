@@ -118,8 +118,10 @@
     "deleteConfirm": "Are you sure you want to delete the profile \"{{name}}\"? Their history, lists and preferences will be archived.",
     "fields": {
       "name": "Name",
-      "isKids": "Kids mode",
-      "isKidsHelp": "Marks the profile as kids — used as a UI hint; the actual access control lives in the allowed libraries below.",
+      "maturityLimit": "Age limit",
+      "maturityLimitUnrestricted": "Unrestricted",
+      "maturityLimitHelp": "The highest age rating this profile can watch. L is for all audiences. Titles without an age rating stay hidden from profiles with a limit.",
+      "maturityLimitCacheNote": "The limit hides titles and blocks playback, but video the server has already cached can still be reached through a direct link.",
       "libraries": "Allowed libraries",
       "librariesHelp": "Pick which libraries this profile can see in the catalog. With none checked, the profile sees an empty catalog.",
       "noLibraries": "No libraries registered yet. Add a library above before configuring this profile.",
@@ -366,6 +368,12 @@
   },
   "admin": {
     "title": "Admin",
+    "locked": {
+      "title": "Admin is locked on this profile",
+      "body": "Admin tools are unavailable while this session is under an age limit. Switch to an unrestricted profile to manage the server.",
+      "switchProfile": "Switch profile",
+      "backHome": "Back to home"
+    },
     "nav": {
       "overview": "Overview",
       "libraries": "Libraries",

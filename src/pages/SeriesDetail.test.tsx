@@ -3,8 +3,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { authKeys } from "../api/auth";
 import { ApiError } from "../api/client";
 import { createQueryClient } from "../api/queryClient";
+import type { SeriesDetail as SeriesDetailData, User } from "../api/types";
 import { ToastProvider } from "../components/ToastProvider";
 import i18n from "../i18n";
 import { theme } from "../theme";
@@ -75,5 +77,77 @@ describe("SeriesDetail — maturity gate", () => {
     // Nothing about the title leaks into the page.
     expect(document.body).not.toHaveTextContent(SERIES_ID);
     expect(apiGet.mock.calls.filter(([path]) => path === SERIES_PATH)).toHaveLength(1);
+  });
+});
+
+const SERIES: SeriesDetailData = {
+  id: SERIES_ID,
+  title: "Dark",
+  original_title: null,
+  start_year: 2017,
+  end_year: 2020,
+  is_ongoing: false,
+  synopsis: null,
+  poster_path: null,
+  backdrop_path: null,
+  logo_path: null,
+  genres: [],
+  content_rating: null,
+  trailer_url: null,
+  tmdb_id: 70523,
+  imdb_id: null,
+  needs_enrichment_review: false,
+  season_count: 0,
+  total_episodes: 0,
+  seasons: [],
+  cast: [],
+  created_at: "2026-01-01T00:00:00Z",
+  updated_at: "2026-01-01T00:00:00Z",
+};
+
+const ADMIN: User = {
+  id: "usr_1",
+  email: "parent@home.test",
+  role: "admin",
+  is_active: true,
+  is_verified: true,
+  active_profile_id: "prf_kid",
+};
+
+/** Renders a loaded series over a cached ``/users/me``. */
+async function renderLoadedSeries(user: User) {
+  apiGet.mockImplementation((path: string) =>
+    path === SERIES_PATH ? Promise.resolve({ data: SERIES }) : new Promise(() => {}),
+  );
+  const client = createQueryClient();
+  client.setQueryData(authKeys.currentUser, user);
+  render(
+    <QueryClientProvider client={client}>
+      <ThemeProvider theme={theme}>
+        <ToastProvider>
+          <MemoryRouter initialEntries={[`/series/${SERIES_ID}`]}>
+            <Routes>
+              <Route path="/series/:seriesId" element={<SeriesDetail />} />
+            </Routes>
+          </MemoryRouter>
+        </ToastProvider>
+      </ThemeProvider>
+    </QueryClientProvider>,
+  );
+  // The hero CTA renders once the detail resolves.
+  await screen.findByRole("button", { name: "Watch" });
+}
+
+describe("SeriesDetail — admin affordances", () => {
+  it("shows the admin overflow menu to a granted admin", async () => {
+    await renderLoadedSeries({ ...ADMIN, admin_access: "granted" });
+
+    expect(screen.getByRole("button", { name: "More actions" })).toBeInTheDocument();
+  });
+
+  it("hides the admin overflow menu from a suspended admin", async () => {
+    await renderLoadedSeries({ ...ADMIN, admin_access: "suspended" });
+
+    expect(screen.queryByRole("button", { name: "More actions" })).not.toBeInTheDocument();
   });
 });
