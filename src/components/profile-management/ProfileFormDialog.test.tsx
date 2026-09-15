@@ -35,7 +35,7 @@ const profileWithLimit = (maturity_limit: number | null | undefined): Profile =>
   updated_at: "2026-01-01T00:00:00Z",
 });
 
-function renderDialog(profile: Profile | null) {
+function renderDialog(profile: Profile | null, libraries: Library[] = LIBRARIES) {
   const onSubmit = vi.fn<(body: ProfileFormSubmit) => void>();
   render(
     <QueryClientProvider client={createQueryClient()}>
@@ -43,7 +43,7 @@ function renderDialog(profile: Profile | null) {
         <ProfileFormDialog
           open
           profile={profile}
-          libraries={LIBRARIES}
+          libraries={libraries}
           submitting={false}
           onClose={() => {}}
           onSubmit={onSubmit}
@@ -59,6 +59,15 @@ const submitted = (onSubmit: ReturnType<typeof renderDialog>) => {
   return onSubmit.mock.calls[0][0];
 };
 
+const slider = () => screen.getByRole("slider", { name: "Age limit" });
+
+/** Click the ladder step drawn for ``limit`` (``null`` = unrestricted), as a pointer would. */
+const clickStep = (limit: number | null) =>
+  userEvent.click(document.querySelector<HTMLElement>(`[data-step="${limit ?? "unrestricted"}"]`)!);
+
+const drawnSteps = () =>
+  [...document.querySelectorAll<HTMLElement>("[data-step]")].map((element) => element.dataset.step);
+
 beforeEach(async () => {
   flags.parentalControls = true;
   await i18n.changeLanguage("en");
@@ -68,11 +77,11 @@ describe("ProfileFormDialog — maturity limit", () => {
   it("renames a limited profile without writing is_kids or the limit", async () => {
     const onSubmit = renderDialog(profileWithLimit(14));
 
-    expect(screen.getByRole("radio", { name: "Up to age 14" })).toBeChecked();
-    const name = screen.getByLabelText("Name");
+    expect(slider()).toHaveAttribute("aria-valuetext", "Up to age 14");
+    const name = screen.getByLabelText("Profile name");
     await userEvent.clear(name);
     await userEvent.type(name, "Kiddo");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(submitted(onSubmit)).toEqual({
       name: "Kiddo",
@@ -84,7 +93,7 @@ describe("ProfileFormDialog — maturity limit", () => {
     const onSubmit = renderDialog(profileWithLimit(14));
 
     await userEvent.click(screen.getByRole("checkbox", { name: /Shows/ }));
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(submitted(onSubmit)).not.toHaveProperty("maturity_limit");
   });
@@ -96,37 +105,42 @@ describe("ProfileFormDialog — maturity limit", () => {
     ["Up to age 12", 12],
     ["Up to age 14", 14],
     ["Up to age 16", 16],
-  ])("maps the %s step to maturity_limit %s", async (label, value) => {
+  ])("maps the %s step to maturity_limit %s", async (title, value) => {
     // 18 is outside the steps, so every step is a change.
     const onSubmit = renderDialog(profileWithLimit(18));
 
-    await userEvent.click(screen.getByRole("radio", { name: label }));
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await clickStep(value);
+    expect(slider()).toHaveAttribute("aria-valuetext", title);
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(submitted(onSubmit)).toHaveProperty("maturity_limit", value);
+  });
+
+  it("writes the step reached with the keyboard", async () => {
+    const onSubmit = renderDialog(profileWithLimit(12));
+
+    slider().focus();
+    await userEvent.keyboard("{ArrowRight}");
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(submitted(onSubmit)).toHaveProperty("maturity_limit", 14);
   });
 
   it("lists a limit set outside the steps as the selected one", () => {
     renderDialog(profileWithLimit(18));
 
-    expect(screen.getByRole("radio", { name: "Up to age 18" })).toBeChecked();
-    expect(screen.getAllByRole("radio")).toHaveLength(7);
+    expect(slider()).toHaveAttribute("aria-valuetext", "Up to age 18");
+    expect(drawnSteps()).toEqual(["0", "10", "12", "14", "16", "18", "unrestricted"]);
+    expect(document.querySelector('[data-step="18"]')).toHaveAttribute("data-selected", "true");
   });
 
   it("offers the D7 steps on create, starting unrestricted, and writes a chosen limit", async () => {
     const onSubmit = renderDialog(null);
 
-    expect(screen.getAllByRole("radio").map((radio) => radio.getAttribute("value"))).toEqual([
-      "unrestricted",
-      "0",
-      "10",
-      "12",
-      "14",
-      "16",
-    ]);
-    expect(screen.getByRole("radio", { name: "Unrestricted" })).toBeChecked();
-    await userEvent.type(screen.getByLabelText("Name"), "Kid");
-    await userEvent.click(screen.getByRole("radio", { name: "Up to age 12" }));
+    expect(drawnSteps()).toEqual(["0", "10", "12", "14", "16", "unrestricted"]);
+    expect(slider()).toHaveAttribute("aria-valuetext", "Unrestricted");
+    await userEvent.type(screen.getByLabelText("Profile name"), "Kid");
+    await clickStep(12);
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
 
     expect(submitted(onSubmit)).toEqual({
@@ -136,14 +150,18 @@ describe("ProfileFormDialog — maturity limit", () => {
     });
   });
 
-  it("warns that the limit does not cover already cached video", async () => {
+  it("keeps “how ratings work” closed until asked, and warns there about cached video", async () => {
     renderDialog(profileWithLimit(null));
 
-    await userEvent.click(screen.getByRole("button", { name: "How it works" }));
+    const toggle = screen.getByRole("button", { name: "How ratings work" });
+    const caveat = screen.getByText(/video the server has already cached can still be reached/);
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(caveat).not.toBeVisible();
 
-    expect(
-      screen.getByText(/video the server has already cached can still be reached/),
-    ).toBeVisible();
+    await userEvent.click(toggle);
+
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(caveat).toBeVisible();
   });
 
   it("lays the form out as a basics section and an age limit section, at the md width", () => {
@@ -151,10 +169,10 @@ describe("ProfileFormDialog — maturity limit", () => {
 
     const basics = screen.getByRole("region", { name: "Profile details" });
     const maturity = screen.getByRole("region", { name: "Parental controls" });
-    expect(within(basics).getByLabelText("Name")).toBeInTheDocument();
+    expect(within(basics).getByLabelText("Profile name")).toBeInTheDocument();
     expect(within(basics).getByRole("checkbox", { name: /Shows/ })).toBeInTheDocument();
-    expect(within(basics).queryByRole("radio")).not.toBeInTheDocument();
-    expect(within(maturity).getByRole("radiogroup", { name: "Age limit" })).toBeInTheDocument();
+    expect(within(basics).queryByRole("slider")).not.toBeInTheDocument();
+    expect(within(maturity).getByRole("slider", { name: "Age limit" })).toBeInTheDocument();
     expect(screen.getByRole("dialog")).toHaveClass("MuiDialog-paperWidthMd");
   });
 
@@ -166,15 +184,61 @@ describe("ProfileFormDialog — maturity limit", () => {
   });
 });
 
+describe("ProfileFormDialog — header and libraries", () => {
+  it("tags the edit title with the profile's first name, in capitals", () => {
+    renderDialog({ ...profileWithLimit(null), name: "Lucas Cristovam" });
+
+    const title = screen.getByRole("heading", { name: "Edit profile Lucas" });
+    const tag = within(title).getByText("Lucas");
+    expect(tag).toHaveStyle({ textTransform: "uppercase" });
+    expect(title).not.toHaveTextContent("Cristovam");
+  });
+
+  it("has no tag on the create title", () => {
+    renderDialog(null);
+
+    const title = screen.getByRole("heading", { name: "New profile" });
+    expect(title).toHaveTextContent(/^New profile\s*$/);
+    expect(title.children).toHaveLength(0);
+  });
+
+  it("shows each library's paths under its name", () => {
+    renderDialog(profileWithLimit(null));
+
+    expect(screen.getByText("/media/movies")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /Movies/ })).toBeChecked();
+  });
+
+  it("leaves the path line out when the server sends no paths", async () => {
+    // Non-admins (and suspended admins) receive every library without paths.
+    const onSubmit = renderDialog(
+      profileWithLimit(null),
+      LIBRARIES.map((library) => ({ ...library, paths: [] })),
+    );
+
+    expect(screen.getByText("Movies").nextElementSibling).toBeNull();
+    expect(screen.getByText("Shows").nextElementSibling).toBeNull();
+    expect(screen.getByRole("checkbox", { name: "Shows" })).not.toBeChecked();
+
+    await userEvent.click(screen.getByRole("checkbox", { name: "Shows" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(submitted(onSubmit)).toEqual({
+      name: "Kid",
+      allowed_library_ids: ["lib_movies", "lib_shows"],
+    });
+  });
+});
+
 describe("ProfileFormDialog — parental controls flag off", () => {
   beforeEach(() => {
     flags.parentalControls = false;
   });
 
-  it("renders no limit selector, no cache note and no kids switch", () => {
+  it("renders no limit slider, no cache note and no kids switch", () => {
     renderDialog(profileWithLimit(14));
 
-    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
+    expect(document.querySelector("[data-step]")).not.toBeInTheDocument();
     expect(screen.queryByText("Age limit")).not.toBeInTheDocument();
     expect(screen.queryByText(/already cached/)).not.toBeInTheDocument();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
@@ -192,7 +256,7 @@ describe("ProfileFormDialog — parental controls flag off", () => {
   it("never writes the limit of a limited profile", async () => {
     const onSubmit = renderDialog(profileWithLimit(14));
 
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(submitted(onSubmit)).toEqual({ name: "Kid", allowed_library_ids: ["lib_movies"] });
   });

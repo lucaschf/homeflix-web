@@ -125,6 +125,10 @@ async function openEdit(name: string) {
   return screen.findByRole("dialog");
 }
 
+/** Click the age-limit ladder step for ``limit`` (``null`` = unrestricted), as a pointer would. */
+const clickStep = (limit: number | null) =>
+  userEvent.click(document.querySelector<HTMLElement>(`[data-step="${limit ?? "unrestricted"}"]`)!);
+
 /** Wait for the mutation's cache work: both branches refetch the list. */
 async function settled() {
   await waitFor(() => expect(callsTo("/profiles")).toBe(2));
@@ -143,7 +147,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
 
     await openEdit("Alice");
     await userEvent.click(screen.getByRole("checkbox", { name: /Shows/ }));
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await settled();
 
     expect(apiPut).toHaveBeenCalledWith(
@@ -163,7 +167,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
 
     await openEdit("Bob");
     await userEvent.click(screen.getByRole("checkbox", { name: /Shows/ }));
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await settled();
 
     expect(apiPut).toHaveBeenCalledWith(
@@ -177,10 +181,10 @@ describe("ManageProfiles — profile-scoped cache", () => {
     const { removed } = renderManage();
 
     await openEdit("Alice");
-    const name = screen.getByLabelText("Name");
+    const name = screen.getByLabelText("Profile name");
     await userEvent.clear(name);
     await userEvent.type(name, "Alicia");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await settled();
 
     expect(apiPut).toHaveBeenCalledWith(
@@ -225,7 +229,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
     const { removed } = renderManage();
 
     await openEdit("Alice");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await settled();
 
     expect(apiPut).toHaveBeenCalledWith(
@@ -242,7 +246,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
 const wire = (body: unknown) => JSON.parse(JSON.stringify(body)) as Record<string, unknown>;
 
 async function save() {
-  await userEvent.click(screen.getByRole("button", { name: "Save" }));
+  await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
   await settled();
   expect(apiPut).toHaveBeenCalledTimes(1);
   return apiPut.mock.calls[0];
@@ -250,7 +254,7 @@ async function save() {
 
 async function createNamed(name: string) {
   await userEvent.click(await screen.findByRole("button", { name: "New profile" }));
-  await userEvent.type(await screen.findByLabelText("Name"), name);
+  await userEvent.type(await screen.findByLabelText("Profile name"), name);
 }
 
 describe("ManageProfiles — maturity limit payload", () => {
@@ -258,7 +262,7 @@ describe("ManageProfiles — maturity limit payload", () => {
     renderManage();
 
     await openEdit("Kid");
-    const name = screen.getByLabelText("Name");
+    const name = screen.getByLabelText("Profile name");
     await userEvent.clear(name);
     await userEvent.type(name, "Kiddo");
     const [path, body] = await save();
@@ -284,7 +288,7 @@ describe("ManageProfiles — maturity limit payload", () => {
     renderManage();
 
     await openEdit("Kid");
-    await userEvent.click(screen.getByRole("radio", { name: "Unrestricted" }));
+    await clickStep(null);
     const [, body] = await save();
 
     expect(JSON.stringify(body)).toContain('"maturity_limit":null');
@@ -299,7 +303,7 @@ describe("ManageProfiles — maturity limit payload", () => {
     renderManage();
 
     await openEdit("Kid");
-    await userEvent.click(screen.getByRole("radio", { name: "All ages" }));
+    await clickStep(0);
     const [, body] = await save();
 
     expect(wire(body)).toHaveProperty("maturity_limit", 0);
@@ -309,7 +313,7 @@ describe("ManageProfiles — maturity limit payload", () => {
     renderManage();
 
     await createNamed("Teen");
-    await userEvent.click(screen.getByRole("radio", { name: "Up to age 16" }));
+    await clickStep(16);
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
     await settled();
 
@@ -329,7 +333,7 @@ describe("ManageProfiles — parental controls flag off", () => {
     renderManage();
 
     const dialog = await openEdit("Kid");
-    expect(within(dialog).queryByRole("radio")).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole("slider")).not.toBeInTheDocument();
     const [, body] = await save();
 
     expect(wire(body)).toEqual({ name: "Kid", allowed_library_ids: ["lib_movies"] });
@@ -339,7 +343,7 @@ describe("ManageProfiles — parental controls flag off", () => {
     renderManage();
 
     await createNamed("Teen");
-    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Create" }));
     await settled();
 
@@ -361,7 +365,7 @@ describe("ManageProfiles — parental controls flag off", () => {
     renderManage();
 
     await openEdit("Bob");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(await screen.findByText("This needs the parental PIN. Try again.")).toBeInTheDocument();
     expect(challenge()).not.toBeInTheDocument();
@@ -414,8 +418,8 @@ describe("ManageProfiles — parental PIN challenge", () => {
     renderManage();
 
     await openEdit("Kid");
-    await userEvent.click(screen.getByRole("radio", { name: "Unrestricted" }));
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await clickStep(null);
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await enterPin("112233");
 
     await waitFor(() => expect(apiPut).toHaveBeenCalledTimes(2));
@@ -459,7 +463,7 @@ describe("ManageProfiles — parental PIN challenge", () => {
     renderManage();
 
     await openEdit("Kid");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await enterPin();
 
     await waitFor(() => expect(apiPut).toHaveBeenCalledTimes(2));
@@ -532,8 +536,8 @@ describe("ManageProfiles — errors by code", () => {
     renderManage();
 
     await openEdit("Bob");
-    await userEvent.click(screen.getByRole("radio", { name: "Up to age 12" }));
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await clickStep(12);
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(
       await screen.findByText(
@@ -549,8 +553,8 @@ describe("ManageProfiles — errors by code", () => {
     renderManage();
 
     await openEdit("Kid");
-    await userEvent.click(screen.getByRole("radio", { name: "Up to age 16" }));
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await clickStep(16);
+    await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(
       await screen.findByText(
