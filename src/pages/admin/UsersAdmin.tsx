@@ -1,17 +1,22 @@
 import {
+  Alert,
   Box,
+  CircularProgress,
+  DialogActions,
   DialogContent,
+  DialogTitle,
   IconButton,
-  MenuItem,
-  Select,
+  InputAdornment,
+  Radio,
+  RadioGroup,
   Snackbar,
   Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Plus, Trash2, Users as UsersIcon } from "lucide-react";
+import { Plus, Trash2, Users as UsersIcon, X } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ApiError } from "../../api/client";
 import { useCurrentUser } from "../../api/auth";
@@ -27,7 +32,6 @@ import {
   AdminButton,
   AdminConfirmDialog,
   AdminDialog,
-  AdminFormSection,
   AdminInput,
   AdminPageHeader,
   AdminTable,
@@ -38,7 +42,14 @@ import {
   type AdminTableColumn,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentCoral, peachAlpha, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
+import {
+  accentCoral,
+  fontFamily,
+  fontSize,
+  peachAlpha,
+  whiteAlpha,
+  toastSurfaceSx,
+} from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -319,20 +330,45 @@ interface InviteUserDialogProps {
   onSuccess: (email: string) => void;
 }
 
+type InviteRole = "admin" | "member";
+
+const INVITE_ROLES: InviteRole[] = ["member", "admin"];
+
+/**
+ * Create-user modal: email + initial password + role, stacked in a
+ * single column.
+ *
+ * It deliberately does NOT use ``AdminFormSection``. That primitive is
+ * a page-level row (a 340-460 px label column beside the field column)
+ * and its breakpoints read the *viewport*, not the dialog — inside a
+ * ``maxWidth="sm"`` paper on a desktop viewport the label column ate
+ * the whole width, squeezing the inputs into ~90 px stubs and pushing
+ * the paper into horizontal scroll. Full-width fields with the label
+ * above are the right shape for a modal; the section helper copy moved
+ * onto the fields it describes.
+ */
 function InviteUserDialog({ open, onClose, onSuccess }: InviteUserDialogProps) {
   const { t } = useTranslation();
   const create = useCreateAdminUser();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"admin" | "member">("member");
+  const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<InviteRole>("member");
   const [error, setError] = useState<string | null>(null);
 
   const reset = () => {
     setEmail("");
     setPassword("");
+    setShowPassword(false);
     setRole("member");
     setError(null);
+  };
+
+  const close = () => {
+    if (create.isPending) return;
+    reset();
+    onClose();
   };
 
   const submit = async (event: React.FormEvent) => {
@@ -356,112 +392,272 @@ function InviteUserDialog({ open, onClose, onSuccess }: InviteUserDialogProps) {
   return (
     <AdminDialog
       open={open}
-      onClose={create.isPending ? undefined : onClose}
+      onClose={create.isPending ? undefined : close}
       maxWidth="sm"
       fullWidth
     >
-      <DialogContent sx={{ p: 3 }}>
-        <Stack spacing={0.5} sx={{ mb: 2.5 }}>
-          <Typography variant="h3" sx={{ fontSize: "1rem", fontWeight: 600 }}>
-            {t("admin.users.invite.title")}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("admin.users.invite.subtitle")}
-          </Typography>
-        </Stack>
-
-        <Box component="form" onSubmit={submit}>
-          <AdminFormSection
-            title={t("admin.users.invite.section.account")}
-            helper={t("admin.users.invite.section.accountHelper")}
+      <Box component="form" onSubmit={submit}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 2,
+            px: 3,
+            pt: 3,
+            pb: 0,
+          }}
+        >
+          <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="h3" sx={{ fontSize: "1.0625rem" }}>
+              {t("admin.users.invite.title")}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              <Trans
+                i18nKey="admin.users.invite.subtitle"
+                components={{
+                  path: (
+                    <Box
+                      component="span"
+                      sx={{ color: "primary.main", fontFamily: fontFamily.mono }}
+                    />
+                  ),
+                }}
+              />
+            </Typography>
+          </Stack>
+          <IconButton
+            size="small"
+            onClick={close}
+            disabled={create.isPending}
+            aria-label={t("admin.users.invite.close")}
+            sx={{ color: "text.secondary", mt: -0.5, mr: -0.5 }}
           >
+            <X size={16} />
+          </IconButton>
+        </DialogTitle>
+
+        {/* MUI zeroes the content's top padding when it follows a
+            ``DialogTitle``; the class-on-class selector wins that back so
+            the first field isn't glued to the subtitle. */}
+        <DialogContent
+          sx={{ px: 3, pb: 1, "&.MuiDialogContent-root": { pt: 3 } }}
+        >
+          <Stack spacing={2.5}>
+            {error && <Alert severity="error">{error}</Alert>}
+
             <AdminInput
               label={t("admin.users.invite.email")}
               type="email"
+              placeholder={t("admin.users.invite.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               autoFocus
               fullWidth
             />
-            <AdminInput
-              label={t("admin.users.invite.password")}
-              helperText={t("admin.users.invite.passwordHelper")}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              inputProps={{ minLength: 8, maxLength: 128 }}
-              fullWidth
-            />
-          </AdminFormSection>
 
-          <AdminFormSection
-            title={t("admin.users.invite.section.role")}
-            helper={t("admin.users.invite.section.roleHelper")}
-          >
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.875 }}>
-              <Typography
-                variant="eyebrow"
-                component="label"
+            <Box>
+              <AdminInput
+                label={t("admin.users.invite.password")}
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                inputProps={{ minLength: 8, maxLength: 128 }}
+                fullWidth
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Box
+                        component="button"
+                        type="button"
+                        onClick={() => setShowPassword((s) => !s)}
+                        aria-pressed={showPassword}
+                        aria-label={t(
+                          showPassword
+                            ? "admin.users.invite.hidePasswordAria"
+                            : "admin.users.invite.showPasswordAria",
+                        )}
+                        sx={{
+                          border: 0,
+                          bgcolor: "transparent",
+                          cursor: "pointer",
+                          p: 0,
+                          fontFamily: fontFamily.mono,
+                          fontSize: fontSize.badge,
+                          letterSpacing: "0.08em",
+                          color: "text.secondary",
+                          "&:hover": { color: "text.primary" },
+                        }}
+                      >
+                        {t(
+                          showPassword
+                            ? "admin.users.invite.hidePassword"
+                            : "admin.users.invite.showPassword",
+                        )}
+                      </Box>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Box
                 sx={{
-                  color: "text.secondary",
-                  letterSpacing: "0.14em",
-                  fontSize: "0.625rem",
+                  mt: 0.875,
+                  display: "grid",
+                  gridTemplateColumns: "auto 1fr",
+                  columnGap: 1,
                 }}
               >
-                {t("admin.users.invite.role")}
-              </Typography>
-              <Select<"admin" | "member">
-                size="small"
-                value={role}
-                onChange={(e) => setRole(e.target.value as "admin" | "member")}
-                sx={{
-                  fontSize: "0.875rem",
-                  bgcolor: whiteAlpha(0.025),
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: whiteAlpha(0.08),
-                  },
-                }}
-              >
-                <MenuItem value="member">{t("admin.users.role.member")}</MenuItem>
-                <MenuItem value="admin">{t("admin.users.role.admin")}</MenuItem>
-              </Select>
+                {/* The dot cell is exactly one ``body2`` line box tall
+                    (0.75rem × 1.5) so the bullet stays centered on the
+                    FIRST line when the helper wraps. */}
+                <Box
+                  aria-hidden
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    height: "1.125rem",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 4,
+                      height: 4,
+                      borderRadius: "50%",
+                      bgcolor: whiteAlpha(0.28),
+                    }}
+                  />
+                </Box>
+                <Typography variant="body2" color="text.secondary">
+                  {t("admin.users.invite.passwordHelper")}
+                </Typography>
+              </Box>
             </Box>
-          </AdminFormSection>
 
-          {error && (
-            <Typography variant="body2" color="error" sx={{ mb: 2 }}>
-              {error}
-            </Typography>
-          )}
-
-          <Stack direction="row" spacing={1.5} justifyContent="flex-end">
-            <AdminButton
-              variant="ghost"
-              type="button"
-              onClick={() => {
-                if (!create.isPending) {
-                  reset();
-                  onClose();
-                }
-              }}
-              disabled={create.isPending}
-            >
-              {t("admin.users.invite.cancel")}
-            </AdminButton>
-            <AdminButton
-              variant="primary"
-              type="submit"
-              disabled={create.isPending}
-            >
-              {create.isPending
-                ? t("admin.users.invite.submitting")
-                : t("admin.users.invite.submit")}
-            </AdminButton>
+            <Box>
+              <Stack
+                direction="row"
+                alignItems="baseline"
+                justifyContent="space-between"
+                spacing={2}
+                sx={{ mb: 1.25 }}
+              >
+                <Typography variant="body1" fontWeight={600} id="invite-role-label">
+                  {t("admin.users.invite.role.label")}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t("admin.users.invite.role.hint")}
+                </Typography>
+              </Stack>
+              <RadioGroup
+                aria-labelledby="invite-role-label"
+                value={role}
+                onChange={(_e, next) => setRole(next as InviteRole)}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                  gap: 1.25,
+                }}
+              >
+                {INVITE_ROLES.map((option) => {
+                  const selected = role === option;
+                  return (
+                    <Box
+                      key={option}
+                      component="label"
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 1.25,
+                        px: 1.75,
+                        py: 1.5,
+                        cursor: "pointer",
+                        borderRadius: 1,
+                        border: `1px solid ${
+                          selected ? peachAlpha(0.55) : whiteAlpha(0.08)
+                        }`,
+                        bgcolor: selected ? peachAlpha(0.07) : whiteAlpha(0.025),
+                        transition: "border-color 150ms ease, background-color 150ms ease",
+                        "&:hover": {
+                          borderColor: selected ? peachAlpha(0.7) : whiteAlpha(0.16),
+                        },
+                      }}
+                    >
+                      <Radio
+                        value={option}
+                        size="small"
+                        disableRipple
+                        sx={{
+                          p: 0,
+                          mt: "1px",
+                          color: whiteAlpha(0.28),
+                          "&.Mui-checked": { color: "primary.main" },
+                        }}
+                      />
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="body1" fontWeight={600}>
+                          {t(`admin.users.role.${option}`)}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 0.25 }}
+                        >
+                          <Trans
+                            i18nKey={`admin.users.invite.role.${option}Helper`}
+                            components={{
+                              path: (
+                                <Box
+                                  component="span"
+                                  sx={{ fontFamily: fontFamily.mono }}
+                                />
+                              ),
+                            }}
+                          />
+                        </Typography>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </RadioGroup>
+            </Box>
           </Stack>
-        </Box>
-      </DialogContent>
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            px: 3,
+            pt: 2,
+            pb: 2.5,
+            mt: 1,
+            gap: 1.25,
+            borderTop: `1px solid ${whiteAlpha(0.06)}`,
+          }}
+        >
+          <AdminButton
+            variant="secondary"
+            type="button"
+            onClick={close}
+            disabled={create.isPending}
+          >
+            {t("admin.users.invite.cancel")}
+          </AdminButton>
+          <AdminButton
+            variant="primary"
+            type="submit"
+            disabled={create.isPending}
+            icon={
+              create.isPending ? (
+                <CircularProgress size={14} color="inherit" />
+              ) : undefined
+            }
+          >
+            {create.isPending
+              ? t("admin.users.invite.submitting")
+              : t("admin.users.invite.submit")}
+          </AdminButton>
+        </DialogActions>
+      </Box>
     </AdminDialog>
   );
 }

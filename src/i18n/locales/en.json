@@ -790,21 +790,26 @@
       },
       "invite": {
         "title": "Invite a new user",
-        "subtitle": "The user will sign in with this email and the initial password. They can change the password from /settings once they're in.",
+        "subtitle": "They sign in with this email and the initial password, and can change it later in <path>/settings</path>.",
         "email": "Email",
+        "emailPlaceholder": "name@example.com",
         "password": "Initial password",
-        "passwordHelper": "Minimum 8 characters. The user is expected to change it after first sign-in.",
-        "role": "Role",
+        "passwordHelper": "Minimum 8 characters · the user is expected to change it on first sign-in.",
+        "showPassword": "Show",
+        "hidePassword": "Hide",
+        "showPasswordAria": "Show password",
+        "hidePasswordAria": "Hide password",
+        "role": {
+          "label": "Role",
+          "hint": "Sets what they can see",
+          "memberHelper": "The catalog only.",
+          "adminHelper": "The full catalog plus the panel at <path>/admin/*</path>."
+        },
         "submit": "Create user",
         "submitting": "Creating…",
         "cancel": "Cancel",
-        "error": "Could not create the user.",
-        "section": {
-          "account": "Account",
-          "accountHelper": "Email + initial password the user types on first sign-in.",
-          "role": "Permissions",
-          "roleHelper": "Admins see /admin/* and the full catalog. Members see the catalog only."
-        }
+        "close": "Close",
+        "error": "Could not create the user."
       },
       "delete": {
         "title": "Delete {{email}}?",
