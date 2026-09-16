@@ -159,14 +159,17 @@
       "deleteFailed": "Couldn't delete the profile. Try again.",
       "cannotDeleteLast": "You must have at least one active profile. Create another one before deleting this.",
       "pinNotConfigured": "Set a parental PIN before giving a profile an age limit. Set it in the Parental PIN section below first, then set the limit.",
-      "conflict": "This profile was changed at the same time on another device. Close the form and try again."
+      "conflict": "This profile was changed at the same time on another device. Close the form and try again.",
+      "createdWithoutAvatar": "{{name}} was created, but the photo didn't upload. Open the profile to add it."
     },
     "avatar": {
+      "add": "Add photo",
       "change": "Change photo",
       "remove": "Remove",
-      "hint": "PNG, JPEG or WebP up to 2MB.",
+      "hint": "PNG, JPEG or WebP up to {{size}}MB.",
+      "pending": "Saved once the profile is created.",
       "errors": {
-        "tooLarge": "The image is too large. Pick a file under 2MB.",
+        "tooLarge": "The image is too large. Pick a file under {{size}}MB.",
         "unsupported": "Unsupported format. Use PNG, JPEG or WebP.",
         "uploadFailed": "Couldn't upload the photo. Try again.",
         "removeFailed": "Couldn't remove the photo. Try again."

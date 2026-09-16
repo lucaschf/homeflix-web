@@ -14,16 +14,24 @@ import i18n from "../i18n";
 import { theme } from "../theme";
 import { ManageProfiles } from "./ManageProfiles";
 
-const { apiGet, apiPost, apiPut, apiDel } = vi.hoisted(() => ({
+const { apiGet, apiPost, apiPut, apiDel, apiPostMultipart } = vi.hoisted(() => ({
   apiGet: vi.fn(),
   apiPost: vi.fn(),
   apiPut: vi.fn(),
   apiDel: vi.fn(),
+  apiPostMultipart: vi.fn(),
 }));
 
 vi.mock("../api/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../api/client")>()),
-  api: { get: apiGet, post: apiPost, put: apiPut, patch: vi.fn(), del: apiDel },
+  api: {
+    get: apiGet,
+    post: apiPost,
+    put: apiPut,
+    patch: vi.fn(),
+    del: apiDel,
+    postMultipart: apiPostMultipart,
+  },
 }));
 
 // The flag is a build-time constant; a getter lets each test pick its value.
@@ -77,6 +85,11 @@ function stubApi() {
     if (path === "/users/me") return Promise.resolve({ data: USER });
     if (path === "/profiles") return Promise.resolve({ data: [ALICE, BOB, KID] });
     if (path === "/libraries") return Promise.resolve({ data: LIBRARIES });
+    if (path === "/settings/avatar") {
+      return Promise.resolve({
+        data: { max_size_bytes: 2 * 1024 * 1024, max_size_mb: 2, size_pixels: 256 },
+      });
+    }
     return new Promise(() => {});
   });
   apiPut.mockImplementation((path: string, body: Partial<Profile>) => {
@@ -87,6 +100,11 @@ function stubApi() {
     Promise.resolve({ data: { ...profile("prf_new", "New"), ...body } }),
   );
   apiDel.mockResolvedValue(undefined);
+  apiPostMultipart.mockImplementation((path: string) =>
+    Promise.resolve({
+      data: { ...profile("prf_new", "New"), avatar_url: `${path}?v=1` },
+    }),
+  );
 }
 
 /** Render the screen behind the real auth guard, over a warm cache. */
@@ -665,5 +683,85 @@ describe("ManageProfiles — parental PIN setup", () => {
     expect(apiPost).toHaveBeenCalledWith("/parental/pin/remove", {
       current_password: "s3cret-pass",
     });
+  });
+});
+
+/** A ``File`` the dialog's local size / MIME check accepts. */
+function validPhoto(): File {
+  return new File(["x"], "bia.png", { type: "image/png" });
+}
+
+/** Pick the photo inside the open create dialog. */
+async function pickPhoto(file: File) {
+  const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+  await userEvent.upload(input, file);
+}
+
+describe("ManageProfiles — creating with a photo", () => {
+  it("creates the profile first, then uploads the photo to the id it got back", async () => {
+    renderManage();
+
+    await createNamed("Bia");
+    await pickPhoto(validPhoto());
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    await waitFor(() => expect(apiPostMultipart).toHaveBeenCalledTimes(1));
+    // The upload can only name the id the create returned, which is
+    // why this is two requests and not one.
+    const [avatarPath, form] = apiPostMultipart.mock.calls[0];
+    expect(avatarPath).toBe("/profiles/prf_new/avatar");
+    expect((form as FormData).get("file")).toBeInstanceOf(File);
+    expect(apiPost).toHaveBeenCalledWith(
+      "/profiles",
+      expect.objectContaining({ name: "Bia" }),
+    );
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(
+      screen.queryByText(/the photo didn't upload/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("uploads nothing when no photo was picked", async () => {
+    renderManage();
+
+    await createNamed("Bia");
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+    await settled();
+
+    expect(apiPostMultipart).not.toHaveBeenCalled();
+  });
+
+  it("keeps the created profile and warns when the photo fails to upload", async () => {
+    apiPostMultipart.mockRejectedValueOnce(new ApiError(500, "Server Error"));
+    renderManage();
+
+    await createNamed("Bia");
+    await pickPhoto(validPhoto());
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    // The profile is real, so the failure is reported as a missing
+    // photo — not as a failed save, and never by re-opening the form
+    // (which would offer to create a second profile).
+    expect(
+      await screen.findByText("Bia was created, but the photo didn't upload. Open the profile to add it."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByText("Couldn't save the profile. Try again.")).not.toBeInTheDocument();
+    expect(apiPost).toHaveBeenCalledWith("/profiles", expect.objectContaining({ name: "Bia" }));
+  });
+
+  it("clears the warning when the operator opens the form again", async () => {
+    apiPostMultipart.mockRejectedValueOnce(new ApiError(500, "Server Error"));
+    renderManage();
+
+    await createNamed("Bia");
+    await pickPhoto(validPhoto());
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+    await screen.findByText(/the photo didn't upload/i);
+
+    await userEvent.click(screen.getByRole("button", { name: "New profile" }));
+
+    expect(screen.queryByText(/the photo didn't upload/i)).not.toBeInTheDocument();
   });
 });
