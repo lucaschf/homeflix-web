@@ -790,21 +790,26 @@
       },
       "invite": {
         "title": "Convidar um novo usuário",
-        "subtitle": "O usuário vai entrar com esse email e a senha inicial. Depois pode trocar a senha em /settings.",
+        "subtitle": "Ele entra com esse email e a senha inicial, e pode trocá-la depois em <path>/settings</path>.",
         "email": "Email",
+        "emailPlaceholder": "nome@exemplo.com",
         "password": "Senha inicial",
-        "passwordHelper": "Mínimo 8 caracteres. O usuário deve trocar depois do primeiro login.",
-        "role": "Papel",
+        "passwordHelper": "Mínimo de 8 caracteres · o usuário deve trocar no primeiro login.",
+        "showPassword": "Mostrar",
+        "hidePassword": "Ocultar",
+        "showPasswordAria": "Mostrar senha",
+        "hidePasswordAria": "Ocultar senha",
+        "role": {
+          "label": "Papel",
+          "hint": "Define o que ele vê",
+          "memberHelper": "Só o catálogo.",
+          "adminHelper": "Catálogo todo e o painel em <path>/admin/*</path>."
+        },
         "submit": "Criar usuário",
         "submitting": "Criando…",
         "cancel": "Cancelar",
-        "error": "Não foi possível criar o usuário.",
-        "section": {
-          "account": "Conta",
-          "accountHelper": "Email + senha inicial que o usuário digita no primeiro login.",
-          "role": "Permissões",
-          "roleHelper": "Admins veem /admin/* e o catálogo todo. Membros só o catálogo."
-        }
+        "close": "Fechar",
+        "error": "Não foi possível criar o usuário."
       },
       "delete": {
         "title": "Excluir {{email}}?",
