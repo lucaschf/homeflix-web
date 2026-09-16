@@ -1,0 +1,60 @@
+# Verification gate for the frontend: the same four commands a
+# contributor runs locally, in the order that fails fastest.
+#
+# The steps deliberately keep running after one fails (`!cancelled()`)
+# so a red run reports every problem at once instead of one per push.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# A new push to the same branch supersedes the run in flight. `main`
+# keeps every run (group includes the ref) but PR branches don't queue
+# up stale ones.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck · Lint · Test · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # Vite 8 needs Node >= 20.19 / >= 22.12; 22 is the version the
+      # project is developed on. `cache: yarn` keys off yarn.lock.
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: yarn
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Typecheck
+        run: npx tsc -b --noEmit
+
+      - name: Lint
+        if: ${{ !cancelled() }}
+        run: yarn lint
+
+      - name: Test
+        if: ${{ !cancelled() }}
+        run: yarn test
+
+      # `yarn build` re-runs `tsc -b` (incremental, so nearly free) and
+      # then the real Vite production build — it catches breakage the
+      # typecheck alone can't, like a bad import resolved only at bundle
+      # time.
+      - name: Build
+        if: ${{ !cancelled() }}
+        run: yarn build
