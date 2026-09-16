@@ -9,6 +9,37 @@ import i18n from "../../i18n";
 import { theme } from "../../theme";
 import { ProfileFormDialog, type ProfileFormSubmit } from "./ProfileFormDialog";
 
+const { apiGet } = vi.hoisted(() => ({ apiGet: vi.fn() }));
+vi.mock("../../api/client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../api/client")>()),
+  api: { get: apiGet, post: vi.fn(), put: vi.fn(), patch: vi.fn(), del: vi.fn(),
+    postMultipart: vi.fn() },
+}));
+
+/** The cap the server reports, unless a test says otherwise. */
+const AVATAR_LIMITS = { max_size_bytes: 2 * 1024 * 1024, max_size_mb: 2, size_pixels: 256 };
+
+/** A ``File`` of ``size`` bytes with the given MIME, without allocating it. */
+function fakeFile(name: string, type: string, size: number): File {
+  const file = new File(["x"], name, { type });
+  Object.defineProperty(file, "size", { value: size });
+  return file;
+}
+
+/**
+ * Pick a file through the hidden input.
+ *
+ * ``applyAccept: false`` mirrors the real escape hatch: the ``accept``
+ * attribute only filters what the OS dialog offers by default, and a
+ * user who switches it to "All files" — or drops a file on the input —
+ * still hands over anything. That is the only way the unsupported-format
+ * branch is reachable, so the test has to reach it the same way.
+ */
+const pickFile = async (file: File) => {
+  const input = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+  await userEvent.upload(input, file, { applyAccept: false });
+};
+
 // The flag is a build-time constant; a getter lets each test pick its value.
 const flags = vi.hoisted(() => ({ parentalControls: true }));
 vi.mock("../../config/featureFlags", () => ({
@@ -69,8 +100,14 @@ const drawnSteps = () =>
   [...document.querySelectorAll<HTMLElement>("[data-step]")].map((element) => element.dataset.step);
 
 beforeEach(async () => {
+  vi.clearAllMocks();
   flags.parentalControls = true;
   await i18n.changeLanguage("en");
+  apiGet.mockImplementation((path: string) =>
+    path === "/settings/avatar"
+      ? Promise.resolve({ data: AVATAR_LIMITS })
+      : new Promise(() => {}),
+  );
 });
 
 describe("ProfileFormDialog — maturity limit", () => {
@@ -259,5 +296,91 @@ describe("ProfileFormDialog — parental controls flag off", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
     expect(submitted(onSubmit)).toEqual({ name: "Kid", allowed_library_ids: ["lib_movies"] });
+  });
+});
+
+describe("ProfileFormDialog — photo on create", () => {
+  it("offers the photo on create and hands the picked file to the parent", async () => {
+    const onSubmit = renderDialog(null);
+
+    // The control is there before any profile exists — the whole point:
+    // previously the block was rendered only in edit mode.
+    await userEvent.click(screen.getByRole("button", { name: "Add photo" }));
+    await userEvent.type(screen.getByLabelText("Profile name"), "Bia");
+    const file = fakeFile("bia.png", "image/png", 1024);
+    await pickFile(file);
+
+    // Held, not uploaded: there is no profile id to upload against yet.
+    expect(await screen.findByText("Saved once the profile is created.")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    expect(submitted(onSubmit)).toEqual({
+      name: "Bia",
+      allowed_library_ids: [],
+      avatarFile: file,
+    });
+  });
+
+  it("submits without the key when no photo was picked", async () => {
+    const onSubmit = renderDialog(null);
+
+    await userEvent.type(screen.getByLabelText("Profile name"), "Bia");
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    expect(submitted(onSubmit)).toEqual({ name: "Bia", allowed_library_ids: [] });
+  });
+
+  it("drops a held photo when the operator removes it", async () => {
+    const onSubmit = renderDialog(null);
+
+    await userEvent.type(screen.getByLabelText("Profile name"), "Bia");
+    await pickFile(fakeFile("bia.png", "image/png", 1024));
+    await userEvent.click(await screen.findByRole("button", { name: "Remove" }));
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+
+    expect(submitted(onSubmit)).toEqual({ name: "Bia", allowed_library_ids: [] });
+  });
+});
+
+describe("ProfileFormDialog — local file check", () => {
+  it("states the cap the server reports, not a hard-coded one", async () => {
+    apiGet.mockResolvedValue({ data: { ...AVATAR_LIMITS, max_size_mb: 9 } });
+    renderDialog(null);
+
+    expect(await screen.findByText("PNG, JPEG or WebP up to 9MB.")).toBeInTheDocument();
+  });
+
+  it("refuses an oversized file before the profile is created", async () => {
+    const onSubmit = renderDialog(null);
+    // Wait for the reported cap so the check runs against it, not the fallback.
+    await screen.findByText("PNG, JPEG or WebP up to 2MB.");
+
+    await userEvent.type(screen.getByLabelText("Profile name"), "Bia");
+    await pickFile(fakeFile("huge.png", "image/png", 3 * 1024 * 1024));
+
+    expect(
+      await screen.findByText("The image is too large. Pick a file under 2MB."),
+    ).toBeInTheDocument();
+
+    // Creating still works — it just goes ahead without the photo,
+    // rather than creating the profile and then failing the upload.
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+    expect(submitted(onSubmit)).toEqual({ name: "Bia", allowed_library_ids: [] });
+  });
+
+  it("refuses a format the storage does not accept, picked past the accept filter", async () => {
+    const onSubmit = renderDialog(null);
+    await screen.findByText("PNG, JPEG or WebP up to 2MB.");
+
+    await userEvent.type(screen.getByLabelText("Profile name"), "Bia");
+    await pickFile(fakeFile("clip.gif", "image/gif", 1024));
+
+    expect(
+      await screen.findByText("Unsupported format. Use PNG, JPEG or WebP."),
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Create" }));
+    expect(submitted(onSubmit)).toEqual({ name: "Bia", allowed_library_ids: [] });
   });
 });

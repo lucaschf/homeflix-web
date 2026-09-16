@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ChangeEvent } from "react";
 import {
   Box,
   Button,
@@ -19,9 +19,14 @@ import { alpha } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { border, fontFamily, fontSize, whiteAlpha, scrim } from "../../theme/tokens";
 import { error as errorColor } from "../../theme/colors";
-import { useDeleteProfileAvatar, useUploadProfileAvatar } from "../../api/auth";
+import {
+  DEFAULT_AVATAR_LIMITS,
+  useAvatarLimits,
+  useDeleteProfileAvatar,
+  useUploadProfileAvatar,
+} from "../../api/auth";
 import { ApiError } from "../../api/client";
-import type { CreateProfileInput, Library, Profile } from "../../api/types";
+import type { AvatarLimits, CreateProfileInput, Library, Profile } from "../../api/types";
 import { PARENTAL_CONTROLS_ENABLED } from "../../config/featureFlags";
 import { Avatar } from "../auth/Avatar";
 import { initialsForName, toneForProfile } from "../auth/avatarUtils";
@@ -37,6 +42,19 @@ export interface ProfileFormSubmit {
    * alone, which the parent must forward as an omitted field.
    */
   maturity_limit?: number | null;
+  /**
+   * The photo the operator picked while creating the profile, or
+   * ``undefined`` when they picked none. Only ever set in create mode:
+   * the avatar is keyed by profile id on the backend, so there is
+   * nowhere to put the bytes until the profile exists. The parent
+   * uploads them as a second request once the create returns, and owns
+   * what to say if that second request fails.
+   *
+   * In edit mode the dialog uploads on pick and this stays unset — the
+   * profile is already there, so waiting for Save would only delay the
+   * feedback.
+   */
+  avatarFile?: File;
 }
 
 interface ProfileFormDialogProps {
@@ -56,6 +74,30 @@ interface ProfileFormDialogProps {
    * so this component just signals "user wants to delete".
    */
   onDelete?: () => void;
+}
+
+/** MIME types the backend's avatar storage accepts. */
+const ACCEPTED_AVATAR_TYPES: string[] = ["image/png", "image/jpeg", "image/webp"];
+const AVATAR_ACCEPT = ACCEPTED_AVATAR_TYPES.join(",");
+
+/**
+ * Local pre-check mirroring what the upload route enforces, returning
+ * the translation key for the rejection or ``null`` when the file
+ * passes.
+ *
+ * On edit it just saves a round-trip. On create it matters more: the
+ * profile and the photo are two requests, so a file the server would
+ * refuse turns into "profile created, photo missing". Catching it
+ * before the first request keeps that partial state rare.
+ */
+function rejectionKeyFor(file: File, limits: AvatarLimits): string | null {
+  if (!ACCEPTED_AVATAR_TYPES.includes(file.type)) {
+    return "profileManagement.avatar.errors.unsupported";
+  }
+  if (file.size > limits.max_size_bytes) {
+    return "profileManagement.avatar.errors.tooLarge";
+  }
+  return null;
 }
 
 /** Neutral outlined look shared by "Change photo" and "Cancel". */
@@ -94,6 +136,15 @@ const outlinedNeutralSx = {
  * (avatar, name, libraries) in a narrow column beside the limit; on
  * narrower screens the sections stack, basics first. Without the ladder
  * there is only the basics section, at the ``sm`` width.
+ *
+ * The photo is offered in BOTH modes. In edit mode picking a file
+ * uploads it immediately, as before. In create mode there is no profile
+ * id yet — the backend keys avatar storage by it — so the file is held,
+ * previewed locally, and handed to the parent on submit as
+ * ``avatarFile``; the parent creates the profile and then uploads. Both
+ * paths check size and MIME locally first, against
+ * ``GET /api/v1/settings/avatar`` (the cap is operator-tunable, so
+ * hard-coding it would disagree with the server).
  *
  * Submit emits ``{ name, allowed_library_ids }`` plus
  * ``maturity_limit`` ONLY when the operator changed it: an unchanged
@@ -142,9 +193,45 @@ export function ProfileFormDialog({
   const uploadAvatar = useUploadProfileAvatar();
   const deleteAvatar = useDeleteProfileAvatar();
   const avatarBusy = uploadAvatar.isPending || deleteAvatar.isPending;
+  // Falls back while the query is in flight or failed, so the picker
+  // always has a cap to check against.
+  const { data: avatarLimits } = useAvatarLimits();
+  const limits = avatarLimits ?? DEFAULT_AVATAR_LIMITS;
+
+  // Create mode only: the photo waits here until the profile exists,
+  // with the object URL that previews it. The two are one piece of
+  // state so the preview can never point at a file that was replaced.
+  const [pending, setPending] = useState<{ file: File; previewUrl: string } | null>(null);
+  // Mirrors ``pending.previewUrl`` for the revoke, which has to run
+  // from a handler and from unmount — neither of which can read state.
+  const pendingUrlRef = useRef<string | null>(null);
+
+  /** Hold a file (or drop the held one), revoking the URL it replaces. */
+  const setPendingAvatar = (file: File | null) => {
+    if (pendingUrlRef.current) URL.revokeObjectURL(pendingUrlRef.current);
+    if (!file) {
+      pendingUrlRef.current = null;
+      setPending(null);
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    pendingUrlRef.current = previewUrl;
+    setPending({ file, previewUrl });
+  };
+
+  // Last revoke: a dialog closed on a held photo would leak it.
+  useEffect(
+    () => () => {
+      if (pendingUrlRef.current) URL.revokeObjectURL(pendingUrlRef.current);
+    },
+    [],
+  );
+
+  // Edit mode shows what the server has; create mode, the local preview.
+  const shownAvatarUrl = profile ? avatarUrl : (pending?.previewUrl ?? null);
 
   const openFilePicker = () => {
-    if (avatarBusy || !profile) return;
+    if (avatarBusy) return;
     setAvatarError(null);
     fileInputRef.current?.click();
   };
@@ -154,7 +241,20 @@ export function ProfileFormDialog({
     // Reset the input value so picking the SAME file again still
     // fires ``onChange`` (browsers de-dupe identical paths).
     event.target.value = "";
-    if (!file || !profile) return;
+    if (!file) return;
+
+    const rejectionKey = rejectionKeyFor(file, limits);
+    if (rejectionKey) {
+      setAvatarError(t(rejectionKey, { size: limits.max_size_mb }));
+      return;
+    }
+
+    // No profile yet: hold the bytes for the parent's second request.
+    if (!profile) {
+      setPendingAvatar(file);
+      return;
+    }
+
     try {
       const updated = await uploadAvatar.mutateAsync({
         profileId: profile.id,
@@ -162,8 +262,12 @@ export function ProfileFormDialog({
       });
       setAvatarUrl(updated.avatar_url);
     } catch (err) {
+      // The local check above already covers the usual 413 / 415, but
+      // the server is still the authority — an operator can lower the
+      // cap between the read and the upload, and only the server
+      // decodes the bytes to see what they really are.
       if (err instanceof ApiError && err.status === 413) {
-        setAvatarError(t("profileManagement.avatar.errors.tooLarge"));
+        setAvatarError(t("profileManagement.avatar.errors.tooLarge", { size: limits.max_size_mb }));
       } else if (err instanceof ApiError && err.status === 415) {
         setAvatarError(t("profileManagement.avatar.errors.unsupported"));
       } else {
@@ -173,8 +277,13 @@ export function ProfileFormDialog({
   };
 
   const handleRemoveAvatar = async () => {
-    if (!profile) return;
     setAvatarError(null);
+    // Nothing was uploaded yet — dropping the held file is the whole
+    // removal.
+    if (!profile) {
+      setPendingAvatar(null);
+      return;
+    }
     try {
       const updated = await deleteAvatar.mutateAsync(profile.id);
       setAvatarUrl(updated.avatar_url);
@@ -211,6 +320,7 @@ export function ProfileFormDialog({
       name: trimmedName,
       allowed_library_ids: [...selected],
       ...(PARENTAL_CONTROLS_ENABLED && limit !== initialLimit ? { maturity_limit: limit } : {}),
+      ...(pending ? { avatarFile: pending.file } : {}),
     });
   };
 
@@ -289,88 +399,99 @@ export function ProfileFormDialog({
           }}
         >
           <Box component="section" aria-label={t("profileManagement.sections.basics")}>
-            {isEdit && profile && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2.5 }}>
-                <Box sx={{ position: "relative", flexShrink: 0 }}>
-                  <Avatar
-                    initials={initialsForName(profile.name)}
-                    tone={toneForProfile(profile.id)}
-                    avatarUrl={avatarUrl}
-                    size={72}
-                    shape="circle"
-                  />
-                  {avatarBusy && (
-                    <Box
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2.5 }}>
+              <Box sx={{ position: "relative", flexShrink: 0 }}>
+                <Avatar
+                  // On create the initials follow the name being typed,
+                  // so the tile is never a bare "?" once there is a name.
+                  initials={initialsForName(profile ? profile.name : name)}
+                  tone={toneForProfile(profile?.id ?? "")}
+                  avatarUrl={shownAvatarUrl}
+                  size={72}
+                  shape="circle"
+                />
+                {avatarBusy && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: "50%",
+                      bgcolor: scrim(0.55),
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <CircularProgress size={22} sx={{ color: "primary.main" }} />
+                  </Box>
+                )}
+              </Box>
+              <Box
+                sx={{
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: 0.5,
+                }}
+              >
+                <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5 }}>
+                  <Button
+                    onClick={openFilePicker}
+                    disabled={avatarBusy || submitting}
+                    variant="outlined"
+                    size="small"
+                    sx={outlinedNeutralSx}
+                  >
+                    {t(
+                      shownAvatarUrl
+                        ? "profileManagement.avatar.change"
+                        : "profileManagement.avatar.add",
+                    )}
+                  </Button>
+                  {shownAvatarUrl && (
+                    <Button
+                      onClick={handleRemoveAvatar}
+                      disabled={avatarBusy || submitting}
+                      size="small"
+                      color="inherit"
                       sx={{
-                        position: "absolute",
-                        inset: 0,
-                        borderRadius: "50%",
-                        bgcolor: scrim(0.55),
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
+                        textTransform: "none",
+                        color: "text.secondary",
+                        "&:hover": { color: "text.primary", bgcolor: whiteAlpha(0.04) },
                       }}
                     >
-                      <CircularProgress size={22} sx={{ color: "primary.main" }} />
-                    </Box>
-                  )}
-                </Box>
-                <Box
-                  sx={{
-                    minWidth: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    gap: 0.5,
-                  }}
-                >
-                  <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 0.5 }}>
-                    <Button
-                      onClick={openFilePicker}
-                      disabled={avatarBusy || submitting}
-                      variant="outlined"
-                      size="small"
-                      sx={outlinedNeutralSx}
-                    >
-                      {t("profileManagement.avatar.change")}
+                      {t("profileManagement.avatar.remove")}
                     </Button>
-                    {avatarUrl && (
-                      <Button
-                        onClick={handleRemoveAvatar}
-                        disabled={avatarBusy || submitting}
-                        size="small"
-                        color="inherit"
-                        sx={{
-                          textTransform: "none",
-                          color: "text.secondary",
-                          "&:hover": { color: "text.primary", bgcolor: whiteAlpha(0.04) },
-                        }}
-                      >
-                        {t("profileManagement.avatar.remove")}
-                      </Button>
-                    )}
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {t("profileManagement.avatar.hint")}
-                  </Typography>
-                  {avatarError && (
-                    <Typography
-                      variant="caption"
-                      sx={{ color: alpha(errorColor.light, 0.95), mt: 0.25 }}
-                    >
-                      {avatarError}
-                    </Typography>
                   )}
                 </Box>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  hidden
-                  onChange={handleFileChange}
-                />
+                <Typography variant="caption" color="text.secondary">
+                  {t("profileManagement.avatar.hint", { size: limits.max_size_mb })}
+                </Typography>
+                {/* Says the photo is not saved yet: on create it only
+                    reaches the server after the profile does. */}
+                {!profile && pending && (
+                  <Typography variant="caption" color="text.secondary">
+                    {t("profileManagement.avatar.pending")}
+                  </Typography>
+                )}
+                {avatarError && (
+                  <Typography
+                    variant="caption"
+                    sx={{ color: alpha(errorColor.light, 0.95), mt: 0.25 }}
+                  >
+                    {avatarError}
+                  </Typography>
+                )}
               </Box>
-            )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={AVATAR_ACCEPT}
+                hidden
+                onChange={handleFileChange}
+              />
+            </Box>
 
             <Typography
               component="label"

@@ -15,13 +15,14 @@ import { alpha } from "@mui/material/styles";
 import { Pencil, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { fontSize, whiteAlpha, inkAlpha, peachAlpha } from "../theme/tokens";
-import { error } from "../theme/colors";
+import { error, warning } from "../theme/colors";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   useCreateProfile,
   useDeleteProfile,
   useProfiles,
   useUpdateProfile,
+  useUploadProfileAvatar,
 } from "../api/auth";
 import { useLibraries } from "../api/hooks";
 import { apiErrorCode } from "../api/errors";
@@ -53,6 +54,14 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
  * the backend's 409 ("can't delete the last profile") into a
  * friendly inline message in the confirm dialog.
  *
+ * Creating with a photo is two requests: ``POST /profiles`` and then
+ * ``POST /profiles/{id}/avatar``, since avatar storage is keyed by
+ * profile id and there is nowhere to put the bytes first. The profile is
+ * the part that matters, so a failed upload does not roll it back or
+ * keep the form open — the screen says the photo did not go up and that
+ * it can be added by editing. The dialog checks size and format locally
+ * before the first request, which keeps that outcome rare.
+ *
  * Create, update and delete run through ``useParentalUnlock().run``
  * (ADR-035): a 403 ``PARENTAL_PIN_REQUIRED`` opens the PIN challenge and
  * the request is sent once more after the unlock. Errors are reported by
@@ -69,6 +78,9 @@ export function ManageProfiles() {
   const createProfile = useCreateProfile();
   const updateProfile = useUpdateProfile();
   const deleteProfile = useDeleteProfile();
+  // Second step of the create flow. Edit-mode uploads are the dialog's
+  // own, on pick — this instance only ever runs after a create.
+  const uploadAvatar = useUploadProfileAvatar();
   const { run } = useParentalUnlock();
 
   const [editing, setEditing] = useState<Profile | null>(null);
@@ -76,9 +88,14 @@ export function ManageProfiles() {
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Profile | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  // Set when a profile was created but its photo did not upload. Lives
+  // here, not in the dialog: the dialog is gone by then, and re-opening
+  // it would offer to create a second profile.
+  const [avatarWarning, setAvatarWarning] = useState<string | null>(null);
 
   const profiles = profilesQuery.data ?? [];
-  const submitting = createProfile.isPending || updateProfile.isPending;
+  const submitting =
+    createProfile.isPending || updateProfile.isPending || uploadAvatar.isPending;
   const deleting = deleteProfile.isPending;
   const dialogOpen = creating || editing !== null;
 
@@ -94,12 +111,14 @@ export function ManageProfiles() {
 
   const openCreate = () => {
     setFormError(null);
+    setAvatarWarning(null);
     setEditing(null);
     setCreating(true);
   };
 
   const openEdit = (profile: Profile) => {
     setFormError(null);
+    setAvatarWarning(null);
     setCreating(false);
     setEditing(profile);
   };
@@ -130,13 +149,30 @@ export function ManageProfiles() {
           }),
         );
       } else {
-        await run(() =>
+        const created = await run(() =>
           createProfile.mutateAsync({
             name: body.name,
             allowed_library_ids: body.allowed_library_ids,
             ...limit,
           }),
         );
+        // Step two, and deliberately not inside the try that owns
+        // ``formError``: the profile already exists, so an upload
+        // failure is a warning about a missing photo, not a failed
+        // save. The avatar routes carry no parental gate (ADR-035), so
+        // this one stays outside ``run``.
+        if (body.avatarFile) {
+          try {
+            await uploadAvatar.mutateAsync({
+              profileId: created.id,
+              file: body.avatarFile,
+            });
+          } catch {
+            setAvatarWarning(
+              t("profileManagement.errors.createdWithoutAvatar", { name: created.name }),
+            );
+          }
+        }
       }
       closeDialog();
     } catch (err) {
@@ -214,6 +250,26 @@ export function ManageProfiles() {
         >
           {t("profileManagement.manageTitle")}
         </Typography>
+
+        {/* The profile was created; only its photo is missing. Sits on
+            the screen rather than in the form, which is already closed. */}
+        {avatarWarning && (
+          <Typography
+            role="status"
+            sx={{
+              maxWidth: 560,
+              p: 1.5,
+              borderRadius: 1,
+              bgcolor: alpha(warning.main, 0.08),
+              border: `1px solid ${alpha(warning.main, 0.25)}`,
+              color: alpha(warning.light, 0.95),
+              fontSize: "0.6875rem",
+              textAlign: "center",
+            }}
+          >
+            {avatarWarning}
+          </Typography>
+        )}
 
         {profilesQuery.isLoading ? (
           <CircularProgress sx={{ color: "primary.main" }} />

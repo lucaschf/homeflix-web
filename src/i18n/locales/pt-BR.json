@@ -159,14 +159,17 @@
       "deleteFailed": "Não foi possível apagar o perfil. Tente novamente.",
       "cannotDeleteLast": "Você precisa ter ao menos um perfil ativo. Crie outro antes de apagar este.",
       "pinNotConfigured": "Defina um PIN parental antes de dar um limite de idade a um perfil. Defina-o primeiro na seção PIN parental abaixo e depois defina o limite.",
-      "conflict": "Este perfil foi alterado ao mesmo tempo em outro dispositivo. Feche o formulário e tente novamente."
+      "conflict": "Este perfil foi alterado ao mesmo tempo em outro dispositivo. Feche o formulário e tente novamente.",
+      "createdWithoutAvatar": "{{name}} foi criado, mas a foto não subiu. Abra o perfil para adicioná-la."
     },
     "avatar": {
+      "add": "Adicionar foto",
       "change": "Trocar foto",
       "remove": "Remover",
-      "hint": "PNG, JPEG ou WebP até 2MB.",
+      "hint": "PNG, JPEG ou WebP até {{size}}MB.",
+      "pending": "Será salva quando o perfil for criado.",
       "errors": {
-        "tooLarge": "A imagem é muito grande. Escolha um arquivo com menos de 2MB.",
+        "tooLarge": "A imagem é muito grande. Escolha um arquivo com menos de {{size}}MB.",
         "unsupported": "Formato não suportado. Use PNG, JPEG ou WebP.",
         "uploadFailed": "Não foi possível enviar a foto. Tente novamente.",
         "removeFailed": "Não foi possível remover a foto. Tente novamente."

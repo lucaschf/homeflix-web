@@ -1381,7 +1381,6 @@ export interface LoginInput {
 
 export interface UpdateProfileInput {
   name?: string;
-  avatar_url?: string | null;
   // ``null`` means "leave the ACL alone" (PATCH-style); an explicit
   // ``[]`` revokes every library; a list replaces.
   allowed_library_ids?: string[] | null;
@@ -1392,13 +1391,32 @@ export interface UpdateProfileInput {
 
 export interface CreateProfileInput {
   name: string;
-  avatar_url?: string | null;
   // Default-deny on the backend when omitted. Pass an explicit list
   // to grant access at creation time.
   allowed_library_ids?: string[] | null;
   // Omitted or ``null`` creates an unrestricted profile.
   maturity_limit?: number | null;
 }
+
+// ``GET /api/v1/settings/avatar`` — what an avatar upload must satisfy
+// right now. Operator-tunable, so a client that hard-codes the cap
+// either rejects a file the server would take or lets one through for
+// the server to refuse with 413.
+//
+// Neither ``CreateProfileInput`` nor ``UpdateProfileInput`` carries an
+// ``avatar_url``: the backend stopped reading the field (it let a caller
+// point a profile at any third-party host). The avatar is set only by
+// uploading bytes to ``POST /profiles/{id}/avatar``.
+export interface AvatarLimits {
+  /** The exact threshold the upload is refused above. */
+  max_size_bytes: number;
+  /** The same cap in megabytes, for the human-readable hint. */
+  max_size_mb: number;
+  /** Side of the square the upload is centre-cropped and scaled to. */
+  size_pixels: number;
+}
+
+export type AvatarLimitsResponse = ApiDetailResponse<AvatarLimits>;
 
 // =============================================================================
 // Admin — Movie Relink (TMDB review queue)

@@ -10,6 +10,7 @@
 // - ``POST   /api/v1/profiles/{id}/switch`` — set the active profile.
 // - ``PUT    /api/v1/profiles/{id}``        — partial profile update.
 // - ``DELETE /api/v1/profiles/{id}``        — soft-delete (409 on last).
+// - ``GET    /api/v1/settings/avatar``      — avatar upload limits.
 //
 // The ``credentials: 'include'`` setting in ``client.ts`` is what
 // makes the ``homeflix_session`` cookie roundtrip — these hooks
@@ -24,6 +25,8 @@ import {
 import { ApiError, api } from "./client";
 import { PARENTAL_GATE_HANDLED_BY_CALLER } from "./parentalGate";
 import type {
+  AvatarLimits,
+  AvatarLimitsResponse,
   CreateProfileInput,
   LoginInput,
   Profile,
@@ -45,6 +48,10 @@ export const authKeys = {
   all: ["auth"] as const,
   currentUser: ["auth", "currentUser"] as const,
   profiles: ["auth", "profiles"] as const,
+  // Under ``["auth", ...]`` deliberately: the avatar limits are an
+  // account-wide operator setting, not profile-scoped, so a profile
+  // switch must not drop them (see ``resetProfileScopedCache``).
+  avatarLimits: ["auth", "avatarLimits"] as const,
 };
 
 /**
@@ -318,6 +325,50 @@ export function useDeleteProfile() {
       }
       await queryClient.invalidateQueries({ queryKey: authKeys.profiles });
     },
+  });
+}
+
+/**
+ * What an avatar upload must satisfy when the server cannot be asked.
+ *
+ * A backend that predates ``GET /settings/avatar`` answers 404; these
+ * are the values its ``AvatarConfig`` defaults to, so the client still
+ * checks the cap it would have hit anyway.
+ */
+export const DEFAULT_AVATAR_LIMITS: AvatarLimits = {
+  max_size_bytes: 2 * 1024 * 1024,
+  max_size_mb: 2,
+  size_pixels: 256,
+};
+
+/**
+ * Avatar upload limits for the current household.
+ *
+ * Lives beside the avatar mutations rather than with the admin settings
+ * hooks: this is the member-facing projection (size cap and output
+ * dimensions only, no storage path) and its only consumers are the
+ * avatar controls.
+ *
+ * A 404 resolves to ``DEFAULT_AVATAR_LIMITS`` instead of erroring, so
+ * the file picker keeps validating against a sane cap against a backend
+ * that does not serve the route yet. Any other failure leaves the query
+ * in its error state and consumers fall back to the same defaults.
+ */
+export function useAvatarLimits() {
+  return useQuery({
+    queryKey: authKeys.avatarLimits,
+    queryFn: async (): Promise<AvatarLimits> => {
+      try {
+        const res = await api.get<AvatarLimitsResponse>("/settings/avatar");
+        return res.data;
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) return DEFAULT_AVATAR_LIMITS;
+        throw err;
+      }
+    },
+    // An operator edit is rare and the cap only gates a local check the
+    // server repeats anyway, so a long stale window costs nothing.
+    staleTime: 5 * 60 * 1000,
   });
 }
 
