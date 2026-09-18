@@ -10,10 +10,10 @@ import {
 } from "../utils/playerShortcuts";
 import { PlayerShortcutsCard } from "./PlayerShortcutsCard";
 
-function renderCard(onClose = vi.fn()) {
+function renderCard({ hasEpisodes = true, onClose = vi.fn() } = {}) {
   render(
     <ThemeProvider theme={theme}>
-      <PlayerShortcutsCard onClose={onClose} />
+      <PlayerShortcutsCard onClose={onClose} hasEpisodes={hasEpisodes} />
     </ThemeProvider>,
   );
   return onClose;
@@ -45,8 +45,19 @@ describe("PlayerShortcutsCard", () => {
     expect(screen.getByText(`Forward ${FORWARD_SEEK_SECONDS}s`)).toBeInTheDocument();
   });
 
+  it("keeps the episode keys off a movie", () => {
+    // A movie has no next episode; a row for `N` would be advertising a
+    // key that does nothing.
+    renderCard({ hasEpisodes: false });
+
+    expect(screen.queryByText("Episodes")).not.toBeInTheDocument();
+    expect(screen.queryByText("Next episode")).not.toBeInTheDocument();
+    // The rest of the map is unaffected.
+    expect(screen.getByText("Playback")).toBeInTheDocument();
+  });
+
   it("closes on the scrim but not on the card", () => {
-    const onClose = renderCard();
+    const onClose = renderCard({ onClose: vi.fn() });
 
     fireEvent.click(screen.getByRole("dialog"));
     expect(onClose).not.toHaveBeenCalled();

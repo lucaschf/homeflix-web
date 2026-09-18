@@ -398,12 +398,18 @@
       "groups": {
         "playback": "Reprodução",
         "audio": "Áudio e legenda",
-        "display": "Exibição"
+        "display": "Exibição",
+        "episodes": "Episódios"
       },
       "playPause": "Pausar / continuar",
       "rewind": "Voltar {{seconds}}s",
       "forward": "Avançar {{seconds}}s",
       "exit": "Sair da tela cheia / voltar",
+      "seekPercent": "Ir para 0–90%",
+      "speed": "Velocidade",
+      "nextEpisode": "Próximo episódio",
+      "previousEpisode": "Episódio anterior",
+      "episodeList": "Lista de episódios",
       "audioMenu": "Menu de áudio",
       "subtitleMenu": "Menu de legendas",
       "cycleAudio": "Trocar faixa de áudio",

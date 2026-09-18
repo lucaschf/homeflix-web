@@ -47,6 +47,8 @@ The backend must be running separately (Vite proxies `/api` to it in dev).
 | `Space` / `K` | Play / Pause |
 | `←` | Rewind 10s |
 | `→` | Forward 30s |
+| `0`–`9` | Jump to that tenth of the runtime |
+| `<` / `>` | Slower / faster, along the speed menu's ladder |
 | `↑` | Volume up |
 | `↓` | Volume down |
 | `M` | Mute / Unmute |
@@ -57,6 +59,8 @@ The backend must be running separately (Vite proxies `/api` to it in dev).
 | `A` | Cycle picture shape |
 | `B` | Cycle audio track |
 | `V` | Cycle subtitle track (… → off → first) |
+| `N` / `P` | Next / previous episode (series only) |
+| `E` | Toggle the episode selector (series only) |
 | `?` | Show the keyboard map |
 | `Esc` | Close the topmost surface / exit fullscreen / go back |
 
@@ -66,7 +70,8 @@ This table is also in the player itself: `?` (or the gear ▸ **Keyboard shortcu
 draws it over the picture, grouped by context. The card doesn't trap focus — the
 keys it lists keep working while it is up, so a row can be read and tried in one
 go. It is rendered from `src/utils/playerShortcuts.ts`, which is the list to
-extend when a binding is added.
+extend when a binding is added. The episode group is left out while watching a
+movie, where those keys do nothing.
 
 Player shortcuts are bare keys: anything held with Ctrl, Cmd or Alt belongs to
 the browser and the player ignores it.
