@@ -2264,10 +2264,9 @@ export function Player() {
           resetHideTimer();
           break;
         case "a":
-          // VLC's picture-shape key. Opens the menu instead of cycling
-          // blind — same contract as the audio/subtitle menus.
-          toggleOverlayMenu("aspect");
-          showAction(<Proportions size={28} />);
+          // VLC's picture-shape key, and VLC's behaviour with it: step
+          // to the next shape, name it in the OSD, open nothing.
+          cycleAspect();
           break;
         case "t":
           // Audio track menu — ``t`` for track, since ``a`` now belongs
@@ -2288,9 +2287,10 @@ export function Player() {
           cycleSubtitleTrack();
           break;
         case "c":
-          // Cycle the picture shape without opening anything, the way
-          // ``b``/``v`` cycle their tracks.
-          cycleAspect();
+          // The picture-shape list, for picking a shape instead of
+          // walking to it — same contract as the audio/subtitle menus.
+          toggleOverlayMenu("aspect");
+          showAction(<Proportions size={28} />);
           break;
         case "escape":
           // While the post-play panel is up, Escape closes it and

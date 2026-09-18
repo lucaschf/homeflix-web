@@ -210,20 +210,20 @@ function press(key: string, modifiers: KeyboardEventInit = {}) {
 }
 
 describe("Player — overlay menu shortcuts", () => {
-  it("opens the picture-shape list on `a`", async () => {
+  it("opens the picture-shape list on `c`", async () => {
     await mountPlaying();
 
-    press("a");
+    press("c");
 
     expect(screen.getByText("Original")).toBeInTheDocument();
     expect(screen.getByText("4:3")).toBeInTheDocument();
   });
 
-  it("closes it again on a second `a`", async () => {
+  it("closes it again on a second `c`", async () => {
     await mountPlaying();
 
-    press("a");
-    press("a");
+    press("c");
+    press("c");
 
     await waitFor(() => expect(screen.queryByText("4:3")).not.toBeInTheDocument());
   });
@@ -234,7 +234,7 @@ describe("Player — overlay menu shortcuts", () => {
     // at a time with only the top one answering the mouse.
     await mountPlaying();
 
-    press("a");
+    press("c");
     expect(screen.getByText("4:3")).toBeInTheDocument();
 
     press("t");
@@ -242,12 +242,12 @@ describe("Player — overlay menu shortcuts", () => {
   });
 
   it("leaves browser and OS shortcuts alone", async () => {
-    // Ctrl+T opens a tab. It must not also open the audio menu behind
-    // it — every player binding is a bare key.
+    // Ctrl+C copies. It must not also open a menu behind the copy —
+    // every player binding is a bare key.
     await mountPlaying();
 
-    press("a", { ctrlKey: true });
-    press("a", { metaKey: true });
+    press("c", { ctrlKey: true });
+    press("c", { metaKey: true });
 
     expect(screen.queryByText("4:3")).not.toBeInTheDocument();
   });
