@@ -37,6 +37,11 @@ export interface Shortcut {
 export interface ShortcutGroup {
   titleKey: string;
   items: readonly Shortcut[];
+  /**
+   * Only shown while watching a series. A movie has no next episode, so
+   * advertising the key would be advertising a key that does nothing.
+   */
+  seriesOnly?: boolean;
 }
 
 /** The cap whose label is a word, not a glyph. */
@@ -57,7 +62,18 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
         labelKey: "player.shortcuts.forward",
         labelValues: { seconds: FORWARD_SEEK_SECONDS },
       },
+      { keys: ["0–9"], labelKey: "player.shortcuts.seekPercent" },
+      { keys: ["<", ">"], labelKey: "player.shortcuts.speed" },
       { keys: ["Esc"], labelKey: "player.shortcuts.exit" },
+    ],
+  },
+  {
+    titleKey: "player.shortcuts.groups.episodes",
+    seriesOnly: true,
+    items: [
+      { keys: ["N"], labelKey: "player.shortcuts.nextEpisode" },
+      { keys: ["P"], labelKey: "player.shortcuts.previousEpisode" },
+      { keys: ["E"], labelKey: "player.shortcuts.episodeList" },
     ],
   },
   {

@@ -28,8 +28,16 @@ import {
  * the card itself is far more likely to be someone reading than someone
  * dismissing.
  */
-export function PlayerShortcutsCard({ onClose }: { onClose: () => void }) {
+export function PlayerShortcutsCard({
+  onClose,
+  hasEpisodes,
+}: {
+  onClose: () => void;
+  /** Whether the title being watched has episodes to step through. */
+  hasEpisodes: boolean;
+}) {
   const { t } = useTranslation();
+  const groups = SHORTCUT_GROUPS.filter((group) => hasEpisodes || !group.seriesOnly);
 
   return (
     <Box
@@ -91,11 +99,13 @@ export function PlayerShortcutsCard({ onClose }: { onClose: () => void }) {
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
+            // Two columns rather than four: the labels are sentences,
+            // and four of them on an 860px card wraps every other one.
+            gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
             gap: { xs: 2, md: 3 },
           }}
         >
-          {SHORTCUT_GROUPS.map((group) => (
+          {groups.map((group) => (
             <Box key={group.titleKey}>
               <Typography
                 variant="eyebrow"

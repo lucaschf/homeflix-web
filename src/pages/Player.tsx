@@ -59,6 +59,7 @@ import {
   type StageSize,
 } from "../utils/aspectRatio";
 import { creditsOnsetAction, playbackEndedAction } from "../utils/creditsSkip";
+import { adjacentEpisode } from "../utils/episodeNavigation";
 import {
   BACKWARD_SEEK_SECONDS,
   FORWARD_SEEK_SECONDS,
@@ -494,45 +495,17 @@ export function Player() {
   // End-credits onset — episode marker for series, movie marker for films.
   const currentCredits = isMovie ? (movieData?.credits ?? null) : (currentEpisode?.credits ?? null);
 
-  // Compute next episode for auto-advance
-  const nextEpisode = useMemo(() => {
-    if (isMovie || !seriesData) return null;
-    const sortedSeasons = [...seriesData.seasons].sort((a, b) => a.season_number - b.season_number);
-    const seasonIdx = sortedSeasons.findIndex((s) => s.season_number === seasonNum);
-    if (seasonIdx < 0) return null;
-    const season = sortedSeasons[seasonIdx];
-    const sortedEps = [...season.episodes].sort((a, b) => a.episode_number - b.episode_number);
-    const epIdx = sortedEps.findIndex((e) => e.episode_number === episodeNum);
-
-    let nextSeason: number;
-    let nextEpNum: number;
-    let nextTitle: string;
-
-    if (epIdx >= 0 && epIdx < sortedEps.length - 1) {
-      // Next episode in same season
-      const ep = sortedEps[epIdx + 1];
-      nextSeason = seasonNum;
-      nextEpNum = ep.episode_number;
-      nextTitle = ep.title;
-    } else if (seasonIdx < sortedSeasons.length - 1) {
-      // First episode of next season
-      const ns = sortedSeasons[seasonIdx + 1];
-      const firstEp = [...ns.episodes].sort((a, b) => a.episode_number - b.episode_number)[0];
-      if (!firstEp) return null;
-      nextSeason = ns.season_number;
-      nextEpNum = firstEp.episode_number;
-      nextTitle = firstEp.title;
-    } else {
-      return null;
-    }
-
-    const label = `S${String(nextSeason).padStart(2, "0")}E${String(nextEpNum).padStart(2, "0")}`;
-    return {
-      season: nextSeason,
-      episode: nextEpNum,
-      title: nextTitle ? `${label} - ${nextTitle}` : label,
-    };
-  }, [isMovie, seriesData, seasonNum, episodeNum]);
+  // Both directions of episode stepping — auto-advance uses the first,
+  // the ``n``/``p`` keys use both. See ``adjacentEpisode`` for why they
+  // share one implementation.
+  const nextEpisode = useMemo(
+    () => (isMovie ? null : adjacentEpisode(seriesData, seasonNum, episodeNum, 1)),
+    [isMovie, seriesData, seasonNum, episodeNum],
+  );
+  const previousEpisode = useMemo(
+    () => (isMovie ? null : adjacentEpisode(seriesData, seasonNum, episodeNum, -1)),
+    [isMovie, seriesData, seasonNum, episodeNum],
+  );
   // Stable handle to the latest mutate function so the auto-save interval
   // and saveCurrentProgress callback don't have to take `saveProgress.mutate`
   // as a dependency (which would re-bind the interval every render and
@@ -2211,6 +2184,50 @@ export function Player() {
     [containerEl],
   );
 
+  // ``n`` / ``p``. Deliberately not ``goToNextEpisode``: that one is the
+  // end-of-episode path and falls back to the series page when the show
+  // runs out, and a keypress that quietly leaves the player is a nasty
+  // surprise. This one simply does nothing at the ends.
+  const stepEpisode = useCallback(
+    (step: 1 | -1) => {
+      const target = step === 1 ? nextEpisode : previousEpisode;
+      if (!target) return;
+      showTrackOsd(target.title);
+      selectEpisode(target.season, target.episode);
+    },
+    [nextEpisode, previousEpisode, selectEpisode, showTrackOsd],
+  );
+
+  // ``<`` / ``>``. Walks the same ladder the settings menu offers rather
+  // than multiplying freely, so the two can't disagree about what a
+  // speed is. A rate saved from elsewhere that isn't on the ladder
+  // steps from 1x.
+  const stepSpeed = useCallback(
+    (step: 1 | -1) => {
+      const video = videoRef.current;
+      if (!video) return;
+      // Step from what is actually playing, not from the saved
+      // preference: that one only catches up when the server answers, so
+      // two quick presses would both step off the same stale value. The
+      // nearest rung, so a rate restored from a preference set elsewhere
+      // steps sensibly instead of snapping back to 1x.
+      const from = SPEEDS.reduce(
+        (best, value, index) =>
+          Math.abs(value - video.playbackRate) <
+          Math.abs(SPEEDS[best] - video.playbackRate)
+            ? index
+            : best,
+        0,
+      );
+      const next = SPEEDS[Math.min(SPEEDS.length - 1, Math.max(0, from + step))];
+      video.playbackRate = next;
+      setPlaybackPrefs({ speed: next });
+      showTrackOsd(`${t("player.speed")}: ${next === 1 ? t("player.normal") : `${next}x`}`);
+      resetHideTimer();
+    },
+    [setPlaybackPrefs, showTrackOsd, resetHideTimer, t],
+  );
+
   const cycleAspect = useCallback(() => {
     const next = aspect.cycle();
     showTrackOsd(`${t("player.aspectRatio")}: ${aspectLabel(next)}`);
@@ -2236,7 +2253,8 @@ export function Player() {
         return;
       }
 
-      switch (e.key.toLowerCase()) {
+      const key = e.key.toLowerCase();
+      switch (key) {
         case " ":
         case "k":
           e.preventDefault();
@@ -2306,6 +2324,26 @@ export function Player() {
           toggleOverlayMenu("aspect");
           showAction(<Proportions size={28} />);
           break;
+        case "n":
+          stepEpisode(1);
+          break;
+        case "p":
+          stepEpisode(-1);
+          break;
+        case "e":
+          // The episode selector, which otherwise only has a mouse
+          // target — and only exists for a series.
+          if (!isMovie && seriesData) {
+            episodeSelector.toggle();
+            resetHideTimer();
+          }
+          break;
+        case "<":
+          stepSpeed(-1);
+          break;
+        case ">":
+          stepSpeed(1);
+          break;
         case "?":
           // The keyboard map. Toggling on the same key means the way in
           // is also the way out, for a viewer who never reaches Escape.
@@ -2322,6 +2360,21 @@ export function Player() {
           else if (postPlayActive && !postPlayEnded) dismissPostPlay();
           else if (isFullscreen) document.exitFullscreen();
           else navigate(-1);
+          break;
+        default:
+          // 0–9 jumps to that tenth of the runtime, the convention every
+          // web player shares. Not a `case` per digit: ten of them would
+          // bury the rest of the map.
+          if (/^[0-9]$/.test(key) && displayDuration > 0) {
+            const digit = Number(key);
+            const target = (displayDuration * digit) / 10;
+            showAction(
+              target >= currentTime ? <SkipForward size={32} /> : <SkipBack size={32} />,
+              `${digit * 10}%`,
+            );
+            userSeekTo(target);
+            resetHideTimer();
+          }
           break;
       }
     };
@@ -2349,6 +2402,13 @@ export function Player() {
     toggleOverlayMenu,
     closeOverlayMenus,
     shortcutsOpen,
+    stepEpisode,
+    stepSpeed,
+    episodeSelector,
+    isMovie,
+    seriesData,
+    currentTime,
+    userSeekTo,
   ]);
 
   const togglePlay = () => {
@@ -3305,7 +3365,10 @@ export function Player() {
       )}
 
       {shortcutsOpen && (
-        <PlayerShortcutsCard onClose={() => setShortcutsOpen(false)} />
+        <PlayerShortcutsCard
+          onClose={() => setShortcutsOpen(false)}
+          hasEpisodes={!isMovie && Boolean(seriesData)}
+        />
       )}
 
       {/* Settings Menu */}

@@ -10,14 +10,15 @@ import i18n from "../i18n";
 import { theme } from "../theme";
 import { Player } from "./Player";
 
-const { apiGet, hlsInstances } = vi.hoisted(() => ({
+const { apiGet, apiPut, hlsInstances } = vi.hoisted(() => ({
   apiGet: vi.fn(),
+  apiPut: vi.fn(),
   hlsInstances: [] as FakeHlsInstance[],
 }));
 
 vi.mock("../api/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../api/client")>()),
-  api: { get: apiGet, post: vi.fn(), put: vi.fn(), patch: vi.fn(), del: vi.fn() },
+  api: { get: apiGet, post: vi.fn(), put: apiPut, patch: vi.fn(), del: vi.fn() },
 }));
 
 interface FakeHlsInstance {
@@ -250,6 +251,51 @@ describe("Player — overlay menu shortcuts", () => {
     press("c", { metaKey: true });
 
     expect(screen.queryByText("4:3")).not.toBeInTheDocument();
+  });
+});
+
+describe("Player — transport shortcuts", () => {
+  beforeEach(() => {
+    // Saving a preference answers with the stored row; ``null`` keeps
+    // the hook on its defaults without leaving a rejected mutation.
+    apiPut.mockResolvedValue({ data: null });
+  });
+
+  it("steps the speed along the ladder the settings menu offers", async () => {
+    await mountPlaying();
+    const video = document.querySelector("video")!;
+
+    press(">");
+    expect(video.playbackRate).toBe(1.25);
+
+    press("<");
+    press("<");
+    expect(video.playbackRate).toBe(0.75);
+  });
+
+  it("stops at the ends of that ladder", async () => {
+    await mountPlaying();
+    const video = document.querySelector("video")!;
+
+    for (let i = 0; i < 8; i += 1) press(">");
+    expect(video.playbackRate).toBe(2);
+
+    for (let i = 0; i < 8; i += 1) press("<");
+    expect(video.playbackRate).toBe(0.5);
+  });
+
+  it("jumps to a tenth of the runtime on a digit", async () => {
+    await mountPlaying();
+
+    press("5");
+
+    // MOVIE runs 9300s, so half of it is 4650 — and a jump that far
+    // remounts the stream anchored at the target second.
+    expect(screen.getByText("50%")).toBeInTheDocument();
+    await waitFor(() => expect(hlsInstances.length).toBeGreaterThan(1));
+    expect(hlsInstances.at(-1)!.loadSource).toHaveBeenCalledWith(
+      expect.stringContaining("start=4650"),
+    );
   });
 });
 

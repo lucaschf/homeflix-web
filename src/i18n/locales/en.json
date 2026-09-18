@@ -398,12 +398,18 @@
       "groups": {
         "playback": "Playback",
         "audio": "Audio & subtitles",
-        "display": "Display"
+        "display": "Display",
+        "episodes": "Episodes"
       },
       "playPause": "Play / pause",
       "rewind": "Back {{seconds}}s",
       "forward": "Forward {{seconds}}s",
       "exit": "Exit fullscreen / go back",
+      "seekPercent": "Jump to 0–90%",
+      "speed": "Speed",
+      "nextEpisode": "Next episode",
+      "previousEpisode": "Previous episode",
+      "episodeList": "Episode list",
       "audioMenu": "Audio menu",
       "subtitleMenu": "Subtitle menu",
       "cycleAudio": "Cycle audio track",
