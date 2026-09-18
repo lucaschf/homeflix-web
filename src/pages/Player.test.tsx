@@ -182,6 +182,77 @@ describe("Player — refused stream", () => {
   });
 });
 
+/**
+ * Mounts far enough for the keyboard handler to be live: metadata is
+ * already cached, so the <video> is in the DOM on the first render
+ * instead of behind the loading overlay.
+ */
+async function mountPlaying() {
+  const client = createQueryClient();
+  client.setQueryData(["movie", MOVIE_ID, "en"], MOVIE);
+  // jsdom's track list is a bare array; the subtitle effect binds to it.
+  vi.spyOn(HTMLMediaElement.prototype, "textTracks", "get").mockReturnValue(
+    Object.assign(new EventTarget(), { length: 0 }) as unknown as TextTrackList,
+  );
+  apiGet.mockImplementation((path: string) => {
+    if (path === `/movies/${MOVIE_ID}`) return Promise.resolve({ data: MOVIE });
+    if (path === `/progress/${MOVIE_ID}`) return Promise.resolve({ data: null });
+    return new Promise(() => {});
+  });
+  renderPlayer(client);
+  await waitFor(() => expect(hlsInstances).toHaveLength(1));
+}
+
+function press(key: string, modifiers: KeyboardEventInit = {}) {
+  act(() => {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key, ...modifiers }));
+  });
+}
+
+describe("Player — overlay menu shortcuts", () => {
+  it("opens the picture-shape list on `a`", async () => {
+    await mountPlaying();
+
+    press("a");
+
+    expect(screen.getByText("Original")).toBeInTheDocument();
+    expect(screen.getByText("4:3")).toBeInTheDocument();
+  });
+
+  it("closes it again on a second `a`", async () => {
+    await mountPlaying();
+
+    press("a");
+    press("a");
+
+    await waitFor(() => expect(screen.queryByText("4:3")).not.toBeInTheDocument());
+  });
+
+  it("never stacks two overlay menus", async () => {
+    // Opening the audio menu has to take the picture-shape menu down
+    // with it, or the viewer is left peeling modals apart one Escape
+    // at a time with only the top one answering the mouse.
+    await mountPlaying();
+
+    press("a");
+    expect(screen.getByText("4:3")).toBeInTheDocument();
+
+    press("t");
+    await waitFor(() => expect(screen.queryByText("4:3")).not.toBeInTheDocument());
+  });
+
+  it("leaves browser and OS shortcuts alone", async () => {
+    // Ctrl+T opens a tab. It must not also open the audio menu behind
+    // it — every player binding is a bare key.
+    await mountPlaying();
+
+    press("a", { ctrlKey: true });
+    press("a", { metaKey: true });
+
+    expect(screen.queryByText("4:3")).not.toBeInTheDocument();
+  });
+});
+
 describe("Player — metadata failures", () => {
   it("explains a restricted title instead of spinning", async () => {
     apiGet.mockImplementation((path: string) => {

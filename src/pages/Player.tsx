@@ -2181,6 +2181,22 @@ export function Player() {
     resetHideTimer();
   }, [subtitleTrackItems, currentSubtitleTrack, showTrackOsd, resetHideTimer, t]);
 
+  // Keyboard toggle for the overlay menus. The one addressed flips, the
+  // others close: two of these stacked means peeling modals apart one
+  // Escape at a time, and only the top one answers the mouse. Anchored
+  // on the container because a key press has no pointer position — the
+  // menu's anchorOrigin puts it bottom-right, by the controls.
+  const toggleOverlayMenu = useCallback(
+    (menu: "aspect" | "audio" | "subtitle") => {
+      setAspectAnchor((prev) => (menu === "aspect" && !prev ? containerEl : null));
+      setAudioAnchor((prev) => (menu === "audio" && !prev ? containerEl : null));
+      setSubtitleAnchor((prev) => (menu === "subtitle" && !prev ? containerEl : null));
+      setSettingsAnchor(null);
+      setSettingsPanel("main");
+    },
+    [containerEl],
+  );
+
   const cycleAspect = useCallback(() => {
     const next = aspect.cycle();
     showTrackOsd(`${t("player.aspectRatio")}: ${aspectLabel(next)}`);
@@ -2249,21 +2265,18 @@ export function Player() {
           break;
         case "a":
           // VLC's picture-shape key. Opens the menu instead of cycling
-          // blind — same contract as the audio/subtitle menus. Uses
-          // containerEl as the anchor since there's no mouse position;
-          // the menu's anchorOrigin places it in the bottom-right
-          // corner near the controls.
-          setAspectAnchor((prev) => (prev ? null : containerEl));
+          // blind — same contract as the audio/subtitle menus.
+          toggleOverlayMenu("aspect");
           showAction(<Proportions size={28} />);
           break;
         case "t":
-          // Toggle audio track menu — ``t`` for track, since ``a`` now
-          // belongs to the picture shape.
-          setAudioAnchor((prev) => (prev ? null : containerEl));
+          // Audio track menu — ``t`` for track, since ``a`` now belongs
+          // to the picture shape.
+          toggleOverlayMenu("audio");
           showAction(<AudioLines size={28} />);
           break;
         case "s":
-          setSubtitleAnchor((prev) => (prev ? null : containerEl));
+          toggleOverlayMenu("subtitle");
           showAction(<Subtitles size={28} />);
           break;
         case "b":
@@ -2312,6 +2325,7 @@ export function Player() {
     cycleAudioTrack,
     cycleSubtitleTrack,
     cycleAspect,
+    toggleOverlayMenu,
   ]);
 
   const togglePlay = () => {
