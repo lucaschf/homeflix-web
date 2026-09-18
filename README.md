@@ -51,11 +51,12 @@ The backend must be running separately (Vite proxies `/api` to it in dev).
 | `↓` | Volume down |
 | `M` | Mute / Unmute |
 | `F` | Toggle fullscreen |
-| `A` | Toggle audio track menu |
+| `A` | Toggle picture shape (aspect ratio) menu |
+| `T` | Toggle audio track menu |
 | `S` | Toggle subtitle menu |
+| `C` | Cycle picture shape |
 | `B` | Cycle audio track |
 | `V` | Cycle subtitle track (… → off → first) |
-| `C` | Cycle picture shape (aspect ratio) |
 | `Esc` | Exit fullscreen / Go back |
 
 All player shortcuts show a brief animated indicator in the center of the viewport confirming the action.
@@ -103,8 +104,9 @@ Configured in Settings (`/settings`).
 Some transfers arrive with the wrong aspect ratio flagged — 4:3 broadcast
 material stored as 16:9 is the usual one, and it plays back horizontally
 stretched with nothing in the stream to say so. The player can override the
-shape the way VLC's *Video ▸ Aspect Ratio* does: the gear in the control bar ▸
-**Aspect ratio**, or `C` to cycle through the list.
+shape the way VLC's *Video ▸ Aspect Ratio* does: `A` opens the list, `C` cycles
+it without opening anything, and the gear in the control bar ▸ **Aspect ratio**
+gets there with the mouse.
 
 - **Original** — the file's own ratio. The default; nothing is touched.
 - **16:9 / 4:3 / 16:10 / 2.35:1 / 1:1** — forced display ratio. The whole frame

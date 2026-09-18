@@ -21,6 +21,7 @@ import {
   Minimize,
   Pause,
   Play,
+  Proportions,
   Settings,
   SkipBack,
   SkipForward,
@@ -1051,6 +1052,9 @@ export function Player() {
     () => videoFitStyle(aspect.mode, stageSize),
     [aspect.mode, stageSize],
   );
+
+  // Picture-shape menu (separate from settings, like audio/subtitles)
+  const [aspectAnchor, setAspectAnchor] = useState<null | HTMLElement>(null);
 
   // Audio menu (separate from settings)
   const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
@@ -2188,6 +2192,11 @@ export function Player() {
       const video = videoRef.current;
       if (!video) return;
 
+      // A browser or OS shortcut is not a player shortcut: Ctrl+T opens
+      // a tab, it does not open the audio menu behind it. Every binding
+      // below is a bare key.
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
       // The still-watching prompt is modal: swallow shortcuts so a
       // stray key can't toggle playback underneath it. Escape doubles
       // as "yes, I'm here" — it dismisses the topmost surface, same
@@ -2239,9 +2248,17 @@ export function Player() {
           resetHideTimer();
           break;
         case "a":
-          // Toggle audio track menu. Uses containerEl as the anchor
-          // since there's no mouse position; the menu's anchorOrigin
-          // places it in the bottom-right corner near the controls.
+          // VLC's picture-shape key. Opens the menu instead of cycling
+          // blind — same contract as the audio/subtitle menus. Uses
+          // containerEl as the anchor since there's no mouse position;
+          // the menu's anchorOrigin places it in the bottom-right
+          // corner near the controls.
+          setAspectAnchor((prev) => (prev ? null : containerEl));
+          showAction(<Proportions size={28} />);
+          break;
+        case "t":
+          // Toggle audio track menu — ``t`` for track, since ``a`` now
+          // belongs to the picture shape.
           setAudioAnchor((prev) => (prev ? null : containerEl));
           showAction(<AudioLines size={28} />);
           break;
@@ -2258,9 +2275,8 @@ export function Player() {
           cycleSubtitleTrack();
           break;
         case "c":
-          // Cycle the picture shape. VLC spends ``a`` on this, but that
-          // key already opens the audio menu here, so it takes ``c`` —
-          // VLC's other picture-geometry key.
+          // Cycle the picture shape without opening anything, the way
+          // ``b``/``v`` cycle their tracks.
           cycleAspect();
           break;
         case "escape":
@@ -2335,8 +2351,11 @@ export function Player() {
     setSettingsPanel("main");
   };
 
+  // Serves both ways into the list — the settings panel and the ``a``
+  // menu. Only one of them is ever open, so closing both is free.
   const changeAspectMode = (mode: AspectMode) => {
     aspect.setMode(mode);
+    setAspectAnchor(null);
     setSettingsAnchor(null);
     setSettingsPanel("main");
   };
@@ -3299,12 +3318,7 @@ export function Player() {
 
         {settingsPanel === "aspect" && [
           <SettingsBackItem key="back" label={t("player.aspectRatio")} onClick={() => setSettingsPanel("main")} />,
-          ...ASPECT_MODES.map((mode) => (
-            <MenuItem key={mode} onClick={() => changeAspectMode(mode)}>
-              {aspect.mode === mode && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
-              <ListItemText inset={aspect.mode !== mode} primary={aspectLabel(mode)} />
-            </MenuItem>
-          )),
+          ...aspectModeItems(aspect.mode, aspectLabel, changeAspectMode),
         ]}
       </Menu>
 
@@ -3347,8 +3361,42 @@ export function Player() {
           </MenuItem>
         ))}
       </Menu>
+
+      {/* Picture Shape Menu — what the ``a`` key opens. The same list
+          also hangs off the settings gear, for viewers who never touch
+          the keyboard. */}
+      <Menu
+        anchorEl={aspectAnchor}
+        open={Boolean(aspectAnchor)}
+        onClose={() => setAspectAnchor(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+        container={containerEl}
+        slotProps={{ paper: { sx: { bgcolor: menuScrim(0.95), backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
+      >
+        {aspectModeItems(aspect.mode, aspectLabel, changeAspectMode)}
+      </Menu>
     </Box>
   );
+}
+
+/**
+ * The picture-shape list, shared by the settings panel and the menu the
+ * ``a`` key opens. A plain array rather than a component so both callers
+ * can spread it straight into ``Menu`` — MUI walks the children for
+ * keyboard navigation, and a wrapper element would hide them.
+ */
+function aspectModeItems(
+  current: AspectMode,
+  label: (mode: AspectMode) => string,
+  onSelect: (mode: AspectMode) => void,
+) {
+  return ASPECT_MODES.map((mode) => (
+    <MenuItem key={mode} onClick={() => onSelect(mode)}>
+      {current === mode && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
+      <ListItemText inset={current !== mode} primary={label(mode)} />
+    </MenuItem>
+  ));
 }
 
 function SettingsBackItem({ label, onClick }: { label: string; onClick: () => void }) {
