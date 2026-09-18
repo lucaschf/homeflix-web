@@ -44,9 +44,18 @@ import { EpisodeRail } from "../components/episode-selector/EpisodeRail";
 import { EpisodeSelectorPanel } from "../components/episode-selector/EpisodeSelectorPanel";
 import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
 import { TitleLogo } from "../components/TitleLogo";
+import { useAspectRatio } from "../hooks/useAspectRatio";
 import { useEpisodeSelector } from "../hooks/useEpisodeSelector";
 import { useIntroAutoSkip } from "../hooks/useIntroAutoSkip";
 import { usePlaybackPreferences } from "../hooks/usePlaybackPreferences";
+import {
+  ASPECT_LABEL_KEYS,
+  ASPECT_MODES,
+  forcedAspectRatio,
+  videoFitStyle,
+  type AspectMode,
+  type StageSize,
+} from "../utils/aspectRatio";
 import { creditsOnsetAction, playbackEndedAction } from "../utils/creditsSkip";
 import {
   subtitlePlayerFontSize,
@@ -403,6 +412,10 @@ export function Player() {
     ? params.movieId ?? ""
     : `epi_${params.seriesId}_${params.season}_${params.episode}`;
   const mediaType = isMovie ? "movie" : "episode";
+  // The *title* a per-title setting hangs off: the movie, or the series
+  // rather than the episode, so a choice made on one episode holds for
+  // the rest of the show.
+  const titleId = isMovie ? params.movieId ?? "" : params.seriesId ?? "";
 
   const { data: movieData, isLoading: movieLoading, error: movieError } = useMovie(
     params.movieId ?? "",
@@ -1000,8 +1013,44 @@ export function Player() {
 
   // Settings menu
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-  type SettingsPanel = "main" | "quality" | "speed";
+  type SettingsPanel = "main" | "quality" | "speed" | "aspect";
   const [settingsPanel, setSettingsPanel] = useState<SettingsPanel>("main");
+
+  // Picture shape. Remembered per title, so a stretched transfer is
+  // corrected once and stays corrected for the rest of the series.
+  const aspect = useAspectRatio(titleId);
+  const aspectLabel = useCallback(
+    (mode: AspectMode) => {
+      // The ratio modes are labelled by their own value ("16:9"); only
+      // the named ones go through i18n.
+      const key = ASPECT_LABEL_KEYS[mode];
+      return key ? t(key) : mode;
+    },
+    [t],
+  );
+
+  // Stage size, measured only while a ratio is forced: fitting a box of
+  // that ratio inside the stage means knowing which axis binds, and CSS
+  // cannot work that out on its own (see ``videoFitStyle``). The stage
+  // is the player container, which is fixed to the viewport, so the
+  // observer fires on resize, rotation and fullscreen alike.
+  const [stageSize, setStageSize] = useState<StageSize | null>(null);
+  useEffect(() => {
+    if (forcedAspectRatio(aspect.mode) === null) return;
+    const el = containerEl;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () =>
+      setStageSize({ width: el.clientWidth, height: el.clientHeight });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [aspect.mode, containerEl]);
+
+  const videoStyle = useMemo(
+    () => videoFitStyle(aspect.mode, stageSize),
+    [aspect.mode, stageSize],
+  );
 
   // Audio menu (separate from settings)
   const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
@@ -2128,6 +2177,12 @@ export function Player() {
     resetHideTimer();
   }, [subtitleTrackItems, currentSubtitleTrack, showTrackOsd, resetHideTimer, t]);
 
+  const cycleAspect = useCallback(() => {
+    const next = aspect.cycle();
+    showTrackOsd(`${t("player.aspectRatio")}: ${aspectLabel(next)}`);
+    resetHideTimer();
+  }, [aspect, aspectLabel, showTrackOsd, resetHideTimer, t]);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
@@ -2202,6 +2257,12 @@ export function Player() {
           // VLC: cycle subtitle track (… → off → first).
           cycleSubtitleTrack();
           break;
+        case "c":
+          // Cycle the picture shape. VLC spends ``a`` on this, but that
+          // key already opens the audio menu here, so it takes ``c`` —
+          // VLC's other picture-geometry key.
+          cycleAspect();
+          break;
         case "escape":
           // While the post-play panel is up, Escape closes it and
           // returns to the credits rather than leaving the player —
@@ -2234,6 +2295,7 @@ export function Player() {
     seekForward,
     cycleAudioTrack,
     cycleSubtitleTrack,
+    cycleAspect,
   ]);
 
   const togglePlay = () => {
@@ -2269,6 +2331,12 @@ export function Player() {
     if (!video) return;
     video.playbackRate = s;
     setPlaybackPrefs({ speed: s });
+    setSettingsAnchor(null);
+    setSettingsPanel("main");
+  };
+
+  const changeAspectMode = (mode: AspectMode) => {
+    aspect.setMode(mode);
     setSettingsAnchor(null);
     setSettingsPanel("main");
   };
@@ -2391,6 +2459,12 @@ export function Player() {
         sx={{
           position: "absolute",
           inset: 0,
+          // Centres the picture when a forced ratio leaves it narrower
+          // or shorter than the stage. Everything else in here is
+          // positioned absolutely, so only the <video> is laid out by it.
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           transformOrigin: "center",
           transition: "transform 480ms cubic-bezier(0.4, 0, 0.2, 1)",
           transform: postPlayActive
@@ -2402,10 +2476,7 @@ export function Player() {
           "@media (prefers-reduced-motion: reduce)": { transition: "none" },
         }}
       >
-        <video
-          ref={videoRef}
-          style={{ width: "100%", height: "100%", objectFit: "contain" }}
-        />
+        <video ref={videoRef} style={videoStyle} />
 
         {/* Subtitle overlay (2.4). Drawn by us — not the browser's ::cue —
             from the hidden native track's active cues, styled by the
@@ -3200,6 +3271,10 @@ export function Player() {
             <ListItemText primary={t("player.speed")} />
             <Typography variant="body2" color="text.secondary">{speed === 1 ? t("player.normal") : `${speed}x`}</Typography>
           </MenuItem>,
+          <MenuItem key="aspect" onClick={() => setSettingsPanel("aspect")}>
+            <ListItemText primary={t("player.aspectRatio")} />
+            <Typography variant="body2" color="text.secondary">{aspectLabel(aspect.mode)}</Typography>
+          </MenuItem>,
         ]}
 
         {settingsPanel === "quality" && [
@@ -3218,6 +3293,16 @@ export function Player() {
             <MenuItem key={s} onClick={() => changeSpeed(s)}>
               {speed === s && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
               <ListItemText inset={speed !== s} primary={s === 1 ? t("player.normal") : `${s}x`} />
+            </MenuItem>
+          )),
+        ]}
+
+        {settingsPanel === "aspect" && [
+          <SettingsBackItem key="back" label={t("player.aspectRatio")} onClick={() => setSettingsPanel("main")} />,
+          ...ASPECT_MODES.map((mode) => (
+            <MenuItem key={mode} onClick={() => changeAspectMode(mode)}>
+              {aspect.mode === mode && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
+              <ListItemText inset={aspect.mode !== mode} primary={aspectLabel(mode)} />
             </MenuItem>
           )),
         ]}

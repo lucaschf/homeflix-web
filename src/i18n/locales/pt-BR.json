@@ -384,6 +384,12 @@
   "player": {
     "quality": "Qualidade",
     "speed": "Velocidade",
+    "aspectRatio": "Proporção",
+    "aspect": {
+      "auto": "Original",
+      "stretch": "Esticar",
+      "zoom": "Zoom (cortar)"
+    },
     "subtitles": "Legendas",
     "audio": "Audio",
     "audioTrack": "Faixa de áudio",
