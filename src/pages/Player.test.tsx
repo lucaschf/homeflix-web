@@ -253,6 +253,52 @@ describe("Player — overlay menu shortcuts", () => {
   });
 });
 
+describe("Player — keyboard map card", () => {
+  const card = { name: "Keyboard shortcuts" };
+
+  it("opens and closes on `?`", async () => {
+    await mountPlaying();
+
+    press("?");
+    expect(screen.getByRole("dialog", card)).toBeInTheDocument();
+
+    press("?");
+    expect(screen.queryByRole("dialog", card)).not.toBeInTheDocument();
+  });
+
+  it("answers Escape by closing the card, not by leaving the player", async () => {
+    await mountPlaying();
+    press("?");
+
+    press("Escape");
+
+    expect(screen.queryByRole("dialog", card)).not.toBeInTheDocument();
+    expect(document.querySelector("video")).toBeInTheDocument();
+  });
+
+  it("steps aside when a menu opens over it", async () => {
+    // A MUI menu portals into its own modal layer, above anything the
+    // player draws — the card would be buried rather than replaced.
+    await mountPlaying();
+    press("?");
+
+    press("c");
+
+    expect(screen.queryByRole("dialog", card)).not.toBeInTheDocument();
+    expect(screen.getByText("4:3")).toBeInTheDocument();
+  });
+
+  it("still answers the keys it is explaining", async () => {
+    // The card is not modal on purpose: read the row, try the key.
+    await mountPlaying();
+    press("?");
+
+    press("c");
+    press("c");
+    await waitFor(() => expect(screen.queryByText("4:3")).not.toBeInTheDocument());
+  });
+});
+
 describe("Player — metadata failures", () => {
   it("explains a restricted title instead of spinning", async () => {
     apiGet.mockImplementation((path: string) => {

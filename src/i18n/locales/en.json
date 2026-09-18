@@ -390,6 +390,31 @@
       "stretch": "Stretch",
       "zoom": "Zoom (crop)"
     },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "escToClose": "Esc to close",
+      "spaceKey": "Space",
+      "wheelHint": "Scroll the wheel over the picture to set the volume.",
+      "groups": {
+        "playback": "Playback",
+        "audio": "Audio & subtitles",
+        "display": "Display"
+      },
+      "playPause": "Play / pause",
+      "rewind": "Back {{seconds}}s",
+      "forward": "Forward {{seconds}}s",
+      "exit": "Exit fullscreen / go back",
+      "audioMenu": "Audio menu",
+      "subtitleMenu": "Subtitle menu",
+      "cycleAudio": "Cycle audio track",
+      "cycleSubtitle": "Cycle subtitle",
+      "volume": "Volume",
+      "mute": "Mute",
+      "cycleAspect": "Cycle picture shape",
+      "aspectMenu": "Picture shape menu",
+      "fullscreen": "Fullscreen",
+      "thisCard": "This card"
+    },
     "subtitles": "Subtitles",
     "audio": "Audio",
     "audioTrack": "Audio track",
