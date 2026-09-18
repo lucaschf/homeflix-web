@@ -21,6 +21,7 @@ import {
   Minimize,
   Pause,
   Play,
+  Proportions,
   Settings,
   SkipBack,
   SkipForward,
@@ -44,9 +45,18 @@ import { EpisodeRail } from "../components/episode-selector/EpisodeRail";
 import { EpisodeSelectorPanel } from "../components/episode-selector/EpisodeSelectorPanel";
 import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
 import { TitleLogo } from "../components/TitleLogo";
+import { useAspectRatio } from "../hooks/useAspectRatio";
 import { useEpisodeSelector } from "../hooks/useEpisodeSelector";
 import { useIntroAutoSkip } from "../hooks/useIntroAutoSkip";
 import { usePlaybackPreferences } from "../hooks/usePlaybackPreferences";
+import {
+  ASPECT_LABEL_KEYS,
+  ASPECT_MODES,
+  forcedAspectRatio,
+  videoFitStyle,
+  type AspectMode,
+  type StageSize,
+} from "../utils/aspectRatio";
 import { creditsOnsetAction, playbackEndedAction } from "../utils/creditsSkip";
 import {
   subtitlePlayerFontSize,
@@ -403,6 +413,10 @@ export function Player() {
     ? params.movieId ?? ""
     : `epi_${params.seriesId}_${params.season}_${params.episode}`;
   const mediaType = isMovie ? "movie" : "episode";
+  // The *title* a per-title setting hangs off: the movie, or the series
+  // rather than the episode, so a choice made on one episode holds for
+  // the rest of the show.
+  const titleId = isMovie ? params.movieId ?? "" : params.seriesId ?? "";
 
   const { data: movieData, isLoading: movieLoading, error: movieError } = useMovie(
     params.movieId ?? "",
@@ -1000,8 +1014,47 @@ export function Player() {
 
   // Settings menu
   const [settingsAnchor, setSettingsAnchor] = useState<null | HTMLElement>(null);
-  type SettingsPanel = "main" | "quality" | "speed";
+  type SettingsPanel = "main" | "quality" | "speed" | "aspect";
   const [settingsPanel, setSettingsPanel] = useState<SettingsPanel>("main");
+
+  // Picture shape. Remembered per title, so a stretched transfer is
+  // corrected once and stays corrected for the rest of the series.
+  const aspect = useAspectRatio(titleId);
+  const aspectLabel = useCallback(
+    (mode: AspectMode) => {
+      // The ratio modes are labelled by their own value ("16:9"); only
+      // the named ones go through i18n.
+      const key = ASPECT_LABEL_KEYS[mode];
+      return key ? t(key) : mode;
+    },
+    [t],
+  );
+
+  // Stage size, measured only while a ratio is forced: fitting a box of
+  // that ratio inside the stage means knowing which axis binds, and CSS
+  // cannot work that out on its own (see ``videoFitStyle``). The stage
+  // is the player container, which is fixed to the viewport, so the
+  // observer fires on resize, rotation and fullscreen alike.
+  const [stageSize, setStageSize] = useState<StageSize | null>(null);
+  useEffect(() => {
+    if (forcedAspectRatio(aspect.mode) === null) return;
+    const el = containerEl;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () =>
+      setStageSize({ width: el.clientWidth, height: el.clientHeight });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [aspect.mode, containerEl]);
+
+  const videoStyle = useMemo(
+    () => videoFitStyle(aspect.mode, stageSize),
+    [aspect.mode, stageSize],
+  );
+
+  // Picture-shape menu (separate from settings, like audio/subtitles)
+  const [aspectAnchor, setAspectAnchor] = useState<null | HTMLElement>(null);
 
   // Audio menu (separate from settings)
   const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
@@ -2128,10 +2181,37 @@ export function Player() {
     resetHideTimer();
   }, [subtitleTrackItems, currentSubtitleTrack, showTrackOsd, resetHideTimer, t]);
 
+  // Keyboard toggle for the overlay menus. The one addressed flips, the
+  // others close: two of these stacked means peeling modals apart one
+  // Escape at a time, and only the top one answers the mouse. Anchored
+  // on the container because a key press has no pointer position — the
+  // menu's anchorOrigin puts it bottom-right, by the controls.
+  const toggleOverlayMenu = useCallback(
+    (menu: "aspect" | "audio" | "subtitle") => {
+      setAspectAnchor((prev) => (menu === "aspect" && !prev ? containerEl : null));
+      setAudioAnchor((prev) => (menu === "audio" && !prev ? containerEl : null));
+      setSubtitleAnchor((prev) => (menu === "subtitle" && !prev ? containerEl : null));
+      setSettingsAnchor(null);
+      setSettingsPanel("main");
+    },
+    [containerEl],
+  );
+
+  const cycleAspect = useCallback(() => {
+    const next = aspect.cycle();
+    showTrackOsd(`${t("player.aspectRatio")}: ${aspectLabel(next)}`);
+    resetHideTimer();
+  }, [aspect, aspectLabel, showTrackOsd, resetHideTimer, t]);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const video = videoRef.current;
       if (!video) return;
+
+      // A browser or OS shortcut is not a player shortcut: Ctrl+T opens
+      // a tab, it does not open the audio menu behind it. Every binding
+      // below is a bare key.
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       // The still-watching prompt is modal: swallow shortcuts so a
       // stray key can't toggle playback underneath it. Escape doubles
@@ -2184,14 +2264,18 @@ export function Player() {
           resetHideTimer();
           break;
         case "a":
-          // Toggle audio track menu. Uses containerEl as the anchor
-          // since there's no mouse position; the menu's anchorOrigin
-          // places it in the bottom-right corner near the controls.
-          setAudioAnchor((prev) => (prev ? null : containerEl));
+          // VLC's picture-shape key, and VLC's behaviour with it: step
+          // to the next shape, name it in the OSD, open nothing.
+          cycleAspect();
+          break;
+        case "t":
+          // Audio track menu — ``t`` for track, since ``a`` now belongs
+          // to the picture shape.
+          toggleOverlayMenu("audio");
           showAction(<AudioLines size={28} />);
           break;
         case "s":
-          setSubtitleAnchor((prev) => (prev ? null : containerEl));
+          toggleOverlayMenu("subtitle");
           showAction(<Subtitles size={28} />);
           break;
         case "b":
@@ -2201,6 +2285,12 @@ export function Player() {
         case "v":
           // VLC: cycle subtitle track (… → off → first).
           cycleSubtitleTrack();
+          break;
+        case "c":
+          // The picture-shape list, for picking a shape instead of
+          // walking to it — same contract as the audio/subtitle menus.
+          toggleOverlayMenu("aspect");
+          showAction(<Proportions size={28} />);
           break;
         case "escape":
           // While the post-play panel is up, Escape closes it and
@@ -2234,6 +2324,8 @@ export function Player() {
     seekForward,
     cycleAudioTrack,
     cycleSubtitleTrack,
+    cycleAspect,
+    toggleOverlayMenu,
   ]);
 
   const togglePlay = () => {
@@ -2269,6 +2361,15 @@ export function Player() {
     if (!video) return;
     video.playbackRate = s;
     setPlaybackPrefs({ speed: s });
+    setSettingsAnchor(null);
+    setSettingsPanel("main");
+  };
+
+  // Serves both ways into the list — the settings panel and the ``a``
+  // menu. Only one of them is ever open, so closing both is free.
+  const changeAspectMode = (mode: AspectMode) => {
+    aspect.setMode(mode);
+    setAspectAnchor(null);
     setSettingsAnchor(null);
     setSettingsPanel("main");
   };
@@ -2391,6 +2492,12 @@ export function Player() {
         sx={{
           position: "absolute",
           inset: 0,
+          // Centres the picture when a forced ratio leaves it narrower
+          // or shorter than the stage. Everything else in here is
+          // positioned absolutely, so only the <video> is laid out by it.
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
           transformOrigin: "center",
           transition: "transform 480ms cubic-bezier(0.4, 0, 0.2, 1)",
           transform: postPlayActive
@@ -2402,10 +2509,7 @@ export function Player() {
           "@media (prefers-reduced-motion: reduce)": { transition: "none" },
         }}
       >
-        <video
-          ref={videoRef}
-          style={{ width: "100%", height: "100%", objectFit: "contain" }}
-        />
+        <video ref={videoRef} style={videoStyle} />
 
         {/* Subtitle overlay (2.4). Drawn by us — not the browser's ::cue —
             from the hidden native track's active cues, styled by the
@@ -3200,6 +3304,10 @@ export function Player() {
             <ListItemText primary={t("player.speed")} />
             <Typography variant="body2" color="text.secondary">{speed === 1 ? t("player.normal") : `${speed}x`}</Typography>
           </MenuItem>,
+          <MenuItem key="aspect" onClick={() => setSettingsPanel("aspect")}>
+            <ListItemText primary={t("player.aspectRatio")} />
+            <Typography variant="body2" color="text.secondary">{aspectLabel(aspect.mode)}</Typography>
+          </MenuItem>,
         ]}
 
         {settingsPanel === "quality" && [
@@ -3220,6 +3328,11 @@ export function Player() {
               <ListItemText inset={speed !== s} primary={s === 1 ? t("player.normal") : `${s}x`} />
             </MenuItem>
           )),
+        ]}
+
+        {settingsPanel === "aspect" && [
+          <SettingsBackItem key="back" label={t("player.aspectRatio")} onClick={() => setSettingsPanel("main")} />,
+          ...aspectModeItems(aspect.mode, aspectLabel, changeAspectMode),
         ]}
       </Menu>
 
@@ -3262,8 +3375,42 @@ export function Player() {
           </MenuItem>
         ))}
       </Menu>
+
+      {/* Picture Shape Menu — what the ``a`` key opens. The same list
+          also hangs off the settings gear, for viewers who never touch
+          the keyboard. */}
+      <Menu
+        anchorEl={aspectAnchor}
+        open={Boolean(aspectAnchor)}
+        onClose={() => setAspectAnchor(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        transformOrigin={{ vertical: "bottom", horizontal: "right" }}
+        container={containerEl}
+        slotProps={{ paper: { sx: { bgcolor: menuScrim(0.95), backdropFilter: "blur(8px)", minWidth: 200, borderRadius: 2 } } }}
+      >
+        {aspectModeItems(aspect.mode, aspectLabel, changeAspectMode)}
+      </Menu>
     </Box>
   );
+}
+
+/**
+ * The picture-shape list, shared by the settings panel and the menu the
+ * ``a`` key opens. A plain array rather than a component so both callers
+ * can spread it straight into ``Menu`` — MUI walks the children for
+ * keyboard navigation, and a wrapper element would hide them.
+ */
+function aspectModeItems(
+  current: AspectMode,
+  label: (mode: AspectMode) => string,
+  onSelect: (mode: AspectMode) => void,
+) {
+  return ASPECT_MODES.map((mode) => (
+    <MenuItem key={mode} onClick={() => onSelect(mode)}>
+      {current === mode && <ListItemIcon><Check size={16} color={peach.main} /></ListItemIcon>}
+      <ListItemText inset={current !== mode} primary={label(mode)} />
+    </MenuItem>
+  ));
 }
 
 function SettingsBackItem({ label, onClick }: { label: string; onClick: () => void }) {

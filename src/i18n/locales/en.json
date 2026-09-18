@@ -384,6 +384,12 @@
   "player": {
     "quality": "Quality",
     "speed": "Speed",
+    "aspectRatio": "Aspect ratio",
+    "aspect": {
+      "auto": "Original",
+      "stretch": "Stretch",
+      "zoom": "Zoom (crop)"
+    },
     "subtitles": "Subtitles",
     "audio": "Audio",
     "audioTrack": "Audio track",
