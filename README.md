@@ -57,9 +57,19 @@ The backend must be running separately (Vite proxies `/api` to it in dev).
 | `A` | Cycle picture shape |
 | `B` | Cycle audio track |
 | `V` | Cycle subtitle track (… → off → first) |
-| `Esc` | Exit fullscreen / Go back |
+| `?` | Show the keyboard map |
+| `Esc` | Close the topmost surface / exit fullscreen / go back |
 
 All player shortcuts show a brief animated indicator in the center of the viewport confirming the action.
+
+This table is also in the player itself: `?` (or the gear ▸ **Keyboard shortcuts**)
+draws it over the picture, grouped by context. The card doesn't trap focus — the
+keys it lists keep working while it is up, so a row can be read and tried in one
+go. It is rendered from `src/utils/playerShortcuts.ts`, which is the list to
+extend when a binding is added.
+
+Player shortcuts are bare keys: anything held with Ctrl, Cmd or Alt belongs to
+the browser and the player ignores it.
 
 ## Project structure
 

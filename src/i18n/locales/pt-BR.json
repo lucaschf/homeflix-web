@@ -390,6 +390,31 @@
       "stretch": "Esticar",
       "zoom": "Zoom (cortar)"
     },
+    "shortcuts": {
+      "title": "Atalhos de teclado",
+      "escToClose": "Esc para fechar",
+      "spaceKey": "Espaço",
+      "wheelHint": "Role o scroll sobre o vídeo para ajustar o volume.",
+      "groups": {
+        "playback": "Reprodução",
+        "audio": "Áudio e legenda",
+        "display": "Exibição"
+      },
+      "playPause": "Pausar / continuar",
+      "rewind": "Voltar {{seconds}}s",
+      "forward": "Avançar {{seconds}}s",
+      "exit": "Sair da tela cheia / voltar",
+      "audioMenu": "Menu de áudio",
+      "subtitleMenu": "Menu de legendas",
+      "cycleAudio": "Trocar faixa de áudio",
+      "cycleSubtitle": "Trocar legenda",
+      "volume": "Volume",
+      "mute": "Mudo",
+      "cycleAspect": "Alternar proporção",
+      "aspectMenu": "Menu de proporção",
+      "fullscreen": "Tela cheia",
+      "thisCard": "Esta cartela"
+    },
     "subtitles": "Legendas",
     "audio": "Audio",
     "audioTrack": "Faixa de áudio",

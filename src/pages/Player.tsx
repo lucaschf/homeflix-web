@@ -43,6 +43,7 @@ import { ContentRatingBadge } from "../components/ContentRatingBadge";
 import { DetailError } from "../components/DetailError";
 import { EpisodeRail } from "../components/episode-selector/EpisodeRail";
 import { EpisodeSelectorPanel } from "../components/episode-selector/EpisodeSelectorPanel";
+import { PlayerShortcutsCard } from "../components/PlayerShortcutsCard";
 import { PostPlayPanel, type PostPlayHero } from "../components/PostPlayPanel";
 import { TitleLogo } from "../components/TitleLogo";
 import { useAspectRatio } from "../hooks/useAspectRatio";
@@ -58,6 +59,10 @@ import {
   type StageSize,
 } from "../utils/aspectRatio";
 import { creditsOnsetAction, playbackEndedAction } from "../utils/creditsSkip";
+import {
+  BACKWARD_SEEK_SECONDS,
+  FORWARD_SEEK_SECONDS,
+} from "../utils/playerShortcuts";
 import {
   subtitlePlayerFontSize,
   subtitleTextEdgeCss,
@@ -353,13 +358,6 @@ function ScrubPreview({
 // speed, default subtitle language, etc.) can share the same prefix.
 const VOLUME_STORAGE_KEY = "homeflix.player.volume";
 const MUTED_STORAGE_KEY = "homeflix.player.muted";
-
-// Skip distances for the seek shortcuts (keyboard ←/→ and the
-// double-tap edge zones). Forward is longer than backward because
-// the dominant use case for forward is skipping past commercials /
-// recaps; backward tends to be "I missed a line, jump a beat".
-const BACKWARD_SEEK_SECONDS = 10;
-const FORWARD_SEEK_SECONDS = 30;
 
 // Granularity (in source-time seconds) of the resume-offset bucket.
 // Must mirror ``_RESUME_BUCKET_SECONDS`` on the backend so a saved
@@ -1055,6 +1053,10 @@ export function Player() {
 
   // Picture-shape menu (separate from settings, like audio/subtitles)
   const [aspectAnchor, setAspectAnchor] = useState<null | HTMLElement>(null);
+
+  // The keyboard map, on ``?``. Nothing in the player advertises a key,
+  // so without this the shortcuts are only in the README.
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Audio menu (separate from settings)
   const [audioAnchor, setAudioAnchor] = useState<null | HTMLElement>(null);
@@ -2181,6 +2183,14 @@ export function Player() {
     resetHideTimer();
   }, [subtitleTrackItems, currentSubtitleTrack, showTrackOsd, resetHideTimer, t]);
 
+  const closeOverlayMenus = useCallback(() => {
+    setAspectAnchor(null);
+    setAudioAnchor(null);
+    setSubtitleAnchor(null);
+    setSettingsAnchor(null);
+    setSettingsPanel("main");
+  }, []);
+
   // Keyboard toggle for the overlay menus. The one addressed flips, the
   // others close: two of these stacked means peeling modals apart one
   // Escape at a time, and only the top one answers the mouse. Anchored
@@ -2193,6 +2203,10 @@ export function Player() {
       setSubtitleAnchor((prev) => (menu === "subtitle" && !prev ? containerEl : null));
       setSettingsAnchor(null);
       setSettingsPanel("main");
+      // MUI portals a menu into its own modal layer, which sits above
+      // anything the player draws — so the card steps aside rather than
+      // being buried under the menu it just explained.
+      setShortcutsOpen(false);
     },
     [containerEl],
   );
@@ -2292,13 +2306,20 @@ export function Player() {
           toggleOverlayMenu("aspect");
           showAction(<Proportions size={28} />);
           break;
+        case "?":
+          // The keyboard map. Toggling on the same key means the way in
+          // is also the way out, for a viewer who never reaches Escape.
+          closeOverlayMenus();
+          setShortcutsOpen((open) => !open);
+          break;
         case "escape":
-          // While the post-play panel is up, Escape closes it and
-          // returns to the credits rather than leaving the player —
-          // the panel is the topmost surface, so it's what the key
-          // should dismiss. Once playback has ended there's nothing to
-          // return to and the usual exit applies.
-          if (postPlayActive && !postPlayEnded) dismissPostPlay();
+          // Escape dismisses the topmost surface, and the card is drawn
+          // over everything. Below it: the post-play panel closes and
+          // returns to the credits rather than leaving the player. Once
+          // playback has ended there's nothing to return to and the
+          // usual exit applies.
+          if (shortcutsOpen) setShortcutsOpen(false);
+          else if (postPlayActive && !postPlayEnded) dismissPostPlay();
           else if (isFullscreen) document.exitFullscreen();
           else navigate(-1);
           break;
@@ -2326,6 +2347,8 @@ export function Player() {
     cycleSubtitleTrack,
     cycleAspect,
     toggleOverlayMenu,
+    closeOverlayMenus,
+    shortcutsOpen,
   ]);
 
   const togglePlay = () => {
@@ -3281,6 +3304,10 @@ export function Player() {
         />
       )}
 
+      {shortcutsOpen && (
+        <PlayerShortcutsCard onClose={() => setShortcutsOpen(false)} />
+      )}
+
       {/* Settings Menu */}
       <Menu
         anchorEl={settingsAnchor}
@@ -3307,6 +3334,14 @@ export function Player() {
           <MenuItem key="aspect" onClick={() => setSettingsPanel("aspect")}>
             <ListItemText primary={t("player.aspectRatio")} />
             <Typography variant="body2" color="text.secondary">{aspectLabel(aspect.mode)}</Typography>
+          </MenuItem>,
+          <MenuItem
+            key="shortcuts"
+            onClick={() => { closeOverlayMenus(); setShortcutsOpen(true); }}
+          >
+            <ListItemText primary={t("player.shortcuts.title")} />
+            {/* Doubles as the hint: the row teaches its own key. */}
+            <Typography variant="body2" color="text.secondary">?</Typography>
           </MenuItem>,
         ]}
 
