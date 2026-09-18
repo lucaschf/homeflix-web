@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PlaybackPreferencesData } from "../api/types";
@@ -138,5 +138,59 @@ describe("usePlaybackPreferences — skip modes", () => {
     await waitFor(() =>
       expect(apiPut).toHaveBeenCalledWith("/preferences", { credits_skip_mode: "auto" }),
     );
+  });
+});
+
+describe("usePlaybackPreferences — saving", () => {
+  // Each of these waits for the GET to land first, so what follows is
+  // measured against a loaded cache rather than the localStorage
+  // fallback. The PUT stays in flight throughout: anything the hook
+  // reports before it settles is the optimistic write, by definition.
+  it("reads back the new value while the save is still in flight", async () => {
+    // The player pushes ``prefs.speed`` onto the <video> element from an
+    // effect, so anything that re-runs it during the round trip — a
+    // volume nudge, say — used to put the old speed back.
+    stubProfile("prf_a", { speed: 0.75 });
+    let settle: (value: unknown) => void = () => {};
+    apiPut.mockImplementation(() => new Promise((resolve) => { settle = resolve; }));
+
+    const { result } = renderHook(() => usePlaybackPreferences(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current[0].speed).toBe(0.75));
+
+    act(() => result.current[1]({ speed: 1.5 }));
+    await waitFor(() => expect(result.current[0].speed).toBe(1.5));
+
+    await act(async () => { settle({ data: { ...SERVER_PREFS, speed: 1.5 } }); });
+    expect(result.current[0].speed).toBe(1.5);
+  });
+
+  it("leaves the rest of the preferences alone while it does", async () => {
+    stubProfile("prf_a", { speed: 0.75, subtitle_mode: "forcedOnly" });
+    apiPut.mockImplementation(() => new Promise(() => {}));
+
+    const { result } = renderHook(() => usePlaybackPreferences(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current[0].speed).toBe(0.75));
+
+    act(() => result.current[1]({ speed: 2 }));
+
+    await waitFor(() => expect(result.current[0].speed).toBe(2));
+    expect(result.current[0].subtitleMode).toBe("forcedOnly");
+  });
+
+  it("puts the stored value back when the save fails", async () => {
+    // Showing a preference the server never stored is worse than
+    // showing the old one: the next reload would silently disagree.
+    stubProfile("prf_a", { speed: 0.75 });
+    let fail: (reason: unknown) => void = () => {};
+    apiPut.mockImplementation(() => new Promise((_resolve, reject) => { fail = reject; }));
+
+    const { result } = renderHook(() => usePlaybackPreferences(), { wrapper: wrapper() });
+    await waitFor(() => expect(result.current[0].speed).toBe(0.75));
+
+    act(() => result.current[1]({ speed: 2 }));
+    await waitFor(() => expect(result.current[0].speed).toBe(2));
+
+    await act(async () => { fail(new Error("offline")); });
+    await waitFor(() => expect(result.current[0].speed).toBe(0.75));
   });
 });

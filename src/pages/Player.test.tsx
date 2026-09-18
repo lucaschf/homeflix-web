@@ -198,11 +198,33 @@ async function mountPlaying() {
   apiGet.mockImplementation((path: string) => {
     if (path === `/movies/${MOVIE_ID}`) return Promise.resolve({ data: MOVIE });
     if (path === `/progress/${MOVIE_ID}`) return Promise.resolve({ data: null });
+    // A profile with stored preferences, so the player runs against a
+    // loaded preferences cache rather than the localStorage fallback.
+    if (path === "/users/me") {
+      return Promise.resolve({ data: { id: "usr_1", active_profile_id: "prf_1" } });
+    }
+    if (path === "/preferences") return Promise.resolve({ data: PREFERENCES });
     return new Promise(() => {});
   });
   renderPlayer(client);
   await waitFor(() => expect(hlsInstances).toHaveLength(1));
 }
+
+const PREFERENCES = {
+  audio_lang: "pt-BR",
+  subtitle_lang: "pt-BR",
+  subtitle_mode: "foreignOnly",
+  default_quality: "best",
+  speed: 1,
+  subtitle_appearance: {
+    color: "#FFFFFF",
+    background: "rgba(0, 0, 0, 0.75)",
+    font_size: "medium",
+    text_edge: "shadow",
+  },
+  intro_skip_mode: "manual",
+  credits_skip_mode: "manual",
+};
 
 function press(key: string, modifiers: KeyboardEventInit = {}) {
   act(() => {
@@ -282,6 +304,24 @@ describe("Player — transport shortcuts", () => {
 
     for (let i = 0; i < 8; i += 1) press("<");
     expect(video.playbackRate).toBe(0.5);
+  });
+
+  it("keeps a stepped speed when the volume moves mid-save", async () => {
+    // The effect that pushes the saved speed onto the element re-runs on
+    // a volume change. The save is deliberately left in flight for the
+    // whole test: that is the window in which the preference used to lag
+    // behind, and the nudge put the old speed back. Anything that lets
+    // the PUT settle first hides the bug instead of testing it.
+    apiPut.mockImplementation(() => new Promise(() => {}));
+    await mountPlaying();
+    const video = document.querySelector("video")!;
+
+    press(">");
+    expect(video.playbackRate).toBe(1.25);
+
+    press("ArrowDown");
+
+    await waitFor(() => expect(video.playbackRate).toBe(1.25));
   });
 
   it("jumps to a tenth of the runtime on a digit", async () => {

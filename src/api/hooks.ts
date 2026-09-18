@@ -1640,9 +1640,40 @@ export function useUpdatePreferences() {
   return useMutation({
     mutationFn: (body: Partial<PlaybackPreferencesData>) =>
       api.put<PreferencesResponse>("/preferences", body),
+    // Write the change into the cache before the request leaves, rather
+    // than when it lands. Everything that reads preferences otherwise
+    // keeps the old value for the whole round trip — and the player has
+    // an effect that pushes ``prefs.speed`` onto the <video> element, so
+    // a volume nudge inside that window quietly undid the speed the
+    // viewer had just chosen.
+    onMutate: async (body) => {
+      // A GET already in flight would land on top of this and put the
+      // old value straight back.
+      await queryClient.cancelQueries({ queryKey: ["preferences"] });
+      const previous = queryClient.getQueryData<PlaybackPreferencesData>([
+        "preferences",
+      ]);
+      // Nothing cached yet means the first GET hasn't answered. A
+      // partial row written here would read back as a preferences
+      // object with holes in it, which is worse than waiting for it.
+      if (previous) {
+        queryClient.setQueryData<PlaybackPreferencesData>(["preferences"], {
+          ...previous,
+          ...body,
+        });
+      }
+      return { previous };
+    },
+    onError: (_error, _body, context) => {
+      // A save that failed must not leave the UI showing a preference
+      // the server never stored.
+      if (context?.previous) {
+        queryClient.setQueryData(["preferences"], context.previous);
+      }
+    },
     onSuccess: (resp) => {
-      // Optimistic in-cache update so every subscriber sees the
-      // new value immediately without waiting for a refetch.
+      // The server's own copy, which can differ from what was sent —
+      // a value it normalised, or a field another device changed.
       queryClient.setQueryData(["preferences"], resp.data);
     },
   });
