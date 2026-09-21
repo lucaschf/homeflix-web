@@ -188,6 +188,7 @@ export function Home() {
                     ? `${item.series_title} - S${String(item.season_number).padStart(2, "0")}E${String(item.episode_number).padStart(2, "0")}`
                     : item.title
                 }
+                artworkTitle={item.series_title ?? item.title}
                 imageUrl={item.backdrop_path ?? item.poster_path ?? undefined}
                 progress={item.percentage}
                 progressLabel={formatRemaining(item.position_seconds, item.duration_seconds)}

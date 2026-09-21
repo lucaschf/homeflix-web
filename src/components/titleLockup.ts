@@ -36,25 +36,46 @@ const WIDE_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Scr
 /** Line height of the lockup, unitless — caps have no descenders, so lines sit tight, like a logo. */
 export const LOCKUP_LINE_HEIGHT = 0.9;
 
-/** A line never gets taller than this fraction of the width. */
-const LINE_MAX = 0.22;
-/** A multi-word title stays on one line when that sets it at least this big. */
-const ONE_LINE_MIN = 0.12;
-/** Two lines smaller than this try a third line. */
-const TWO_LINE_MIN = 0.075;
-/** ...which is only taken when it sets the title this much bigger. */
-const THREE_LINE_GAIN = 1.15;
+/** An extra line is only taken when it sets the title this much bigger. */
+const EXTRA_LINE_GAIN = 1.15;
 /** The biggest line is at most this many times the smallest. */
 const LINE_RATIO_MAX = 1.6;
-/** The lockup's height budget: the logo box's, so both fill the same footprint. */
-const MAX_HEIGHT = 1 / LOGO_ASPECT;
 /** Split cost for a line opening on a lowercase connector ("de", "in", "of"). */
 const CONNECTOR_PENALTY = 0.5;
 /** Split bonus for breaking after a colon or dash, the title's own seam. */
 const SEAM_BONUS = 0.3;
 
+/** The space a lockup is set in, every size a fraction of its width. */
+export interface LockupFrame {
+  /** Height the lockup may take. */
+  maxHeight: number;
+  /** Size cap for one line, so a short word doesn't balloon. */
+  lineMax: number;
+  /** Most lines the title may break into. */
+  maxLines: number;
+  /** A multi-word title stays on one line when that sets it at least this big. */
+  oneLineMin: number;
+  /** Once every line is at least this big, no further line is tried. */
+  settleSize: number;
+}
+
+/**
+ * The hero / detail-header frame: the logo box, so a title with no
+ * logo fills the same footprint its logo would.
+ */
+export const LOGO_FRAME: LockupFrame = {
+  maxHeight: 1 / LOGO_ASPECT,
+  lineMax: 0.22,
+  maxLines: 3,
+  oneLineMin: 0.12,
+  settleSize: 0.075,
+};
+
 export interface TitleLockup {
-  /** The title's display lines, in its original case (the card uppercases them). */
+  /**
+   * The title's display lines, in its original case (the card
+   * uppercases them) — minus any separator dash a break made redundant.
+   */
   lines: string[];
   /** Each line's font size, as a fraction of the lockup width. */
   sizes: number[];
@@ -70,19 +91,46 @@ export function lineEm(text: string): number {
   return em;
 }
 
-/** Font size per line (fraction of width): fill the width, then fit the box. */
-function sizeLines(lines: string[]): number[] {
-  const fill = lines.map((line) => Math.min(LINE_MAX, 1 / Math.max(lineEm(line), 0.01)));
+/** Font size per line (fraction of width): fill the width, then fit the frame. */
+function sizeLines(lines: string[], frame: LockupFrame): number[] {
+  const fill = lines.map((line) => Math.min(frame.lineMax, 1 / Math.max(lineEm(line), 0.01)));
   const ceiling = Math.min(...fill) * LINE_RATIO_MAX;
   const sizes = fill.map((size) => Math.min(size, ceiling));
   const height = sizes.reduce((sum, size) => sum + size * LOCKUP_LINE_HEIGHT, 0);
-  const fit = Math.min(1, MAX_HEIGHT / height);
+  const fit = Math.min(1, frame.maxHeight / height);
   return sizes.map((size) => size * fit);
 }
 
-/** How poorly ``lines`` read as a lockup: uneven widths and awkward breaks. */
+/**
+ * A line that can't stand alone: one short word ("A", "DO", "3") or a
+ * lowercase connector ("dos", "the") left on a line of its own.
+ */
+function isOrphan(line: string[]): boolean {
+  if (line.length > 1) return false;
+  const word = line[0];
+  return word.replace(/[^\p{L}\p{N}]/gu, "").length <= 2 || /^\p{Ll}/u.test(word);
+}
+
+/** A dash standing between a title and its subtitle ("Skeeters - Asas da Morte"). */
+const SEPARATOR = /^[-–—]$/;
+
+/**
+ * Drop a separator dash a break has left at the end of a line — the
+ * break already does its job, so "SKEETERS / ASAS DA MORTE".
+ */
+function dropSeamDashes(lines: string[][]): string[][] {
+  return lines.map((words, i) =>
+    i < lines.length - 1 && words.length > 1 && SEPARATOR.test(words.at(-1)!) ? words.slice(0, -1) : words,
+  );
+}
+
+/**
+ * How poorly ``lines`` read as a lockup: uneven widths and awkward
+ * breaks. A split that orphans a word is ruled out entirely.
+ */
 function splitCost(lines: string[][]): number {
-  const widths = lines.map((words) => lineEm(words.join(" ")));
+  if (lines.some(isOrphan)) return Infinity;
+  const widths = dropSeamDashes(lines).map((words) => lineEm(words.join(" ")));
   let cost = Math.log(Math.max(...widths) / Math.min(...widths));
   for (let i = 1; i < lines.length; i++) {
     const opener = lines[i][0];
@@ -103,27 +151,41 @@ function* splits(words: string[], count: number): Generator<string[][]> {
   }
 }
 
-function bestSplit(words: string[], count: number): string[] {
-  let best: string[][] = [];
+/** The best way to set ``words`` on ``count`` lines, or ``null`` when every way orphans a word. */
+function bestSplit(words: string[], count: number): string[] | null {
+  let best: string[][] | null = null;
   let bestCost = Infinity;
   for (const lines of splits(words, count)) {
     const cost = splitCost(lines);
     if (cost < bestCost) [best, bestCost] = [lines, cost];
   }
-  return best.map((line) => line.join(" "));
+  return best && dropSeamDashes(best).map((line) => line.join(" "));
 }
 
-/** Lay ``title`` out as a lockup: its lines and their sizes. */
-export function titleLockup(title: string): TitleLockup {
+/** Lay ``title`` out as a lockup in ``frame``: its lines and their sizes. */
+export function titleLockup(title: string, frame: LockupFrame = LOGO_FRAME): TitleLockup {
   const words = title.trim().split(/\s+/);
-  const layout = (lines: string[]) => ({ lines, sizes: sizeLines(lines) });
+  const layout = (lines: string[]) => {
+    const sizes = sizeLines(lines, frame);
+    return { lines, sizes, smallest: Math.min(...sizes) };
+  };
 
   const one = layout([words.join(" ")]);
-  if (words.length === 1 || one.sizes[0] >= ONE_LINE_MIN) return one;
+  if (words.length === 1 || one.smallest >= frame.oneLineMin) return one;
 
-  const two = layout(bestSplit(words, 2));
-  if (words.length === 2 || Math.min(...two.sizes) >= TWO_LINE_MIN) return two;
-
-  const three = layout(bestSplit(words, 3));
-  return Math.min(...three.sizes) >= Math.min(...two.sizes) * THREE_LINE_GAIN ? three : two;
+  // Past one line, each extra line has to earn its place: it's tried
+  // only while the lines are still small, and kept only when it sets
+  // the title clearly bigger.
+  const two = bestSplit(words, 2);
+  if (!two) return one;
+  let best = layout(two);
+  for (let count = 3; count <= Math.min(frame.maxLines, words.length); count++) {
+    if (best.smallest >= frame.settleSize) break;
+    const split = bestSplit(words, count);
+    if (!split) break;
+    const next = layout(split);
+    if (next.smallest < best.smallest * EXTRA_LINE_GAIN) break;
+    best = next;
+  }
+  return best;
 }

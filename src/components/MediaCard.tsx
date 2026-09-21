@@ -4,6 +4,7 @@ import { Bookmark, BookmarkCheck, ListPlus, Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useContinueWatching, useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
+import { GeneratedPoster } from "./GeneratedPoster";
 import { useToast } from "./ToastProvider";
 import { QualityBadge } from "./QualityBadge";
 import { deriveQualityBadge } from "./mediaQuality";
@@ -20,6 +21,10 @@ const CARD_SIZES = {
 
 interface MediaCardProps {
   title: string;
+  /** Title set on the generated artwork when the image is missing —
+   *  e.g. just the series name on an episode card whose ``title``
+   *  carries the episode code. Defaults to ``title``. */
+  artworkTitle?: string;
   imageUrl?: string;
   year?: number;
   progress?: number;
@@ -48,6 +53,7 @@ interface MediaCardProps {
 
 export function MediaCard({
   title,
+  artworkTitle,
   imageUrl,
   year,
   progress,
@@ -78,6 +84,8 @@ export function MediaCard({
   // badge on every poster cluttered the mobile lists) and play from
   // the detail page instead — a tap on the card opens details there.
   const canPlay = hasActions && !!onPlay;
+  // Keyed by URL so a card reused for another title retries its image.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
   // Surface resume progress on movie cards outside Continue Watching:
   // when the caller didn't pass an explicit ``progress`` and this is a
@@ -202,7 +210,7 @@ export function MediaCard({
           zIndex: 0,
         }}
       >
-        {imageUrl ? (
+        {imageUrl && failedUrl !== imageUrl ? (
           <Box
             component="img"
             className="media-image"
@@ -216,6 +224,7 @@ export function MediaCard({
             // items, never when scrolling back over decoded ones.
             loading="lazy"
             decoding="async"
+            onError={() => setFailedUrl(imageUrl)}
             sx={{
               width: "100%",
               height: "100%",
@@ -224,20 +233,9 @@ export function MediaCard({
             }}
           />
         ) : (
-          <Box
-            sx={{
-              width: "100%",
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: `linear-gradient(135deg, ${neutral[800]} 0%, ${neutral[700]} 100%)`,
-            }}
-          >
-            <Typography variant="body2" color="text.secondary">
-              {t("card.noImage")}
-            </Typography>
-          </Box>
+          // No artwork, or it failed to load: the title set as a
+          // lockup stands in, the way the hero does without a logo.
+          <GeneratedPoster title={artworkTitle ?? title} shape={shape} className="media-image" />
         )}
 
         {/* Quality badge — top-left because the dismiss button owns the

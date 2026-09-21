@@ -82,4 +82,15 @@ describe("TitleLogo — title card", () => {
 
     expect(screen.getByRole("heading", { name: "A Viagem de Chihiro" })).toBeInTheDocument();
   });
+
+  it("keeps the full title as the name when a break drops the dash", () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <TitleLogo logoUrl={null} title="Skeeters - Asas da Morte" />
+      </ThemeProvider>,
+    );
+
+    const heading = screen.getByRole("heading", { name: "Skeeters - Asas da Morte" });
+    expect(heading).not.toHaveTextContent("-");
+  });
 });
