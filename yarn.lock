@@ -422,6 +422,11 @@
   resolved "https://registry.yarnpkg.com/@exodus/bytes/-/bytes-1.15.1.tgz#b13bc464ca162c17abf0837fb3a11aeab79e45d1"
   integrity sha512-S6mL0yNB/Abt9Ei4tq8gDhcczc4S3+vQ4ra7vxnAf+YHC02srtqxKKZghx2Dq6p0e66THKwR6r8N6P95wEty7Q==
 
+"@fontsource/eczar@^5.3.0":
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/@fontsource/eczar/-/eczar-5.3.0.tgz#eb4f566c18395ea3b4e33a8f5a14c7da5072a1bc"
+  integrity sha512-HIDqQVs2NhNlm8W0wXABW45H+CGIJ7EhsYZ4iN0/Wz+FByYS+vlxvxGokN4x4A6Bbmru4kAujE7VM0CuoR47ZA==
+
 "@fontsource/inter@^5.2.8":
   version "5.2.8"
   resolved "https://registry.yarnpkg.com/@fontsource/inter/-/inter-5.2.8.tgz#10c95d877d972c7de5bd4592309d42fb6a5e1a5b"

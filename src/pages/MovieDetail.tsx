@@ -364,7 +364,7 @@ export function MovieDetail() {
           />
           <Box sx={{ position: "absolute", left: 0, right: 0, bottom: 0, px: 3, pb: "22px", display: "flex", flexDirection: "column" }}>
             {movieEyebrow}
-            <TitleLogo logoUrl={movie.logo_path} title={movie.title} sx={{ fontSize: { xs: "2.125rem" }, mb: 1.5 }} />
+            <TitleLogo logoUrl={movie.logo_path} title={movie.title} sx={{ mb: 1.5 }} />
             <MetaLine
               contentRating={movie.content_rating}
               items={[movie.year, formatDuration(movie.duration_seconds)]}

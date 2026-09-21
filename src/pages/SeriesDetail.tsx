@@ -278,7 +278,7 @@ export function SeriesDetail() {
           />
           <Box sx={{ position: "absolute", left: 0, right: 0, bottom: 0, px: 3, pb: "22px", display: "flex", flexDirection: "column" }}>
             {seriesEyebrow}
-            <TitleLogo logoUrl={series.logo_path} title={series.title} sx={{ fontSize: { xs: "2.125rem" }, mb: 1.5 }} />
+            <TitleLogo logoUrl={series.logo_path} title={series.title} sx={{ mb: 1.5 }} />
             <MetaLine
               contentRating={series.content_rating}
               items={[
