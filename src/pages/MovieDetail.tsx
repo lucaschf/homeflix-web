@@ -32,6 +32,7 @@ import { MediaCarousel } from "../components/MediaCarousel";
 import { CollectionChip } from "../components/CollectionChip";
 import { MetaLine } from "../components/MetaLine";
 import { OverflowMenu, type OverflowAction } from "../components/OverflowMenu";
+import { PosterBackdrop } from "../components/PosterBackdrop";
 import { QualityRail } from "../components/QualityRail";
 import { TitleLogo } from "../components/TitleLogo";
 import { TrailerDialog } from "../components/TrailerDialog";
@@ -44,10 +45,7 @@ import { formatLanguage, uniqueLanguages } from "../utils/languages";
 import { restrictedContentKeys } from "../utils/restrictedContent";
 import { ACTION_BAR_HEIGHT, fontSize, inkAlpha, panelScrim, peachAlpha, scrim, whiteAlpha, toastSurfaceSx } from "../theme/tokens";
 import { neutral } from "../theme/colors";
-import { artworkSrcSet, sizesFor } from "../utils/artwork";
-
-/** The header poster (shown when a title has no backdrop) — same steps as its box. */
-const HEADER_POSTER_SIZES = sizesFor({ xs: 100, sm: 140, md: 200 });
+import { artworkSrcSet } from "../utils/artwork";
 
 export function MovieDetail() {
   const { t } = useTranslation();
@@ -374,7 +372,7 @@ export function MovieDetail() {
         </Box>
       ) : (
       <Box sx={{ position: "relative", width: "100%", height: "75dvh", minHeight: 460, overflow: "hidden" }}>
-        {movie.backdrop_path && (
+        {movie.backdrop_path ? (
           <Box
             component="img"
             {...artworkSrcSet(movie.backdrop_path, "backdrop")}
@@ -389,6 +387,10 @@ export function MovieDetail() {
               objectPosition: "center top",
             }}
           />
+        ) : (
+          // No backdrop art: the poster, blurred into a colour field,
+          // stands in rather than sitting next to the title.
+          movie.poster_path && <PosterBackdrop posterPath={movie.poster_path} />
         )}
         <Box
           sx={{
@@ -409,26 +411,6 @@ export function MovieDetail() {
         />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: "20dvh" }, gap: { xs: 2, md: 4 } }}>
-          {movie.poster_path && !movie.backdrop_path && (
-            // Poster is shown only when the header has no backdrop, so
-            // it never sits bare. Otherwise the title — logo art or
-            // its typeset lockup (``TitleLogo``) — carries the visual
-            // identity and a poster would compete for attention.
-            <Box
-              component="img"
-              {...artworkSrcSet(movie.poster_path, "poster")}
-              sizes={HEADER_POSTER_SIZES}
-              alt={movie.title}
-              sx={{
-                width: { xs: 100, sm: 140, md: 200 },
-                aspectRatio: "2/3",
-                borderRadius: 2,
-                objectFit: "cover",
-                boxShadow: `0 8px 24px ${scrim(0.6)}`,
-              }}
-            />
-          )}
-
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
             <TitleLogo logoUrl={movie.logo_path} title={movie.title} />
 
