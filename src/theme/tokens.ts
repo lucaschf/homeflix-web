@@ -76,6 +76,12 @@ export const fontSize = {
 export const fontFamily = {
   /** Monospace stack — JetBrains Mono with SF Mono / generic fallbacks. */
   mono: "'JetBrains Mono', ui-monospace, SFMono-Regular, monospace",
+  /**
+   * Title-card display face — Eczar (ExtraBold), a heavy flared serif.
+   * Only for a movie/series title set as a lockup when it has no logo art
+   * (``TitleLogo``); scripts Eczar lacks fall through to the serif stack.
+   */
+  display: "'Eczar', Georgia, 'Times New Roman', serif",
 } as const;
 
 // -- Viewport height regimes ---------------------------------------------------

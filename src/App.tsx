@@ -74,6 +74,7 @@ import "@fontsource/space-grotesk/600.css";
 import "@fontsource/space-grotesk/700.css";
 import "@fontsource/jetbrains-mono/400.css";
 import "@fontsource/jetbrains-mono/500.css";
+import "@fontsource/eczar/800.css";
 import "./i18n";
 
 const queryClient = createQueryClient();

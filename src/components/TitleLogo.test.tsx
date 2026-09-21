@@ -71,3 +71,15 @@ describe("TitleLogo — loading states", () => {
     );
   });
 });
+
+describe("TitleLogo — title card", () => {
+  it("keeps a multi-line lockup readable as one title", () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <TitleLogo logoUrl={null} title="A Viagem de Chihiro" />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByRole("heading", { name: "A Viagem de Chihiro" })).toBeInTheDocument();
+  });
+});

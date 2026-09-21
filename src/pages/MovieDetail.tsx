@@ -46,7 +46,7 @@ import { ACTION_BAR_HEIGHT, fontSize, inkAlpha, panelScrim, peachAlpha, scrim, w
 import { neutral } from "../theme/colors";
 import { artworkSrcSet, sizesFor } from "../utils/artwork";
 
-/** The header poster (shown when a title has no logo) — same steps as its box. */
+/** The header poster (shown when a title has no backdrop) — same steps as its box. */
 const HEADER_POSTER_SIZES = sizesFor({ xs: 100, sm: 140, md: 200 });
 
 export function MovieDetail() {
@@ -364,7 +364,7 @@ export function MovieDetail() {
           />
           <Box sx={{ position: "absolute", left: 0, right: 0, bottom: 0, px: 3, pb: "22px", display: "flex", flexDirection: "column" }}>
             {movieEyebrow}
-            <TitleLogo logoUrl={movie.logo_path} title={movie.title} sx={{ fontSize: { xs: "2.125rem" }, mb: 1.5 }} />
+            <TitleLogo logoUrl={movie.logo_path} title={movie.title} sx={{ mb: 1.5 }} />
             <MetaLine
               contentRating={movie.content_rating}
               items={[movie.year, formatDuration(movie.duration_seconds)]}
@@ -409,12 +409,11 @@ export function MovieDetail() {
         />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: "20dvh" }, gap: { xs: 2, md: 4 } }}>
-          {movie.poster_path && !movie.logo_path && (
-            // Poster is shown only when there's no localized title-logo
-            // — when the logo is present it carries the visual identity
-            // and the poster would compete for attention. Titles
-            // without a TMDB logo (less popular catalog items) keep
-            // the poster so the header still feels rich.
+          {movie.poster_path && !movie.backdrop_path && (
+            // Poster is shown only when the header has no backdrop, so
+            // it never sits bare. Otherwise the title — logo art or
+            // its typeset lockup (``TitleLogo``) — carries the visual
+            // identity and a poster would compete for attention.
             <Box
               component="img"
               {...artworkSrcSet(movie.poster_path, "poster")}

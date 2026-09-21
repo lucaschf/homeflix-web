@@ -48,7 +48,7 @@ import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, whiteAlpha,
 import { artworkSrcSet, sizesFor } from "../utils/artwork";
 import { restrictedContentKeys } from "../utils/restrictedContent";
 
-/** The header poster (shown when a title has no logo) — same steps as its box. */
+/** The header poster (shown when a title has no backdrop) — same steps as its box. */
 const HEADER_POSTER_SIZES = sizesFor({ xs: 100, sm: 140, md: 200 });
 /** Episode-list still — same steps as its box. */
 const EPISODE_ROW_THUMB_SIZES = sizesFor({ xs: 110, sm: 140, md: 200 });
@@ -278,7 +278,7 @@ export function SeriesDetail() {
           />
           <Box sx={{ position: "absolute", left: 0, right: 0, bottom: 0, px: 3, pb: "22px", display: "flex", flexDirection: "column" }}>
             {seriesEyebrow}
-            <TitleLogo logoUrl={series.logo_path} title={series.title} sx={{ fontSize: { xs: "2.125rem" }, mb: 1.5 }} />
+            <TitleLogo logoUrl={series.logo_path} title={series.title} sx={{ mb: 1.5 }} />
             <MetaLine
               contentRating={series.content_rating}
               items={[
@@ -306,9 +306,9 @@ export function SeriesDetail() {
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(1)} 35%, ${panelScrim(0.85)} 45%, ${panelScrim(0.5)} 58%, ${panelScrim(0.2)} 72%, transparent 85%)`, md: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(1)} 30%, ${panelScrim(0.85)} 40%, ${panelScrim(0.5)} 55%, ${panelScrim(0.15)} 70%, transparent 80%)` } }} />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
-          {series.poster_path && !series.logo_path && (
-            // See ``MovieDetail`` — poster is only shown when no
-            // title-logo is available, otherwise the two compete for
+          {series.poster_path && !series.backdrop_path && (
+            // See ``MovieDetail`` — poster is only shown when the header
+            // has no backdrop; otherwise it competes with the title for
             // visual identity at the top of the hero.
             <Box
               component="img"

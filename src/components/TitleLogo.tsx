@@ -1,29 +1,14 @@
-import { useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
-import { artworkSrcSet, sizesFor } from "../utils/artwork";
+import { fontFamily, scrim } from "../theme/tokens";
+import { artworkSrcSet } from "../utils/artwork";
+import { LOCKUP_LINE_HEIGHT, titleLockup } from "./titleLockup";
+import { LOGO_ASPECT_RATIO, LOGO_MAX_WIDTH, LOGO_SIZES, LOGO_WIDTH } from "./titleLogoSizing";
 
-/**
- * Canonical sizing for the title logo, shared by every surface that
- * renders it (hero carousel + detail headers) so the branding looks
- * uniform across the app. Tweak these constants to rescale everywhere
- * at once.
- */
-// HBO-style sizing: the logo lives in a fixed-aspect-ratio box whose
-// WIDTH is a consistent responsive value (capped by the column). The
-// image is ``object-fit: contain`` inside it, so every logo occupies
-// the same horizontal footprint — wide logos fill the width, compact
-// ones are centered within the derived height — and low-res PNGs are
-// scaled up to fill rather than rendering at their tiny native size.
-// ``md`` (900–1535px, which includes 1366×768 laptops) gets a smaller
-// step than ``xl`` so the hero column — eyebrow, logo, meta, synopsis,
-// actions — fits a 768px-tall window without crowding the navbar.
-const LOGO_WIDTH = { xs: 260, sm: 400, md: 480, xl: 560 } as const;
-const LOGO_MAX_WIDTH = "100%";
-const LOGO_ASPECT_RATIO = "432 / 130";
-const FALLBACK_FONT_SIZE = { xs: "1.25rem", sm: "1.75rem", md: "2.5rem" } as const;
-/** ``sizes`` for the logo ``<img>``, from the same width steps as its box. */
-const LOGO_SIZES = sizesFor(LOGO_WIDTH);
+// The logo's footprint, except on phones: there the card spans the
+// column, since at the 260px logo step a long title would set at ~18px.
+const TITLE_CARD_WIDTH = { ...LOGO_WIDTH, xs: "100%" } as const;
 
 interface TitleLogoProps {
   /** TMDB-hosted transparent PNG URL, or ``null`` when not available. */
@@ -38,9 +23,10 @@ interface TitleLogoProps {
 
 /**
  * Render a movie/series title as the official transparent-PNG logo
- * (when TMDB has one) and gracefully fall back to plain text in two
- * cases: the backend has no ``logo_path`` for this title, or the
- * image fails to load (network blip, deleted asset).
+ * (when TMDB has one) and gracefully fall back to a typeset one — a
+ * ``TitleCard`` lockup — in two cases: the backend has no ``logo_path``
+ * for this title, or the image fails to load (network blip, deleted
+ * asset).
  *
  * While the logo is still downloading the title is shown as text
  * *inside* the logo's reserved box, so the header never reads as
@@ -49,7 +35,7 @@ interface TitleLogoProps {
  * Used by the hero carousel and the detail-page header — both render
  * a large title at the top of a backdrop and benefit from the logo's
  * branding when available. Sizing is uniform across every surface
- * (see ``LOGO_WIDTH`` / ``LOGO_ASPECT_RATIO`` / ``FALLBACK_FONT_SIZE``).
+ * (see ``LOGO_WIDTH`` / ``LOGO_ASPECT_RATIO``).
  */
 export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
   // Load / failure bookkeeping is keyed by URL rather than a bare
@@ -115,32 +101,72 @@ export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
           }}
         />
         {!loaded && (
-          <Typography
-            variant="h1"
-            data-testid="title-logo-pending"
-            sx={{ fontSize: FALLBACK_FONT_SIZE, fontWeight: 700 }}
-          >
-            {title}
-          </Typography>
+          <TitleCard title={title} data-testid="title-logo-pending" sx={{ width: "100%" }} />
         )}
       </Box>
     );
   }
 
   return (
+    <TitleCard
+      title={title}
+      onClick={onClick}
+      sx={{ width: TITLE_CARD_WIDTH, mb: 1.5, cursor: onClick ? "pointer" : "default", ...sx }}
+    />
+  );
+}
+
+interface TitleCardProps {
+  title: string;
+  onClick?: () => void;
+  "data-testid"?: string;
+  sx?: SxProps<Theme>;
+}
+
+/**
+ * The title set as a logo would be (see ``titleLockup``): all caps in
+ * the display face, each line sized in ``cqi`` — a fraction of the
+ * card's own width — so the lockup fills the logo's footprint at every
+ * breakpoint and in any narrower column. The lines are separate blocks
+ * with a space between them, so the heading still reads as one title.
+ */
+function TitleCard({ title, onClick, "data-testid": testId, sx }: TitleCardProps) {
+  const { lines, sizes } = useMemo(() => titleLockup(title), [title]);
+  return (
     <Typography
       variant="h1"
       onClick={onClick}
+      data-testid={testId}
       sx={{
-        fontSize: FALLBACK_FONT_SIZE,
-        fontWeight: 700,
-        mb: 1,
-        cursor: onClick ? "pointer" : "default",
-        "&:hover": onClick ? { textDecoration: "underline", textUnderlineOffset: 4 } : {},
+        containerType: "inline-size",
+        width: LOGO_WIDTH,
+        maxWidth: LOGO_MAX_WIDTH,
+        fontFamily: fontFamily.display,
+        fontWeight: 800,
+        letterSpacing: 0,
+        textTransform: "uppercase",
+        color: "common.white",
+        // Lifts the letters off a bright backdrop, as a logo's own art does.
+        textShadow: `0 2px 24px ${scrim(0.45)}`,
         ...sx,
       }}
     >
-      {title}
+      {lines.map((line, i) => (
+        <Fragment key={i}>
+          {i > 0 && " "}
+          <Box
+            component="span"
+            sx={{
+              display: "block",
+              whiteSpace: "nowrap",
+              fontSize: `${(sizes[i] * 100).toFixed(2)}cqi`,
+              lineHeight: LOCKUP_LINE_HEIGHT,
+            }}
+          >
+            {line}
+          </Box>
+        </Fragment>
+      ))}
     </Typography>
   );
 }
