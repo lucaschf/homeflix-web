@@ -35,6 +35,7 @@ import { MediaCard } from "../components/MediaCard";
 import { MediaCarousel } from "../components/MediaCarousel";
 import { MetaLine } from "../components/MetaLine";
 import { OverflowMenu, type OverflowAction } from "../components/OverflowMenu";
+import { PosterBackdrop } from "../components/PosterBackdrop";
 import { TitleLogo } from "../components/TitleLogo";
 import { useToast } from "../components/ToastProvider";
 import { TrailerDialog } from "../components/TrailerDialog";
@@ -48,8 +49,6 @@ import { ACTION_BAR_HEIGHT, fontFamily, inkAlpha, panelScrim, scrim, whiteAlpha,
 import { artworkSrcSet, sizesFor } from "../utils/artwork";
 import { restrictedContentKeys } from "../utils/restrictedContent";
 
-/** The header poster (shown when a title has no backdrop) — same steps as its box. */
-const HEADER_POSTER_SIZES = sizesFor({ xs: 100, sm: 140, md: 200 });
 /** Episode-list still — same steps as its box. */
 const EPISODE_ROW_THUMB_SIZES = sizesFor({ xs: 110, sm: 140, md: 200 });
 
@@ -291,40 +290,27 @@ export function SeriesDetail() {
         </Box>
       ) : (
       <Box sx={{ position: "relative", width: "100%", height: "56dvh", minHeight: 400 }}>
-        {series.backdrop_path && (
-          <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh" }}>
-            <Box
-              component="img"
-              {...artworkSrcSet(series.backdrop_path, "backdrop")}
-              sizes="100vw"
-              alt=""
-              sx={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
-            />
+        {(series.backdrop_path || series.poster_path) && (
+          <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", overflow: "hidden" }}>
+            {series.backdrop_path ? (
+              <Box
+                component="img"
+                {...artworkSrcSet(series.backdrop_path, "backdrop")}
+                sizes="100vw"
+                alt=""
+                sx={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top" }}
+              />
+            ) : (
+              // See ``MovieDetail`` — no backdrop art, so the blurred
+              // poster stands in rather than sitting next to the title.
+              <PosterBackdrop posterPath={series.poster_path!} />
+            )}
           </Box>
         )}
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: `linear-gradient(to right, ${panelScrim(0.97)} 0%, ${panelScrim(0.75)} 50%, ${panelScrim(0.3)} 100%)`, md: `linear-gradient(to right, ${panelScrim(0.95)} 0%, ${panelScrim(0.6)} 40%, transparent 70%)` } }} />
         <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, bottom: "-44dvh", background: { xs: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(1)} 35%, ${panelScrim(0.85)} 45%, ${panelScrim(0.5)} 58%, ${panelScrim(0.2)} 72%, transparent 85%)`, md: `linear-gradient(to top, ${panelScrim(1)} 0%, ${panelScrim(1)} 30%, ${panelScrim(0.85)} 40%, ${panelScrim(0.5)} 55%, ${panelScrim(0.15)} 70%, transparent 80%)` } }} />
 
         <Box sx={{ position: "relative", height: "100%", display: "flex", alignItems: "flex-end", px: { xs: 3, md: 6 }, pb: { xs: 4, md: 6 }, gap: { xs: 2, md: 4 } }}>
-          {series.poster_path && !series.backdrop_path && (
-            // See ``MovieDetail`` — poster is only shown when the header
-            // has no backdrop; otherwise it competes with the title for
-            // visual identity at the top of the hero.
-            <Box
-              component="img"
-              {...artworkSrcSet(series.poster_path, "poster")}
-              sizes={HEADER_POSTER_SIZES}
-              alt={series.title}
-              sx={{
-                width: { xs: 100, sm: 140, md: 200 },
-                aspectRatio: "2/3",
-                borderRadius: 2,
-                objectFit: "cover",
-                boxShadow: `0 8px 24px ${scrim(0.6)}`,
-              }}
-            />
-          )}
-
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: 600, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
             <TitleLogo logoUrl={series.logo_path} title={series.title} />
 

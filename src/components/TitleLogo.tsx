@@ -1,9 +1,8 @@
-import { Fragment, useMemo, useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box } from "@mui/material";
 import type { SxProps, Theme } from "@mui/material/styles";
-import { fontFamily, scrim } from "../theme/tokens";
 import { artworkSrcSet } from "../utils/artwork";
-import { LOCKUP_LINE_HEIGHT, titleLockup } from "./titleLockup";
+import { TitleLockupText } from "./TitleLockupText";
 import { LOGO_ASPECT_RATIO, LOGO_MAX_WIDTH, LOGO_SIZES, LOGO_WIDTH } from "./titleLogoSizing";
 
 // The logo's footprint, except on phones: there the card spans the
@@ -24,7 +23,7 @@ interface TitleLogoProps {
 /**
  * Render a movie/series title as the official transparent-PNG logo
  * (when TMDB has one) and gracefully fall back to a typeset one — a
- * ``TitleCard`` lockup — in two cases: the backend has no ``logo_path``
+ * ``TitleLockupText`` lockup — in two cases: the backend has no ``logo_path``
  * for this title, or the image fails to load (network blip, deleted
  * asset).
  *
@@ -101,72 +100,29 @@ export function TitleLogo({ logoUrl, title, onClick, sx }: TitleLogoProps) {
           }}
         />
         {!loaded && (
-          <TitleCard title={title} data-testid="title-logo-pending" sx={{ width: "100%" }} />
+          <TitleLockupText
+            variant="h1"
+            title={title}
+            data-testid="title-logo-pending"
+            sx={{ width: "100%" }}
+          />
         )}
       </Box>
     );
   }
 
   return (
-    <TitleCard
+    <TitleLockupText
+      variant="h1"
       title={title}
       onClick={onClick}
-      sx={{ width: TITLE_CARD_WIDTH, mb: 1.5, cursor: onClick ? "pointer" : "default", ...sx }}
-    />
-  );
-}
-
-interface TitleCardProps {
-  title: string;
-  onClick?: () => void;
-  "data-testid"?: string;
-  sx?: SxProps<Theme>;
-}
-
-/**
- * The title set as a logo would be (see ``titleLockup``): all caps in
- * the display face, each line sized in ``cqi`` — a fraction of the
- * card's own width — so the lockup fills the logo's footprint at every
- * breakpoint and in any narrower column. The lines are separate blocks
- * with a space between them, so the heading still reads as one title.
- */
-function TitleCard({ title, onClick, "data-testid": testId, sx }: TitleCardProps) {
-  const { lines, sizes } = useMemo(() => titleLockup(title), [title]);
-  return (
-    <Typography
-      variant="h1"
-      onClick={onClick}
-      data-testid={testId}
       sx={{
-        containerType: "inline-size",
-        width: LOGO_WIDTH,
+        width: TITLE_CARD_WIDTH,
         maxWidth: LOGO_MAX_WIDTH,
-        fontFamily: fontFamily.display,
-        fontWeight: 800,
-        letterSpacing: 0,
-        textTransform: "uppercase",
-        color: "common.white",
-        // Lifts the letters off a bright backdrop, as a logo's own art does.
-        textShadow: `0 2px 24px ${scrim(0.45)}`,
+        mb: 1.5,
+        cursor: onClick ? "pointer" : "default",
         ...sx,
       }}
-    >
-      {lines.map((line, i) => (
-        <Fragment key={i}>
-          {i > 0 && " "}
-          <Box
-            component="span"
-            sx={{
-              display: "block",
-              whiteSpace: "nowrap",
-              fontSize: `${(sizes[i] * 100).toFixed(2)}cqi`,
-              lineHeight: LOCKUP_LINE_HEIGHT,
-            }}
-          >
-            {line}
-          </Box>
-        </Fragment>
-      ))}
-    </Typography>
+    />
   );
 }
