@@ -26,9 +26,32 @@ Each profile is gated twice: by **library** (which folders it can see at all) an
 
 ### Player
 
-HLS player with multi-audio and multi-subtitle tracks, per-profile language defaults, skip-intro and next-episode cards driven by server-side markers, scrub thumbnails, and a full keyboard map (see [Keyboard shortcuts](#keyboard-shortcuts)).
+HLS player with multi-audio and multi-subtitle tracks, per-profile language defaults, scrub thumbnails, and a full keyboard map (see [Keyboard shortcuts](#keyboard-shortcuts)).
 
-![Player paused with the audio track menu open](docs/screenshots/player.jpg)
+Openings and end credits are detected on the server, so the player can offer **Skip Intro** during the opening and a next-episode card when the credits start — or do either automatically, per profile (see [Playback preferences](#playback-preferences)).
+
+<p>
+  <img src="docs/screenshots/skip-intro.jpg" alt="Skip Intro button during a detected opening" width="49%">
+  <img src="docs/screenshots/player.jpg" alt="Player paused with the audio track menu open" width="49%">
+</p>
+
+### Lists
+
+Besides the watchlist, each profile keeps up to 10 custom lists with manual ordering, *Play all* and *Shuffle*. A list can be shared by link, and whoever opens it can follow it.
+
+![A custom list](docs/screenshots/list.jpg)
+
+### Coming soon and notifications
+
+Titles found on TMDB but missing from the disks are tracked as requests. Anyone can follow one, and the scanner fulfils it when the file shows up — followers get a notification.
+
+![Coming soon page with the notifications panel open](docs/screenshots/requests.jpg)
+
+### Settings
+
+Per-profile preferences: accent theme, audio and subtitle languages, when subtitles appear, default quality, and what happens between episodes.
+
+![Playback settings](docs/screenshots/settings.jpg)
 
 ### Mobile
 
