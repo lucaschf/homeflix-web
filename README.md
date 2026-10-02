@@ -43,7 +43,7 @@ Besides the watchlist, each profile keeps up to 10 custom lists with manual orde
 
 ### Coming soon and notifications
 
-Titles found on TMDB but missing from the disks are tracked as requests. Anyone can follow one, and the scanner fulfils it when the file shows up — followers get a notification.
+Anyone in the household can ask for a title to be added to the catalog with *Suggest a title*. Requests go to an admin queue, and others can follow them with *Notify me when it arrives*. Once the file is scanned and matched, the request closes on its own and its followers get a notification; the admin can also mark a request as included or dismiss it by hand.
 
 ![Coming soon page with the notifications panel open](docs/screenshots/requests.jpg)
 
