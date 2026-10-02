@@ -1,6 +1,48 @@
 # HomeFlix Web
 
 Frontend for the HomeFlix personal streaming platform. Manages and plays movies and series stored on a local drive.
+Backend, architecture and ADRs live in [homeflix](https://github.com/lucaschf/homeflix).
+
+![Series page — hero artwork, season picker and episode grid](docs/screenshots/details.jpg)
+
+## A tour
+
+### Browse
+
+Rows per genre and "Recently added", with posters mirrored from TMDB into local storage. Hovering a card expands it in place with the synopsis and quick actions.
+
+![Browse page with an expanded card](docs/screenshots/browse.jpg)
+
+### Profiles
+
+One account, several household profiles, Netflix-style picker. Each profile carries its own watch progress, watchlist, playback preferences and avatar.
+
+<p>
+  <img src="docs/screenshots/profiles.jpg" alt="Profile picker" width="49%">
+  <img src="docs/screenshots/profile-rules.jpg" alt="New profile dialog with age limit and allowed libraries" width="49%">
+</p>
+
+Each profile is gated twice: by **library** (which folders it can see at all) and by **age rating** (everything at or below the chosen rating is allowed). Both are enforced on the server — the UI only reflects them.
+
+### Player
+
+HLS player with multi-audio and multi-subtitle tracks, per-profile language defaults, skip-intro and next-episode cards driven by server-side markers, scrub thumbnails, and a full keyboard map (see [Keyboard shortcuts](#keyboard-shortcuts)).
+
+![Player paused with the audio track menu open](docs/screenshots/player.jpg)
+
+### Mobile
+
+Mobile-first layout with a bottom tab bar; the same pages, not a separate app.
+
+<p align="center">
+  <img src="docs/screenshots/mobile.jpg" alt="Series page and episode list on a phone" width="60%">
+</p>
+
+### Admin
+
+Catalog health, active streams, scan and enrichment pipelines, intro/credits detection, subtitle OCR and runtime settings.
+
+![Admin overview](docs/screenshots/admin.jpg)
 
 ## Stack
 
@@ -16,7 +58,7 @@ Frontend for the HomeFlix personal streaming platform. Manages and plays movies 
 
 ```bash
 yarn install
-yarn dev        # http://localhost:5173
+yarn dev        # http://localhost:3000
 ```
 
 The backend must be running separately (Vite proxies `/api` to it in dev).
