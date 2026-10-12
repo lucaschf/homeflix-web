@@ -246,7 +246,8 @@
     "addToWatchlist": "Add to Watchlist",
     "removeFromWatchlist": "Remove from Watchlist",
     "addToList": "Add to List",
-    "dismiss": "Remove from Continue Watching"
+    "dismiss": "Remove from Continue Watching",
+    "subtitledOnly": "SUB"
   },
   "common": {
     "undo": "Undo",

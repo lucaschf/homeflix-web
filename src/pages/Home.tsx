@@ -225,6 +225,7 @@ export function Home() {
                 synopsis={item.synopsis ?? undefined}
                 resolution={item.resolution}
                 hdr={item.hdr}
+                audioLanguages={item.audio_languages}
                 mediaId={item.id}
                 mediaType={item.type}
                 onPlay={

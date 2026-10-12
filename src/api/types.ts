@@ -11,6 +11,9 @@ export interface MovieSummary {
   resolution: string | null;
   /** Whether any file variant is HDR. With `resolution`, drives the card badge. */
   hdr: boolean;
+  /** ISO 639-1 code of every audio track across the variants (``"un"`` for
+   *  an untagged one). Drives the card's subtitled-only badge. */
+  audio_languages: string[];
   variant_count: number;
   available_resolutions: string[];
   genres: string[];
@@ -381,6 +384,8 @@ export interface SeriesSummary {
   // of their own), null when no episode has one yet. Drives the card badge.
   resolution: string | null;
   hdr: boolean;
+  // Audio track languages across every episode — see MovieSummary.
+  audio_languages: string[];
   genres: string[];
   // Operator-facing metadata surfaced on the admin Catalog table.
   library_id: string;
@@ -482,16 +487,18 @@ export interface CatalogItem {
   // best across a series' episodes. Drives the card's quality badge.
   resolution: string | null;
   hdr: boolean;
+  // Audio track languages behind the row — see MovieSummary.
+  audio_languages: string[];
   genres: string[];
 }
 
 export type CatalogByGenreResponse = ApiListResponse<CatalogItem>;
 
-// Search rows are catalog rows minus the quality pair: the FTS query
-// deliberately skips loading file variants (a fan-out of thousands of
-// rows per search, discarded immediately), so `resolution` / `hdr`
-// aren't available and search cards render without a quality badge.
-export type SearchItem = Omit<CatalogItem, "resolution" | "hdr">;
+// Search rows are catalog rows minus the file-derived fields: the FTS
+// query deliberately skips loading file variants (a fan-out of thousands
+// of rows per search, discarded immediately), so `resolution` / `hdr` /
+// `audio_languages` aren't available and search cards render unbadged.
+export type SearchItem = Omit<CatalogItem, "resolution" | "hdr" | "audio_languages">;
 
 // Search endpoint response — same item shape as the catalog but with
 // a `total` count in metadata instead of pagination cursors.
@@ -1108,6 +1115,7 @@ export interface WatchlistItemOutput {
   genres?: string[];
   resolution?: string | null;
   hdr?: boolean;
+  audio_languages?: string[];
   // Watched fraction in [0, 1] (B2); null/absent when no progress.
   progress?: number | null;
 }
@@ -1193,6 +1201,7 @@ export interface CustomListItemOutput {
   genres?: string[];
   resolution?: string | null;
   hdr?: boolean;
+  audio_languages?: string[];
   // Watched fraction in [0, 1] (B2); null/absent when no progress.
   progress?: number | null;
 }

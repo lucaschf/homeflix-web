@@ -461,6 +461,7 @@ function FilmographySection({ movies, sort, onSortChange, t, onPlay, onOpen }: F
               synopsis={movie.synopsis ?? undefined}
               resolution={movie.resolution}
               hdr={movie.hdr}
+              audioLanguages={movie.audio_languages}
               variant="poster"
               mediaId={movie.id}
               mediaType="movie"

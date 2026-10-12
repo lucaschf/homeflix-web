@@ -246,7 +246,8 @@
     "addToWatchlist": "Adicionar à Fila",
     "removeFromWatchlist": "Remover da Fila",
     "addToList": "Adicionar à Lista",
-    "dismiss": "Remover de Continue Assistindo"
+    "dismiss": "Remover de Continue Assistindo",
+    "subtitledOnly": "LEG"
   },
   "common": {
     "undo": "Desfazer",

@@ -2,19 +2,22 @@ import { ThemeProvider } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { describe, expect, it, vi } from "vitest";
-import "../i18n";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import i18n from "../i18n";
 import { theme } from "../theme";
 import { MediaCard } from "./MediaCard";
 import { ToastProvider } from "./ToastProvider";
 
-// The card reaches the backend only through the Continue Watching and
-// watchlist hooks; stub the client so those queries resolve quietly.
+// The card reaches the backend only through the Continue Watching,
+// watchlist and preferences hooks; stub the client so those queries
+// resolve quietly, with pt-BR as the preferred audio language.
 vi.mock("../api/client", () => ({
   AUTH_EXPIRED_EVENT: "homeflix:auth-expired",
   ApiError: class ApiError extends Error {},
   api: {
-    get: vi.fn().mockResolvedValue({ data: [] }),
+    get: vi.fn((path: string) =>
+      Promise.resolve({ data: path === "/preferences" ? { audio_lang: "pt-BR" } : [] }),
+    ),
     post: vi.fn(),
     put: vi.fn(),
     patch: vi.fn(),
@@ -60,5 +63,35 @@ describe("MediaCard — missing artwork", () => {
     const art = screen.getByRole("img", { name: "Visões Noturnas" });
     expect(art).toHaveTextContent("Visões Noturnas");
     expect(art).not.toHaveTextContent("S01E11");
+  });
+});
+
+describe("MediaCard — subtitled-only badge", () => {
+  beforeEach(async () => {
+    await i18n.changeLanguage("pt-BR");
+  });
+
+  it("marks only the title with no audio in the preferred language", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <ThemeProvider theme={theme}>
+          <ToastProvider>
+            <MediaCard title="Parasita" audioLanguages={["ko"]} />
+            <MediaCard title="Dublado" audioLanguages={["en", "pt"]} />
+          </ToastProvider>
+        </ThemeProvider>
+      </QueryClientProvider>,
+    );
+
+    // Appears once the preference lands; the dubbed card never gets one.
+    expect(await screen.findAllByText("LEG")).toHaveLength(1);
+  });
+
+  it("sits beside the quality badge", async () => {
+    renderCard({ resolution: "4K", hdr: true, audioLanguages: ["en"] });
+
+    expect(await screen.findByText("LEG")).toBeInTheDocument();
+    expect(screen.getByText("4K HDR")).toBeInTheDocument();
   });
 });

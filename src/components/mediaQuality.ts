@@ -1,18 +1,17 @@
 /**
- * Quality-badge derivation, split out of ``QualityBadge.tsx`` so the
+ * Quality-badge derivation, split out of ``CardBadge.tsx`` so the
  * component file only exports components (Fast Refresh requirement) —
  * the same split ``mediaCardDimensions.ts`` makes for ``MediaCard``.
  */
+import type { CardBadgeTone } from "./CardBadge";
 
 /**
- * ``premium`` marks a title worth seeking out (4K / HDR); ``low`` warns
+ * ``accent`` marks a title worth seeking out (4K / HDR); ``muted`` warns
  * that the only copy on disk is standard definition.
  */
-export type QualityBadgeKind = "premium" | "low";
-
 export interface QualityBadgeSpec {
   label: string;
-  kind: QualityBadgeKind;
+  tone: CardBadgeTone;
 }
 
 // Resolution names the backend reports as standard definition. Mirrors
@@ -37,13 +36,13 @@ export function deriveQualityBadge(
   hdr: boolean | undefined,
 ): QualityBadgeSpec | null {
   if (resolution === "4K") {
-    return { label: hdr ? "4K HDR" : "4K", kind: "premium" };
+    return { label: hdr ? "4K HDR" : "4K", tone: "accent" };
   }
   if (hdr) {
-    return { label: "HDR", kind: "premium" };
+    return { label: "HDR", tone: "accent" };
   }
   if (resolution && SD_RESOLUTIONS.has(resolution)) {
-    return { label: "SD", kind: "low" };
+    return { label: "SD", tone: "muted" };
   }
   return null;
 }

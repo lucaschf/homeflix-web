@@ -593,6 +593,7 @@ export function MovieDetail() {
                 synopsis={m.synopsis ?? undefined}
                 resolution={m.resolution}
                 hdr={m.hdr}
+                audioLanguages={m.audio_languages}
                 variant="poster"
                 mediaId={m.id}
                 mediaType="movie"

@@ -2,12 +2,18 @@ import { useMemo, useState } from "react";
 import { Box, IconButton, LinearProgress, Tooltip, Typography } from "@mui/material";
 import { Bookmark, BookmarkCheck, ListPlus, Play, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useContinueWatching, useIsInWatchlist, useToggleWatchlist } from "../api/hooks";
+import {
+  useContinueWatching,
+  useIsInWatchlist,
+  usePreferencesQuery,
+  useToggleWatchlist,
+} from "../api/hooks";
 import { AddToListDialog } from "./AddToListDialog";
 import { GeneratedPoster } from "./GeneratedPoster";
 import { useToast } from "./ToastProvider";
-import { QualityBadge } from "./QualityBadge";
+import { CardBadge } from "./CardBadge";
 import { deriveQualityBadge } from "./mediaQuality";
+import { isSubtitledOnly } from "./mediaAudio";
 import { neutral } from "../theme/colors";
 import { whiteAlpha, scrim, shortDesktopViewport } from "../theme/tokens";
 import { CARD_WIDTH, CARD_WIDTH_COMPACT } from "./mediaCardDimensions";
@@ -37,6 +43,9 @@ interface MediaCardProps {
   resolution?: string | null;
   /** Whether any variant behind this title is HDR. */
   hdr?: boolean;
+  /** Language of every audio track behind this title (``["en", "pt"]``).
+   *  Feeds the subtitled-only badge; omit on cards with no track data. */
+  audioLanguages?: readonly string[];
   variant?: "poster" | "landscape" | "episode";
   fullWidth?: boolean;
   /** ``sizes`` for a ``fullWidth`` card, whose width the caller's grid decides. */
@@ -62,6 +71,7 @@ export function MediaCard({
   synopsis,
   resolution,
   hdr,
+  audioLanguages,
   variant = "poster",
   fullWidth = false,
   sizes,
@@ -74,6 +84,12 @@ export function MediaCard({
   const { t } = useTranslation();
   const aspectRatio = variant === "poster" ? "2/3" : "16/9";
   const qualityBadge = deriveQualityBadge(resolution, hdr);
+  // Read straight off the shared preferences query (deduped across every
+  // card) rather than ``usePlaybackPreferences``: its cached/default
+  // fallback would badge against pt-BR for a render before the real
+  // preference lands, and a wrong "LEG" is worse than none.
+  const { data: preferences } = usePreferencesQuery();
+  const subtitledOnly = isSubtitledOnly(audioLanguages, preferences?.audio_lang);
   const hasActions = !!mediaId && !!mediaType;
   // A movie card can start playback straight from the carousel. Series
   // need an episode picked first, so their cards only ever open the
@@ -238,13 +254,16 @@ export function MediaCard({
           <GeneratedPoster title={artworkTitle ?? title} shape={shape} className="media-image" />
         )}
 
-        {/* Quality badge — top-left because the dismiss button owns the
-            top-right corner on list / continue-watching cards. Lives
-            inside the image wrapper, so the hover overlay dims it along
-            with the progress bar. */}
-        {qualityBadge && (
-          <Box sx={{ position: "absolute", top: 6, left: 6, zIndex: 2 }}>
-            <QualityBadge label={qualityBadge.label} kind={qualityBadge.kind} />
+        {/* Quality + subtitled-only badges — top-left because the
+            dismiss button owns the top-right corner on list / continue-
+            watching cards. Live inside the image wrapper, so the hover
+            overlay dims them along with the progress bar. */}
+        {(qualityBadge || subtitledOnly) && (
+          <Box
+            sx={{ position: "absolute", top: 6, left: 6, zIndex: 2, display: "flex", gap: "4px" }}
+          >
+            {qualityBadge && <CardBadge label={qualityBadge.label} tone={qualityBadge.tone} />}
+            {subtitledOnly && <CardBadge label={t("card.subtitledOnly")} tone="muted" />}
           </Box>
         )}
 
