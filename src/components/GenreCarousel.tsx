@@ -168,6 +168,7 @@ export function GenreCarousel({ genre, type }: GenreCarouselProps) {
           synopsis={item.synopsis ?? undefined}
           resolution={item.resolution}
           hdr={item.hdr}
+          audioLanguages={item.audio_languages}
           variant="poster"
           mediaId={item.id}
           mediaType={item.type}

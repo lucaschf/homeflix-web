@@ -562,6 +562,7 @@ export function SeriesDetail() {
                 synopsis={s.synopsis ?? undefined}
                 resolution={s.resolution}
                 hdr={s.hdr}
+                audioLanguages={s.audio_languages}
                 variant="poster"
                 mediaId={s.id}
                 mediaType="series"

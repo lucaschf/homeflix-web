@@ -147,6 +147,7 @@ export function SharedList() {
               year={item.year ?? undefined}
               resolution={item.resolution}
               hdr={item.hdr}
+              audioLanguages={item.audio_languages}
               variant="poster"
               fullWidth
               onClick={() =>
