@@ -58,3 +58,14 @@ jobs:
       - name: Build
         if: ${{ !cancelled() }}
         run: yarn build
+
+  image:
+    name: Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      # Builds the image and checks it against a stand-in backend
+      # (scripts/docker-smoke.sh says what).
+      - name: Build and smoke-test
+        run: scripts/docker-smoke.sh
