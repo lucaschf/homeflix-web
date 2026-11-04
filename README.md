@@ -86,6 +86,27 @@ yarn dev        # http://localhost:3000
 
 The backend must be running separately (Vite proxies `/api` to it in dev).
 
+### As a container
+
+The `Dockerfile` builds the app and serves it with nginx, which also forwards `/api` and `/health` to the backend, so the app and the API share one origin. The backend's compose file ([homeflix](https://github.com/lucaschf/homeflix)) builds and runs it next to the backend; set `HOMEFLIX_WEB_DIR` there if this repo is not checked out beside it.
+
+On its own:
+
+```bash
+docker build -t homeflix-web:local .
+docker run -p 3000:8080 -e HOMEFLIX_API=http://<backend-host>:8005 homeflix-web:local
+```
+
+| | |
+|---|---|
+| `HOMEFLIX_API` | the backend's URL, as seen from the container (default `http://backend:8005`, the compose service) |
+| Port | 8080 inside; nginx runs unprivileged (uid 101) |
+| Health | `GET /healthz` (nginx itself); `/health` is the backend's |
+| Streams | `/api` is proxied unbuffered, with 1 h timeouts, for HLS and direct play |
+| Uploads | up to 25 MB (the backend caps avatars at 20 MB) |
+
+`scripts/docker-smoke.sh` builds the image and checks all of that against a stand-in backend; CI runs it on every PR.
+
 ## Scripts
 
 | Command | Description |
