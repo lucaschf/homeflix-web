@@ -138,14 +138,14 @@ async function mountStream() {
 }
 
 /** Raise a fatal network error and let the 3s reload timer run out. */
-function failNetwork(hls: FakeHlsInstance, details: string, code: number) {
+function failNetwork(hls: FakeHlsInstance, details: string, code?: number) {
   vi.useFakeTimers();
   act(() => {
     hls.emit(Hls.Events.ERROR, {
       type: Hls.ErrorTypes.NETWORK_ERROR,
       details,
       fatal: true,
-      response: { url: MANIFEST_URL, code, text: "" },
+      response: code === undefined ? undefined : { url: MANIFEST_URL, code, text: "" },
     });
   });
   act(() => {
@@ -164,13 +164,44 @@ describe("Player — refused stream", () => {
     expect(screen.getByText("Couldn't load this title")).toBeInTheDocument();
   });
 
-  it("keeps reloading a manifest that failed with a 5xx", async () => {
+  it("shows an error when the backend could not build the stream", async () => {
     const hls = await mountStream();
+
+    failNetwork(hls, Hls.ErrorDetails.MANIFEST_LOAD_ERROR, 500);
+
+    expect(hls.loadSource).toHaveBeenCalledTimes(1);
+    expect(hls.destroy).toHaveBeenCalled();
+    expect(screen.getByText("Couldn't play this")).toBeInTheDocument();
+  });
+
+  // startLoad does nothing without a manifest: only loadSource asks for it
+  // again. Calling startLoad here left the viewer on an endless spinner.
+  it.each([
+    ["a 502 while the backend restarts", Hls.ErrorDetails.MANIFEST_LOAD_ERROR, 502],
+    ["a timeout while the encode starts", Hls.ErrorDetails.MANIFEST_LOAD_TIMEOUT, undefined],
+  ])("asks for the manifest again after %s", async (_name, details, code) => {
+    const hls = await mountStream();
+
+    failNetwork(hls, details, code);
+
+    expect(hls.loadSource).toHaveBeenCalledTimes(2);
+    expect(hls.startLoad).not.toHaveBeenCalled();
+    expect(screen.queryByText("Couldn't play this")).not.toBeInTheDocument();
+  });
+
+  it("gives up on the manifest after a bounded number of reloads", async () => {
+    const hls = await mountStream();
+
+    for (let failures = 0; failures < 5; failures += 1) {
+      failNetwork(hls, Hls.ErrorDetails.MANIFEST_LOAD_ERROR, 502);
+    }
+    expect(screen.queryByText("Couldn't play this")).not.toBeInTheDocument();
 
     failNetwork(hls, Hls.ErrorDetails.MANIFEST_LOAD_ERROR, 502);
 
-    expect(hls.startLoad).toHaveBeenCalled();
-    expect(screen.queryByText("Couldn't load this title")).not.toBeInTheDocument();
+    expect(hls.loadSource).toHaveBeenCalledTimes(6);
+    expect(hls.destroy).toHaveBeenCalled();
+    expect(screen.getByText("Couldn't play this")).toBeInTheDocument();
   });
 
   it("keeps reloading after a segment 404 from the cache route", async () => {

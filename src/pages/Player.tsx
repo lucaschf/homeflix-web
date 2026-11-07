@@ -364,6 +364,9 @@ const MUTED_STORAGE_KEY = "homeflix.player.muted";
 // Must mirror ``_RESUME_BUCKET_SECONDS`` on the backend so a saved
 // position lands in the same on-disk cache the next session.
 const RESUME_BUCKET_SECONDS = 300;
+// How many times to ask for a manifest the backend could not answer, 3s
+// apart. Long enough to ride out a backend restart behind the proxy.
+const MAX_MANIFEST_RELOADS = 5;
 // Source-time floor below which we never bother with a non-zero
 // bucket. Resumes inside the first minute are indistinguishable
 // from a fresh play and avoid burning a separate cache bucket.
@@ -477,6 +480,9 @@ export function Player() {
   // manifest). Keyed by URL, so another title, episode or resume bucket
   // gets its own attempt.
   const [refusedHlsUrl, setRefusedHlsUrl] = useState<string | null>(null);
+  // Playlist URL the backend could not build: it answered 500, or stayed
+  // unreachable through every reload. Keyed by URL for the same reason.
+  const [failedHlsUrl, setFailedHlsUrl] = useState<string | null>(null);
 
   const seasonNum = isMovie ? 0 : Number(params.season);
   const episodeNum = isMovie ? 0 : Number(params.episode);
@@ -1238,25 +1244,41 @@ export function Player() {
       });
 
       let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+      let manifestReloads = 0;
       hls.on(Hls.Events.ERROR, (_, data) => {
         console.error("[HLS Error]", data.type, data.details, data.fatal, data);
         if (data.fatal) {
           setHlsReady(false);
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              // The manifest route is the one behind the profile gate and
-              // the title lookup, so a 403 or 404 there is final: reloading
-              // every 3s would loop forever. Renditions and segments are
-              // served by the cache route, which has neither, and keep the
-              // retry.
               if (
-                data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR &&
-                (data.response?.code === 403 || data.response?.code === 404)
+                data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR ||
+                data.details === Hls.ErrorDetails.MANIFEST_LOAD_TIMEOUT
               ) {
-                hls.destroy();
-                setRefusedHlsUrl(hlsUrl);
+                const code = data.response?.code;
+                // The manifest route is the one behind the profile gate and
+                // the title lookup, so a 403 or 404 there is final.
+                if (code === 403 || code === 404) {
+                  hls.destroy();
+                  setRefusedHlsUrl(hlsUrl);
+                  break;
+                }
+                // A 500 means the backend tried and could not build the
+                // stream, and hls.js has already asked twice. Anything else
+                // (a restart behind the proxy, a slow start) can clear up, but
+                // only loadSource asks again: startLoad does nothing without a
+                // manifest, which used to leave an endless spinner.
+                if (code === 500 || manifestReloads >= MAX_MANIFEST_RELOADS) {
+                  hls.destroy();
+                  setFailedHlsUrl(hlsUrl);
+                  break;
+                }
+                manifestReloads += 1;
+                retryTimeout = setTimeout(() => hls.loadSource(hlsUrl), 3000);
                 break;
               }
+              // Renditions and segments are served by the cache route, which
+              // has no gate, and keep the retry.
               retryTimeout = setTimeout(() => hls.startLoad(), 3000);
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
@@ -2527,6 +2549,14 @@ export function Player() {
     return (
       <Box sx={{ position: "fixed", inset: 0, bgcolor: "common.black", overflowY: "auto" }}>
         <DetailError {...restrictedContentKeys(mediaError ?? (isMovie ? movieError : seriesError))} />
+      </Box>
+    );
+  }
+
+  if (failedHlsUrl === hlsUrl) {
+    return (
+      <Box sx={{ position: "fixed", inset: 0, bgcolor: "common.black", overflowY: "auto" }}>
+        <DetailError titleKey="player.streamFailedTitle" bodyKey="player.streamFailedBody" />
       </Box>
     );
   }
