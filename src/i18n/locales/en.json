@@ -436,6 +436,8 @@
     "cancel": "Cancel",
     "back": "Back",
     "preparing": "Preparing video…",
+    "streamFailedTitle": "Couldn't play this",
+    "streamFailedBody": "Something went wrong while preparing the video. Go back and try again.",
     "episodes": "Episodes",
     "notAvailable": "not available",
     "skipIntro": "Skip Intro",

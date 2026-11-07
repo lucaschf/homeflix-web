@@ -436,6 +436,8 @@
     "cancel": "Cancelar",
     "back": "Voltar",
     "preparing": "Preparando vídeo…",
+    "streamFailedTitle": "Não foi possível reproduzir",
+    "streamFailedBody": "Algo deu errado ao preparar o vídeo. Volte e tente de novo.",
     "episodes": "Episódios",
     "notAvailable": "indisponível",
     "skipIntro": "Pular abertura",
