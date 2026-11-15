@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/client";
+import { PARENTAL_GATE_HANDLED_BY_CALLER } from "../api/parentalGate";
 import { createQueryClient } from "../api/queryClient";
 import type { Library, Profile, User } from "../api/types";
 import { RequireAuth } from "../components/auth";
@@ -171,6 +172,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
     expect(apiPut).toHaveBeenCalledWith(
       "/profiles/prf_alice",
       expect.objectContaining({ allowed_library_ids: ["lib_movies", "lib_shows"] }),
+      PARENTAL_GATE_HANDLED_BY_CALLER,
     );
     for (const key of [...PROFILE_SCOPED_KEYS, ["libraries"]]) {
       expect(removed).toContainEqual(key);
@@ -191,6 +193,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
     expect(apiPut).toHaveBeenCalledWith(
       "/profiles/prf_bob",
       expect.objectContaining({ allowed_library_ids: ["lib_movies", "lib_shows"] }),
+      PARENTAL_GATE_HANDLED_BY_CALLER,
     );
     expect(removed).toEqual([]);
   });
@@ -208,6 +211,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
     expect(apiPut).toHaveBeenCalledWith(
       "/profiles/prf_alice",
       expect.objectContaining({ name: "Alicia" }),
+      PARENTAL_GATE_HANDLED_BY_CALLER,
     );
     expect(removed).toEqual([]);
   });
@@ -220,7 +224,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
     await settled();
 
-    expect(apiDel).toHaveBeenCalledWith("/profiles/prf_alice");
+    expect(apiDel).toHaveBeenCalledWith("/profiles/prf_alice", PARENTAL_GATE_HANDLED_BY_CALLER);
     for (const key of [...PROFILE_SCOPED_KEYS, ["libraries"]]) {
       expect(removed).toContainEqual(key);
     }
@@ -234,7 +238,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
     await settled();
 
-    expect(apiDel).toHaveBeenCalledWith("/profiles/prf_bob");
+    expect(apiDel).toHaveBeenCalledWith("/profiles/prf_bob", PARENTAL_GATE_HANDLED_BY_CALLER);
     expect(removed).toEqual([]);
   });
 
@@ -253,6 +257,7 @@ describe("ManageProfiles — profile-scoped cache", () => {
     expect(apiPut).toHaveBeenCalledWith(
       "/profiles/prf_alice",
       expect.objectContaining({ name: "Alice", allowed_library_ids: ["lib_movies"] }),
+      PARENTAL_GATE_HANDLED_BY_CALLER,
     );
     for (const key of [...PROFILE_SCOPED_KEYS, ["libraries"]]) {
       expect(removed).toContainEqual(key);
@@ -455,27 +460,26 @@ describe("ManageProfiles — parental PIN challenge", () => {
     await enterPin();
 
     await waitFor(() => expect(apiDel).toHaveBeenCalledTimes(2));
-    expect(apiDel.mock.calls).toEqual([["/profiles/prf_kid"], ["/profiles/prf_kid"]]);
+    expect(apiDel.mock.calls).toEqual([
+      ["/profiles/prf_kid", PARENTAL_GATE_HANDLED_BY_CALLER],
+      ["/profiles/prf_kid", PARENTAL_GATE_HANDLED_BY_CALLER],
+    ]);
     expect(unlockCalls()).toHaveLength(1);
   });
 
   // ``run`` owns the challenge and the retry of these three mutations. Were
-  // the query client's handler for unguarded writes to react as well, it
-  // would join the challenge and, after the retry already went through,
-  // tell the user to repeat an action that happened.
+  // the API client to challenge them as well, a cancelled challenge would
+  // reopen from ``run`` and a refusal would be retried twice. Every send
+  // carries the opt-out, so the client stays out.
 
-  /** The retried write went through: one challenge, closed, and no repeat prompt. */
-  async function expectHandledOnlyByRun() {
+  /** The retried write went through: one challenge, closed, and every send opted out. */
+  async function expectHandledOnlyByRun(calls: unknown[][]) {
     await waitFor(() => expect(challenge()).not.toBeInTheDocument());
     expect(unlockCalls()).toHaveLength(1);
-    // Give a late toast every chance to show up before the final check.
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(screen.queryByText(/Repeat the action/)).not.toBeInTheDocument();
-    expect(challenge()).not.toBeInTheDocument();
-    expect(unlockCalls()).toHaveLength(1);
+    for (const call of calls) expect(call.at(-1)).toBe(PARENTAL_GATE_HANDLED_BY_CALLER);
   }
 
-  it("asks nobody to repeat an update that run already retried", async () => {
+  it("keeps the API client out of an update that run already retried", async () => {
     apiPost.mockResolvedValue(undefined);
     apiPut.mockRejectedValueOnce(backendError(403, "PARENTAL_PIN_REQUIRED"));
     renderManage();
@@ -485,10 +489,10 @@ describe("ManageProfiles — parental PIN challenge", () => {
     await enterPin();
 
     await waitFor(() => expect(apiPut).toHaveBeenCalledTimes(2));
-    await expectHandledOnlyByRun();
+    await expectHandledOnlyByRun(apiPut.mock.calls);
   });
 
-  it("asks nobody to repeat a create that run already retried", async () => {
+  it("keeps the API client out of a create that run already retried", async () => {
     apiPost.mockRejectedValueOnce(backendError(403, "PARENTAL_PIN_REQUIRED"));
     renderManage();
 
@@ -502,10 +506,10 @@ describe("ManageProfiles — parental PIN challenge", () => {
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "New profile" })).not.toBeInTheDocument(),
     );
-    await expectHandledOnlyByRun();
+    await expectHandledOnlyByRun(apiPost.mock.calls.filter(([path]) => path === "/profiles"));
   });
 
-  it("asks nobody to repeat a delete that run already retried", async () => {
+  it("keeps the API client out of a delete that run already retried", async () => {
     apiPost.mockResolvedValue(undefined);
     apiDel.mockRejectedValueOnce(backendError(403, "PARENTAL_PIN_REQUIRED"));
     renderManage();
@@ -514,7 +518,7 @@ describe("ManageProfiles — parental PIN challenge", () => {
     await enterPin();
 
     await waitFor(() => expect(apiDel).toHaveBeenCalledTimes(2));
-    await expectHandledOnlyByRun();
+    await expectHandledOnlyByRun(apiDel.mock.calls);
   });
 
   it("keeps the form open, without an error or a retry, when the challenge is cancelled", async () => {
@@ -714,6 +718,7 @@ describe("ManageProfiles — creating with a photo", () => {
     expect(apiPost).toHaveBeenCalledWith(
       "/profiles",
       expect.objectContaining({ name: "Bia" }),
+      PARENTAL_GATE_HANDLED_BY_CALLER,
     );
 
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
@@ -748,7 +753,11 @@ describe("ManageProfiles — creating with a photo", () => {
     ).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByText("Couldn't save the profile. Try again.")).not.toBeInTheDocument();
-    expect(apiPost).toHaveBeenCalledWith("/profiles", expect.objectContaining({ name: "Bia" }));
+    expect(apiPost).toHaveBeenCalledWith(
+      "/profiles",
+      expect.objectContaining({ name: "Bia" }),
+      PARENTAL_GATE_HANDLED_BY_CALLER,
+    );
   });
 
   it("clears the warning when the operator opens the form again", async () => {

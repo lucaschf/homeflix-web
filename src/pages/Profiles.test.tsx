@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../api/client";
+import { PARENTAL_GATE_HANDLED_BY_CALLER } from "../api/parentalGate";
 import { createQueryClient } from "../api/queryClient";
 import type { Profile, User } from "../api/types";
 import { ParentalPinProvider } from "../components/parental/ParentalPinProvider";
@@ -143,9 +144,11 @@ describe("Profiles — switch behind the parental PIN", () => {
       "/parental/unlock",
       "/profiles/prf_parent/switch",
     ]);
-    // ``run`` owned the refusal: the global handler for unguarded writes
-    // stayed out, so nobody is told to repeat what already happened.
-    expect(screen.queryByText(/Repeat the action/)).not.toBeInTheDocument();
+    // ``run`` owned the refusal: every send opted out of the API client's
+    // own challenge, so it could not open a second one.
+    for (const call of switchCalls(PARENT.id)) {
+      expect(call.at(-1)).toBe(PARENTAL_GATE_HANDLED_BY_CALLER);
+    }
   });
 
   it("reports a retry refused again and does not reopen the challenge", async () => {

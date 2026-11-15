@@ -191,8 +191,7 @@
       "lockedNoWait": "Too many wrong attempts. Wait a moment and try again.",
       "notConfigured": "This account has no parental PIN yet. Set one in Manage profiles.",
       "pinFormat": "The PIN must be exactly 6 digits.",
-      "failed": "Couldn't check the PIN. Try again.",
-      "repeatAction": "Unlocked for 5 minutes on this device. Repeat the action."
+      "failed": "Couldn't check the PIN. Try again."
     },
     "errors": {
       "pinRequired": "This needs the parental PIN. Try again."

@@ -1,6 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PARENTAL_PIN_REQUIRED_EVENT } from "./api/parentalGate";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import i18n from "./i18n";
 
@@ -27,14 +26,29 @@ beforeEach(async () => {
   apiPost.mockImplementation(() => new Promise(() => {}));
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("App composition", () => {
   it("mounts the parental PIN challenge for writes refused with PARENTAL_PIN_REQUIRED", async () => {
     render(<App />);
     expect(screen.queryByRole("dialog", { name: "Parental PIN required" })).not.toBeInTheDocument();
 
-    // What the query client dispatches for an unguarded write the backend refused.
+    // An unguarded admin write the backend refuses, sent through the real
+    // client: the challenge it opens is the one ``App`` mounts.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ code: "PARENTAL_PIN_REQUIRED", type: "forbidden", message: "", details: [] }),
+          { status: 403, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+    const { api: realApi } = await vi.importActual<typeof import("./api/client")>("./api/client");
     act(() => {
-      window.dispatchEvent(new CustomEvent(PARENTAL_PIN_REQUIRED_EVENT));
+      void realApi.post("/admin/scans", { library_id: "lib_movies" }).catch(() => {});
     });
 
     const dialog = await screen.findByRole("dialog", { name: "Parental PIN required" });

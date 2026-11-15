@@ -26,8 +26,8 @@ export interface ParentalUnlock {
    * ``ParentalChallengeCancelledError`` without retrying. With
    * ``PARENTAL_CONTROLS_ENABLED`` off, every error passes through untouched.
    *
-   * ``fn`` must be a mutation marked ``PARENTAL_GATE_HANDLED_BY_CALLER``, so
-   * the query client does not open a second challenge for it.
+   * ``fn``'s request must pass ``PARENTAL_GATE_HANDLED_BY_CALLER``, so the
+   * API client does not open a second challenge for it.
    */
   run<T>(fn: () => Promise<T>): Promise<T>;
   /**
