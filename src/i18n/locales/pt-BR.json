@@ -191,8 +191,7 @@
       "lockedNoWait": "Muitas tentativas erradas. Aguarde um pouco e tente novamente.",
       "notConfigured": "Esta conta ainda não tem PIN parental. Defina um em Gerenciar perfis.",
       "pinFormat": "O PIN deve ter exatamente 6 dígitos.",
-      "failed": "Não foi possível verificar o PIN. Tente novamente.",
-      "repeatAction": "Desbloqueado por 5 minutos neste dispositivo. Repita a ação."
+      "failed": "Não foi possível verificar o PIN. Tente novamente."
     },
     "errors": {
       "pinRequired": "Isto precisa do PIN parental. Tente novamente."

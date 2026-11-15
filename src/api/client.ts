@@ -50,6 +50,25 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Opens the parental PIN challenge and resolves once this device is
+ * unlocked; rejects when the user closes it. ``ParentalPinProvider``
+ * installs it through ``setParentalUnlockHandler`` (ADR-035).
+ */
+export type ParentalUnlockHandler = () => Promise<void>;
+
+let parentalUnlockHandler: ParentalUnlockHandler | null = null;
+
+/**
+ * Installs (or, with ``null``, removes) the challenge ``request`` opens
+ * when a write is refused with 403 ``PARENTAL_PIN_REQUIRED``. A setter
+ * rather than an import keeps this module free of React, the same way
+ * ``AUTH_EXPIRED_EVENT`` keeps it free of the router.
+ */
+export function setParentalUnlockHandler(handler: ParentalUnlockHandler | null): void {
+  parentalUnlockHandler = handler;
+}
+
 interface RequestOptions extends RequestInit {
   /**
    * Suppresses the ``AUTH_EXPIRED_EVENT`` dispatch on a 401
@@ -63,10 +82,52 @@ interface RequestOptions extends RequestInit {
    * are already rendering anonymously.
    */
   expects401?: boolean;
+  /**
+   * ``"caller"`` when every caller runs this write through
+   * ``useParentalUnlock().run``, which owns the challenge and the retry
+   * for it, so ``request`` does not open a second one. See
+   * ``PARENTAL_GATE_HANDLED_BY_CALLER``.
+   */
+  parentalGate?: "caller";
 }
 
+/**
+ * Sends the request and, when the backend refuses a write with 403
+ * ``PARENTAL_PIN_REQUIRED`` (an admin write under ADR-035 D10), opens the
+ * PIN challenge and sends it exactly once more after the unlock, so the
+ * action the user started carries on instead of having to be repeated.
+ *
+ * The replay is safe because the gate refuses before any write (ADR-035,
+ * D9 and D10). Its outcome is final: a second refusal rejects to the
+ * caller and never reopens the challenge. Closing the challenge rejects
+ * with the original refusal, without replaying. Reads are never
+ * challenged (the query client reacts to them instead), nor is a write
+ * whose caller handles the gate, nor anything while no handler is
+ * installed.
+ */
 async function request<T>(path: string, options?: RequestOptions): Promise<T> {
-  const { expects401, ...fetchOptions } = options ?? {};
+  const { parentalGate, ...sendOptions } = options ?? {};
+  try {
+    return await send<T>(path, sendOptions);
+  } catch (err) {
+    const challenge = parentalUnlockHandler;
+    const isWrite = (sendOptions.method ?? "GET").toUpperCase() !== "GET";
+    if (!challenge || !isWrite || parentalGate === "caller" || !isPinRequired(err)) throw err;
+    try {
+      await challenge();
+    } catch {
+      throw err;
+    }
+    return send<T>(path, sendOptions);
+  }
+}
+
+function isPinRequired(err: unknown): boolean {
+  return err instanceof ApiError && err.status === 403 && err.body?.code === "PARENTAL_PIN_REQUIRED";
+}
+
+async function send<T>(path: string, options: Omit<RequestOptions, "parentalGate">): Promise<T> {
+  const { expects401, ...fetchOptions } = options;
   // Skip the JSON ``Content-Type`` default when the body is
   // ``FormData`` — multipart uploads need the browser to set the
   // header itself so the boundary token gets injected. Hand-setting
@@ -119,6 +180,8 @@ function withParams(path: string, params?: Record<string, string>): string {
 interface ApiOptions {
   /** See ``RequestOptions.expects401``. */
   expects401?: boolean;
+  /** See ``RequestOptions.parentalGate``. */
+  parentalGate?: "caller";
 }
 
 export const api = {

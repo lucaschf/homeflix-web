@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
-import { isParentalPinRequired, PARENTAL_PIN_REQUIRED_EVENT } from "../../api/parentalGate";
+import { setParentalUnlockHandler } from "../../api/client";
+import { isParentalPinRequired } from "../../api/parentalGate";
 import { PARENTAL_CONTROLS_ENABLED } from "../../config/featureFlags";
-import { useToast } from "../ToastProvider";
 import { ParentalPinDialog } from "./ParentalPinDialog";
 import {
   ParentalChallengeCancelledError,
@@ -23,21 +22,19 @@ interface PendingChallenge {
  * Two ways in:
  * - ``run(fn)`` and ``unlock()``, for flows that know what to do after the
  *   unlock (profile switch and edits, the admin lock screen).
- * - ``PARENTAL_PIN_REQUIRED_EVENT``, dispatched by the query client when a
- *   write nobody guards (an admin write, D10) is refused. The challenge
- *   opens and, after the unlock, a toast asks the user to repeat the
- *   action: the write is never replayed for them.
+ * - The API client, which gets ``unlock`` as its parental unlock handler
+ *   while this provider is mounted. A write nobody guards (an admin write,
+ *   D10) refused with ``PARENTAL_PIN_REQUIRED`` opens the challenge from
+ *   there and, after the unlock, is sent again, so the action carries on.
  *
  * Requests that arrive while the challenge is open share it, so several
  * refusals in a row open one dialog. With ``PARENTAL_CONTROLS_ENABLED`` off
- * nothing opens: ``run`` passes every error through and the event is
- * ignored.
+ * nothing opens: ``run`` passes every error through and the API client gets
+ * no handler.
  *
- * Mount inside ``QueryClientProvider`` and ``ToastProvider``.
+ * Mount inside ``QueryClientProvider``.
  */
 export function ParentalPinProvider({ children }: { children: ReactNode }) {
-  const { t } = useTranslation();
-  const { showToast } = useToast();
   const pending = useRef<PendingChallenge | null>(null);
   const [open, setOpen] = useState(false);
 
@@ -78,20 +75,10 @@ export function ParentalPinProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
-    const onPinRequired = () => {
-      if (!PARENTAL_CONTROLS_ENABLED) return;
-      unlock().then(
-        () =>
-          showToast(t("parental.challenge.repeatAction"), { severity: "info", durationMs: 6000 }),
-        () => {
-          // Closed without unlocking: the refused action already reported
-          // its own error, so there is nothing to add.
-        },
-      );
-    };
-    window.addEventListener(PARENTAL_PIN_REQUIRED_EVENT, onPinRequired);
-    return () => window.removeEventListener(PARENTAL_PIN_REQUIRED_EVENT, onPinRequired);
-  }, [unlock, showToast, t]);
+    if (!PARENTAL_CONTROLS_ENABLED) return;
+    setParentalUnlockHandler(unlock);
+    return () => setParentalUnlockHandler(null);
+  }, [unlock]);
 
   const value = useMemo<ParentalUnlock>(() => ({ run, unlock }), [run, unlock]);
 

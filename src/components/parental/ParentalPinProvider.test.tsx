@@ -4,8 +4,8 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError } from "../../api/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError, api } from "../../api/client";
 import { useJobs } from "../../api/hooks";
 import { createQueryClient } from "../../api/queryClient";
 import i18n from "../../i18n";
@@ -35,6 +35,46 @@ const gateError = (code: string, status = 403) =>
   new ApiError(status, "", { code, type: "business_rule_violation", message: code, details: [] });
 
 const PIN_REQUIRED = () => gateError("PARENTAL_PIN_REQUIRED");
+
+/** The backend's 403 ``PARENTAL_PIN_REQUIRED``, as ``fetch`` returns it. */
+const pinRequiredResponse = () =>
+  new Response(
+    JSON.stringify({
+      code: "PARENTAL_PIN_REQUIRED",
+      type: "business_rule_violation",
+      message: "PARENTAL_PIN_REQUIRED",
+      details: [],
+    }),
+    { status: 403, headers: { "Content-Type": "application/json" } },
+  );
+
+const createdResponse = (data: unknown) =>
+  new Response(JSON.stringify({ data }), {
+    status: 201,
+    headers: { "Content-Type": "application/json" },
+  });
+
+/**
+ * Sends every write but the unlock through the real API client, over a
+ * stubbed ``fetch`` that answers in ``responses`` order. The challenge and
+ * replay of unguarded writes live in that client, so the mocked ``api``
+ * alone would skip them.
+ */
+async function sendWritesThroughClient(...responses: Array<() => Response>) {
+  const { api: realApi } =
+    await vi.importActual<typeof import("../../api/client")>("../../api/client");
+  const fetchMock = vi.fn();
+  for (const response of responses) fetchMock.mockImplementationOnce(async () => response());
+  vi.stubGlobal("fetch", fetchMock);
+  apiPost.mockImplementation((path: string, body?: unknown) =>
+    path === "/parental/unlock" ? Promise.resolve(undefined) : realApi.post(path, body),
+  );
+  return fetchMock;
+}
+
+/** The paths ``fetch`` was sent, in order. */
+const fetchedPaths = (fetchMock: ReturnType<typeof vi.fn>) =>
+  fetchMock.mock.calls.map(([url]) => String(url));
 
 /** What a ``run`` call ended with, for the probe to render. */
 type Outcome = { kind: "resolved"; value: string } | { kind: "cancelled" } | { kind: "rejected"; code?: string };
@@ -97,6 +137,10 @@ async function enterPin(pin = "123456") {
   await userEvent.type(within(dialog).getByLabelText("Parental PIN"), pin);
   await userEvent.click(within(dialog).getByRole("button", { name: "Unlock" }));
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 beforeEach(async () => {
   vi.clearAllMocks();
@@ -193,18 +237,16 @@ describe("parental controls flag off", () => {
 
   it("opens no challenge for an unguarded write refused with PARENTAL_PIN_REQUIRED", async () => {
     apiGet.mockResolvedValue({ data: [] });
-    apiPost.mockRejectedValue(PIN_REQUIRED());
+    const fetchMock = await sendWritesThroughClient(pinRequiredResponse);
     renderWithProvider(<UsersAdmin />);
 
     await inviteUser();
 
     expect(await screen.findByText("PARENTAL_PIN_REQUIRED")).toBeInTheDocument();
     expect(screen.queryByRole("dialog", { name: "Parental PIN required" })).not.toBeInTheDocument();
-    expect(adminUserPosts()).toHaveLength(1);
+    expect(fetchedPaths(fetchMock)).toEqual(["/api/v1/admin/users"]);
   });
 });
-
-const adminUserPosts = () => apiPost.mock.calls.filter(([path]) => path === "/admin/users");
 
 /** Opens the invite dialog on the users page and submits a new member. */
 async function inviteUser() {
@@ -215,44 +257,84 @@ async function inviteUser() {
   await userEvent.click(within(invite).getByRole("button", { name: "Create user" }));
 }
 
+/** Starts two admin writes at once, as the scan page does for several libraries. */
+function ConcurrentWritesProbe({ onDone }: { onDone: (outcome: string[]) => void }) {
+  const scan = (libraryId: string) =>
+    api.post<{ data: { id: string } }>("/admin/scans", { library_id: libraryId });
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        Promise.all([scan("lib_movies"), scan("lib_series")]).then(
+          (results) => onDone(results.map((r) => r.data.id)),
+          () => onDone(["failed"]),
+        )
+      }
+    >
+      Scan both
+    </button>
+  );
+}
+
 describe("admin writes (D10)", () => {
-  it("challenges an unguarded admin write, then asks to repeat it without re-sending", async () => {
+  it("challenges an unguarded admin write, then sends it once more after the unlock", async () => {
     apiGet.mockResolvedValue({ data: [] });
-    apiPost.mockImplementation((path: string) =>
-      path === "/parental/unlock" ? Promise.resolve(undefined) : Promise.reject(PIN_REQUIRED()),
+    const fetchMock = await sendWritesThroughClient(pinRequiredResponse, () =>
+      createdResponse({ id: "usr_kid", email: "kid@home.test", role: "member" }),
     );
     renderWithProvider(<UsersAdmin />);
 
     await inviteUser();
     await enterPin("246810");
 
-    expect(
-      await screen.findByText("Unlocked for 5 minutes on this device. Repeat the action."),
-    ).toBeInTheDocument();
+    // The invite went through on its own: its form closed, nothing to repeat.
+    await waitFor(() => expect(document.querySelector('input[type="email"]')).toBeNull());
     expect(unlockCalls()).toEqual([["/parental/unlock", { pin: "246810" }]]);
-    expect(adminUserPosts()).toHaveLength(1);
+    expect(fetchedPaths(fetchMock)).toEqual(["/api/v1/admin/users", "/api/v1/admin/users"]);
+    // The unlock came between the refusal and the replay.
+    const unlockOrder = apiPost.mock.invocationCallOrder[
+      apiPost.mock.calls.findIndex(([path]) => path === "/parental/unlock")
+    ];
+    expect(fetchMock.mock.invocationCallOrder[0]).toBeLessThan(unlockOrder);
+    expect(unlockOrder).toBeLessThan(fetchMock.mock.invocationCallOrder[1]);
+    expect(screen.queryByText("PARENTAL_PIN_REQUIRED")).not.toBeInTheDocument();
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Parental PIN required" })).not.toBeInTheDocument(),
     );
-    // Give a replay every chance to show up before the final count.
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(adminUserPosts()).toHaveLength(1);
   });
 
-  it("closing the challenge after an admin write shows no repeat prompt", async () => {
+  it("shares one challenge between writes refused together and replays each of them", async () => {
+    const fetchMock = await sendWritesThroughClient(
+      pinRequiredResponse,
+      pinRequiredResponse,
+      () => createdResponse({ id: "run_movies" }),
+      () => createdResponse({ id: "run_series" }),
+    );
+    const outcomes: string[][] = [];
+    renderWithProvider(<ConcurrentWritesProbe onDone={(o) => outcomes.push(o)} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Scan both" }));
+    await enterPin();
+
+    await waitFor(() => expect(outcomes).toEqual([["run_movies", "run_series"]]));
+    expect(unlockCalls()).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("closing the challenge reports the refusal and sends the admin write no more", async () => {
     apiGet.mockResolvedValue({ data: [] });
-    apiPost.mockRejectedValue(PIN_REQUIRED());
+    const fetchMock = await sendWritesThroughClient(pinRequiredResponse);
     renderWithProvider(<UsersAdmin />);
 
     await inviteUser();
     const challenge = await screen.findByRole("dialog", { name: "Parental PIN required" });
     await userEvent.click(within(challenge).getByRole("button", { name: "Cancel" }));
 
+    expect(await screen.findByText("PARENTAL_PIN_REQUIRED")).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.queryByRole("dialog", { name: "Parental PIN required" })).not.toBeInTheDocument(),
     );
-    expect(screen.queryByText(/Repeat the action/)).not.toBeInTheDocument();
-    expect(adminUserPosts()).toHaveLength(1);
+    expect(fetchedPaths(fetchMock)).toEqual(["/api/v1/admin/users"]);
     expect(unlockCalls()).toEqual([]);
   });
 

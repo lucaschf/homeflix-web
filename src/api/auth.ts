@@ -220,10 +220,9 @@ export function useLogout() {
 export function useSwitchProfile() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
-    // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
-    meta: PARENTAL_GATE_HANDLED_BY_CALLER,
     mutationFn: async (profileId) => {
-      await api.post<void>(`/profiles/${profileId}/switch`);
+      // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
+      await api.post<void>(`/profiles/${profileId}/switch`, undefined, PARENTAL_GATE_HANDLED_BY_CALLER);
     },
     onSuccess: async () => {
       // Every list/detail query is now scoped to a different
@@ -255,8 +254,6 @@ export function useUpdateProfile() {
     { profileId: string; input: UpdateProfileInput },
     { before: Profile | undefined }
   >({
-    // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
-    meta: PARENTAL_GATE_HANDLED_BY_CALLER,
     // Snapshot before the request so ``onSuccess`` compares the
     // server's answer against the profile the session was using.
     onMutate: ({ profileId }) => ({
@@ -265,7 +262,12 @@ export function useUpdateProfile() {
         ?.find((profile) => profile.id === profileId),
     }),
     mutationFn: async ({ profileId, input }) => {
-      const res = await api.put<ProfileResponse>(`/profiles/${profileId}`, input);
+      // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
+      const res = await api.put<ProfileResponse>(
+        `/profiles/${profileId}`,
+        input,
+        PARENTAL_GATE_HANDLED_BY_CALLER,
+      );
       return res.data;
     },
     onSuccess: async (updated, { profileId }, snapshot) => {
@@ -289,10 +291,9 @@ export function useUpdateProfile() {
 export function useCreateProfile() {
   const queryClient = useQueryClient();
   return useMutation<Profile, Error, CreateProfileInput>({
-    // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
-    meta: PARENTAL_GATE_HANDLED_BY_CALLER,
     mutationFn: async (input) => {
-      const res = await api.post<ProfileResponse>("/profiles", input);
+      // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
+      const res = await api.post<ProfileResponse>("/profiles", input, PARENTAL_GATE_HANDLED_BY_CALLER);
       return res.data;
     },
     onSuccess: async () => {
@@ -313,10 +314,9 @@ export function useCreateProfile() {
 export function useDeleteProfile() {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
-    // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
-    meta: PARENTAL_GATE_HANDLED_BY_CALLER,
     mutationFn: async (profileId) => {
-      await api.del(`/profiles/${profileId}`);
+      // Every caller runs it through ``useParentalUnlock().run`` (ADR-035).
+      await api.del(`/profiles/${profileId}`, PARENTAL_GATE_HANDLED_BY_CALLER);
     },
     onSuccess: async (_data, profileId) => {
       if (isActiveProfile(queryClient, profileId)) {

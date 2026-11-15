@@ -3,6 +3,7 @@ import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { authKeys, useSwitchProfile } from "./auth";
+import { PARENTAL_GATE_HANDLED_BY_CALLER } from "./parentalGate";
 import { createQueryClient } from "./queryClient";
 
 const { apiPost } = vi.hoisted(() => ({ apiPost: vi.fn() }));
@@ -32,7 +33,11 @@ describe("useSwitchProfile", () => {
 
     await result.current.mutateAsync("prf_b");
 
-    expect(apiPost).toHaveBeenCalledWith("/profiles/prf_b/switch");
+    expect(apiPost).toHaveBeenCalledWith(
+      "/profiles/prf_b/switch",
+      undefined,
+      PARENTAL_GATE_HANDLED_BY_CALLER,
+    );
     const roots = client
       .getQueryCache()
       .getAll()
