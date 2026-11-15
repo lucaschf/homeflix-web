@@ -60,6 +60,13 @@ export type ParentalUnlockHandler = () => Promise<void>;
 let parentalUnlockHandler: ParentalUnlockHandler | null = null;
 
 /**
+ * Challenges ``request`` has seen through to an unlock. A write refused
+ * while one of them was settling was refused before that unlock, so it
+ * replays without asking for the PIN again.
+ */
+let parentalUnlocks = 0;
+
+/**
  * Installs (or, with ``null``, removes) the challenge ``request`` opens
  * when a write is refused with 403 ``PARENTAL_PIN_REQUIRED``. A setter
  * rather than an import keeps this module free of React, the same way
@@ -104,19 +111,28 @@ interface RequestOptions extends RequestInit {
  * challenged (the query client reacts to them instead), nor is a write
  * whose caller handles the gate, nor anything while no handler is
  * installed.
+ *
+ * Writes refused while the challenge is open join it. A write whose
+ * refusal only arrives after a challenge settled with an unlock (it was
+ * sent before that unlock) replays at once rather than ask for the PIN
+ * a second time.
  */
 async function request<T>(path: string, options?: RequestOptions): Promise<T> {
   const { parentalGate, ...sendOptions } = options ?? {};
+  const unlocksAtSend = parentalUnlocks;
   try {
     return await send<T>(path, sendOptions);
   } catch (err) {
     const challenge = parentalUnlockHandler;
     const isWrite = (sendOptions.method ?? "GET").toUpperCase() !== "GET";
     if (!challenge || !isWrite || parentalGate === "caller" || !isPinRequired(err)) throw err;
-    try {
-      await challenge();
-    } catch {
-      throw err;
+    if (parentalUnlocks === unlocksAtSend) {
+      try {
+        await challenge();
+      } catch {
+        throw err;
+      }
+      parentalUnlocks += 1;
     }
     return send<T>(path, sendOptions);
   }

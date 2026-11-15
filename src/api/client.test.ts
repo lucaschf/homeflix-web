@@ -102,11 +102,58 @@ describe("api client — parental gate on writes (ADR-035)", () => {
       .mockResolvedValueOnce(pinRequired())
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
     vi.stubGlobal("fetch", fetchMock);
-    setParentalUnlockHandler(vi.fn().mockResolvedValue(undefined));
+    const unlock = vi.fn().mockResolvedValue(undefined);
+    setParentalUnlockHandler(unlock);
 
     await (method === "del" ? api.del("/admin/users/u_1") : api[method]("/admin/users/u_1", {}));
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(unlock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.invocationCallOrder[0]).toBeLessThan(unlock.mock.invocationCallOrder[0]);
+    expect(unlock.mock.invocationCallOrder[0]).toBeLessThan(fetchMock.mock.invocationCallOrder[1]);
+  });
+
+  it("replays a write refused late, after a challenge already unlocked, without a second challenge", async () => {
+    // Two writes go out together. The first is refused at once and opens the
+    // challenge; the second is refused (before the unlock) but its answer
+    // only lands after the challenge settled.
+    let lateRefusal!: (response: Response) => void;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(pinRequired())
+      .mockImplementationOnce(() => new Promise<Response>((resolve) => (lateRefusal = resolve)))
+      .mockImplementation(async () => okResponse({ id: "run" }));
+    vi.stubGlobal("fetch", fetchMock);
+    const unlock = vi.fn().mockResolvedValue(undefined);
+    setParentalUnlockHandler(unlock);
+
+    const first = api.post("/admin/scans", { library_id: "lib_movies" });
+    const second = api.post("/admin/scans", { library_id: "lib_series" });
+    await first;
+    expect(unlock).toHaveBeenCalledTimes(1);
+    lateRefusal(pinRequired());
+    await second;
+
+    expect(unlock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it("challenges a write sent after an earlier unlock as usual", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(pinRequired())
+      .mockResolvedValueOnce(okResponse({ id: "run_1" }))
+      .mockResolvedValueOnce(pinRequired())
+      .mockResolvedValueOnce(okResponse({ id: "run_2" }));
+    vi.stubGlobal("fetch", fetchMock);
+    const unlock = vi.fn().mockResolvedValue(undefined);
+    setParentalUnlockHandler(unlock);
+
+    await api.post("/admin/scans", {});
+    await api.post("/admin/scans", {});
+
+    expect(unlock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it("rejects a replay refused again without a second challenge", async () => {
