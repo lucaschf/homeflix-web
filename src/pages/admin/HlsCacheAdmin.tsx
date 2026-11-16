@@ -15,7 +15,7 @@ import {
   type BadgeTone,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentCoral, status, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
+import { accentCoral, inkAlpha, status, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -45,9 +45,12 @@ function toneForOccupancy(ratio: number): BadgeTone {
 
 function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
   const { t } = useTranslation();
-  const ratio = stats.max_bytes > 0 ? Math.min(stats.size_bytes / stats.max_bytes, 1) : 0;
+  // ``null`` until the server's first eviction sweep measures the cache.
+  const size = stats.size_bytes;
+  const ratio = size !== null && stats.max_bytes > 0 ? Math.min(size / stats.max_bytes, 1) : 0;
   const percent = Math.round(ratio * 100);
-  const tone = toneForOccupancy(ratio);
+  const tone: BadgeTone = size === null ? "neutral" : toneForOccupancy(ratio);
+  const used = size === null ? t("admin.system.hls.occupancy.measuring") : formatBytes(size);
   const lastCleared = stats.last_cleared_at
     ? parseServerDate(stats.last_cleared_at).toLocaleString()
     : null;
@@ -60,7 +63,9 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
         subtitle={t("admin.system.hls.occupancy.subtitle")}
         action={
           <AdminBadge tone={tone}>
-            {t("admin.system.hls.occupancy.percent", { percent })}
+            {size === null
+              ? t("admin.system.hls.occupancy.measuring")
+              : t("admin.system.hls.occupancy.percent", { percent })}
           </AdminBadge>
         }
       />
@@ -68,7 +73,8 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
       <Stack spacing={2}>
         <Box>
           <LinearProgress
-            variant="determinate"
+            // Unknown size: an empty determinate bar would read as an empty cache.
+            variant={size === null ? "indeterminate" : "determinate"}
             value={percent}
             sx={{
               height: 8,
@@ -77,17 +83,19 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
               "& .MuiLinearProgress-bar": {
                 borderRadius: 999,
                 backgroundColor:
-                  tone === "err"
-                    ? accentCoral
-                    : tone === "warn"
-                      ? status.warn.fg
-                      : status.ok.fg,
+                  tone === "neutral"
+                    ? inkAlpha(0.3)
+                    : tone === "err"
+                      ? accentCoral
+                      : tone === "warn"
+                        ? status.warn.fg
+                        : status.ok.fg,
               },
             }}
           />
           <Stack direction="row" justifyContent="space-between" sx={{ mt: 1 }}>
             <Typography variant="metaMono" color="text.secondary">
-              {formatBytes(stats.size_bytes)}
+              {used}
             </Typography>
             <Typography variant="metaMono" color="text.secondary">
               {t("admin.system.hls.occupancy.cap", { cap: formatBytes(stats.max_bytes) })}
@@ -104,7 +112,8 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
         >
           <StatBlock
             label={t("admin.system.hls.occupancy.usedLabel")}
-            value={formatBytes(stats.size_bytes)}
+            value={used}
+            muted={size === null}
           />
           <StatBlock
             label={t("admin.system.hls.occupancy.lastClearedLabel")}

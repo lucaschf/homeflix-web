@@ -600,7 +600,8 @@
       },
       "hlsCache": {
         "sub": "Open System",
-        "subWithRatio": "{{percent}} % of {{cap}}"
+        "subWithRatio": "{{percent}} % of {{cap}}",
+        "measuring": "Measuring the cache…"
       },
       "recentlyFlagged": {
         "title": "Recently flagged",
@@ -899,7 +900,8 @@
           "cap": "Cap {{cap}}",
           "usedLabel": "Used",
           "lastClearedLabel": "Last globally cleared",
-          "lastClearedNever": "Never"
+          "lastClearedNever": "Never",
+          "measuring": "Measuring…"
         },
         "clear": {
           "title": "Clear every HLS cache bucket?",

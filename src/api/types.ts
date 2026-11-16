@@ -555,10 +555,11 @@ export interface ReadinessResponse {
  * ``GET /api/v1/admin/hls-cache`` payload. The admin System page
  * renders ``size_bytes`` over ``max_bytes`` as an occupancy bar
  * and shows ``last_cleared_at`` as the freshness signal for the
- * "Clear cache" button.
+ * "Clear cache" button. ``size_bytes`` is what the server's eviction
+ * sweep last measured, ``null`` until its first sweep after startup.
  */
 export interface HlsCacheStats {
-  size_bytes: number;
+  size_bytes: number | null;
   max_bytes: number;
   last_cleared_at: string | null;
 }
@@ -1037,9 +1038,10 @@ export interface AdminOverviewLastScan {
 /**
  * Slim HLS cache view inside ``AdminOverviewStats`` — drops the
  * last-cleared timestamp versus the dedicated System page.
+ * ``size_bytes`` is ``null`` while the server has not measured it yet.
  */
 export interface AdminOverviewHlsCache {
-  size_bytes: number;
+  size_bytes: number | null;
   max_bytes: number;
 }
 
