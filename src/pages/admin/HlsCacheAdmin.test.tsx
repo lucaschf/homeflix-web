@@ -44,6 +44,9 @@ describe("HLS cache occupancy", () => {
 
     expect(await screen.findAllByText("Measuring…")).not.toHaveLength(0);
     expect(screen.queryByText(/null/)).not.toBeInTheDocument();
+    // Neither the badge nor the bar may read as a measured (empty) cache.
+    expect(screen.queryByText(/%/)).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).not.toHaveAttribute("aria-valuenow");
     expect(screen.getByRole("button", { name: "Clear cache" })).toBeEnabled();
   });
 
@@ -56,5 +59,6 @@ describe("HLS cache occupancy", () => {
 
     expect(await screen.findByText("50 %")).toBeInTheDocument();
     expect(screen.queryByText("Measuring…")).not.toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
   });
 });

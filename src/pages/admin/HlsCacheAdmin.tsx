@@ -15,7 +15,7 @@ import {
   type BadgeTone,
 } from "../../components/admin";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle";
-import { accentCoral, status, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
+import { accentCoral, inkAlpha, status, whiteAlpha, toastSurfaceSx } from "../../theme/tokens";
 import { parseServerDate } from "../../utils/datetime";
 
 type Snack = { message: string; severity: "success" | "error" } | null;
@@ -73,7 +73,8 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
       <Stack spacing={2}>
         <Box>
           <LinearProgress
-            variant="determinate"
+            // Unknown size: an empty determinate bar would read as an empty cache.
+            variant={size === null ? "indeterminate" : "determinate"}
             value={percent}
             sx={{
               height: 8,
@@ -82,11 +83,13 @@ function OccupancyCard({ stats }: { stats: HlsCacheStats }) {
               "& .MuiLinearProgress-bar": {
                 borderRadius: 999,
                 backgroundColor:
-                  tone === "err"
-                    ? accentCoral
-                    : tone === "warn"
-                      ? status.warn.fg
-                      : status.ok.fg,
+                  tone === "neutral"
+                    ? inkAlpha(0.3)
+                    : tone === "err"
+                      ? accentCoral
+                      : tone === "warn"
+                        ? status.warn.fg
+                        : status.ok.fg,
               },
             }}
           />
