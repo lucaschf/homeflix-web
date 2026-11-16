@@ -2480,10 +2480,19 @@ export function useIncludeCatalogRequest() {
 // ─── Admin — System (HLS cache + health) ───────────────────
 
 /**
+ * How often to re-read the HLS cache stats while the server has not
+ * measured the cache yet (``size_bytes: null``). The server measures it
+ * in its eviction sweep, which can take minutes on a slow disk; the
+ * read itself is cheap.
+ */
+const UNMEASURED_HLS_CACHE_POLL_MS = 15_000;
+
+/**
  * Snapshot of the HLS cache: bytes-on-disk, configured ceiling,
  * and the timestamp of the last global clear. Drives the occupancy
- * card on the admin System page; the underlying endpoint walks the
- * cache directory server-side, so the page polls on demand only.
+ * card on the admin System page. The server returns the size its
+ * eviction sweep last measured; until the first sweep ends the size
+ * is ``null`` and the page re-reads it.
  */
 export function useHlsCacheStats() {
   return useQuery({
@@ -2492,6 +2501,8 @@ export function useHlsCacheStats() {
       const resp = await api.get<HlsCacheStatsResponse>("/admin/hls-cache");
       return resp.data;
     },
+    refetchInterval: (q) =>
+      q.state.data?.size_bytes === null ? UNMEASURED_HLS_CACHE_POLL_MS : false,
   });
 }
 
@@ -2926,6 +2937,8 @@ export function useAdminOverviewStats() {
     // Cheap aggregate read — keep it fresh-ish without
     // hammering the backend on every focus change.
     staleTime: 30_000,
+    refetchInterval: (q) =>
+      q.state.data?.hls_cache.size_bytes === null ? UNMEASURED_HLS_CACHE_POLL_MS : false,
   });
 }
 

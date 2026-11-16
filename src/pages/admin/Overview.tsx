@@ -71,10 +71,11 @@ function formatBytesShort(bytes: number): string {
 
 /**
  * HLS cache value renders the raw bytes-on-disk; the sub shows
- * the occupancy ratio. ``"—"`` when stats haven't loaded yet.
+ * the occupancy ratio. ``"—"`` when stats haven't loaded yet or the
+ * server hasn't measured the cache yet.
  */
 function formatHlsValue(cache: AdminOverviewStats["hls_cache"] | undefined): string {
-  if (!cache) return "—";
+  if (!cache || cache.size_bytes === null) return "—";
   return formatBytesShort(cache.size_bytes);
 }
 
@@ -82,7 +83,9 @@ function formatHlsSub(
   cache: AdminOverviewStats["hls_cache"] | undefined,
   t: TFn,
 ): string {
-  if (!cache || cache.max_bytes <= 0) return t("admin.overview.hlsCache.sub");
+  if (!cache) return t("admin.overview.hlsCache.sub");
+  if (cache.size_bytes === null) return t("admin.overview.hlsCache.measuring");
+  if (cache.max_bytes <= 0) return t("admin.overview.hlsCache.sub");
   const percent = Math.round((cache.size_bytes / cache.max_bytes) * 100);
   return t("admin.overview.hlsCache.subWithRatio", {
     percent,
